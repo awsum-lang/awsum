@@ -46,7 +46,7 @@ const v_render = (v_b) => {
     }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -62,7 +62,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, (v_render)(__eqString("🔥", "🔥"))); } } })(__concat(v_s1, (v_render)(__eqString("abc", "abd")))); } } })(__concat(v_s0, (v_render)(__eqString("a", "ab")))); } } })(__concat((v_render)(__eqString("", "")), (v_render)(__eqString("abc", "abc")))));
+const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, (v_render)(__eqString("🔥", "🔥"))); } } })(__concat(v_s1, (v_render)(__eqString("abc", "abd")))); } } })(__concat(v_s0, (v_render)(__eqString("a", "ab")))); } } })(__concat((v_render)(__eqString("", "")), (v_render)(__eqString("abc", "abc")))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

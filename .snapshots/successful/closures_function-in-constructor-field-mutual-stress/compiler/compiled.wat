@@ -15,7 +15,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00underflow")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v__scc__apply1__lam_12_a_b $v_a)
+  (elem (i32.const 0) $v_runIO $v__scc__apply1__lam_15_a_b $v_a)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -817,7 +817,7 @@
     local.get 0
     end)
 
-  (func $v__scc__apply1__lam_12_a_b (param i32) (result i32)
+  (func $v__scc__apply1__lam_15_a_b (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

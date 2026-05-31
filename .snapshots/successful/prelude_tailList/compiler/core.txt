@@ -239,16 +239,16 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$16" )
+                ( CVar "$let$19" )
                 [ CCall
                     ( CVar "tailList" )
                     [ CCall
-                        ( CVar "$lift$13" )
+                        ( CVar "$lift$16" )
                         [ CCon 12 [] ]
                     ]
                 ]
             )
-        , CFunDef "$let$12" [ "msg" ]
+        , CFunDef "$let$15" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -275,14 +275,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$13" [ "__input" ]
+        , CFunDef "$lift$16" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$13" )
+                ( CVar "$cps$$lift$16" )
                 [ CVar "__input"
                 , CCon 16 []
                 ]
             )
-        , CFunDef "$cps$$lift$13"
+        , CFunDef "$cps$$lift$16"
             [ "__input"
             , "$k"
             ]
@@ -293,7 +293,7 @@ CoreProgram
                         ( 12
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$13" )
+                            ( CVar "$apply$$lift$16" )
                             [ CVar "$k"
                             , CCon 12 []
                             ]
@@ -321,7 +321,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$13"
+        , CFunDef "$apply$$lift$16"
             [ "$k"
             , "$x"
             ]
@@ -356,13 +356,13 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$let$14"
+        , CFunDef "$let$17"
             [ "noElems"
             , "single"
             , "multi"
             ]
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CCall
                         ( CVar "show" )
@@ -496,12 +496,12 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15"
+        , CFunDef "$let$18"
             [ "noElems"
             , "single"
             ]
             ( CCall
-                ( CVar "$let$14" )
+                ( CVar "$let$17" )
                 [ CVar "noElems"
                 , CVar "single"
                 , CCall
@@ -513,7 +513,7 @@ CoreProgram
                             , CCon 13
                                 [ CString "c"
                                 , CCall
-                                    ( CVar "$lift$13" )
+                                    ( CVar "$lift$16" )
                                     [ CCon 12 [] ]
                                 ]
                             ]
@@ -521,16 +521,16 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$16" [ "noElems" ]
+        , CFunDef "$let$19" [ "noElems" ]
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$18" )
                 [ CVar "noElems"
                 , CCall
                     ( CVar "tailList" )
                     [ CCon 13
                         [ CString "a"
                         , CCall
-                            ( CVar "$lift$13" )
+                            ( CVar "$lift$16" )
                             [ CCon 12 [] ]
                         ]
                     ]

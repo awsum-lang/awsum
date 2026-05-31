@@ -23,7 +23,7 @@
   (data (i32.const 257) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00b")
   (data (i32.const 278) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00c")
   (table 13 funcref)
-  (elem (i32.const 0) $v_runIO $v_tailList $v_showList $v__cps_showList $v__apply_showList $v_show $v__let_12 $v__lift_13 $v__cps__lift_13 $v__apply__lift_13 $v__let_14 $v__let_15 $v__let_16)
+  (elem (i32.const 0) $v_runIO $v_tailList $v_showList $v__cps_showList $v__apply_showList $v_show $v__let_15 $v__lift_16 $v__cps__lift_16 $v__apply__lift_16 $v__let_17 $v__let_18 $v__let_19)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1081,7 +1081,7 @@
     call 14
     call 26)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1190,7 +1190,7 @@
     end
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1214,7 +1214,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_13 (param i32 i32) (result i32)
+  (func $v__cps__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1304,7 +1304,7 @@
     end
     end)
 
-  (func $v__apply__lift_13 (param i32 i32) (result i32)
+  (func $v__apply__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1379,7 +1379,7 @@
     end
     end)
 
-  (func $v__let_14 (param i32 i32 i32) (result i32)
+  (func $v__let_17 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1741,7 +1741,7 @@
     local.get 11
     end)
 
-  (func $v__let_15 (param i32 i32) (result i32)
+  (func $v__let_18 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1815,7 +1815,7 @@
     local.get 6
     end)
 
-  (func $v__let_16 (param i32) (result i32)
+  (func $v__let_19 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

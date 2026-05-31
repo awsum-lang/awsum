@@ -522,15 +522,15 @@ case.default.5:
 case.join.6:
   %t41 = phi ptr [%t11, %case.end.3.8], [%t40, %case.end.4.16]
   call void @__free_recursive(ptr %t1)
-  %t42 = call ptr @v__let_13(ptr %t41)
+  %t42 = call ptr @v__let_16(ptr %t41)
   ret ptr %t42
 }
 
-define internal ptr @v__lam_12(ptr %v_n) {
+define internal ptr @v__lam_15(ptr %v_n) {
   ret ptr %v_n
 }
 
-define internal ptr @v__let_13(ptr %v_res) {
+define internal ptr @v__let_16(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -592,7 +592,7 @@ case.default.3:
 
 define internal ptr @v__df_apply_0(ptr %v_x) {
   call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_12(ptr %v_x)
+  %t0 = call ptr @v__lam_15(ptr %v_x)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t0
 }

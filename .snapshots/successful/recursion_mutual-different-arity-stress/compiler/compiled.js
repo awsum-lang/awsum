@@ -124,7 +124,7 @@ const v_pingOne = (v_n) => {
     return (v__scc_pingOne_pongTwo)([8, v_n]);
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -140,7 +140,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)((v_showResult)((v_pingOne)((100000|0))));
+const main = (v__let_15)((v_showResult)((v_pingOne)((100000|0))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

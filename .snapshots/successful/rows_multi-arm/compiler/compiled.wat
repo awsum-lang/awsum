@@ -21,7 +21,7 @@
   (data (i32.const 219) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00; ")
   (data (i32.const 241) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 7 funcref)
-  (elem (i32.const 0) $v_showUnit $v_runIO $v_whatsInside $v__lift_12 $v__lift_13 $v__lift_14 $v__let_15)
+  (elem (i32.const 0) $v_showUnit $v_runIO $v_whatsInside $v__lift_15 $v__lift_16 $v__lift_17 $v__let_18)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1057,7 +1057,7 @@
     call 16
     call 21)
 
-  (func $v__lift_12 (param i32) (result i32)
+  (func $v__lift_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1125,7 +1125,7 @@
     end
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1193,7 +1193,7 @@
     end
     end)
 
-  (func $v__lift_14 (param i32) (result i32)
+  (func $v__lift_17 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1250,7 +1250,7 @@
     end
     end)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

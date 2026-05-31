@@ -17,7 +17,7 @@
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00world")
   (data (i32.const 130) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00n")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_dispatch $v__let_12)
+  (elem (i32.const 0) $v_runIO $v_dispatch $v__let_15)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -511,7 +511,7 @@
     local.get 0
     call 14)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

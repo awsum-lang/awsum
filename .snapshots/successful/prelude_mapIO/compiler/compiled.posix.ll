@@ -702,7 +702,7 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__lam_12(ptr %v__s) {
+define internal ptr @v__lam_15(ptr %v__s) {
   call void @__free_recursive(ptr %v__s)
   ret ptr getelementptr inbounds (i8, ptr @.str.1, i64 12)
 }
@@ -994,7 +994,7 @@ tco.case.arm.5.11:
   %t16 = getelementptr ptr, ptr %t14, i32 0
   store ptr %t15, ptr %t16
   call void @__inc_ref(ptr %t13)
-  %t17 = call ptr @v__lam_12(ptr %t13)
+  %t17 = call ptr @v__lam_15(ptr %t13)
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
   %t19 = call ptr @v__apply__df_mapIO_3(ptr %t6, ptr %t14)

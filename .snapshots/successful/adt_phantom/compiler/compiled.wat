@@ -15,7 +15,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00Phantom")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_show $v__lift_12)
+  (elem (i32.const 0) $v_runIO $v_show $v__lift_15)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -531,7 +531,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lift_12 (param i32) (result i32)
+  (func $v__lift_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -512,7 +512,7 @@ L_arm7:
   astore_3
   aload_3
   ldc "answer="
-  invokestatic AwsumMain/v__let_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_join6:
   areturn
 .end method
@@ -720,7 +720,7 @@ L_join10:
 .end method
 
 
-.method static v__let_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 5
   aload_0

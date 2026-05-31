@@ -69,7 +69,7 @@ const v_showResult = (v_r) => {
     }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -85,7 +85,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([26, [25, [23]]])); } } })(__concat((v_showBoxedColor)([25, [22]]), " ")));
+const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([26, [25, [23]]])); } } })(__concat((v_showBoxedColor)([25, [22]]), " ")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -22,31 +22,31 @@ show:
   case-pattern    __p0                            count=0
   case-pattern    s                               count=0
 
-$let$12:
+$let$15:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lift$13:
+$lift$16:
   param           __input                         count=1
 
-$cps$$lift$13:
+$cps$$lift$16:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$13:
+$apply$$lift$16:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_24                          count=0
   case-pattern    __f0                            count=0
 
-$lift$14:
+$lift$17:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 
-$let$15:
+$let$18:
   param           fromJust                        count=1
   param           fromNothing                     count=1
   param           chained                         count=1
@@ -63,16 +63,16 @@ $let$15:
   case-pattern    $do_e_1                         count=0
   case-pattern    s2                              count=0
 
-$let$16:
+$let$19:
   param           fromNothing                     count=1
   param           fromJust                        count=1
   case-pattern    $do_e_0                         count=0
   case-pattern    h                               count=0
 
-$lift$17:
+$lift$20:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 
-$let$18:
+$let$21:
   param           fromNothing                     count=1
 

@@ -286,11 +286,11 @@ define internal ptr @v_bad() {
 define internal ptr @v_main() {
   %t0 = call ptr @v_ok()
   %t1 = call ptr @v__df_mapRight_0(ptr %t0)
-  %t2 = call ptr @v__let_16(ptr %t1)
+  %t2 = call ptr @v__let_19(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_12(ptr %v_msg) {
+define internal ptr @v__let_15(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -350,11 +350,11 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lam_13(ptr %v_n) {
+define internal ptr @v__lam_16(ptr %v_n) {
   ret ptr %v_n
 }
 
-define internal ptr @v__let_14(ptr %v_mappedOk, ptr %v_mappedBad) {
+define internal ptr @v__let_17(ptr %v_mappedOk, ptr %v_mappedBad) {
   %t0 = getelementptr ptr, ptr %v_mappedOk, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -442,21 +442,21 @@ case.default.3:
   unreachable
 case.join.4:
   %t53 = phi ptr [%t20, %case.end.3.6], [%t52, %case.end.4.22]
-  %t54 = call ptr @v__let_12(ptr %t53)
+  %t54 = call ptr @v__let_15(ptr %t53)
   call void @__free_recursive(ptr %v_mappedOk)
   call void @__free_recursive(ptr %v_mappedBad)
   ret ptr %t54
 }
 
-define internal ptr @v__lam_15(ptr %v_n) {
+define internal ptr @v__lam_18(ptr %v_n) {
   ret ptr %v_n
 }
 
-define internal ptr @v__let_16(ptr %v_mappedOk) {
+define internal ptr @v__let_19(ptr %v_mappedOk) {
   call void @__inc_ref(ptr %v_mappedOk)
   %t0 = call ptr @v_bad()
   %t1 = call ptr @v__df_mapRight_1(ptr %t0)
-  %t2 = call ptr @v__let_14(ptr %v_mappedOk, ptr %t1)
+  %t2 = call ptr @v__let_17(ptr %v_mappedOk, ptr %t1)
   call void @__free_recursive(ptr %v_mappedOk)
   ret ptr %t2
 }
@@ -489,7 +489,7 @@ case.arm.4.11:
   %t16 = getelementptr ptr, ptr %t14, i32 0
   store ptr %t15, ptr %t16
   call void @__inc_ref(ptr %t13)
-  %t17 = call ptr @v__lam_15(ptr %t13)
+  %t17 = call ptr @v__lam_18(ptr %t13)
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
   call void @__free_recursive(ptr %t13)
@@ -527,7 +527,7 @@ case.arm.4.11:
   %t16 = getelementptr ptr, ptr %t14, i32 0
   store ptr %t15, ptr %t16
   call void @__inc_ref(ptr %t13)
-  %t17 = call ptr @v__lam_13(ptr %t13)
+  %t17 = call ptr @v__lam_16(ptr %t13)
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
   call void @__free_recursive(ptr %t13)

@@ -326,7 +326,7 @@ case.join.6:
   ret ptr %t40
 }
 
-define internal ptr @v__scc__apply1__lam_12_a_b(ptr %v__args) {
+define internal ptr @v__scc__apply1__lam_15_a_b(ptr %v__args) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -586,7 +586,7 @@ define internal ptr @v_a(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t3 = getelementptr ptr, ptr %t0, i32 1
   store ptr %v_n, ptr %t3
-  %t4 = call ptr @v__scc__apply1__lam_12_a_b(ptr %t0)
+  %t4 = call ptr @v__scc__apply1__lam_15_a_b(ptr %t0)
   call void @__free_recursive(ptr %v_n)
   ret ptr %t4
 }

@@ -47,7 +47,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_12 = (v_msg) => {
+const v__let_15 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -170,11 +170,11 @@ const v_show = (v_m) => {
     }
 };
 
-const v__let_14 = (v_noElems, v_single, v_multi) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_8 = s[1]; return [3, v__do_e_8]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_7 = s[1]; return [3, v__do_e_7]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, "|")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, "|")); } } })((v_show)(v_multi)); } } })((v_show)(v_single)); } } })((v_show)(v_noElems)));
+const v__let_17 = (v_noElems, v_single, v_multi) => {
+    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_8 = s[1]; return [3, v__do_e_8]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_7 = s[1]; return [3, v__do_e_7]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, "|")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, "|")); } } })((v_show)(v_multi)); } } })((v_show)(v_single)); } } })((v_show)(v_noElems)));
 };
 
-const v__apply__lift_13 = (v__k, v__x) => {
+const v__apply__lift_16 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -196,13 +196,13 @@ const v__apply__lift_13 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_13 = (v___input, v__k) => {
+const v__cps__lift_16 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 12: {
-          return (v__apply__lift_13)(v__k, [12]);
+          return (v__apply__lift_16)(v__k, [12]);
         }
         case 13: {
           const v___f0 = __s[1];
@@ -218,19 +218,19 @@ const v__cps__lift_13 = (v___input, v__k) => {
   }
 };
 
-const v__lift_13 = (v___input) => {
-    return (v__cps__lift_13)(v___input, [16]);
+const v__lift_16 = (v___input) => {
+    return (v__cps__lift_16)(v___input, [16]);
 };
 
-const v__let_15 = (v_noElems, v_single) => {
-    return (v__let_14)(v_noElems, v_single, (v_tailList)([13, "a", [13, "b", [13, "c", (v__lift_13)([12])]]]));
+const v__let_18 = (v_noElems, v_single) => {
+    return (v__let_17)(v_noElems, v_single, (v_tailList)([13, "a", [13, "b", [13, "c", (v__lift_16)([12])]]]));
 };
 
-const v__let_16 = (v_noElems) => {
-    return (v__let_15)(v_noElems, (v_tailList)([13, "a", (v__lift_13)([12])]));
+const v__let_19 = (v_noElems) => {
+    return (v__let_18)(v_noElems, (v_tailList)([13, "a", (v__lift_16)([12])]));
 };
 
-const main = (v__let_16)((v_tailList)((v__lift_13)([12])));
+const main = (v__let_19)((v_tailList)((v__lift_16)([12])));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

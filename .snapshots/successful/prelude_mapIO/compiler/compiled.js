@@ -11,7 +11,7 @@ const v_pureIO = (v_x) => {
 
 const v_source = (v_pureIO)("before");
 
-const v__lam_12 = (v__s) => {
+const v__lam_15 = (v__s) => {
     return "after";
 };
 
@@ -278,7 +278,7 @@ const v__cps__df_mapIO_3 = (v_io, v__k) => {
       switch (__s[0]) {
         case 5: {
           const v_a = __s[1];
-          return (v__apply__df_mapIO_3)(v__k, [5, (v__lam_12)(v_a)]);
+          return (v__apply__df_mapIO_3)(v__k, [5, (v__lam_15)(v_a)]);
         }
         case 6: {
           const v_e = __s[1];

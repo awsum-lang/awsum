@@ -28,10 +28,10 @@ $apply$$lift$1:
   case-pattern    $pk_28                          count=0
   case-pattern    __f0                            count=0
 
-$lift$12:
+$lift$15:
   param           __input                         count=1
 
-$cps$$lift$12:
+$cps$$lift$15:
   param           __input                         count=2
   param           $k                              count=4
   case-pattern    __f0                            count=0
@@ -41,16 +41,16 @@ $cps$$lift$12:
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$apply$$lift$12:
+$apply$$lift$15:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_30                          count=0
   case-pattern    __f0                            count=0
 
-$lam$15:
+$lam$18:
   param           _v                              count=0
 
-$lam$16:
+$lam$19:
   param           _u                              count=0
 
 $df$bindIO$0:
@@ -91,10 +91,10 @@ $apply$$df$bindIO$3:
   case-pattern    $pk_34                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$bindIOAfterArgs$1_$df$bindIOAfterArgs$4_$df$bindIOAfterStdin$2_$df$bindIOAfterStdin$5_$lift$13_$lift$14_$lift$2_$lift$3:
+$scc$$apply1_$df$bindIOAfterArgs$1_$df$bindIOAfterArgs$4_$df$bindIOAfterStdin$2_$df$bindIOAfterStdin$5_$lift$16_$lift$17_$lift$2_$lift$3:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$bindIOAfterArgs$1_$df$bindIOAfterArgs$4_$df$bindIOAfterStdin$2_$df$bindIOAfterStdin$5_$lift$13_$lift$14_$lift$2_$lift$3:
+$cps$$scc$$apply1_$df$bindIOAfterArgs$1_$df$bindIOAfterArgs$4_$df$bindIOAfterStdin$2_$df$bindIOAfterStdin$5_$lift$16_$lift$17_$lift$2_$lift$3:
   param           $args                           count=17
   param           $k                              count=0
   case-pattern    $cl                             count=0

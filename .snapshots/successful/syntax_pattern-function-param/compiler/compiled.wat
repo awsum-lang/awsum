@@ -16,7 +16,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 119) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00 / ")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v_sumTriple $v_sumPair $v__let_12 $v__lam_13 $v__let_14 $v__let_15 $v__df_apply_0)
+  (elem (i32.const 0) $v_runIO $v_sumTriple $v_sumPair $v__let_15 $v__lam_16 $v__let_17 $v__let_18 $v__df_apply_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1080,7 +1080,7 @@
     call 17
     call 25)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1189,7 +1189,7 @@
     end
     end)
 
-  (func $v__lam_13 (param i32) (result i32)
+  (func $v__lam_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1240,7 +1240,7 @@
     local.get 5
     end)
 
-  (func $v__let_14 (param i32 i32) (result i32)
+  (func $v__let_17 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1322,7 +1322,7 @@
     local.get 5
     end)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_18 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

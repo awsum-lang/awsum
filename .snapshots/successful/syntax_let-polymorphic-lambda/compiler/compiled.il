@@ -151,7 +151,7 @@
     ldarg.2
     ldarg.0
     ldarg.1
-    call object AwsumMain::v__df__let_13_0(object, object, object)
+    call object AwsumMain::v__df__let_16_0(object, object, object)
     ret
   }
 
@@ -173,12 +173,12 @@
     stelem.ref
     ldloc.0
     call object AwsumMain::v_threeTypes(object, object, object)
-    call object AwsumMain::v__let_14(object)
+    call object AwsumMain::v__let_17(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_12(object) cil managed
+  .method private hidebysig static object v__lam_15(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -186,7 +186,7 @@
   }
 
 
-  .method private hidebysig static object v__let_14(object) cil managed
+  .method private hidebysig static object v__let_17(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -290,12 +290,12 @@
   }
 
 
-  .method private hidebysig static object v__df__let_13_0(object,object,object) cil managed
+  .method private hidebysig static object v__df__let_16_0(object,object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
     ldarg.1
-    call object AwsumMain::v__lam_12(object)
+    call object AwsumMain::v__lam_15(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     ldstr "/"
     call object AwsumMain::__concat(object, object)
@@ -334,7 +334,7 @@
     stloc.1
     ldloc.1
     ldarg.2
-    call object AwsumMain::v__lam_12(object)
+    call object AwsumMain::v__lam_15(object)
     call object AwsumMain::__concat(object, object)
     stloc.2
     ldloc.2
@@ -407,7 +407,7 @@
     stloc.s 5
     ldloc.s 5
     ldarg.0
-    call object AwsumMain::v__lam_12(object)
+    call object AwsumMain::v__lam_15(object)
     call object AwsumMain::v_showTri(object)
     call object AwsumMain::__concat(object, object)
   IL_c4:

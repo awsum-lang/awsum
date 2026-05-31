@@ -277,15 +277,15 @@ define internal ptr @v_main() {
   store ptr %t7, ptr %t8
   %t9 = getelementptr ptr, ptr %t3, i32 1
   store ptr %t6, ptr %t9
-  %t10 = call ptr @v__lift_12(ptr %t3)
+  %t10 = call ptr @v__lift_15(ptr %t3)
   %t11 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t10, ptr %t11
   %t12 = call ptr @v_whatsThat(ptr %t0)
-  %t13 = call ptr @v__let_13(ptr %t12)
+  %t13 = call ptr @v__let_16(ptr %t12)
   ret ptr %t13
 }
 
-define internal ptr @v__lift_12(ptr %v___input) {
+define internal ptr @v__lift_15(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -321,7 +321,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_13(ptr %v_res) {
+define internal ptr @v__let_16(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

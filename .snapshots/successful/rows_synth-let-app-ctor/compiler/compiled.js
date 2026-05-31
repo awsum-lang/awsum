@@ -42,7 +42,7 @@ const v_dispatch = (v_x) => {
     }
 };
 
-const v__let_12 = (v_m) => {
+const v__let_15 = (v_m) => {
     {
       const __s = v_m;
       switch (__s[0]) {
@@ -57,7 +57,7 @@ const v__let_12 = (v_m) => {
     }
 };
 
-const main = (v__let_12)([11, "world"]);
+const main = (v__let_15)([11, "world"]);
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

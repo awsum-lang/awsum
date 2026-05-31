@@ -150,7 +150,7 @@ L_tarm3:
   aastore
   aastore
   aastore
-  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_16(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__df_andThenIO_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
@@ -400,7 +400,7 @@ L_tarm10:
 .end method
 
 
-.method static v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 1
   iconst_3
@@ -438,7 +438,7 @@ L_tarm10:
 .end method
 
 
-.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_16(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 1
   aload_0
@@ -449,12 +449,12 @@ L_tarm10:
   bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 9
   .limit locals 6
 L_tco11:
@@ -488,7 +488,7 @@ L_tco11:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -514,7 +514,7 @@ L_tarm12:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -585,7 +585,7 @@ L_tarm14:
   aload 4
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -618,14 +618,14 @@ L_tarm15:
   aload 4
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
 .end method
 
 
-.method static v__apply__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 6
 L_tco16:
@@ -722,7 +722,7 @@ L_tco18:
   astore 5
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_andThenIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
@@ -918,7 +918,7 @@ L_tarm24:
 .end method
 
 
-.method static v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 1
   aload_0
@@ -929,12 +929,12 @@ L_tarm24:
   bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 9
 L_tco25:
@@ -1449,7 +1449,7 @@ L_tarm31:
   iconst_2
   aload_1
   aastore
-  invokestatic AwsumMain/v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

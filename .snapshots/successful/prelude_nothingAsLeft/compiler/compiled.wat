@@ -21,7 +21,7 @@
   (data (i32.const 223) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00second")
   (data (i32.const 249) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00hi")
   (table 14 funcref)
-  (elem (i32.const 0) $v_pureEither $v_nothingAsLeft $v_runIO $v_headList $v_show $v__let_12 $v__lift_13 $v__cps__lift_13 $v__apply__lift_13 $v__lift_14 $v__let_15 $v__let_16 $v__lift_17 $v__let_18)
+  (elem (i32.const 0) $v_pureEither $v_nothingAsLeft $v_runIO $v_headList $v_show $v__let_15 $v__lift_16 $v__cps__lift_16 $v__apply__lift_16 $v__lift_17 $v__let_18 $v__let_19 $v__lift_20 $v__let_21)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -841,7 +841,7 @@
     call 14
     call 27)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -950,7 +950,7 @@
     end
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -974,7 +974,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_13 (param i32 i32) (result i32)
+  (func $v__cps__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1064,7 +1064,7 @@
     end
     end)
 
-  (func $v__apply__lift_13 (param i32 i32) (result i32)
+  (func $v__apply__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1139,7 +1139,7 @@
     end
     end)
 
-  (func $v__lift_14 (param i32) (result i32)
+  (func $v__lift_17 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1196,7 +1196,7 @@
     end
     end)
 
-  (func $v__let_15 (param i32 i32 i32) (result i32)
+  (func $v__let_18 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1558,7 +1558,7 @@
     local.get 11
     end)
 
-  (func $v__let_16 (param i32 i32) (result i32)
+  (func $v__let_19 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1684,7 +1684,7 @@
     local.get 7
     end)
 
-  (func $v__lift_17 (param i32) (result i32)
+  (func $v__lift_20 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1741,7 +1741,7 @@
     end
     end)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_21 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

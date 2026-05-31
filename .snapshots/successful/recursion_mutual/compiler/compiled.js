@@ -31,7 +31,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -214,7 +214,7 @@ const v_handleA = (v_step) => {
     return (v__scc_handleA_handleB)([26, v_step]);
 };
 
-const main = (v__let_12)((v_handleA)([22]));
+const main = (v__let_15)((v_handleA)([22]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

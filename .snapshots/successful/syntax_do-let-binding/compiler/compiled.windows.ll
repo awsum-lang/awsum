@@ -460,7 +460,7 @@ case.arm.4.16:
   %t18 = load ptr, ptr %t17
   call void @__inc_ref(ptr %t18)
   call void @__inc_ref(ptr %t18)
-  %t19 = call ptr @v__let_12(ptr %t18, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
+  %t19 = call ptr @v__let_15(ptr %t18, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
   call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t18)
   call void @__free_recursive(ptr %v_start)
@@ -618,7 +618,7 @@ case.join.6:
   ret ptr %t66
 }
 
-define internal ptr @v__let_12(ptr %v_a, ptr %v_prefix) {
+define internal ptr @v__let_15(ptr %v_a, ptr %v_prefix) {
   call void @__inc_ref(ptr %v_a)
   %t0 = call ptr @v_step2(ptr %v_a)
   %t1 = getelementptr ptr, ptr %t0, i32 0

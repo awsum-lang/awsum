@@ -59,7 +59,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$12"
+        , CFunDef "$lam$15"
             [ "k"
             , "_n"
             ]
@@ -69,7 +69,7 @@ CoreProgram
             , "$df$apply$0$cap0$0"
             ]
             ( CCall
-                ( CVar "$lam$12" )
+                ( CVar "$lam$15" )
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "x"
                 ]

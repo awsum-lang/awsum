@@ -18,7 +18,7 @@
   (data (i32.const 140) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00B")
   (data (i32.const 161) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00C")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v__let_12 $v__scc_handleA_handleB $v__cps__scc_handleA_handleB $v__apply__scc_handleA_handleB $v_handleA)
+  (elem (i32.const 0) $v_runIO $v__let_15 $v__scc_handleA_handleB $v__cps__scc_handleA_handleB $v__apply__scc_handleA_handleB $v_handleA)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -611,7 +611,7 @@
     call 19
     call 15)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -17,7 +17,7 @@
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00c")
   (data (i32.const 126) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00b")
   (table 18 funcref)
-  (elem (i32.const 0) $v_runIO $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lam_12 $v__lift_13 $v__cps__lift_13 $v__apply__lift_13 $v__lam_16 $v__df_andThenIO_0 $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0 $v__df_andThenIO_3 $v__cps__df_andThenIO_3 $v__apply__df_andThenIO_3 $v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3 $v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3 $v__apply1)
+  (elem (i32.const 0) $v_runIO $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lam_15 $v__lift_16 $v__cps__lift_16 $v__apply__lift_16 $v__lam_19 $v__df_andThenIO_0 $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0 $v__df_andThenIO_3 $v__cps__df_andThenIO_3 $v__apply__df_andThenIO_3 $v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3 $v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3 $v__apply1)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1316,7 +1316,7 @@
     end
     end)
 
-  (func $v__lam_12 (param i32) (result i32)
+  (func $v__lam_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1360,7 +1360,7 @@
     local.get 4
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1384,7 +1384,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_13 (param i32 i32) (result i32)
+  (func $v__cps__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1631,7 +1631,7 @@
     end
     end)
 
-  (func $v__apply__lift_13 (param i32 i32) (result i32)
+  (func $v__apply__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1706,7 +1706,7 @@
     end
     end)
 
-  (func $v__lam_16 (param i32) (result i32)
+  (func $v__lam_19 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2427,7 +2427,7 @@
     end
     end)
 
-  (func $v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3 (param i32) (result i32)
+  (func $v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2451,7 +2451,7 @@
     local.get 2
     end)
 
-  (func $v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3 (param i32 i32) (result i32)
+  (func $v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

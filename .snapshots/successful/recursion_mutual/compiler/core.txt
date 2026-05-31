@@ -40,13 +40,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCall
                     ( CVar "handleA" )
                     [ CCon 22 [] ]
                 ]
             )
-        , CFunDef "$let$12" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

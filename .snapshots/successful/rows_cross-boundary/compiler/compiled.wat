@@ -21,7 +21,7 @@
   (data (i32.const 192) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00 / ")
   (data (i32.const 215) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 16 funcref)
-  (elem (i32.const 0) $v_runIO $v_dispatchInner $v_describeMaybe $v_describeLst $v__cps_describeLst $v__apply_describeLst $v_describeEither $v__lift_12 $v__cps__lift_12 $v__apply__lift_12 $v__lift_13 $v__lift_14 $v__cps__lift_14 $v__apply__lift_14 $v__lift_15 $v__let_16)
+  (elem (i32.const 0) $v_runIO $v_dispatchInner $v_describeMaybe $v_describeLst $v__cps_describeLst $v__apply_describeLst $v_describeEither $v__lift_15 $v__cps__lift_15 $v__apply__lift_15 $v__lift_16 $v__lift_17 $v__cps__lift_17 $v__apply__lift_17 $v__lift_18 $v__let_19)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1370,7 +1370,7 @@
     call 23
     call 33)
 
-  (func $v__lift_12 (param i32) (result i32)
+  (func $v__lift_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1394,7 +1394,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_12 (param i32 i32) (result i32)
+  (func $v__cps__lift_15 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1484,7 +1484,7 @@
     end
     end)
 
-  (func $v__apply__lift_12 (param i32 i32) (result i32)
+  (func $v__apply__lift_15 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1559,7 +1559,7 @@
     end
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1627,7 +1627,7 @@
     end
     end)
 
-  (func $v__lift_14 (param i32) (result i32)
+  (func $v__lift_17 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1651,7 +1651,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_14 (param i32 i32) (result i32)
+  (func $v__cps__lift_17 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1741,7 +1741,7 @@
     end
     end)
 
-  (func $v__apply__lift_14 (param i32 i32) (result i32)
+  (func $v__apply__lift_17 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1826,7 +1826,7 @@
     end
     end)
 
-  (func $v__lift_15 (param i32) (result i32)
+  (func $v__lift_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1897,7 +1897,7 @@
     end
     end)
 
-  (func $v__let_16 (param i32) (result i32)
+  (func $v__let_19 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

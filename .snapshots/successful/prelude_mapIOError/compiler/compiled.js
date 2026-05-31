@@ -15,7 +15,7 @@ const v_failIO = (v_e) => {
 
 const v_action = (v_failIO)([22]);
 
-const v__lam_12 = (v__a) => {
+const v__lam_15 = (v__a) => {
     return [23];
 };
 
@@ -187,7 +187,7 @@ const v__cps__df_mapIOError_0 = (v_io, v__k) => {
         }
         case 6: {
           const v_e = __s[1];
-          return (v__apply__df_mapIOError_0)(v__k, [6, (v__lam_12)(v_e)]);
+          return (v__apply__df_mapIOError_0)(v__k, [6, (v__lam_15)(v_e)]);
         }
         case 7: {
           const v_s = __s[1];
@@ -276,11 +276,11 @@ const v__df_handleErrorIO_3 = (v_io) => {
     return (v__cps__df_handleErrorIO_3)(v_io, [35]);
 };
 
-const v__let_13 = (v_renamed) => {
+const v__let_16 = (v_renamed) => {
     return (v__df_handleErrorIO_3)(v_renamed);
 };
 
-const main = (v__let_13)((v__df_mapIOError_0)(v_action));
+const main = (v__let_16)((v__df_mapIOError_0)(v_action));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

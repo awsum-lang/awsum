@@ -9,7 +9,7 @@ firstZero:
   case-pattern    __p0                            count=0
   case-pattern    n                               count=0
 
-$lift$12:
+$lift$15:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 

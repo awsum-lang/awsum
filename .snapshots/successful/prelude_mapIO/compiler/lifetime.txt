@@ -28,7 +28,7 @@ $apply$$lift$1:
   case-pattern    $pk_24                          count=0
   case-pattern    __f0                            count=0
 
-$lam$12:
+$lam$15:
   param           _s                              count=0
 
 $bi$IO.Stdout.print:

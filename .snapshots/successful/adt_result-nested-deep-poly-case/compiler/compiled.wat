@@ -24,7 +24,7 @@
   (data (i32.const 252) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\008")
   (data (i32.const 273) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_unwrap $v__let_12)
+  (elem (i32.const 0) $v_runIO $v_unwrap $v__let_15)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1663,7 +1663,7 @@
     end
     call 16)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

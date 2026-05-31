@@ -34,27 +34,27 @@ show:
   case-pattern    $do_e_2                         count=0
   case-pattern    rendered                        count=0
 
-$let$12:
+$let$15:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lift$13:
+$lift$16:
   param           __input                         count=1
 
-$cps$$lift$13:
+$cps$$lift$16:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$13:
+$apply$$lift$16:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_17                          count=0
   case-pattern    __f0                            count=0
 
-$let$14:
+$let$17:
   param           noElems                         count=1
   param           single                          count=1
   param           multi                           count=1
@@ -71,10 +71,10 @@ $let$14:
   case-pattern    $do_e_3                         count=0
   case-pattern    s2                              count=0
 
-$let$15:
+$let$18:
   param           noElems                         count=1
   param           single                          count=1
 
-$let$16:
+$let$19:
   param           noElems                         count=1
 

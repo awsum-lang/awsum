@@ -88,7 +88,7 @@ const v_defaultRight = [4, [11, [2]]];
 
 const v_defaultJust = [11, [1]];
 
-const v__lift_13 = (v___input) => {
+const v__lift_16 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -103,7 +103,7 @@ const v__lift_13 = (v___input) => {
     }
 };
 
-const v__lift_15 = (v___input) => {
+const v__lift_18 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -113,13 +113,13 @@ const v__lift_15 = (v___input) => {
         }
         case 4: {
           const v___f0 = __s[1];
-          return [4, (v__lift_13)(v___f0)];
+          return [4, (v__lift_16)(v___f0)];
         }
       }
     }
 };
 
-const v__let_16 = (v_res) => {
+const v__let_19 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -199,7 +199,7 @@ const v_describeLst = (v_xs) => {
     return (v__cps_describeLst)(v_xs, [25]);
 };
 
-const v__apply__lift_14 = (v__k, v__x) => {
+const v__apply__lift_17 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -221,13 +221,13 @@ const v__apply__lift_14 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_14 = (v___input, v__k) => {
+const v__cps__lift_17 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 23: {
-          return (v__apply__lift_14)(v__k, [23]);
+          return (v__apply__lift_17)(v__k, [23]);
         }
         case 24: {
           const v___f0 = __s[1];
@@ -243,11 +243,11 @@ const v__cps__lift_14 = (v___input, v__k) => {
   }
 };
 
-const v__lift_14 = (v___input) => {
-    return (v__cps__lift_14)(v___input, [29]);
+const v__lift_17 = (v___input) => {
+    return (v__cps__lift_17)(v___input, [29]);
 };
 
-const v__apply__lift_12 = (v__k, v__x) => {
+const v__apply__lift_15 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -269,13 +269,13 @@ const v__apply__lift_12 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_12 = (v___input, v__k) => {
+const v__cps__lift_15 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 23: {
-          return (v__apply__lift_12)(v__k, [23]);
+          return (v__apply__lift_15)(v__k, [23]);
         }
         case 24: {
           const v___f0 = __s[1];
@@ -291,15 +291,15 @@ const v__cps__lift_12 = (v___input, v__k) => {
   }
 };
 
-const v__lift_12 = (v___input) => {
-    return (v__cps__lift_12)(v___input, [27]);
+const v__lift_15 = (v___input) => {
+    return (v__cps__lift_15)(v___input, [27]);
 };
 
-const v_defaultBools = [24, [1], [24, [2], (v__lift_12)([23])]];
+const v_defaultBools = [24, [1], [24, [2], (v__lift_15)([23])]];
 
-const v_summary = ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, " / ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, " / ")); } } })((v_describeEither)((v__lift_15)(v_defaultRight))); } } })((v_describeLst)((v__lift_14)(v_defaultBools))); } } })((v_describeMaybe)((v__lift_13)(v_defaultJust)));
+const v_summary = ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, " / ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, " / ")); } } })((v_describeEither)((v__lift_18)(v_defaultRight))); } } })((v_describeLst)((v__lift_17)(v_defaultBools))); } } })((v_describeMaybe)((v__lift_16)(v_defaultJust)));
 
-const main = (v__let_16)(v_summary);
+const main = (v__let_19)(v_summary);
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

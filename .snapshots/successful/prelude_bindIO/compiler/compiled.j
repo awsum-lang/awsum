@@ -159,7 +159,7 @@ L_tarm3:
   .limit locals 0
   ldc "a"
   invokestatic AwsumMain/v_emit(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__df_bindIO_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
@@ -409,7 +409,7 @@ L_tarm10:
 .end method
 
 
-.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 1
   aload_0
@@ -420,12 +420,12 @@ L_tarm10:
   bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 9
   .limit locals 6
 L_tco11:
@@ -459,7 +459,7 @@ L_tco11:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -485,7 +485,7 @@ L_tarm12:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -556,7 +556,7 @@ L_tarm14:
   aload 4
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
@@ -589,14 +589,14 @@ L_tarm15:
   aload 4
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
 .end method
 
 
-.method static v__apply__lift_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__lift_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 6
 L_tco16:
@@ -653,7 +653,7 @@ L_tarm17:
 .end method
 
 
-.method static v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 2
   .limit locals 1
   ldc "c"
@@ -662,12 +662,12 @@ L_tarm17:
 .end method
 
 
-.method static v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   ldc "b"
   invokestatic AwsumMain/v_emit(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__df_bindIO_3(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
@@ -713,7 +713,7 @@ L_tco18:
   astore 5
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_bindIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
@@ -949,7 +949,7 @@ L_tco25:
   astore 5
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_bindIO_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
@@ -1145,7 +1145,7 @@ L_tarm31:
 .end method
 
 
-.method static v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 1
   aload_0
@@ -1156,12 +1156,12 @@ L_tarm31:
   bipush 35
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 9
 L_tco32:
@@ -1832,7 +1832,7 @@ L_tarm40:
   iconst_2
   aload_1
   aastore
-  invokestatic AwsumMain/v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

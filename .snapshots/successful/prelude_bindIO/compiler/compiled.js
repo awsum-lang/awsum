@@ -9,11 +9,11 @@ const v_emit = (v_s) => {
     return [7, v_s, [5, [0]]];
 };
 
-const v__lam_15 = (v__v) => {
+const v__lam_18 = (v__v) => {
     return (v_emit)("c");
 };
 
-const v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3 = (v__args, v__k) => {
+const v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3 = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
@@ -168,12 +168,12 @@ const v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIO
   }
 };
 
-const v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3 = (v__args) => {
-    return (v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3)(v__args, [35]);
+const v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3 = (v__args) => {
+    return (v__cps__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3)(v__args, [35]);
 };
 
 const v__apply1 = (v__cl, v__arg0) => {
-    return (v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_13__lift_14__lift_2__lift_3)([18, v__cl, v__arg0]);
+    return (v__scc__apply1__df_bindIOAfterArgs_1__df_bindIOAfterArgs_4__df_bindIOAfterStdin_2__df_bindIOAfterStdin_5__lift_16__lift_17__lift_2__lift_3)([18, v__cl, v__arg0]);
 };
 
 const v_runIO = (v_io) => {
@@ -216,7 +216,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__apply__lift_12 = (v__k, v__x) => {
+const v__apply__lift_15 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -238,18 +238,18 @@ const v__apply__lift_12 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_12 = (v___input, v__k) => {
+const v__cps__lift_15 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 5: {
           const v___f0 = __s[1];
-          return (v__apply__lift_12)(v__k, [5, v___f0]);
+          return (v__apply__lift_15)(v__k, [5, v___f0]);
         }
         case 6: {
           const v___f0 = __s[1];
-          return (v__apply__lift_12)(v__k, [6, v___f0]);
+          return (v__apply__lift_15)(v__k, [6, v___f0]);
         }
         case 7: {
           const v___f0 = __s[1];
@@ -262,19 +262,19 @@ const v__cps__lift_12 = (v___input, v__k) => {
         }
         case 8: {
           const v___f0 = __s[1];
-          return (v__apply__lift_12)(v__k, [8, [14, v___f0]]);
+          return (v__apply__lift_15)(v__k, [8, [14, v___f0]]);
         }
         case 9: {
           const v___f0 = __s[1];
-          return (v__apply__lift_12)(v__k, [9, [15, v___f0]]);
+          return (v__apply__lift_15)(v__k, [9, [15, v___f0]]);
         }
       }
     }
   }
 };
 
-const v__lift_12 = (v___input) => {
-    return (v__cps__lift_12)(v___input, [29]);
+const v__lift_15 = (v___input) => {
+    return (v__cps__lift_15)(v___input, [29]);
 };
 
 const v__apply__lift_1 = (v__k, v__x) => {
@@ -367,7 +367,7 @@ const v__cps__df_bindIO_3 = (v_io, v__k) => {
       switch (__s[0]) {
         case 5: {
           const v_a = __s[1];
-          return (v__apply__df_bindIO_3)(v__k, (v__lift_1)((v__lam_15)(v_a)));
+          return (v__apply__df_bindIO_3)(v__k, (v__lift_1)((v__lam_18)(v_a)));
         }
         case 6: {
           const v_e = __s[1];
@@ -399,8 +399,8 @@ const v__df_bindIO_3 = (v_io) => {
     return (v__cps__df_bindIO_3)(v_io, [33]);
 };
 
-const v__lam_16 = (v__u) => {
-    return (v__df_bindIO_3)((v__lift_12)((v_emit)("b")));
+const v__lam_19 = (v__u) => {
+    return (v__df_bindIO_3)((v__lift_15)((v_emit)("b")));
 };
 
 const v__apply__df_bindIO_0 = (v__k, v__x) => {
@@ -432,7 +432,7 @@ const v__cps__df_bindIO_0 = (v_io, v__k) => {
       switch (__s[0]) {
         case 5: {
           const v_a = __s[1];
-          return (v__apply__df_bindIO_0)(v__k, (v__lift_1)((v__lam_16)(v_a)));
+          return (v__apply__df_bindIO_0)(v__k, (v__lift_1)((v__lam_19)(v_a)));
         }
         case 6: {
           const v_e = __s[1];
@@ -464,7 +464,7 @@ const v__df_bindIO_0 = (v_io) => {
     return (v__cps__df_bindIO_0)(v_io, [31]);
 };
 
-const main = (v__df_bindIO_0)((v__lift_12)((v_emit)("a")));
+const main = (v__df_bindIO_0)((v__lift_15)((v_emit)("a")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

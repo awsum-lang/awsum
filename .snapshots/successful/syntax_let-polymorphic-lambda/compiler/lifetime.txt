@@ -12,15 +12,15 @@ threeTypes:
   param           s                               count=1
   param           b                               count=1
 
-$lam$12:
+$lam$15:
   param           x                               count=1
 
-$let$14:
+$let$17:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$df$$let$13$0:
+$df$$let$16$0:
   param           b                               count=1
   param           n                               count=1
   param           s                               count=1

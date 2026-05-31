@@ -14,7 +14,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_captureFn $v__lam_12 $v__df_apply_0)
+  (elem (i32.const 0) $v_runIO $v_captureFn $v__lam_15 $v__df_apply_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -677,7 +677,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lam_12 (param i32 i32) (result i32)
+  (func $v__lam_15 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

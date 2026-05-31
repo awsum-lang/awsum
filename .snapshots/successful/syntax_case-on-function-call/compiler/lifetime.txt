@@ -14,7 +14,7 @@ main:
   case-pattern    __p0                            count=1
   case-pattern    v                               count=1
 
-$let$12:
+$let$15:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

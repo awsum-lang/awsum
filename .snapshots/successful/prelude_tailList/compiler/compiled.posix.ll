@@ -574,13 +574,13 @@ define internal ptr @v_main() {
   %t1 = inttoptr i64 12 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__lift_13(ptr %t0)
+  %t3 = call ptr @v__lift_16(ptr %t0)
   %t4 = call ptr @v_tailList(ptr %t3)
-  %t5 = call ptr @v__let_16(ptr %t4)
+  %t5 = call ptr @v__let_19(ptr %t4)
   ret ptr %t5
 }
 
-define internal ptr @v__let_12(ptr %v_msg) {
+define internal ptr @v__let_15(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -640,18 +640,18 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lift_13(ptr %v___input) {
+define internal ptr @v__lift_16(ptr %v___input) {
   call void @__inc_ref(ptr %v___input)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 16 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__lift_13(ptr %v___input, ptr %t0)
+  %t3 = call ptr @v__cps__lift_16(ptr %v___input, ptr %t0)
   call void @__free_recursive(ptr %v___input)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__lift_13(ptr %v___input, ptr %v__k) {
+define internal ptr @v__cps__lift_16(ptr %v___input, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v___input, ptr %t3
@@ -672,7 +672,7 @@ tco.case.arm.12.11:
   %t13 = inttoptr i64 12 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__apply__lift_13(ptr %t6, ptr %t12)
+  %t15 = call ptr @v__apply__lift_16(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t15, ptr %t2
@@ -728,7 +728,7 @@ tco.exit.1:
   ret ptr %t39
 }
 
-define internal ptr @v__apply__lift_13(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__lift_16(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -798,7 +798,7 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__let_14(ptr %v_noElems, ptr %v_single, ptr %v_multi) {
+define internal ptr @v__let_17(ptr %v_noElems, ptr %v_single, ptr %v_multi) {
   call void @__inc_ref(ptr %v_noElems)
   %t0 = call ptr @v_show(ptr %v_noElems)
   %t1 = getelementptr ptr, ptr %t0, i32 0
@@ -1007,14 +1007,14 @@ case.default.4:
 case.join.5:
   %t114 = phi ptr [%t10, %case.end.3.7], [%t113, %case.end.4.15]
   call void @__free_recursive(ptr %t0)
-  %t115 = call ptr @v__let_12(ptr %t114)
+  %t115 = call ptr @v__let_15(ptr %t114)
   call void @__free_recursive(ptr %v_noElems)
   call void @__free_recursive(ptr %v_single)
   call void @__free_recursive(ptr %v_multi)
   ret ptr %t115
 }
 
-define internal ptr @v__let_15(ptr %v_noElems, ptr %v_single) {
+define internal ptr @v__let_18(ptr %v_noElems, ptr %v_single) {
   call void @__inc_ref(ptr %v_noElems)
   call void @__inc_ref(ptr %v_single)
   %t0 = call ptr @__alloc(i64 24, i32 2)
@@ -1039,7 +1039,7 @@ define internal ptr @v__let_15(ptr %v_noElems, ptr %v_single) {
   %t13 = inttoptr i64 12 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__lift_13(ptr %t12)
+  %t15 = call ptr @v__lift_16(ptr %t12)
   %t16 = getelementptr ptr, ptr %t8, i32 2
   store ptr %t15, ptr %t16
   %t17 = getelementptr ptr, ptr %t4, i32 2
@@ -1047,13 +1047,13 @@ define internal ptr @v__let_15(ptr %v_noElems, ptr %v_single) {
   %t18 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t18
   %t19 = call ptr @v_tailList(ptr %t0)
-  %t20 = call ptr @v__let_14(ptr %v_noElems, ptr %v_single, ptr %t19)
+  %t20 = call ptr @v__let_17(ptr %v_noElems, ptr %v_single, ptr %t19)
   call void @__free_recursive(ptr %v_noElems)
   call void @__free_recursive(ptr %v_single)
   ret ptr %t20
 }
 
-define internal ptr @v__let_16(ptr %v_noElems) {
+define internal ptr @v__let_19(ptr %v_noElems) {
   call void @__inc_ref(ptr %v_noElems)
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 13 to ptr
@@ -1065,11 +1065,11 @@ define internal ptr @v__let_16(ptr %v_noElems) {
   %t5 = inttoptr i64 12 to ptr
   %t6 = getelementptr ptr, ptr %t4, i32 0
   store ptr %t5, ptr %t6
-  %t7 = call ptr @v__lift_13(ptr %t4)
+  %t7 = call ptr @v__lift_16(ptr %t4)
   %t8 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t7, ptr %t8
   %t9 = call ptr @v_tailList(ptr %t0)
-  %t10 = call ptr @v__let_15(ptr %v_noElems, ptr %t9)
+  %t10 = call ptr @v__let_18(ptr %v_noElems, ptr %t9)
   call void @__free_recursive(ptr %v_noElems)
   ret ptr %t10
 }

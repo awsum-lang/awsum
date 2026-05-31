@@ -48,13 +48,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$16" )
+                ( CVar "$let$19" )
                 [ CCall
                     ( CVar "$df$mapRight$0" )
                     [ CVar "ok" ]
                 ]
             )
-        , CFunDef "$let$12" [ "msg" ]
+        , CFunDef "$let$15" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,14 +81,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$13" [ "n" ]
+        , CFunDef "$lam$16" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$14"
+        , CFunDef "$let$17"
             [ "mappedOk"
             , "mappedBad"
             ]
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CVar "mappedOk" )
                     [
@@ -146,11 +146,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$15" [ "n" ]
+        , CFunDef "$lam$18" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$16" [ "mappedOk" ]
+        , CFunDef "$let$19" [ "mappedOk" ]
             ( CCall
-                ( CVar "$let$14" )
+                ( CVar "$let$17" )
                 [ CVar "mappedOk"
                 , CCall
                     ( CVar "$df$mapRight$1" )
@@ -174,7 +174,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "a"
                         ( CCon 4
                             [ CCall
-                                ( CVar "$lam$15" )
+                                ( CVar "$lam$18" )
                                 [ CVar "a" ]
                             ]
                         )
@@ -198,7 +198,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "a"
                         ( CCon 4
                             [ CCall
-                                ( CVar "$lam$13" )
+                                ( CVar "$lam$16" )
                                 [ CVar "a" ]
                             ]
                         )

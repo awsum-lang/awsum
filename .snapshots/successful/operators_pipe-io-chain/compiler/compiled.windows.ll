@@ -468,7 +468,7 @@ define internal ptr @v_main() {
   store ptr %t7, ptr %t10
   %t11 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t11
-  %t12 = call ptr @v__lift_13(ptr %t0)
+  %t12 = call ptr @v__lift_16(ptr %t0)
   %t13 = call ptr @v__df_andThenIO_3(ptr %t12)
   %t14 = call ptr @v__df_andThenIO_0(ptr %t13)
   ret ptr %t14
@@ -705,7 +705,7 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__lam_12(ptr %v__u) {
+define internal ptr @v__lam_15(ptr %v__u) {
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -728,18 +728,18 @@ define internal ptr @v__lam_12(ptr %v__u) {
   ret ptr %t0
 }
 
-define internal ptr @v__lift_13(ptr %v___input) {
+define internal ptr @v__lift_16(ptr %v___input) {
   call void @__inc_ref(ptr %v___input)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 29 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__lift_13(ptr %v___input, ptr %t0)
+  %t3 = call ptr @v__cps__lift_16(ptr %v___input, ptr %t0)
   call void @__free_recursive(ptr %v___input)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__lift_13(ptr %v___input, ptr %v__k) {
+define internal ptr @v__cps__lift_16(ptr %v___input, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v___input, ptr %t3
@@ -766,7 +766,7 @@ tco.case.arm.5.11:
   call void @__inc_ref(ptr %t13)
   %t17 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t13, ptr %t17
-  %t18 = call ptr @v__apply__lift_13(ptr %t6, ptr %t14)
+  %t18 = call ptr @v__apply__lift_16(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -784,7 +784,7 @@ tco.case.arm.6.19:
   call void @__inc_ref(ptr %t21)
   %t25 = getelementptr ptr, ptr %t22, i32 1
   store ptr %t21, ptr %t25
-  %t26 = call ptr @v__apply__lift_13(ptr %t6, ptr %t22)
+  %t26 = call ptr @v__apply__lift_16(ptr %t6, ptr %t22)
   call void @__free_recursive(ptr %t21)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -852,7 +852,7 @@ tco.case.arm.8.50:
   store ptr %t52, ptr %t59
   %t60 = getelementptr ptr, ptr %t53, i32 1
   store ptr %t56, ptr %t60
-  %t61 = call ptr @v__apply__lift_13(ptr %t6, ptr %t53)
+  %t61 = call ptr @v__apply__lift_16(ptr %t6, ptr %t53)
   call void @__free_recursive(ptr %t52)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -876,7 +876,7 @@ tco.case.arm.9.62:
   store ptr %t64, ptr %t71
   %t72 = getelementptr ptr, ptr %t65, i32 1
   store ptr %t68, ptr %t72
-  %t73 = call ptr @v__apply__lift_13(ptr %t6, ptr %t65)
+  %t73 = call ptr @v__apply__lift_16(ptr %t6, ptr %t65)
   call void @__free_recursive(ptr %t64)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -889,7 +889,7 @@ tco.exit.1:
   ret ptr %t74
 }
 
-define internal ptr @v__apply__lift_13(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__lift_16(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -959,7 +959,7 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__lam_16(ptr %v__u) {
+define internal ptr @v__lam_19(ptr %v__u) {
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -978,7 +978,7 @@ define internal ptr @v__lam_16(ptr %v__u) {
   store ptr %t7, ptr %t10
   %t11 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t11
-  %t12 = call ptr @v__lift_13(ptr %t0)
+  %t12 = call ptr @v__lift_16(ptr %t0)
   call void @__free_recursive(ptr %v__u)
   ret ptr %t12
 }
@@ -1015,7 +1015,7 @@ tco.case.arm.5.11:
   call void @__inc_ref(ptr %t13)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @v__lam_12(ptr %t13)
+  %t14 = call ptr @v__lam_15(ptr %t13)
   %t15 = call ptr @v__lift_1(ptr %t14)
   %t16 = call ptr @v__apply__df_andThenIO_0(ptr %t6, ptr %t15)
   call void @__free_recursive(ptr %t13)
@@ -1242,7 +1242,7 @@ tco.case.arm.5.11:
   call void @__inc_ref(ptr %t13)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @v__lam_16(ptr %t13)
+  %t14 = call ptr @v__lam_19(ptr %t13)
   %t15 = call ptr @v__lift_1(ptr %t14)
   %t16 = call ptr @v__apply__df_andThenIO_3(ptr %t6, ptr %t15)
   call void @__free_recursive(ptr %t13)
@@ -1437,18 +1437,18 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(ptr %v__args) {
+define internal ptr @v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(ptr %v__args) {
   call void @__inc_ref(ptr %v__args)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 35 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(ptr %v__args, ptr %t0)
+  %t3 = call ptr @v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(ptr %v__args, ptr %t0)
   call void @__free_recursive(ptr %v__args)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -2150,7 +2150,7 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
   call void @__inc_ref(ptr %v__arg0)
   %t4 = getelementptr ptr, ptr %t0, i32 2
   store ptr %v__arg0, ptr %t4
-  %t5 = call ptr @v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(ptr %t0)
+  %t5 = call ptr @v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(ptr %t0)
   call void @__free_recursive(ptr %v__cl)
   call void @__free_recursive(ptr %v__arg0)
   ret ptr %t5

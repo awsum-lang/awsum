@@ -38,7 +38,7 @@ const v_maxStringLengthUtf16CodeUnits = (134217728 >>> 0);
 
 const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-const v__lift_13 = (v___input) => {
+const v__lift_16 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -70,7 +70,7 @@ const v__lift_0 = (v___input) => {
     }
 };
 
-const v__apply__scc__df_andThenEither_0__lam_12_build = (v__k, v__x) => {
+const v__apply__scc__df_andThenEither_0__lam_15_build = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -91,7 +91,7 @@ const v__apply__scc__df_andThenEither_0__lam_12_build = (v__k, v__x) => {
   }
 };
 
-const v__cps__scc__df_andThenEither_0__lam_12_build = (v__args, v__k) => {
+const v__cps__scc__df_andThenEither_0__lam_15_build = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
@@ -104,7 +104,7 @@ const v__cps__scc__df_andThenEither_0__lam_12_build = (v__args, v__k) => {
             switch (__s[0]) {
               case 3: {
                 const v_e = __s[1];
-                return (v__apply__scc__df_andThenEither_0__lam_12_build)(v__k, [3, v_e]);
+                return (v__apply__scc__df_andThenEither_0__lam_15_build)(v__k, [3, v_e]);
               }
               case 4: {
                 const v_a = __s[1];
@@ -134,11 +134,11 @@ const v__cps__scc__df_andThenEither_0__lam_12_build = (v__args, v__k) => {
             switch (__s[0]) {
               case 3: {
                 const v___w0 = __s[1];
-                return (v__apply__scc__df_andThenEither_0__lam_12_build)(v__k, [4, v_acc]);
+                return (v__apply__scc__df_andThenEither_0__lam_15_build)(v__k, [4, v_acc]);
               }
               case 4: {
                 const v_m = __s[1];
-                const __t0 = (v__args[0] = 8, v__args[1] = (v__lift_13)(__concat(v_acc, v_acc)), v__args[2] = v_m, v__args);
+                const __t0 = (v__args[0] = 8, v__args[1] = (v__lift_16)(__concat(v_acc, v_acc)), v__args[2] = v_m, v__args);
                 const __t1 = v__k;
                 v__args = __t0;
                 v__k = __t1;
@@ -152,12 +152,12 @@ const v__cps__scc__df_andThenEither_0__lam_12_build = (v__args, v__k) => {
   }
 };
 
-const v__scc__df_andThenEither_0__lam_12_build = (v__args) => {
-    return (v__cps__scc__df_andThenEither_0__lam_12_build)(v__args, [11]);
+const v__scc__df_andThenEither_0__lam_15_build = (v__args) => {
+    return (v__cps__scc__df_andThenEither_0__lam_15_build)(v__args, [11]);
 };
 
 const v_build = (v_n, v_acc) => {
-    return (v__scc__df_andThenEither_0__lam_12_build)([10, v_n, v_acc]);
+    return (v__scc__df_andThenEither_0__lam_15_build)([10, v_n, v_acc]);
 };
 
 const v_runTest = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "FAIL: build returned Left at the cap"; } case 4: { const v_capStr = s[1]; return ((s) => { switch(s[0]) { case 1: { return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "OK"; } case 4: { const v___w0 = s[1]; return "FAIL: cap + 1 returned Right"; } } })(__concat(v_capStr, "!")); } case 2: { return "FAIL: built string length is not at cap"; } } })(__eqUInt32(__lengthUtf16CodeUnits(v_capStr), v_maxStringLengthUtf16CodeUnits)); } } })((v_build)((20 >>> 0), v_block));

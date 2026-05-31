@@ -4,22 +4,22 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
-$lift$12:
+$lift$15:
   param           __input                         count=1
 
-$cps$$lift$12:
+$cps$$lift$15:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$12:
+$apply$$lift$15:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_17                          count=0
   case-pattern    __f0                            count=0
 
-$let$13:
+$let$16:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

@@ -152,7 +152,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$13" )
+                ( CVar "$let$16" )
                 [ CCase
                     ( CCall
                         ( CVar "describe" )
@@ -196,9 +196,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$12" [ "n" ]
+        , CFunDef "$lam$15" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$13" [ "res" ]
+        , CFunDef "$let$16" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -227,7 +227,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "x" ]
             ( CCall
-                ( CVar "$lam$12" )
+                ( CVar "$lam$15" )
                 [ CVar "x" ]
             )
         ]

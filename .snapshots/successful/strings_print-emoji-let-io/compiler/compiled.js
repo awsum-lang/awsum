@@ -30,11 +30,11 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_12 = (v_unit) => {
+const v__let_15 = (v_unit) => {
     return [7, "🔥", [5, [0]]];
 };
 
-const main = (v__let_12)([7, "💩", [5, [0]]]);
+const main = (v__let_15)([7, "💩", [5, [0]]]);
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

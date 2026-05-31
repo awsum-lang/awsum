@@ -15,7 +15,7 @@ showResult:
   case-pattern    e                               count=0
   case-pattern    b                               count=0
 
-$let$12:
+$let$15:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

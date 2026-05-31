@@ -18,7 +18,7 @@
   (data (i32.const 163) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00NO_ARG")
   (data (i32.const 189) "\00\00\00\00\00\00\00\00\00\00\00\00\0b\00\00\00\0b\00\00\00PARSE_ERROR")
   (table 22 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v_headList $v_opTuple $v_processInput $v_handleInputErr $v_processArgs $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__let_12 $v__io_getargs_cont $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__df_andThenIO_3 $v__cps__df_andThenIO_3 $v__apply__df_andThenIO_3 $v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__apply1)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v_headList $v_opTuple $v_processInput $v_handleInputErr $v_processArgs $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__let_15 $v__io_getargs_cont $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__df_andThenIO_3 $v__cps__df_andThenIO_3 $v__apply__df_andThenIO_3 $v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 $v__apply1)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -2036,7 +2036,7 @@
     end
     end)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

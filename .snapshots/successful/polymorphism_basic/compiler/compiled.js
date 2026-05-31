@@ -47,7 +47,7 @@ const v_appendX = (v_s) => {
     return __concat(v_s, "x");
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -63,7 +63,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
+const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

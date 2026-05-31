@@ -97,7 +97,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -113,7 +113,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)((v_show)((v_threeAndDouble)((5|0))));
+const main = (v__let_15)((v_show)((v_threeAndDouble)((5|0))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -79,7 +79,7 @@
     .maxstack 1
     ldc.i4.5
     box [System.Runtime]System.Int32
-    call object AwsumMain::v__lam_12(object)
+    call object AwsumMain::v__lam_15(object)
     ret
   }
 
@@ -88,7 +88,7 @@
   {
     .maxstack 1
     call object AwsumMain::v_runMe()
-    call object AwsumMain::v__lam_13(object)
+    call object AwsumMain::v__lam_16(object)
     ret
   }
 
@@ -139,7 +139,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_12(object) cil managed
+  .method private hidebysig static object v__lam_15(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -147,7 +147,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_13(object) cil managed
+  .method private hidebysig static object v__lam_16(object) cil managed
   {
     .maxstack 1
     ldarg.0

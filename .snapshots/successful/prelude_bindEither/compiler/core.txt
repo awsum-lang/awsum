@@ -48,7 +48,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$13" )
+                ( CVar "$let$16" )
                 [ CCall
                     ( CVar "$df$bindEither$0" )
                     [ CVar "opA" ]
@@ -75,7 +75,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$12" [ "msg" ]
+        , CFunDef "$let$15" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -102,9 +102,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$13" [ "chained" ]
+        , CFunDef "$let$16" [ "chained" ]
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CVar "chained" )
                     [

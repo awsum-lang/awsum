@@ -143,7 +143,7 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_13(object)
+    call object AwsumMain::v__lift_16(object)
     call object AwsumMain::v__df_andThenIO_3(object)
     call object AwsumMain::v__df_andThenIO_0(object)
     ret
@@ -388,7 +388,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_12(object) cil managed
+  .method private hidebysig static object v__lam_15(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -433,7 +433,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_13(object) cil managed
+  .method private hidebysig static object v__lift_16(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -447,12 +447,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__lift_13(object, object)
+    call object AwsumMain::v__cps__lift_16(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_13(object,object) cil managed
+  .method private hidebysig static object v__cps__lift_16(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -485,7 +485,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_13(object, object)
+    call object AwsumMain::v__apply__lift_16(object, object)
     ret
   IL_c0:
     dup
@@ -510,7 +510,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_13(object, object)
+    call object AwsumMain::v__apply__lift_16(object, object)
     ret
   IL_c1:
     dup
@@ -581,7 +581,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_13(object, object)
+    call object AwsumMain::v__apply__lift_16(object, object)
     ret
   IL_c3:
     pop
@@ -615,12 +615,12 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_13(object, object)
+    call object AwsumMain::v__apply__lift_16(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__apply__lift_13(object,object) cil managed
+  .method private hidebysig static object v__apply__lift_16(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -671,7 +671,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_16(object) cil managed
+  .method private hidebysig static object v__lam_19(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -712,7 +712,7 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_13(object)
+    call object AwsumMain::v__lift_16(object)
     ret
   }
 
@@ -757,7 +757,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_12(object)
+    call object AwsumMain::v__lam_15(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_0(object, object)
     ret
@@ -985,7 +985,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_16(object)
+    call object AwsumMain::v__lam_19(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_3(object, object)
     ret
@@ -1173,7 +1173,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(object) cil managed
+  .method private hidebysig static object v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -1187,12 +1187,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(object, object)
+    call object AwsumMain::v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(object,object) cil managed
+  .method private hidebysig static object v__cps__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -1846,7 +1846,7 @@
     ldarg.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_14__lift_15__lift_2__lift_3(object)
+    call object AwsumMain::v__scc__apply1__df__lam_4_1__df__lam_4_4__df__lam_5_2__df__lam_5_5__lift_17__lift_18__lift_2__lift_3(object)
     ret
   }
 

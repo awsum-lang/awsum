@@ -45,7 +45,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CCall
                         ( CVar "appendX" )
@@ -91,7 +91,7 @@ CoreProgram
                 , CString "y"
                 ]
             )
-        , CFunDef "$let$12" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

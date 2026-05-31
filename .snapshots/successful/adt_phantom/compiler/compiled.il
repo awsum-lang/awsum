@@ -114,7 +114,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__lift_12(object)
+    call object AwsumMain::v__lift_15(object)
     call object AwsumMain::v_show(object)
     stelem.ref
     ldloc.0
@@ -146,7 +146,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_12(object) cil managed
+  .method private hidebysig static object v__lift_15(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1)
