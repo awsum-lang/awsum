@@ -6,6 +6,8 @@ import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
+import Awsum.JvmFarBranchSpec qualified
+import Awsum.JvmMethodLimitSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
@@ -43,6 +45,8 @@ main = do
     Awsum.ErrorSnapshotsSpec.spec
     Awsum.PropertySpec.spec
     Awsum.StringLiteralCapSpec.spec
+    Awsum.JvmMethodLimitSpec.spec
+    Awsum.JvmFarBranchSpec.spec
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do

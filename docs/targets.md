@@ -1,6 +1,6 @@
 # Target Implementation Details
 
-How the same Awsum program maps to each compilation target. All targets produce identical stdout for the same input — a compiler invariant, verified by the test suite.
+How the same Awsum program maps to each compilation target. All targets produce identical stdout for the same input — a compiler invariant, verified by the test suite. That guarantee is about *runtime* behaviour; targets may legitimately differ in which programs they *accept at compile time* — see [Per-target compile-time limits](#per-target-compile-time-limits).
 
 ## Overview
 
@@ -19,6 +19,28 @@ How the same Awsum program maps to each compilation target. All targets produce 
 | **show\***                 | Runtime helpers using `snprintf`                  | `Integer.toString()` for signed-friendly types; `Long.toString((long)v & 0xFFFFFFFFL)` for `UInt32` | `Object::ToString()` after re-boxing as `System.UInt32` for `UInt32` | Hand-rolled itoa; separate `__show_u32` skips the sign branch | `String(x)`                                                 |
 | **Memory**                 | Refcount (`__alloc_shaped` / `__free_recursive`) over libc `malloc`/`free` | GC                                                                                                  | GC                                                                   | Refcount (`__alloc_shaped` / `__free_recursive`) over per-size-bin freelist | GC                                                          |
 | **Name mangling**          | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                                                   | `v_` prefix for all (including `main` → `v_main`)                    | `v_` prefix for all (`_start` is WASI entry)                  | `v_` prefix, `main` unchanged                               |
+
+## Per-target compile-time limits
+
+The identical-stdout invariant is a guarantee about **runtime** behaviour: any program that compiles *and runs* on two targets behaves indistinguishably on both — nothing observable at runtime reveals which target a program was compiled for. It says nothing about every target accepting the *same set of programs at compile time*. Targets may differ there, and a per-target **compile-time refusal** is a normal, honest outcome — the same category as a platform-gated effect (a program that uses a `Terminal` effect simply does not compile for a browser target; that's a compile error, never a runtime surprise).
+
+Two consequences:
+
+- **A target's hard limit is refused at compile time, not discovered at runtime.** Where a backend's runtime would reject an artifact the compiler could technically emit, the compiler refuses to emit it and reports why — a build error with a clear message, not a crash when the program is launched.
+- **Capable targets are not capped to match limited ones.** A limit that binds on one backend does not shrink what the others accept. The compiler does not cap how large a function may be everywhere just because one target caps it; LLVM, CLR, and WASM keep their far higher (or absent) ceilings.
+
+### JVM: 65535 bytes per method
+
+The JVM caps a method's `Code` attribute at 65535 bytes (`code_length`, JVM Spec §4.7.3); a method over that yields a class the JVM rejects at load. `awsum build -t jvm` / `awsum run -t jvm` therefore refuse such a program at compile time, naming the method and its size:
+
+```
+JVM target — function `v_main` compiles to 66069 bytes, over the JVM's hard limit
+of 65535 bytes per method. This program can't be built for the JVM target.
+```
+
+The size is the **actual** assembled bytecode, measured after every Core-to-Core pass and codegen — not an estimate. Reaching the limit takes a pathologically large single function (a multi-thousand-element literal lowered into one straight-line body, say); ordinary code is nowhere near it. The other four backends build and run the same program unchanged.
+
+Other JVM ceilings of the same `u2` shape — at most 65535 methods per class, 65535 constant-pool entries — sit far higher and aren't reached by today's programs; should one ever bind, the same principle applies: refuse for the JVM target, never silently emit a class the runtime would reject.
 
 ## Maximum string length
 

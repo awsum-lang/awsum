@@ -16,7 +16,7 @@ module Main (main) where
 
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
-import Awsum.Codegen.JVM.Assemble (assembleJVM)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram, PreludeTags)
@@ -134,7 +134,9 @@ data Artifacts = Artifacts
 buildAllArtifacts :: FilePath -> PreludeTags -> CoreProgram -> IO Artifacts
 buildAllArtifacts dir ptags core = do
   let ll = codegenLLVM llvmHostFromSystem ptags core
-      jvmBytes = assembleJVM ptags core
+      jvmBytes = case assembleJVM ptags core of
+        Left e -> error ("assembleJVM refused a benchmark program: " <> renderJvmLimitExceeded e)
+        Right b -> b
       clrBytes = assembleCLR ptags core
       wasmBytes = assembleWASM ptags core
       jsCode = codegenJS ProgramCli ptags core
