@@ -1,0 +1,265 @@
+{- Stress test for `andThenEither` composing with structural-sum
+   (row) error types: when two Either-returning steps compose, their
+   error rows union as `(e1 | e2)`, and `andThenEither` injects both the
+   passed-through `Left e1` and the continuation's `Left e2` into that
+   row. This program hardcodes one composition per collapse scenario and
+   prints `label=value` per line, so the snapshot shows exactly which
+   error (or success value) survived each union.
+
+   Scenarios: `Never` collapse on either side and as a pure result;
+   the primitive `String` as a row alternative; one-constructor ADTs
+   (`ErrA`, `ErrB`); a two-constructor ADT (`ErrTwo`); idempotent
+   collapse `(e | e) ~ e`; and a three-step chain `(ErrTwo | String | ErrA)`.
+
+   Each case carries an explicit signature with the collapsed row, both
+   to document the expected union and to make the typechecker verify it. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrTwo = First | Second
+
+-- Continuations: Int32 -> Either e Int32, one per error shape.
+
+kNever : Int32 -> Either Never Int32
+kNever n = Right n
+
+kAOk : Int32 -> Either ErrA Int32
+kAOk n = Right n
+
+kAFail : Int32 -> Either ErrA Int32
+kAFail _n = Left ErrA
+
+kBFail : Int32 -> Either ErrB Int32
+kBFail _n = Left ErrB
+
+kSOk : Int32 -> Either String Int32
+kSOk n = Right n
+
+kSFail : Int32 -> Either String Int32
+kSFail _n = Left "kS"
+
+kSecond : Int32 -> Either ErrTwo Int32
+kSecond _n = Left Second
+
+-- Seeds: Either e Int32 in both Right and Left shapes.
+
+seedNever : Either Never Int32
+seedNever = Right 1
+
+seedA : Either ErrA Int32
+seedA = Right 2
+
+seedLeftA : Either ErrA Int32
+seedLeftA = Left ErrA
+
+seedS : Either String Int32
+seedS = Right 3
+
+seedLeftS : Either String Int32
+seedLeftS = Left "seedS"
+
+seedT : Either ErrTwo Int32
+seedT = Right 4
+
+seedFirst : Either ErrTwo Int32
+seedFirst = Left First
+
+seedSecond : Either ErrTwo Int32
+seedSecond = Left Second
+
+-- ── Never collapse ────────────────────────────────────────────────────────
+
+-- (Never | ErrA) ~ ErrA — Never on the left, both succeed.
+nevOk : Either ErrA Int32
+nevOk = seedNever |> andThenEither kAOk
+
+-- (Never | ErrA) ~ ErrA — Never on the left, continuation fails (e2).
+nevFail : Either ErrA Int32
+nevFail = seedNever |> andThenEither kAFail
+
+-- (ErrA | Never) ~ ErrA — Never on the right, both succeed.
+nevRightOk : Either ErrA Int32
+nevRightOk = seedA |> andThenEither kNever
+
+-- (ErrA | Never) ~ ErrA — Never on the right, seed fails (e1).
+nevRightE1 : Either ErrA Int32
+nevRightE1 = seedLeftA |> andThenEither kNever
+
+-- (Never | Never) ~ Never — pure Never result.
+pureNever : Either Never Int32
+pureNever = seedNever |> andThenEither kNever
+
+-- ── String (primitive) in a union ─────────────────────────────────────────
+
+strOk : Either (String | ErrA) Int32
+strOk = seedS |> andThenEither kAOk
+
+-- e1 = String surfaces through (String | ErrA).
+strE1 : Either (String | ErrA) Int32
+strE1 = seedLeftS |> andThenEither kAOk
+
+-- e2 = ErrA surfaces through (String | ErrA).
+strE2 : Either (String | ErrA) Int32
+strE2 = seedS |> andThenEither kAFail
+
+-- (String | String) ~ String — idempotent collapse of a primitive row.
+strIdem : Either String Int32
+strIdem = seedS |> andThenEither kSFail
+
+-- ── Two one-constructor ADTs ──────────────────────────────────────────────
+
+abE1 : Either (ErrA | ErrB) Int32
+abE1 = seedLeftA |> andThenEither kBFail
+
+abE2 : Either (ErrA | ErrB) Int32
+abE2 = seedA |> andThenEither kBFail
+
+-- ── Two-constructor ADT in a union ────────────────────────────────────────
+
+twoFirst : Either (ErrTwo | ErrA) Int32
+twoFirst = seedFirst |> andThenEither kAOk
+
+twoSecond : Either (ErrTwo | ErrA) Int32
+twoSecond = seedSecond |> andThenEither kAOk
+
+twoE2 : Either (ErrTwo | ErrA) Int32
+twoE2 = seedT |> andThenEither kAFail
+
+twoOk : Either (ErrTwo | ErrA) Int32
+twoOk = seedT |> andThenEither kAOk
+
+-- ── Idempotent collapse (e | e) ~ e ───────────────────────────────────────
+
+-- (ErrA | ErrA) ~ ErrA — seed fails, takes precedence.
+idemE1 : Either ErrA Int32
+idemE1 = seedLeftA |> andThenEither kAFail
+
+-- (ErrA | ErrA) ~ ErrA — continuation fails.
+idemE2 : Either ErrA Int32
+idemE2 = seedA |> andThenEither kAFail
+
+-- (ErrTwo | ErrTwo) ~ ErrTwo — First (seed) survives the collapse.
+idem2First : Either ErrTwo Int32
+idem2First = seedFirst |> andThenEither kSecond
+
+-- (ErrTwo | ErrTwo) ~ ErrTwo — Second (continuation) survives.
+idem2Second : Either ErrTwo Int32
+idem2Second = seedT |> andThenEither kSecond
+
+-- ── Three-step chain: (ErrTwo | String | ErrA) ────────────────────────────
+
+wE1 : Either (ErrTwo | String | ErrA) Int32
+wE1 = seedFirst |> andThenEither kSOk |> andThenEither kAOk
+
+wE2str : Either (ErrTwo | String | ErrA) Int32
+wE2str = seedT |> andThenEither kSFail |> andThenEither kAOk
+
+wE3 : Either (ErrTwo | String | ErrA) Int32
+wE3 = seedT |> andThenEither kSOk |> andThenEither kAFail
+
+wOk : Either (ErrTwo | String | ErrA) Int32
+wOk = seedT |> andThenEither kSOk |> andThenEither kAOk
+
+-- ── Renderers (pure String; payloads shown to confirm they survive) ───────
+
+showA : Either ErrA Int32 -> String
+showA e = case e of
+  Left ErrA -> "ErrA"
+  Right n -> showInt32 n
+
+showNever : Either Never Int32 -> String
+showNever e = case e of
+  Right n -> showInt32 n
+
+showTwo : Either ErrTwo Int32 -> String
+showTwo e = case e of
+  Left First -> "First"
+  Left Second -> "Second"
+  Right n -> showInt32 n
+
+showStr : Either String Int32 -> String
+showStr e = case e of
+  Left s -> s
+  Right n -> showInt32 n
+
+showStrA : Either (String | ErrA) Int32 -> String
+showStrA e = case e of
+  Left (s : String) -> s
+  Left (_a : ErrA) -> "ErrA"
+  Right n -> showInt32 n
+
+showAB : Either (ErrA | ErrB) Int32 -> String
+showAB e = case e of
+  Left (_a : ErrA) -> "ErrA"
+  Left (_b : ErrB) -> "ErrB"
+  Right n -> showInt32 n
+
+showTwoA : Either (ErrTwo | ErrA) Int32 -> String
+showTwoA e = case e of
+  Left (t : ErrTwo) -> case t of
+    First -> "First"
+    Second -> "Second"
+  Left (_a : ErrA) -> "ErrA"
+  Right n -> showInt32 n
+
+showThree : Either (ErrTwo | String | ErrA) Int32 -> String
+showThree e = case e of
+  Left (t : ErrTwo) -> case t of
+    First -> "First"
+    Second -> "Second"
+  Left (s : String) -> s
+  Left (_a : ErrA) -> "ErrA"
+  Right n -> showInt32 n
+
+-- ── Output plumbing (the only place `++` / StringTooLong appears) ──────────
+
+tagged : String -> String -> Either StringTooLong String
+tagged label val = do
+  a <- label ++ "="
+  b <- a ++ val
+  b ++ "\n"
+
+appendTagged : String -> String -> String -> Either StringTooLong String
+appendTagged acc label val = do
+  line <- tagged label val
+  acc ++ line
+
+render : Either StringTooLong String
+render = do
+  r01 <- tagged "nevOk" (showA nevOk)
+  r02 <- appendTagged r01 "nevFail" (showA nevFail)
+  r03 <- appendTagged r02 "nevRightOk" (showA nevRightOk)
+  r04 <- appendTagged r03 "nevRightE1" (showA nevRightE1)
+  r05 <- appendTagged r04 "pureNever" (showNever pureNever)
+  r06 <- appendTagged r05 "strOk" (showStrA strOk)
+  r07 <- appendTagged r06 "strE1" (showStrA strE1)
+  r08 <- appendTagged r07 "strE2" (showStrA strE2)
+  r09 <- appendTagged r08 "strIdem" (showStr strIdem)
+  r10 <- appendTagged r09 "abE1" (showAB abE1)
+  r11 <- appendTagged r10 "abE2" (showAB abE2)
+  r12 <- appendTagged r11 "twoFirst" (showTwoA twoFirst)
+  r13 <- appendTagged r12 "twoSecond" (showTwoA twoSecond)
+  r14 <- appendTagged r13 "twoE2" (showTwoA twoE2)
+  r15 <- appendTagged r14 "twoOk" (showTwoA twoOk)
+  r16 <- appendTagged r15 "idemE1" (showA idemE1)
+  r17 <- appendTagged r16 "idemE2" (showA idemE2)
+  r18 <- appendTagged r17 "idem2First" (showTwo idem2First)
+  r19 <- appendTagged r18 "idem2Second" (showTwo idem2Second)
+  r20 <- appendTagged r19 "wE1" (showThree wE1)
+  r21 <- appendTagged r20 "wE2str" (showThree wE2str)
+  r22 <- appendTagged r21 "wE3" (showThree wE3)
+  appendTagged r22 "wOk" (showThree wOk)
+
+printErr : StringTooLong -> IO Never Unit
+printErr e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main =
+  eitherToIO render
+    |> andThenIO IO.Stdout.print
+    |> handleErrorIO printErr

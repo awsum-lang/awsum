@@ -1,0 +1,237 @@
+{- Test for `eitherToIO` (`Either e a -> IO e a`). `eitherToIO` does not
+   union error rows — it bridges an `Either` to an `IO`, mapping
+   `Left e -> IOFail e` and `Right a -> IOPure a`. So this test feeds it
+   the full matrix of already-row-collapsed `Either` values (built with
+   `bindEither`: `Never`, primitive `String`, one- and two-constructor
+   ADTs, idempotent `(e | e) ~ e`, three-step chains) and confirms every
+   row alternative survives the Either→IO bridge: each case is converted
+   with `eitherToIO`, run, and its success value or `IOFail` row
+   alternative printed. Output is `label=value` per line. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrTwo = First | Second
+
+kNever : Int32 -> Either Never Int32
+kNever n = Right n
+
+kAOk : Int32 -> Either ErrA Int32
+kAOk n = Right n
+
+kAFail : Int32 -> Either ErrA Int32
+kAFail _n = Left ErrA
+
+kBFail : Int32 -> Either ErrB Int32
+kBFail _n = Left ErrB
+
+kSOk : Int32 -> Either String Int32
+kSOk n = Right n
+
+kSFail : Int32 -> Either String Int32
+kSFail _n = Left "kS"
+
+kSecond : Int32 -> Either ErrTwo Int32
+kSecond _n = Left Second
+
+seedNever : Either Never Int32
+seedNever = Right 1
+
+seedA : Either ErrA Int32
+seedA = Right 2
+
+seedLeftA : Either ErrA Int32
+seedLeftA = Left ErrA
+
+seedS : Either String Int32
+seedS = Right 3
+
+seedLeftS : Either String Int32
+seedLeftS = Left "seedS"
+
+seedT : Either ErrTwo Int32
+seedT = Right 4
+
+seedFirst : Either ErrTwo Int32
+seedFirst = Left First
+
+seedSecond : Either ErrTwo Int32
+seedSecond = Left Second
+
+nevOk : Either ErrA Int32
+nevOk = bindEither seedNever kAOk
+
+nevFail : Either ErrA Int32
+nevFail = bindEither seedNever kAFail
+
+nevRightOk : Either ErrA Int32
+nevRightOk = bindEither seedA kNever
+
+nevRightE1 : Either ErrA Int32
+nevRightE1 = bindEither seedLeftA kNever
+
+pureNever : Either Never Int32
+pureNever = bindEither seedNever kNever
+
+strOk : Either (String | ErrA) Int32
+strOk = bindEither seedS kAOk
+
+strE1 : Either (String | ErrA) Int32
+strE1 = bindEither seedLeftS kAOk
+
+strE2 : Either (String | ErrA) Int32
+strE2 = bindEither seedS kAFail
+
+strIdem : Either String Int32
+strIdem = bindEither seedS kSFail
+
+abE1 : Either (ErrA | ErrB) Int32
+abE1 = bindEither seedLeftA kBFail
+
+abE2 : Either (ErrA | ErrB) Int32
+abE2 = bindEither seedA kBFail
+
+twoFirst : Either (ErrTwo | ErrA) Int32
+twoFirst = bindEither seedFirst kAOk
+
+twoSecond : Either (ErrTwo | ErrA) Int32
+twoSecond = bindEither seedSecond kAOk
+
+twoE2 : Either (ErrTwo | ErrA) Int32
+twoE2 = bindEither seedT kAFail
+
+twoOk : Either (ErrTwo | ErrA) Int32
+twoOk = bindEither seedT kAOk
+
+idemE1 : Either ErrA Int32
+idemE1 = bindEither seedLeftA kAFail
+
+idemE2 : Either ErrA Int32
+idemE2 = bindEither seedA kAFail
+
+idem2First : Either ErrTwo Int32
+idem2First = bindEither seedFirst kSecond
+
+idem2Second : Either ErrTwo Int32
+idem2Second = bindEither seedT kSecond
+
+wE1 : Either (ErrTwo | String | ErrA) Int32
+wE1 = bindEither (bindEither seedFirst kSOk) kAOk
+
+wE2str : Either (ErrTwo | String | ErrA) Int32
+wE2str = bindEither (bindEither seedT kSFail) kAOk
+
+wE3 : Either (ErrTwo | String | ErrA) Int32
+wE3 = bindEither (bindEither seedT kSOk) kAFail
+
+wOk : Either (ErrTwo | String | ErrA) Int32
+wOk = bindEither (bindEither seedT kSOk) kAOk
+
+handlerA : ErrA -> IO Never Unit
+handlerA e = case e of
+  ErrA -> IO.Stdout.print "ErrA"
+
+observeA : Either ErrA Int32 -> IO Never Unit
+observeA e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerA
+
+observeNever : Either Never Int32 -> IO Never Unit
+observeNever e = mapIO (eitherToIO e) showInt32 |> andThenIO IO.Stdout.print
+
+handlerTwo : ErrTwo -> IO Never Unit
+handlerTwo e = case e of
+  First -> IO.Stdout.print "First"
+  Second -> IO.Stdout.print "Second"
+
+observeTwo : Either ErrTwo Int32 -> IO Never Unit
+observeTwo e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerTwo
+
+handlerStr : String -> IO Never Unit
+handlerStr e = IO.Stdout.print e
+
+observeStr : Either String Int32 -> IO Never Unit
+observeStr e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerStr
+
+handlerStrA : (String | ErrA) -> IO Never Unit
+handlerStrA e = case e of
+  (s : String) -> IO.Stdout.print s
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeStrA : Either (String | ErrA) Int32 -> IO Never Unit
+observeStrA e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerStrA
+
+handlerAB : (ErrA | ErrB) -> IO Never Unit
+handlerAB e = case e of
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+  (_b : ErrB) -> IO.Stdout.print "ErrB"
+
+observeAB : Either (ErrA | ErrB) Int32 -> IO Never Unit
+observeAB e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerAB
+
+handlerTwoA : (ErrTwo | ErrA) -> IO Never Unit
+handlerTwoA e = case e of
+  (t : ErrTwo) -> case t of
+    First -> IO.Stdout.print "First"
+    Second -> IO.Stdout.print "Second"
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeTwoA : Either (ErrTwo | ErrA) Int32 -> IO Never Unit
+observeTwoA e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerTwoA
+
+handlerThree : (ErrTwo | String | ErrA) -> IO Never Unit
+handlerThree e = case e of
+  (t : ErrTwo) -> case t of
+    First -> IO.Stdout.print "First"
+    Second -> IO.Stdout.print "Second"
+  (s : String) -> IO.Stdout.print s
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeThree : Either (ErrTwo | String | ErrA) Int32 -> IO Never Unit
+observeThree e = mapIO (eitherToIO e) showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerThree
+
+line : String -> IO Never Unit -> IO Never Unit
+line label act = IO.Stdout.print label
+  |> andThenIO (\_u -> IO.Stdout.print "=")
+  |> andThenIO (\_u -> act)
+  |> andThenIO (\_u -> IO.Stdout.print "\n")
+
+main : IO Never Unit
+main = line "nevOk" (observeA nevOk)
+  |> andThenIO (\_u -> line "nevFail" (observeA nevFail))
+  |> andThenIO (\_u -> line "nevRightOk" (observeA nevRightOk))
+  |> andThenIO (\_u -> line "nevRightE1" (observeA nevRightE1))
+  |> andThenIO (\_u -> line "pureNever" (observeNever pureNever))
+  |> andThenIO (\_u -> line "strOk" (observeStrA strOk))
+  |> andThenIO (\_u -> line "strE1" (observeStrA strE1))
+  |> andThenIO (\_u -> line "strE2" (observeStrA strE2))
+  |> andThenIO (\_u -> line "strIdem" (observeStr strIdem))
+  |> andThenIO (\_u -> line "abE1" (observeAB abE1))
+  |> andThenIO (\_u -> line "abE2" (observeAB abE2))
+  |> andThenIO (\_u -> line "twoFirst" (observeTwoA twoFirst))
+  |> andThenIO (\_u -> line "twoSecond" (observeTwoA twoSecond))
+  |> andThenIO (\_u -> line "twoE2" (observeTwoA twoE2))
+  |> andThenIO (\_u -> line "twoOk" (observeTwoA twoOk))
+  |> andThenIO (\_u -> line "idemE1" (observeA idemE1))
+  |> andThenIO (\_u -> line "idemE2" (observeA idemE2))
+  |> andThenIO (\_u -> line "idem2First" (observeTwo idem2First))
+  |> andThenIO (\_u -> line "idem2Second" (observeTwo idem2Second))
+  |> andThenIO (\_u -> line "wE1" (observeThree wE1))
+  |> andThenIO (\_u -> line "wE2str" (observeThree wE2str))
+  |> andThenIO (\_u -> line "wE3" (observeThree wE3))
+  |> andThenIO (\_u -> line "wOk" (observeThree wOk))

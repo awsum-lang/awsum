@@ -1,0 +1,92 @@
+{- `mapIOError` whose transform targets a row: `f : e1 -> (row)`. In `IO`
+   the row tag is produced inside `f` and `mapIOError` must carry it out
+   on `IOFail` unchanged. Covers a plain source mapped to each row
+   alternative, a success (transform not called), and a row source
+   remapped to a wider row. Each case is run and its `IOFail` row
+   alternative (or success value) printed. -}
+
+import IO.Stdout
+
+type Src = Src
+
+type SrcX = SrcX
+
+type SrcY = SrcY
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrC = ErrC
+
+toRowA : Src -> (ErrA | ErrB)
+toRowA _s = ErrA
+
+toRowB : Src -> (ErrA | ErrB)
+toRowB _s = ErrB
+
+failSrc : IO Src Int32
+failSrc = failIO Src
+
+okSrc : IO Src Int32
+okSrc = pureIO 5
+
+mappedA : IO (ErrA | ErrB) Int32
+mappedA = mapIOError failSrc toRowA
+
+mappedB : IO (ErrA | ErrB) Int32
+mappedB = mapIOError failSrc toRowB
+
+mappedOk : IO (ErrA | ErrB) Int32
+mappedOk = mapIOError okSrc toRowA
+
+remap : (SrcX | SrcY) -> (ErrA | ErrB | ErrC)
+remap e = case e of
+  (_x : SrcX) -> ErrA
+  (_y : SrcY) -> ErrB
+
+failX : IO (SrcX | SrcY) Int32
+failX = failIO SrcX
+
+failY : IO (SrcX | SrcY) Int32
+failY = failIO SrcY
+
+remappedX : IO (ErrA | ErrB | ErrC) Int32
+remappedX = mapIOError failX remap
+
+remappedY : IO (ErrA | ErrB | ErrC) Int32
+remappedY = mapIOError failY remap
+
+handlerAB : (ErrA | ErrB) -> IO Never Unit
+handlerAB e = case e of
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+  (_b : ErrB) -> IO.Stdout.print "ErrB"
+
+observeAB : IO (ErrA | ErrB) Int32 -> IO Never Unit
+observeAB io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerAB
+
+handlerABC : (ErrA | ErrB | ErrC) -> IO Never Unit
+handlerABC e = case e of
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+  (_b : ErrB) -> IO.Stdout.print "ErrB"
+  (_c : ErrC) -> IO.Stdout.print "ErrC"
+
+observeABC : IO (ErrA | ErrB | ErrC) Int32 -> IO Never Unit
+observeABC io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerABC
+
+line : String -> IO Never Unit -> IO Never Unit
+line label act = IO.Stdout.print label
+  |> andThenIO (\_u -> IO.Stdout.print "=")
+  |> andThenIO (\_u -> act)
+  |> andThenIO (\_u -> IO.Stdout.print "\n")
+
+main : IO Never Unit
+main = line "mappedA" (observeAB mappedA)
+  |> andThenIO (\_u -> line "mappedB" (observeAB mappedB))
+  |> andThenIO (\_u -> line "mappedOk" (observeAB mappedOk))
+  |> andThenIO (\_u -> line "remappedX" (observeABC remappedX))
+  |> andThenIO (\_u -> line "remappedY" (observeABC remappedY))

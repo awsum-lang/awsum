@@ -1,0 +1,235 @@
+{- Stress test for `bindIO` (`bindIO io k`) composing with structural-sum
+   (row) error types. Collapse matrix — `Never`, the primitive `String`,
+   one- and two-constructor ADTs, idempotent `(e | e) ~ e`, and a
+   three-step chain — but the values are `IO` actions, so the error rows
+   are carried by `IOFail`. Each case is run: the success is mapped to
+   its string and printed; the failure is caught by `handleErrorIO` and
+   its row alternative printed. Output is `label=value` per line. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrTwo = First | Second
+
+kNeverIO : Int32 -> IO Never Int32
+kNeverIO n = pureIO n
+
+kAOkIO : Int32 -> IO ErrA Int32
+kAOkIO n = pureIO n
+
+kAFailIO : Int32 -> IO ErrA Int32
+kAFailIO _n = failIO ErrA
+
+kBFailIO : Int32 -> IO ErrB Int32
+kBFailIO _n = failIO ErrB
+
+kSOkIO : Int32 -> IO String Int32
+kSOkIO n = pureIO n
+
+kSFailIO : Int32 -> IO String Int32
+kSFailIO _n = failIO "kS"
+
+kSecondIO : Int32 -> IO ErrTwo Int32
+kSecondIO _n = failIO Second
+
+seedNeverIO : IO Never Int32
+seedNeverIO = pureIO 1
+
+seedAIO : IO ErrA Int32
+seedAIO = pureIO 2
+
+seedLeftAIO : IO ErrA Int32
+seedLeftAIO = failIO ErrA
+
+seedSIO : IO String Int32
+seedSIO = pureIO 3
+
+seedLeftSIO : IO String Int32
+seedLeftSIO = failIO "seedS"
+
+seedTIO : IO ErrTwo Int32
+seedTIO = pureIO 4
+
+seedFirstIO : IO ErrTwo Int32
+seedFirstIO = failIO First
+
+seedSecondIO : IO ErrTwo Int32
+seedSecondIO = failIO Second
+
+nevOk : IO ErrA Int32
+nevOk = bindIO seedNeverIO kAOkIO
+
+nevFail : IO ErrA Int32
+nevFail = bindIO seedNeverIO kAFailIO
+
+nevRightOk : IO ErrA Int32
+nevRightOk = bindIO seedAIO kNeverIO
+
+nevRightE1 : IO ErrA Int32
+nevRightE1 = bindIO seedLeftAIO kNeverIO
+
+pureNever : IO Never Int32
+pureNever = bindIO seedNeverIO kNeverIO
+
+strOk : IO (String | ErrA) Int32
+strOk = bindIO seedSIO kAOkIO
+
+strE1 : IO (String | ErrA) Int32
+strE1 = bindIO seedLeftSIO kAOkIO
+
+strE2 : IO (String | ErrA) Int32
+strE2 = bindIO seedSIO kAFailIO
+
+strIdem : IO String Int32
+strIdem = bindIO seedSIO kSFailIO
+
+abE1 : IO (ErrA | ErrB) Int32
+abE1 = bindIO seedLeftAIO kBFailIO
+
+abE2 : IO (ErrA | ErrB) Int32
+abE2 = bindIO seedAIO kBFailIO
+
+twoFirst : IO (ErrTwo | ErrA) Int32
+twoFirst = bindIO seedFirstIO kAOkIO
+
+twoSecond : IO (ErrTwo | ErrA) Int32
+twoSecond = bindIO seedSecondIO kAOkIO
+
+twoE2 : IO (ErrTwo | ErrA) Int32
+twoE2 = bindIO seedTIO kAFailIO
+
+twoOk : IO (ErrTwo | ErrA) Int32
+twoOk = bindIO seedTIO kAOkIO
+
+idemE1 : IO ErrA Int32
+idemE1 = bindIO seedLeftAIO kAFailIO
+
+idemE2 : IO ErrA Int32
+idemE2 = bindIO seedAIO kAFailIO
+
+idem2First : IO ErrTwo Int32
+idem2First = bindIO seedFirstIO kSecondIO
+
+idem2Second : IO ErrTwo Int32
+idem2Second = bindIO seedTIO kSecondIO
+
+wE1 : IO (ErrTwo | String | ErrA) Int32
+wE1 = bindIO (bindIO seedFirstIO kSOkIO) kAOkIO
+
+wE2str : IO (ErrTwo | String | ErrA) Int32
+wE2str = bindIO (bindIO seedTIO kSFailIO) kAOkIO
+
+wE3 : IO (ErrTwo | String | ErrA) Int32
+wE3 = bindIO (bindIO seedTIO kSOkIO) kAFailIO
+
+wOk : IO (ErrTwo | String | ErrA) Int32
+wOk = bindIO (bindIO seedTIO kSOkIO) kAOkIO
+
+handlerA : ErrA -> IO Never Unit
+handlerA e = case e of
+  ErrA -> IO.Stdout.print "ErrA"
+
+observeA : IO ErrA Int32 -> IO Never Unit
+observeA io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerA
+
+observeNever : IO Never Int32 -> IO Never Unit
+observeNever io = mapIO io showInt32 |> andThenIO IO.Stdout.print
+
+handlerTwo : ErrTwo -> IO Never Unit
+handlerTwo e = case e of
+  First -> IO.Stdout.print "First"
+  Second -> IO.Stdout.print "Second"
+
+observeTwo : IO ErrTwo Int32 -> IO Never Unit
+observeTwo io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerTwo
+
+handlerStr : String -> IO Never Unit
+handlerStr e = IO.Stdout.print e
+
+observeStr : IO String Int32 -> IO Never Unit
+observeStr io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerStr
+
+handlerStrA : (String | ErrA) -> IO Never Unit
+handlerStrA e = case e of
+  (s : String) -> IO.Stdout.print s
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeStrA : IO (String | ErrA) Int32 -> IO Never Unit
+observeStrA io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerStrA
+
+handlerAB : (ErrA | ErrB) -> IO Never Unit
+handlerAB e = case e of
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+  (_b : ErrB) -> IO.Stdout.print "ErrB"
+
+observeAB : IO (ErrA | ErrB) Int32 -> IO Never Unit
+observeAB io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerAB
+
+handlerTwoA : (ErrTwo | ErrA) -> IO Never Unit
+handlerTwoA e = case e of
+  (t : ErrTwo) -> case t of
+    First -> IO.Stdout.print "First"
+    Second -> IO.Stdout.print "Second"
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeTwoA : IO (ErrTwo | ErrA) Int32 -> IO Never Unit
+observeTwoA io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerTwoA
+
+handlerThree : (ErrTwo | String | ErrA) -> IO Never Unit
+handlerThree e = case e of
+  (t : ErrTwo) -> case t of
+    First -> IO.Stdout.print "First"
+    Second -> IO.Stdout.print "Second"
+  (s : String) -> IO.Stdout.print s
+  (_a : ErrA) -> IO.Stdout.print "ErrA"
+
+observeThree : IO (ErrTwo | String | ErrA) Int32 -> IO Never Unit
+observeThree io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerThree
+
+line : String -> IO Never Unit -> IO Never Unit
+line label act = IO.Stdout.print label
+  |> andThenIO (\_u -> IO.Stdout.print "=")
+  |> andThenIO (\_u -> act)
+  |> andThenIO (\_u -> IO.Stdout.print "\n")
+
+main : IO Never Unit
+main = line "nevOk" (observeA nevOk)
+  |> andThenIO (\_u -> line "nevFail" (observeA nevFail))
+  |> andThenIO (\_u -> line "nevRightOk" (observeA nevRightOk))
+  |> andThenIO (\_u -> line "nevRightE1" (observeA nevRightE1))
+  |> andThenIO (\_u -> line "pureNever" (observeNever pureNever))
+  |> andThenIO (\_u -> line "strOk" (observeStrA strOk))
+  |> andThenIO (\_u -> line "strE1" (observeStrA strE1))
+  |> andThenIO (\_u -> line "strE2" (observeStrA strE2))
+  |> andThenIO (\_u -> line "strIdem" (observeStr strIdem))
+  |> andThenIO (\_u -> line "abE1" (observeAB abE1))
+  |> andThenIO (\_u -> line "abE2" (observeAB abE2))
+  |> andThenIO (\_u -> line "twoFirst" (observeTwoA twoFirst))
+  |> andThenIO (\_u -> line "twoSecond" (observeTwoA twoSecond))
+  |> andThenIO (\_u -> line "twoE2" (observeTwoA twoE2))
+  |> andThenIO (\_u -> line "twoOk" (observeTwoA twoOk))
+  |> andThenIO (\_u -> line "idemE1" (observeA idemE1))
+  |> andThenIO (\_u -> line "idemE2" (observeA idemE2))
+  |> andThenIO (\_u -> line "idem2First" (observeTwo idem2First))
+  |> andThenIO (\_u -> line "idem2Second" (observeTwo idem2Second))
+  |> andThenIO (\_u -> line "wE1" (observeThree wE1))
+  |> andThenIO (\_u -> line "wE2str" (observeThree wE2str))
+  |> andThenIO (\_u -> line "wE3" (observeThree wE3))
+  |> andThenIO (\_u -> line "wOk" (observeThree wOk))

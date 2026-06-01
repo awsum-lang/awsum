@@ -18,7 +18,7 @@
   (data (i32.const 143) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00ErrB")
   (data (i32.const 167) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00Ok ")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_opB $v__lift_0 $v__let_15 $v__let_16 $v__df_bindEither_0)
+  (elem (i32.const 0) $v_runIO $v_opB $v__let_15 $v__lift_17 $v__let_18 $v__df__rowspec_16_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -764,76 +764,6 @@
     call 22
     call 21)
 
-  (func $v__lift_0 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 2
-    local.get 2
-    i32.load
-    i32.const 3
-    i32.eq
-    if (result i32)
-    local.get 2
-    i32.load offset=4
-    local.set 3
-    local.get 3
-    call 12
-    block (result i32)
-    i32.const 8
-    i32.const 1
-    call 11
-    local.set 1
-    local.get 1
-    i32.const 3
-    i32.store
-    local.get 1
-    local.get 3
-    i32.store offset=4
-    local.get 1
-    i32.load offset=4
-    call 12
-    local.get 1
-    local.set 4
-    local.get 3
-    call 13
-    local.get 0
-    call 13
-    local.get 4
-    end
-    else
-    local.get 2
-    i32.load offset=4
-    local.set 3
-    local.get 3
-    call 12
-    block (result i32)
-    i32.const 8
-    i32.const 1
-    call 11
-    local.set 1
-    local.get 1
-    i32.const 4
-    i32.store
-    local.get 1
-    local.get 3
-    i32.store offset=4
-    local.get 1
-    i32.load offset=4
-    call 12
-    local.get 1
-    local.set 4
-    local.get 3
-    call 13
-    local.get 0
-    call 13
-    local.get 4
-    end
-    end)
-
   (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
@@ -943,7 +873,88 @@
     end
     end)
 
-  (func $v__let_16 (param i32) (result i32)
+  (func $v__lift_17 (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    local.set 3
+    local.get 3
+    i32.load
+    i32.const 3
+    i32.eq
+    if (result i32)
+    local.get 3
+    i32.load offset=4
+    local.set 4
+    local.get 4
+    call 12
+    block (result i32)
+    i32.const 8
+    i32.const 1
+    call 11
+    local.set 1
+    local.get 1
+    i32.const 3
+    i32.store
+    local.get 1
+    i32.const 8
+    i32.const 1
+    call 11
+    local.set 2
+    local.get 2
+    i32.const 2269767818
+    i32.store
+    local.get 2
+    local.get 4
+    i32.store offset=4
+    local.get 2
+    i32.load offset=4
+    call 12
+    local.get 2
+    i32.store offset=4
+    local.get 1
+    local.set 5
+    local.get 4
+    call 13
+    local.get 0
+    call 13
+    local.get 5
+    end
+    else
+    local.get 3
+    i32.load offset=4
+    local.set 4
+    local.get 4
+    call 12
+    block (result i32)
+    i32.const 8
+    i32.const 1
+    call 11
+    local.set 1
+    local.get 1
+    i32.const 4
+    i32.store
+    local.get 1
+    local.get 4
+    i32.store offset=4
+    local.get 1
+    i32.load offset=4
+    call 12
+    local.get 1
+    local.set 5
+    local.get 4
+    call 13
+    local.get 0
+    call 13
+    local.get 5
+    end
+    end)
+
+  (func $v__let_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1042,30 +1053,31 @@
     local.get 5
     end
     end
-    call 20
+    call 19
     local.set 5
     local.get 0
     call 13
     local.get 5
     end)
 
-  (func $v__df_bindEither_0 (param i32) (result i32)
+  (func $v__df__rowspec_16_0 (param i32) (result i32)
+    (local i32)
     (local i32)
     (local i32)
     (local i32)
     (local i32)
     (local i32)
     local.get 0
-    local.set 2
-    local.get 2
+    local.set 3
+    local.get 3
     i32.load
     i32.const 3
     i32.eq
     if (result i32)
-    local.get 2
-    i32.load offset=4
-    local.set 3
     local.get 3
+    i32.load offset=4
+    local.set 4
+    local.get 4
     call 12
     block (result i32)
     i32.const 8
@@ -1076,38 +1088,48 @@
     i32.const 3
     i32.store
     local.get 1
-    local.get 3
-    i32.store offset=4
-    local.get 1
-    i32.load offset=4
-    call 12
-    local.get 1
-    local.set 4
-    local.get 3
-    call 13
-    local.get 0
-    call 13
+    i32.const 8
+    i32.const 1
+    call 11
+    local.set 2
+    local.get 2
+    i32.const 2252990199
+    i32.store
+    local.get 2
     local.get 4
-    end
-    else
+    i32.store offset=4
     local.get 2
     i32.load offset=4
-    local.set 3
-    local.get 3
     call 12
-    block (result i32)
-    local.get 3
-    local.tee 5
-    call 12
-    local.get 5
-    call 17
-    call 19
-    local.set 4
-    local.get 3
+    local.get 2
+    i32.store offset=4
+    local.get 1
+    local.set 5
+    local.get 4
     call 13
     local.get 0
     call 13
+    local.get 5
+    end
+    else
+    local.get 3
+    i32.load offset=4
+    local.set 4
     local.get 4
+    call 12
+    block (result i32)
+    local.get 4
+    local.tee 6
+    call 12
+    local.get 6
+    call 17
+    call 20
+    local.set 5
+    local.get 4
+    call 13
+    local.get 0
+    call 13
+    local.get 5
     end
     end)
 
