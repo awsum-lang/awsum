@@ -15,6 +15,8 @@ module Awsum.RunBackend
     runOnAll,
     runOnStdin,
     runOnAllStdin,
+    runJVM,
+    runJVMStdin,
   )
 where
 

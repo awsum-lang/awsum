@@ -495,68 +495,175 @@ entryLocalsFromDesc desc =
   let paramSec = T.takeWhile (/= ')') (T.dropWhile (/= '(') desc)
    in replicate (T.count "Ljava/lang/Object;" paramSec) (VObject (ClassRef "java/lang/Object"))
 
--- | Lower a method body to @(code, smtAttrCount, smtAttrBytes)@ in a single
---   pass plus a backpatch: branches emit a 3-byte placeholder whose offset is
---   filled once every label's bci is known, and labels carrying a 'Frame'
---   become the StackMapTable. This is the one place branch offsets are
---   computed — every helper and the user-code emitter ('emitExprI') route
---   their branches and frames through it.
+-- | One item in a method body during assembly: a fixed byte run, a branch
+--   whose encoding (and thus size) depends on how far its target sits, or a
+--   label (zero bytes) optionally carrying a StackMapTable frame.
+data Item
+  = IBytes [Word8]
+  | -- | opcode · is-it-an-unconditional-@goto@ · target label
+    IBranch Word8 Bool LabelId
+  | ILabel LabelId (Maybe Frame)
+
+-- | Lower a method body to @(code, smtAttrCount, smtAttrBytes)@ in three steps:
+--   assemble each non-branch once (keeping branches and labels symbolic), relax
+--   branch widths to a fixpoint, then emit with final offsets and build the
+--   StackMapTable from the final label positions. JVM short branches carry a
+--   signed 16-bit offset (s2, ±32767); past that a @goto@ widens to @goto_w@
+--   (s4) and a conditional is rewritten @if<¬cond> SKIP; goto_w TARGET; SKIP:@,
+--   the synthesized @SKIP@ reusing the target's frame ('skipFrameFor'). When
+--   nothing overflows — every method that fits comfortably in 32 KB — the bytes
+--   are identical to the un-widened encoding. The one place branch offsets are
+--   computed; every helper and the user-code emitter ('emitExprI') route their
+--   branches and frames through it.
 assembleBody :: [VType] -> [JvmInstr] -> AsmM ([Word8], Word16, [Word8])
 assembleBody entryLocals body = do
-  (chunksRev, _bci, labels, patchesRev, framesRev) <-
-    foldlM stepBody ([], 0, Map.empty, [], []) body
-  let code0 = concat (reverse chunksRev)
-      resolved =
-        [ (branchBci + 1, fromIntegral (labels Map.! tgt - branchBci) :: Word16)
-        | (branchBci, tgt) <- reverse patchesRev
+  items <- traverse toItem body
+  let wides = relaxBranches items
+      starts = scanl' (+) 0 [itemSize wides i it | (i, it) <- zip [0 ..] items]
+      withStart = zip3 [0 :: Int ..] starts items
+      labelPos = Map.fromList [(l, s) | (_, s, ILabel l _) <- withStart]
+      frameOf = Map.fromList [(l, f) | ILabel l (Just f) <- items]
+      code = concatMap (\(i, s, it) -> emitItem labelPos wides i s it) withStart
+      -- Explicit frames at branch-target labels, plus a synthesized frame at
+      -- every widened conditional's @SKIP@ (its fall-through, at branch + 8).
+      labelFrames = [(s, f) | (_, s, ILabel _ (Just f)) <- withStart]
+      skipFrames =
+        [ (s + 8, skipFrameFor frameOf tgt)
+        | (i, s, IBranch _ False tgt) <- withStart,
+          i `Set.member` wides
         ]
-      code = applyOffsetPatches code0 resolved
-      -- Deduplicate frames that resolved to the same bci, keeping the one with
-      -- the NARROWEST locals. Nested cases emit their own join 'Label' which,
+      -- Deduplicate frames at the same offset, keeping the one with the
+      -- NARROWEST locals. Nested cases emit their own join 'Label' which,
       -- when the inner case is the last expression of an outer arm, lands on
       -- the same byte as the outer join; the verifier needs exactly one frame
       -- there describing the intersection of live locals across every incoming
-      -- edge (the outermost, smaller frame). 'Map.fromListWith' over the bci
-      -- collapses them; 'Map.elems' returns them in ascending-bci order, which
-      -- is also what 'buildStackMapTable' needs.
+      -- edge (the outermost, smaller frame). 'Map.fromListWith' over the offset
+      -- collapses them; 'Map.elems' returns them in ascending-offset order,
+      -- which is also what 'buildStackMapTable' needs.
       frames =
         Map.elems
           $ Map.fromListWith
             (\a b -> if length (frLocals (snd a)) <= length (frLocals (snd b)) then a else b)
-            [(bci, (bci, f)) | (bci, f) <- reverse framesRev]
+            [(off, (off, f)) | (off, f) <- labelFrames <> skipFrames]
   if null frames
     then pure (code, 0, [])
     else do
       smtNameIdx <- addUtf8 "StackMapTable"
       classMap <- resolveFrameClasses frames
       pure (code, 1, buildStackMapTable classMap entryLocals smtNameIdx frames)
-  where
-    stepBody (chunks, bci, labels, patches, frames) = \case
-      Label l mframe ->
-        pure (chunks, bci, Map.insert l bci labels, patches, maybe frames (\f -> (bci, f) : frames) mframe)
-      Ifeq l -> branch 0x99 l chunks bci labels patches frames
-      Ifne l -> branch 0x9A l chunks bci labels patches frames
-      Iflt l -> branch 0x9B l chunks bci labels patches frames
-      Ifle l -> branch 0x9E l chunks bci labels patches frames
-      Ifgt l -> branch 0x9D l chunks bci labels patches frames
-      IfICmpEq l -> branch 0x9F l chunks bci labels patches frames
-      IfICmpNe l -> branch 0xA0 l chunks bci labels patches frames
-      IfICmpLe l -> branch 0xA4 l chunks bci labels patches frames
-      IfICmpLt l -> branch 0xA1 l chunks bci labels patches frames
-      IfICmpGt l -> branch 0xA3 l chunks bci labels patches frames
-      IfICmpGe l -> branch 0xA2 l chunks bci labels patches frames
-      Goto l -> branch 0xA7 l chunks bci labels patches frames
-      instr -> do
-        bs <- assembleInstr instr
-        pure (bs : chunks, bci + length bs, labels, patches, frames)
-    branch op l chunks bci labels patches frames =
-      pure ([op, 0, 0] : chunks, bci + 3, labels, (bci, l) : patches, frames)
 
--- | Replace the two offset bytes at each @(hiPos, offset)@ in a code stream.
-applyOffsetPatches :: [Word8] -> [(Int, Word16)] -> [Word8]
-applyOffsetPatches code patches =
-  let pm = Map.fromList (concatMap (\(p, off) -> [(p, hi8 off), (p + 1, lo8 off)]) patches)
-   in zipWith (\i b -> Map.findWithDefault b i pm) [0 ..] code
+-- | Lift one 'JvmInstr' into an 'Item': branches stay symbolic (their width is
+--   decided by 'relaxBranches'); every other instruction is assembled to its
+--   fixed bytes now, interning constants in the pool exactly once.
+toItem :: JvmInstr -> AsmM Item
+toItem = \case
+  Label l mframe -> pure (ILabel l mframe)
+  Ifeq l -> pure (IBranch 0x99 False l)
+  Ifne l -> pure (IBranch 0x9A False l)
+  Iflt l -> pure (IBranch 0x9B False l)
+  Ifle l -> pure (IBranch 0x9E False l)
+  Ifgt l -> pure (IBranch 0x9D False l)
+  IfICmpEq l -> pure (IBranch 0x9F False l)
+  IfICmpNe l -> pure (IBranch 0xA0 False l)
+  IfICmpLe l -> pure (IBranch 0xA4 False l)
+  IfICmpLt l -> pure (IBranch 0xA1 False l)
+  IfICmpGt l -> pure (IBranch 0xA3 False l)
+  IfICmpGe l -> pure (IBranch 0xA2 False l)
+  Goto l -> pure (IBranch 0xA7 True l)
+  instr -> IBytes <$> assembleInstr instr
+
+-- | Byte size of item @i@ under the current wide set. A narrow branch is 3
+--   bytes; a wide @goto@ is @goto_w@ (5); a wide conditional is
+--   @if<¬cond> (3) + goto_w (5)@ = 8.
+itemSize :: Set Int -> Int -> Item -> Int
+itemSize wides i = \case
+  IBytes bs -> length bs
+  ILabel _ _ -> 0
+  IBranch _ isGoto _
+    | not (i `Set.member` wides) -> 3
+    | isGoto -> 5
+    | otherwise -> 8
+
+-- | Promote branches to their wide form until a fixpoint: assume all narrow,
+--   compute offsets, widen every branch whose s2 offset overflows, repeat.
+--   Widening only grows sizes, so the set is monotonic and the loop terminates;
+--   in the common case (no overflow) it returns empty after one pass, leaving
+--   every byte identical to the un-widened encoding.
+relaxBranches :: [Item] -> Set Int
+relaxBranches items = go Set.empty
+  where
+    go wides =
+      let starts = scanl' (+) 0 [itemSize wides i it | (i, it) <- zip [0 ..] items]
+          withStart = zip3 [0 :: Int ..] starts items
+          labelPos = Map.fromList [(l, s) | (_, s, ILabel l _) <- withStart]
+          newWides =
+            [ i
+            | (i, s, IBranch _ _ tgt) <- withStart,
+              not (i `Set.member` wides),
+              let off = Map.findWithDefault 0 tgt labelPos - s,
+              off < -32768 || off > 32767
+            ]
+       in if null newWides then wides else go (foldr Set.insert wides newWides)
+
+-- | Emit one item's bytes given the final label offsets and wide set.
+emitItem :: Map LabelId Int -> Set Int -> Int -> Int -> Item -> [Word8]
+emitItem labelPos wides i start = \case
+  IBytes bs -> bs
+  ILabel _ _ -> []
+  IBranch op isGoto tgt ->
+    let target = Map.findWithDefault 0 tgt labelPos
+     in if not (i `Set.member` wides)
+          then op : s2 (target - start)
+          else
+            if isGoto
+              then 0xC8 : s4 (target - start) -- goto_w
+              else [invertCond op, 0, 8] <> (0xC8 : s4 (target - (start + 3)))
+
+-- | The StackMapTable frame for the synthesized @SKIP@ of a widened
+--   conditional. A conditional's fall-through and its branch target share
+--   verifier state in this codegen — both reached with an empty stack and the
+--   same locals (the compare popped its operands and nothing is bound before
+--   either edge) — so @SKIP@ reuses the target's frame. The empty-stack check
+--   makes a future conditional that violates this fail loudly here rather than
+--   emit a class the verifier rejects.
+skipFrameFor :: Map LabelId Frame -> LabelId -> Frame
+skipFrameFor frameOf tgt = case Map.lookup tgt frameOf of
+  Just f
+    | null (frStack f) -> f
+    | otherwise -> error "assembleBody: cannot widen a conditional whose target frame has a non-empty operand stack"
+  Nothing -> error "assembleBody: cannot widen a conditional whose target carries no StackMapTable frame"
+
+-- | Big-endian signed 16-bit branch offset (narrow @goto@ / @if*@).
+s2 :: Int -> [Word8]
+s2 off = let w = fromIntegral off :: Word16 in [hi8 w, lo8 w]
+
+-- | Big-endian signed 32-bit branch offset (@goto_w@).
+s4 :: Int -> [Word8]
+s4 off =
+  let w = fromIntegral off :: Word32
+   in [ fromIntegral (Bits.shiftR w 24),
+        fromIntegral (Bits.shiftR w 16),
+        fromIntegral (Bits.shiftR w 8),
+        fromIntegral w
+      ]
+
+-- | Invert a conditional-branch opcode, to skip over the @goto_w@ when a
+--   conditional's target is too far for a 16-bit offset.
+invertCond :: Word8 -> Word8
+invertCond = \case
+  0x99 -> 0x9A -- ifeq → ifne
+  0x9A -> 0x99 -- ifne → ifeq
+  0x9B -> 0x9C -- iflt → ifge
+  0x9C -> 0x9B -- ifge → iflt
+  0x9D -> 0x9E -- ifgt → ifle
+  0x9E -> 0x9D -- ifle → ifgt
+  0x9F -> 0xA0 -- if_icmpeq → if_icmpne
+  0xA0 -> 0x9F -- if_icmpne → if_icmpeq
+  0xA1 -> 0xA2 -- if_icmplt → if_icmpge
+  0xA2 -> 0xA1 -- if_icmpge → if_icmplt
+  0xA3 -> 0xA4 -- if_icmpgt → if_icmple
+  0xA4 -> 0xA3 -- if_icmple → if_icmpgt
+  other -> error ("assembleBody.invertCond: not a conditional-branch opcode: " <> show other)
 
 -- | Pre-resolve every 'ClassRef' that appears as a 'VObject' in a frame to its
 --   CONSTANT_Class index, so the frame classifier ('buildStackMapTable') can
