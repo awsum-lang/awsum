@@ -1,0 +1,100 @@
+{- `mapLeft` whose transform targets a row: `f : e1 -> (row)`. `mapLeft`
+   itself does not union rows (`Either e1 a -> (e1 -> e2) -> Either e2 a`),
+   so the row tag is produced inside `f` and `mapLeft` must carry it out
+   on the `Left` unchanged. Covers a plain source mapped to each row
+   alternative, a `Right` (transform not called), and a row source
+   remapped to a wider row (`f` dispatches on the incoming row).
+   Output is `label=value` per line. -}
+
+import IO.Stdout
+
+type Src = Src
+
+type SrcX = SrcX
+
+type SrcY = SrcY
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrC = ErrC
+
+toRowA : Src -> (ErrA | ErrB)
+toRowA _s = ErrA
+
+toRowB : Src -> (ErrA | ErrB)
+toRowB _s = ErrB
+
+leftSrc : Either Src Int32
+leftSrc = Left Src
+
+rightSrc : Either Src Int32
+rightSrc = Right 5
+
+mappedA : Either (ErrA | ErrB) Int32
+mappedA = mapLeft leftSrc toRowA
+
+mappedB : Either (ErrA | ErrB) Int32
+mappedB = mapLeft leftSrc toRowB
+
+mappedOk : Either (ErrA | ErrB) Int32
+mappedOk = mapLeft rightSrc toRowA
+
+remap : (SrcX | SrcY) -> (ErrA | ErrB | ErrC)
+remap e = case e of
+  (_x : SrcX) -> ErrA
+  (_y : SrcY) -> ErrB
+
+leftX : Either (SrcX | SrcY) Int32
+leftX = Left SrcX
+
+leftY : Either (SrcX | SrcY) Int32
+leftY = Left SrcY
+
+remappedX : Either (ErrA | ErrB | ErrC) Int32
+remappedX = mapLeft leftX remap
+
+remappedY : Either (ErrA | ErrB | ErrC) Int32
+remappedY = mapLeft leftY remap
+
+showAB : Either (ErrA | ErrB) Int32 -> String
+showAB e = case e of
+  Left (_a : ErrA) -> "ErrA"
+  Left (_b : ErrB) -> "ErrB"
+  Right n -> showInt32 n
+
+showABC : Either (ErrA | ErrB | ErrC) Int32 -> String
+showABC e = case e of
+  Left (_a : ErrA) -> "ErrA"
+  Left (_b : ErrB) -> "ErrB"
+  Left (_c : ErrC) -> "ErrC"
+  Right n -> showInt32 n
+
+tagged : String -> String -> Either StringTooLong String
+tagged label val = do
+  a <- label ++ "="
+  b <- a ++ val
+  b ++ "\n"
+
+appendTagged : String -> String -> String -> Either StringTooLong String
+appendTagged acc label val = do
+  line <- tagged label val
+  acc ++ line
+
+render : Either StringTooLong String
+render = do
+  r01 <- tagged "mappedA" (showAB mappedA)
+  r02 <- appendTagged r01 "mappedB" (showAB mappedB)
+  r03 <- appendTagged r02 "mappedOk" (showAB mappedOk)
+  r04 <- appendTagged r03 "remappedX" (showABC remappedX)
+  appendTagged r04 "remappedY" (showABC remappedY)
+
+printErr : StringTooLong -> IO Never Unit
+printErr e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main = eitherToIO render
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO printErr

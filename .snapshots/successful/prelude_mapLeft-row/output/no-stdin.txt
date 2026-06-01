@@ -1,0 +1,5 @@
+mappedA=ErrA
+mappedB=ErrB
+mappedOk=5
+remappedX=ErrA
+remappedY=ErrB

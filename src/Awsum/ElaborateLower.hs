@@ -65,7 +65,19 @@ data LowerEnv = LowerEnv
     --   to point its diagnostic at the @type@ declaration of one of
     --   the colliding labels (what the user would rename) rather
     --   than at the case-arm pattern that triggered the detection.
-    leTypeDeclSpans :: M.Map Name SrcSpan
+    leTypeDeclSpans :: M.Map Name SrcSpan,
+    -- | Surface bodies (params + RHS) of every top-level 'FunDef',
+    --   keyed by name. Consulted at a fully-applied call to a
+    --   /row-unioning combinator/ — one whose result widens an abstract
+    --   error row (@(e1 | e2)@ of type variables) into a concrete
+    --   multi-alternative row at this instantiation. The body is
+    --   re-lowered at the concrete error types so the implicit-injection
+    --   lift emits a real 'CRow' tag. The polymorphic original cannot:
+    --   its error types are still type variables when its body is
+    --   lowered, so 'synthCoerce' short-circuits to identity (a value
+    --   of an abstract @e2@ has no statically-known row tag). See
+    --   'getOrCreateRowSpec'.
+    leBodies :: M.Map Name ([Param], Expr)
   }
 
 -- | Constructor info as seen by the lowerer: tag, arity, owning type
@@ -183,7 +195,13 @@ data LowerState = LowerState
   { lsFresh :: !Int,
     lsHelpers :: ![CDecl],
     lsRowTags :: !(M.Map Word32 (M.Map Text Type')),
-    lsLifters :: !(M.Map (Text, Text) Name)
+    lsLifters :: !(M.Map (Text, Text) Name),
+    -- | Memo of per-instantiation specialisations of row-unioning
+    --   combinators, keyed by @(combinator name, canonical concrete
+    --   signature)@ so each distinct instantiation gets one shared
+    --   @$rowspec$N@ helper. Registered before the body is lowered so a
+    --   self-recursive combinator reaches its own specialised name.
+    lsRowSpecs :: !(M.Map (Name, Text) Name)
   }
 
 -- | Lowering monad — lambda-lift state on top of the existing
@@ -229,6 +247,15 @@ freshLetWildName = do
   s <- get
   put s {lsFresh = lsFresh s + 1}
   pure ("$let_w_" <> show (lsFresh s))
+
+-- | Mint a fresh helper name '$rowspec$N' for a per-instantiation
+--   specialisation of a row-unioning combinator. Same shared counter as
+--   the other mint helpers.
+freshRowSpecName :: LowerM Name
+freshRowSpecName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$rowspec$" <> show (lsFresh s))
 
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
@@ -489,7 +516,7 @@ genBuiltInEtaWrappers progType names =
 --   to the user-decl list in the program pipeline).
 runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
 runLowerM m = do
-  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
+  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty M.empty)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
 elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], PreludeTags, CoreProgram)
@@ -537,7 +564,10 @@ elaborateLowerProgram progType progIn = do
               nameStartCol
               (spanStartLine sp)
               (nameStartCol + T.length n)
-      env = mkLowerEnv progType conInfo sigMap typeDeclSpans
+      -- Surface bodies of every top-level function, for per-instantiation
+      -- specialisation of row-unioning combinators (see 'leBodies').
+      funBodies = M.fromList [(n, (args, body)) | FunDef _sp n args body _ _ <- ds]
+      env = mkLowerEnv progType conInfo sigMap typeDeclSpans funBodies
   (mds, liftedHelpers, rowTags) <- runLowerM (traverse (lowerDeclM env sigMap) ds)
   -- Row tag collision check: reject programs in which two distinct
   -- structural-sum labels canonicalise to the same FNV-1a 32-bit hash.
@@ -1060,15 +1090,16 @@ declFreeVars = \case
 --   types down to integer literals. Combines user signatures, the current
 --   program type's platform-effect table, and (as a future hook)
 --   constructor types.
-mkLowerEnv :: ProgramType -> ConInfoEnv -> M.Map Name Type' -> M.Map Name SrcSpan -> LowerEnv
-mkLowerEnv progType conInfo sigMap typeDeclSpans =
+mkLowerEnv :: ProgramType -> ConInfoEnv -> M.Map Name Type' -> M.Map Name SrcSpan -> M.Map Name ([Param], Expr) -> LowerEnv
+mkLowerEnv progType conInfo sigMap typeDeclSpans bodies =
   let userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
       lookupName q = M.lookup q (userSigs <> platformTable progType)
    in LowerEnv
         { leProgramType = progType,
           leTypeOf = lookupName,
           leConInfo = conInfo,
-          leTypeDeclSpans = typeDeclSpans
+          leTypeDeclSpans = typeDeclSpans,
+          leBodies = bodies
         }
 
 -- | Saturate under-applied direct calls by lambda-lifting.
@@ -1310,7 +1341,15 @@ lowerExprM env locals expected = \case
   -- expression. Surface AST -> Core erases the boundary; no @CAscribe@
   -- node exists.
   EAscribe _sp e ty -> lowerExprM env locals (Just ty) e
-  EVar _sp qn -> liftEither (lowerVar env qn)
+  EVar _sp qn -> do
+    bare <- liftEither (lowerVar env qn)
+    -- Implicit row injection at a value-flow boundary: when this var is
+    -- used where a wider row is expected (a bare @Either ErrA Int32@
+    -- flowing into an @Either (String | ErrA) Int32@ slot — via a let,
+    -- a def body, or a case arm), wrap its payload so the row-case sees
+    -- a @CRow@-tagged value. No-op when the types already agree or the
+    -- expected type carries no row.
+    wrapInjectedM (leConInfo env) expected (leTypeOf env qn) bare
   ELit _sp (LString t) -> pure (CString t)
   ELit sp (LInt n) -> case expected of
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
@@ -1455,12 +1494,24 @@ lowerExprM env locals expected = \case
         -- argument slot. For non-lambda heads we keep 'Nothing'
         -- (their type comes from a top-level signature or local
         -- binding).
-        let f0Expected = if isLamHead f0 then mHeadTy else Nothing
-        f0' <- lowerExprM env locals f0Expected f0
-        xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
-        let bare = CCall f0' xs'
-            mResultTy' = applySubst sFinal <$> mResultTy
-        wrapInjectedM (leConInfo env) expected mResultTy' bare
+        -- Implicit row injection: if this fully-applied call widens an
+        -- abstract error row into a concrete one (e.g. `bindEither` /
+        -- `andThenEither` / `bindIO` / `andThenIO` instantiated at
+        -- distinct concrete error types), dispatch to a body-specialised
+        -- copy lowered at those concrete types — the polymorphic original
+        -- cannot inject the row tag (its error types are still tyvars).
+        case rowUnioningSpec env f0 xs mHeadTy of
+          Just (specN, concreteSig, params, body) -> do
+            specName <- getOrCreateRowSpec env specN concreteSig params body
+            xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+            pure (CCall (CVar specName) xs')
+          Nothing -> do
+            let f0Expected = if isLamHead f0 then mHeadTy else Nothing
+            f0' <- lowerExprM env locals f0Expected f0
+            xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+            let bare = CCall f0' xs'
+                mResultTy' = applySubst sFinal <$> mResultTy
+            wrapInjectedM (leConInfo env) expected mResultTy' bare
 
 -- | Best-effort substitution that an argument expression contributes
 --   given a (possibly tyvar-laden) expected type. Used by 'lowerExprM'
@@ -1889,6 +1940,108 @@ constructorsOfType conInfo tyName =
 firstConName :: [(Name, ConInfo)] -> Name
 firstConName ((n, _) : _) = n
 firstConName [] = "" -- empty type: no constructors, body never runs
+
+-- | Decide whether a fully-applied call should be specialised at its
+--   concrete error types, and return the data to do so. A call qualifies
+--   when its head is a top-level function with a known body, the call is
+--   fully applied, and this instantiation /widens/ an abstract error row
+--   into a concrete multi-alternative row (see 'rowWidenedToConcrete').
+--
+--   The re-lowering is needed because a polymorphic combinator like
+--   @bindEither : … -> Either (e1 | e2) b@ cannot emit a 'CRow' tag for
+--   its 'Left' payloads, because its body is lowered while @e1@/@e2@ are
+--   still type variables — 'synthCoerce' short-circuits to identity, and
+--   the resulting bare cell is mis-read by the row-case at runtime.
+--   Re-lowering the body at the concrete error types lets the
+--   construction-site injection (which is correct) fire.
+rowUnioningSpec :: LowerEnv -> Expr -> [Expr] -> Maybe Type' -> Maybe (Name, Type', [Param], Expr)
+rowUnioningSpec env f0 xs mHeadTy = do
+  n <- case f0 of
+    EVar _ (QName [] nm) -> Just nm
+    _ -> Nothing
+  genSig <- mHeadTy
+  (params, body) <- M.lookup n (leBodies env)
+  guard (length xs == length params)
+  -- Pin the combinator's type variables from each argument's synthesised
+  -- type, threading the substitution left-to-right. Using 'synthLabelType'
+  -- (rather than the caller's 'sFinal') matters when an argument's error
+  -- type is itself a row — e.g. the left operand of the outer
+  -- 'andThenEither' in @x |> andThenEither k1 |> andThenEither k2@, whose
+  -- error type is @(e1 | e2)@ from the inner call. The generic result row
+  -- @(e1 | e2)@ has fewer alternatives than the concrete one, so unifying
+  -- result-against-expected would fail by cardinality; deriving the
+  -- substitution from the arguments avoids that.
+  let (genArgTys, _) = splitArrowN (length xs) genSig
+      step acc (paramT, argE) = case synthLabelType env argE of
+        Just argT -> acc <> fromRight mempty (unify (applySubst acc paramT) argT)
+        Nothing -> acc
+      argSub = foldl' step mempty (zip genArgTys xs)
+      concreteSig = applySubst argSub genSig
+  guard (rowWidenedToConcrete genSig concreteSig)
+  pure (n, concreteSig, params, body)
+
+-- | True when, somewhere in the same structural position, the generic
+--   type has a row (@TyOr@) containing a type variable while the
+--   concrete type has a row with two or more distinct concrete (non-row-
+--   variable, non-'empty type') alternatives. That is exactly the shape
+--   the polymorphic body cannot inject — a value of an abstract @e@ has
+--   no statically-known row tag, but the concrete instantiation needs
+--   one per alternative. Recurses through 'TyApp' / 'TyArrow' so the
+--   widened position can sit anywhere (the result row of @Either@/@IO@,
+--   a constructor field, a function-typed argument's result, …).
+rowWidenedToConcrete :: Type' -> Type' -> Bool
+rowWidenedToConcrete gen con = case (gen, con) of
+  (TyOr {}, _) ->
+    let genHasVar = any isRowVar (flattenRow gen)
+        conAlts = flattenRow con
+        conConcrete = ordNub (filter isConcreteAlt conAlts)
+     in -- Specialise only when the concrete row is /fully/ resolved: no
+        -- alternative is still a type variable. A partial instantiation
+        -- (some labels concrete, some abstract — e.g. @andThenIO@ whose
+        -- continuation is a lambda 'synthLabelType' cannot type, leaving
+        -- @e2@ a tyvar) would re-lower the body mixing concrete-tag
+        -- injection with abstract-identity handling, producing a
+        -- malformed value. Fall back to the polymorphic original there;
+        -- it is correct when the row's values were already injected at
+        -- their construction sites (the common case).
+        genHasVar && not (any isRowVar conAlts) && length conConcrete >= 2
+  (TyApp _ gf gx, TyApp _ cf cx) ->
+    rowWidenedToConcrete gf cf || rowWidenedToConcrete gx cx
+  (TyArrow _ ga gb, TyArrow _ ca cb) ->
+    rowWidenedToConcrete ga ca || rowWidenedToConcrete gb cb
+  _ -> False
+  where
+    isRowVar (TyVar _ _) = True
+    isRowVar _ = False
+    isConcreteAlt = \case
+      TyVar _ _ -> False
+      TyEmpty _ _ -> False
+      _ -> True
+
+-- | Return (creating and memoising if necessary) the name of the
+--   per-instantiation specialisation of @n@ at @concreteSig@. The body
+--   is re-lowered with each parameter bound to its concrete type and the
+--   concrete result type pushed in as the expected type, so the
+--   construction-site row injection fires with real tags. The memo entry
+--   is registered before the body is lowered so a self-recursive call in
+--   the body reaches this specialised name rather than looping.
+getOrCreateRowSpec :: LowerEnv -> Name -> Type' -> [Param] -> Expr -> LowerM Name
+getOrCreateRowSpec env n concreteSig params body = do
+  let key = (n, canonicalLabel concreteSig)
+  st <- get
+  case M.lookup key (lsRowSpecs st) of
+    Just nm -> pure nm
+    Nothing -> do
+      nm <- freshRowSpecName
+      modify (\s -> s {lsRowSpecs = M.insert key nm (lsRowSpecs s)})
+      let (argTys, mResultTy) = splitArrowN (length params) concreteSig
+          paramEntries =
+            [(QName [] (paramName p), ty) | (p, ty) <- zip params argTys]
+          env' = extendLowerEnv env paramEntries
+          locals = Set.fromList (map paramName params)
+      body' <- lowerExprM env' locals mResultTy body
+      emitHelper (CFunDef nm (freshenWildcardArgs (map paramName params)) body')
+      pure nm
 
 -- | Best-effort synthesis of an expression's type, used at lowering
 --   time to pick the right row label for implicit injection.

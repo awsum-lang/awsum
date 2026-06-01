@@ -8,6 +8,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Fixed
+
+- **Implicit row injection now fires when a value reaches a wider structural-sum error type through a value-flow boundary, not only at a construction site.** Previously the row tag (`CRow`) was inserted only where a constructor was written directly at the row type (`Left ErrA : Either (String | ErrA) Int32`). A value that arrived already built — a `let`/def-body/`case`-arm variable, or the result of a row-unioning combinator (`bindEither`, `andThenEither`, `bindIO`, `andThenIO`) — kept its narrower representation, which the row-`case` then mis-read: wrong alternative on JS (the constructor tag surfaced as an `Int32`), out-of-bounds access on LLVM/JVM/CLR/WASM. Two parts: (1) an `EVar` used where a row is expected now routes through the existing injection (`let x : Either ErrA Int32 = … in x` at `Either (String | ErrA) Int32`); (2) a fully-applied call that widens an abstract error row `(e1 | e2)` into a concrete multi-alternative row is dispatched to a per-instantiation specialisation of the combinator, whose body is re-lowered at the concrete error types — the polymorphic original cannot inject, because its error types are still type variables when its body is lowered. Covers `Never` collapse, the primitive `String` as an alternative, one- and two-constructor nominal alternatives, idempotent `(e | e) ~ e` collapse, and multi-step chains. Programs that didn't hit the bug are unchanged — output stays identical on every backend.
+
 ## [0.0.5] - 2026-05-31
 
 ### Added

@@ -1,0 +1,9 @@
+defBodyLeft=ErrA
+defBodyRight=7
+letBody=ErrB
+caseTrue=ErrA
+caseFalse=ErrB
+nestedNothing=First
+nestedJustTrue=ErrA
+nestedJustFalse=Second
+strWiden=strErr

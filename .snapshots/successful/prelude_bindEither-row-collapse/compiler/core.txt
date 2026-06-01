@@ -1,0 +1,2717 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "pureIO" [ "x" ]
+            ( CCon 5
+                [ CVar "x" ]
+            )
+        , CFunDef "failIO" [ "e" ]
+            ( CCon 6
+                [ CVar "e" ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "io"
+                                ( CContinue
+                                    [ CCall
+                                        ( CVar "$apply1" )
+                                        [ CVar "cont"
+                                        , CCall
+                                            ( CBuiltIn "internalGetArgs" ) []
+                                        ]
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "io"
+                                ( CContinue
+                                    [ CCall
+                                        ( CVar "$apply1" )
+                                        [ CVar "cont"
+                                        , CCall
+                                            ( CBuiltIn "internalStdinReadAllAsUtf16" ) []
+                                        ]
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "eitherToIO" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCall
+                            ( CVar "failIO" )
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$12" )
+                            [ CCall
+                                ( CVar "pureIO" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "kNever" [ "n" ]
+            ( CCon 4
+                [ CVar "n" ]
+            )
+        , CFunDef "kAOk" [ "n" ]
+            ( CCon 4
+                [ CVar "n" ]
+            )
+        , CFunDef "kAFail" [ "_n" ]
+            ( CCon 3
+                [ CCon 22 [] ]
+            )
+        , CFunDef "kBFail" [ "_n" ]
+            ( CCon 3
+                [ CCon 23 [] ]
+            )
+        , CFunDef "kSOk" [ "n" ]
+            ( CCon 4
+                [ CVar "n" ]
+            )
+        , CFunDef "kSFail" [ "_n" ]
+            ( CCon 3
+                [ CString "kS" ]
+            )
+        , CFunDef "kSecond" [ "_n" ]
+            ( CCon 3
+                [ CCon 25 [] ]
+            )
+        , CValDef "seedNever"
+            ( CCon 4
+                [ CIntLit 1 TInt32 ]
+            )
+        , CValDef "seedA"
+            ( CCon 4
+                [ CIntLit 2 TInt32 ]
+            )
+        , CValDef "seedLeftA"
+            ( CCon 3
+                [ CCon 22 [] ]
+            )
+        , CValDef "seedS"
+            ( CCon 4
+                [ CIntLit 3 TInt32 ]
+            )
+        , CValDef "seedLeftS"
+            ( CCon 3
+                [ CString "seedS" ]
+            )
+        , CValDef "seedT"
+            ( CCon 4
+                [ CIntLit 4 TInt32 ]
+            )
+        , CValDef "seedFirst"
+            ( CCon 3
+                [ CCon 24 [] ]
+            )
+        , CValDef "seedSecond"
+            ( CCon 3
+                [ CCon 25 [] ]
+            )
+        , CValDef "nevOk"
+            ( CCall
+                ( CVar "$df$bindEither$0" )
+                [ CVar "seedNever" ]
+            )
+        , CValDef "nevFail"
+            ( CCall
+                ( CVar "$df$bindEither$1" )
+                [ CVar "seedNever" ]
+            )
+        , CValDef "nevRightOk"
+            ( CCall
+                ( CVar "$df$bindEither$2" )
+                [ CVar "seedA" ]
+            )
+        , CValDef "nevRightE1"
+            ( CCall
+                ( CVar "$df$bindEither$2" )
+                [ CVar "seedLeftA" ]
+            )
+        , CValDef "pureNever"
+            ( CCall
+                ( CVar "$df$bindEither$2" )
+                [ CVar "seedNever" ]
+            )
+        , CValDef "strOk"
+            ( CCall
+                ( CVar "$df$$rowspec$15$3" )
+                [ CVar "seedS" ]
+            )
+        , CValDef "strE1"
+            ( CCall
+                ( CVar "$df$$rowspec$15$3" )
+                [ CVar "seedLeftS" ]
+            )
+        , CValDef "strE2"
+            ( CCall
+                ( CVar "$df$$rowspec$15$4" )
+                [ CVar "seedS" ]
+            )
+        , CValDef "strIdem"
+            ( CCall
+                ( CVar "$df$bindEither$5" )
+                [ CVar "seedS" ]
+            )
+        , CValDef "abE1"
+            ( CCall
+                ( CVar "$df$$rowspec$17$6" )
+                [ CVar "seedLeftA" ]
+            )
+        , CValDef "abE2"
+            ( CCall
+                ( CVar "$df$$rowspec$17$6" )
+                [ CVar "seedA" ]
+            )
+        , CValDef "twoFirst"
+            ( CCall
+                ( CVar "$df$$rowspec$19$7" )
+                [ CVar "seedFirst" ]
+            )
+        , CValDef "twoSecond"
+            ( CCall
+                ( CVar "$df$$rowspec$19$7" )
+                [ CVar "seedSecond" ]
+            )
+        , CValDef "twoE2"
+            ( CCall
+                ( CVar "$df$$rowspec$19$8" )
+                [ CVar "seedT" ]
+            )
+        , CValDef "twoOk"
+            ( CCall
+                ( CVar "$df$$rowspec$19$7" )
+                [ CVar "seedT" ]
+            )
+        , CValDef "idemE1"
+            ( CCall
+                ( CVar "$df$bindEither$1" )
+                [ CVar "seedLeftA" ]
+            )
+        , CValDef "idemE2"
+            ( CCall
+                ( CVar "$df$bindEither$1" )
+                [ CVar "seedA" ]
+            )
+        , CValDef "idem2First"
+            ( CCall
+                ( CVar "$df$bindEither$9" )
+                [ CVar "seedFirst" ]
+            )
+        , CValDef "idem2Second"
+            ( CCall
+                ( CVar "$df$bindEither$9" )
+                [ CVar "seedT" ]
+            )
+        , CValDef "wE1"
+            ( CCall
+                ( CVar "$df$$rowspec$21$10" )
+                [ CCall
+                    ( CVar "$lift$25" )
+                    [ CCall
+                        ( CVar "$df$$rowspec$23$11" )
+                        [ CVar "seedFirst" ]
+                    ]
+                ]
+            )
+        , CValDef "wE2str"
+            ( CCall
+                ( CVar "$df$$rowspec$21$10" )
+                [ CCall
+                    ( CVar "$lift$25" )
+                    [ CCall
+                        ( CVar "$df$$rowspec$23$12" )
+                        [ CVar "seedT" ]
+                    ]
+                ]
+            )
+        , CValDef "wE3"
+            ( CCall
+                ( CVar "$df$$rowspec$21$13" )
+                [ CCall
+                    ( CVar "$lift$25" )
+                    [ CCall
+                        ( CVar "$df$$rowspec$23$11" )
+                        [ CVar "seedT" ]
+                    ]
+                ]
+            )
+        , CValDef "wOk"
+            ( CCall
+                ( CVar "$df$$rowspec$21$10" )
+                [ CCall
+                    ( CVar "$lift$25" )
+                    [ CCall
+                        ( CVar "$df$$rowspec$23$11" )
+                        [ CVar "seedT" ]
+                    ]
+                ]
+            )
+        , CFunDef "showA" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__p0" ]
+                    , CDrop DropFreeUnchecked "__p0"
+                        ( CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 22
+                                , []
+                                , CString "ErrA"
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showNever" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showTwo" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__p0" ]
+                    , CDrop DropFreeUnchecked "__p0"
+                        ( CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 24
+                                , []
+                                , CString "First"
+                                )
+                            ,
+                                ( 25
+                                , []
+                                , CString "Second"
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showStr" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CVar "s" )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showStrA" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 1615808600
+                                , "s"
+                                , CDrop DropFreeUnchecked "s"
+                                    ( CVar "s" )
+                                )
+                            ,
+                                ( 2252990199
+                                , "_a"
+                                , CDrop DropFreeUnchecked "_a"
+                                    ( CString "ErrA" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showAB" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 2252990199
+                                , "_a"
+                                , CDrop DropFreeUnchecked "_a"
+                                    ( CString "ErrA" )
+                                )
+                            ,
+                                ( 2269767818
+                                , "_b"
+                                , CDrop DropFreeUnchecked "_b"
+                                    ( CString "ErrB" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showTwoA" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 925038822
+                                , "t"
+                                , CDrop DropFreeUnchecked "t"
+                                    ( CCase
+                                        ( CVar "t" )
+                                        [
+                                            ( 24
+                                            , []
+                                            , CString "First"
+                                            )
+                                        ,
+                                            ( 25
+                                            , []
+                                            , CString "Second"
+                                            )
+                                        ]
+                                    )
+                                )
+                            ,
+                                ( 2252990199
+                                , "_a"
+                                , CDrop DropFreeUnchecked "_a"
+                                    ( CString "ErrA" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "showThree" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 925038822
+                                , "t"
+                                , CDrop DropFreeUnchecked "t"
+                                    ( CCase
+                                        ( CVar "t" )
+                                        [
+                                            ( 24
+                                            , []
+                                            , CString "First"
+                                            )
+                                        ,
+                                            ( 25
+                                            , []
+                                            , CString "Second"
+                                            )
+                                        ]
+                                    )
+                                )
+                            ,
+                                ( 1615808600
+                                , "s"
+                                , CDrop DropFreeUnchecked "s"
+                                    ( CVar "s" )
+                                )
+                            ,
+                                ( 2252990199
+                                , "_a"
+                                , CDrop DropFreeUnchecked "_a"
+                                    ( CString "ErrA" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "tagged"
+            [ "label"
+            , "val"
+            ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "label"
+                    , CString "="
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_1" ]
+                    , CDrop DropFreeUnchecked "$do_e_1"
+                        ( CCon 3
+                            [ CVar "$do_e_1" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCase
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "a"
+                                , CVar "val"
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_0" ]
+                                , CDrop DropFreeUnchecked "$do_e_0"
+                                    ( CCon 3
+                                        [ CVar "$do_e_0" ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "b" ]
+                                , CDrop DropFreeUnchecked "b"
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "b"
+                                        , CString "
+                                          "
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "appendTagged"
+            [ "acc"
+            , "label"
+            , "val"
+            ]
+            ( CCase
+                ( CCall
+                    ( CVar "tagged" )
+                    [ CVar "label"
+                    , CVar "val"
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_2" ]
+                    , CDrop DropFreeUnchecked "$do_e_2"
+                        ( CCon 3
+                            [ CVar "$do_e_2" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "line" ]
+                    , CDrop DropFreeUnchecked "line"
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "acc"
+                            , CVar "line"
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CValDef "render"
+            ( CCase
+                ( CCall
+                    ( CVar "tagged" )
+                    [ CString "nevOk"
+                    , CCall
+                        ( CVar "showA" )
+                        [ CVar "nevOk" ]
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_24" ]
+                    , CCon 3
+                        [ CVar "$do_e_24" ]
+                    )
+                ,
+                    ( 4
+                    , [ "r01" ]
+                    , CCase
+                        ( CCall
+                            ( CVar "appendTagged" )
+                            [ CVar "r01"
+                            , CString "nevFail"
+                            , CCall
+                                ( CVar "showA" )
+                                [ CVar "nevFail" ]
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "$do_e_23" ]
+                            , CCon 3
+                                [ CVar "$do_e_23" ]
+                            )
+                        ,
+                            ( 4
+                            , [ "r02" ]
+                            , CCase
+                                ( CCall
+                                    ( CVar "appendTagged" )
+                                    [ CVar "r02"
+                                    , CString "nevRightOk"
+                                    , CCall
+                                        ( CVar "showA" )
+                                        [ CVar "nevRightOk" ]
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_22" ]
+                                    , CCon 3
+                                        [ CVar "$do_e_22" ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "r03" ]
+                                    , CCase
+                                        ( CCall
+                                            ( CVar "appendTagged" )
+                                            [ CVar "r03"
+                                            , CString "nevRightE1"
+                                            , CCall
+                                                ( CVar "showA" )
+                                                [ CVar "nevRightE1" ]
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_21" ]
+                                            , CCon 3
+                                                [ CVar "$do_e_21" ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "r04" ]
+                                            , CCase
+                                                ( CCall
+                                                    ( CVar "appendTagged" )
+                                                    [ CVar "r04"
+                                                    , CString "pureNever"
+                                                    , CCall
+                                                        ( CVar "showNever" )
+                                                        [ CVar "pureNever" ]
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "$do_e_20" ]
+                                                    , CCon 3
+                                                        [ CVar "$do_e_20" ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "r05" ]
+                                                    , CCase
+                                                        ( CCall
+                                                            ( CVar "appendTagged" )
+                                                            [ CVar "r05"
+                                                            , CString "strOk"
+                                                            , CCall
+                                                                ( CVar "showStrA" )
+                                                                [ CVar "strOk" ]
+                                                            ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_19" ]
+                                                            , CCon 3
+                                                                [ CVar "$do_e_19" ]
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "r06" ]
+                                                            , CCase
+                                                                ( CCall
+                                                                    ( CVar "appendTagged" )
+                                                                    [ CVar "r06"
+                                                                    , CString "strE1"
+                                                                    , CCall
+                                                                        ( CVar "showStrA" )
+                                                                        [ CVar "strE1" ]
+                                                                    ]
+                                                                )
+                                                                [
+                                                                    ( 3
+                                                                    , [ "$do_e_18" ]
+                                                                    , CCon 3
+                                                                        [ CVar "$do_e_18" ]
+                                                                    )
+                                                                ,
+                                                                    ( 4
+                                                                    , [ "r07" ]
+                                                                    , CCase
+                                                                        ( CCall
+                                                                            ( CVar "appendTagged" )
+                                                                            [ CVar "r07"
+                                                                            , CString "strE2"
+                                                                            , CCall
+                                                                                ( CVar "showStrA" )
+                                                                                [ CVar "strE2" ]
+                                                                            ]
+                                                                        )
+                                                                        [
+                                                                            ( 3
+                                                                            , [ "$do_e_17" ]
+                                                                            , CCon 3
+                                                                                [ CVar "$do_e_17" ]
+                                                                            )
+                                                                        ,
+                                                                            ( 4
+                                                                            , [ "r08" ]
+                                                                            , CCase
+                                                                                ( CCall
+                                                                                    ( CVar "appendTagged" )
+                                                                                    [ CVar "r08"
+                                                                                    , CString "strIdem"
+                                                                                    , CCall
+                                                                                        ( CVar "showStr" )
+                                                                                        [ CVar "strIdem" ]
+                                                                                    ]
+                                                                                )
+                                                                                [
+                                                                                    ( 3
+                                                                                    , [ "$do_e_16" ]
+                                                                                    , CCon 3
+                                                                                        [ CVar "$do_e_16" ]
+                                                                                    )
+                                                                                ,
+                                                                                    ( 4
+                                                                                    , [ "r09" ]
+                                                                                    , CCase
+                                                                                        ( CCall
+                                                                                            ( CVar "appendTagged" )
+                                                                                            [ CVar "r09"
+                                                                                            , CString "abE1"
+                                                                                            , CCall
+                                                                                                ( CVar "showAB" )
+                                                                                                [ CVar "abE1" ]
+                                                                                            ]
+                                                                                        )
+                                                                                        [
+                                                                                            ( 3
+                                                                                            , [ "$do_e_15" ]
+                                                                                            , CCon 3
+                                                                                                [ CVar "$do_e_15" ]
+                                                                                            )
+                                                                                        ,
+                                                                                            ( 4
+                                                                                            , [ "r10" ]
+                                                                                            , CCase
+                                                                                                ( CCall
+                                                                                                    ( CVar "appendTagged" )
+                                                                                                    [ CVar "r10"
+                                                                                                    , CString "abE2"
+                                                                                                    , CCall
+                                                                                                        ( CVar "showAB" )
+                                                                                                        [ CVar "abE2" ]
+                                                                                                    ]
+                                                                                                )
+                                                                                                [
+                                                                                                    ( 3
+                                                                                                    , [ "$do_e_14" ]
+                                                                                                    , CCon 3
+                                                                                                        [ CVar "$do_e_14" ]
+                                                                                                    )
+                                                                                                ,
+                                                                                                    ( 4
+                                                                                                    , [ "r11" ]
+                                                                                                    , CCase
+                                                                                                        ( CCall
+                                                                                                            ( CVar "appendTagged" )
+                                                                                                            [ CVar "r11"
+                                                                                                            , CString "twoFirst"
+                                                                                                            , CCall
+                                                                                                                ( CVar "showTwoA" )
+                                                                                                                [ CVar "twoFirst" ]
+                                                                                                            ]
+                                                                                                        )
+                                                                                                        [
+                                                                                                            ( 3
+                                                                                                            , [ "$do_e_13" ]
+                                                                                                            , CCon 3
+                                                                                                                [ CVar "$do_e_13" ]
+                                                                                                            )
+                                                                                                        ,
+                                                                                                            ( 4
+                                                                                                            , [ "r12" ]
+                                                                                                            , CCase
+                                                                                                                ( CCall
+                                                                                                                    ( CVar "appendTagged" )
+                                                                                                                    [ CVar "r12"
+                                                                                                                    , CString "twoSecond"
+                                                                                                                    , CCall
+                                                                                                                        ( CVar "showTwoA" )
+                                                                                                                        [ CVar "twoSecond" ]
+                                                                                                                    ]
+                                                                                                                )
+                                                                                                                [
+                                                                                                                    ( 3
+                                                                                                                    , [ "$do_e_12" ]
+                                                                                                                    , CCon 3
+                                                                                                                        [ CVar "$do_e_12" ]
+                                                                                                                    )
+                                                                                                                ,
+                                                                                                                    ( 4
+                                                                                                                    , [ "r13" ]
+                                                                                                                    , CCase
+                                                                                                                        ( CCall
+                                                                                                                            ( CVar "appendTagged" )
+                                                                                                                            [ CVar "r13"
+                                                                                                                            , CString "twoE2"
+                                                                                                                            , CCall
+                                                                                                                                ( CVar "showTwoA" )
+                                                                                                                                [ CVar "twoE2" ]
+                                                                                                                            ]
+                                                                                                                        )
+                                                                                                                        [
+                                                                                                                            ( 3
+                                                                                                                            , [ "$do_e_11" ]
+                                                                                                                            , CCon 3
+                                                                                                                                [ CVar "$do_e_11" ]
+                                                                                                                            )
+                                                                                                                        ,
+                                                                                                                            ( 4
+                                                                                                                            , [ "r14" ]
+                                                                                                                            , CCase
+                                                                                                                                ( CCall
+                                                                                                                                    ( CVar "appendTagged" )
+                                                                                                                                    [ CVar "r14"
+                                                                                                                                    , CString "twoOk"
+                                                                                                                                    , CCall
+                                                                                                                                        ( CVar "showTwoA" )
+                                                                                                                                        [ CVar "twoOk" ]
+                                                                                                                                    ]
+                                                                                                                                )
+                                                                                                                                [
+                                                                                                                                    ( 3
+                                                                                                                                    , [ "$do_e_10" ]
+                                                                                                                                    , CCon 3
+                                                                                                                                        [ CVar "$do_e_10" ]
+                                                                                                                                    )
+                                                                                                                                ,
+                                                                                                                                    ( 4
+                                                                                                                                    , [ "r15" ]
+                                                                                                                                    , CCase
+                                                                                                                                        ( CCall
+                                                                                                                                            ( CVar "appendTagged" )
+                                                                                                                                            [ CVar "r15"
+                                                                                                                                            , CString "idemE1"
+                                                                                                                                            , CCall
+                                                                                                                                                ( CVar "showA" )
+                                                                                                                                                [ CVar "idemE1" ]
+                                                                                                                                            ]
+                                                                                                                                        )
+                                                                                                                                        [
+                                                                                                                                            ( 3
+                                                                                                                                            , [ "$do_e_9" ]
+                                                                                                                                            , CCon 3
+                                                                                                                                                [ CVar "$do_e_9" ]
+                                                                                                                                            )
+                                                                                                                                        ,
+                                                                                                                                            ( 4
+                                                                                                                                            , [ "r16" ]
+                                                                                                                                            , CCase
+                                                                                                                                                ( CCall
+                                                                                                                                                    ( CVar "appendTagged" )
+                                                                                                                                                    [ CVar "r16"
+                                                                                                                                                    , CString "idemE2"
+                                                                                                                                                    , CCall
+                                                                                                                                                        ( CVar "showA" )
+                                                                                                                                                        [ CVar "idemE2" ]
+                                                                                                                                                    ]
+                                                                                                                                                )
+                                                                                                                                                [
+                                                                                                                                                    ( 3
+                                                                                                                                                    , [ "$do_e_8" ]
+                                                                                                                                                    , CCon 3
+                                                                                                                                                        [ CVar "$do_e_8" ]
+                                                                                                                                                    )
+                                                                                                                                                ,
+                                                                                                                                                    ( 4
+                                                                                                                                                    , [ "r17" ]
+                                                                                                                                                    , CCase
+                                                                                                                                                        ( CCall
+                                                                                                                                                            ( CVar "appendTagged" )
+                                                                                                                                                            [ CVar "r17"
+                                                                                                                                                            , CString "idem2First"
+                                                                                                                                                            , CCall
+                                                                                                                                                                ( CVar "showTwo" )
+                                                                                                                                                                [ CVar "idem2First" ]
+                                                                                                                                                            ]
+                                                                                                                                                        )
+                                                                                                                                                        [
+                                                                                                                                                            ( 3
+                                                                                                                                                            , [ "$do_e_7" ]
+                                                                                                                                                            , CCon 3
+                                                                                                                                                                [ CVar "$do_e_7" ]
+                                                                                                                                                            )
+                                                                                                                                                        ,
+                                                                                                                                                            ( 4
+                                                                                                                                                            , [ "r18" ]
+                                                                                                                                                            , CCase
+                                                                                                                                                                ( CCall
+                                                                                                                                                                    ( CVar "appendTagged" )
+                                                                                                                                                                    [ CVar "r18"
+                                                                                                                                                                    , CString "idem2Second"
+                                                                                                                                                                    , CCall
+                                                                                                                                                                        ( CVar "showTwo" )
+                                                                                                                                                                        [ CVar "idem2Second" ]
+                                                                                                                                                                    ]
+                                                                                                                                                                )
+                                                                                                                                                                [
+                                                                                                                                                                    ( 3
+                                                                                                                                                                    , [ "$do_e_6" ]
+                                                                                                                                                                    , CCon 3
+                                                                                                                                                                        [ CVar "$do_e_6" ]
+                                                                                                                                                                    )
+                                                                                                                                                                ,
+                                                                                                                                                                    ( 4
+                                                                                                                                                                    , [ "r19" ]
+                                                                                                                                                                    , CCase
+                                                                                                                                                                        ( CCall
+                                                                                                                                                                            ( CVar "appendTagged" )
+                                                                                                                                                                            [ CVar "r19"
+                                                                                                                                                                            , CString "wE1"
+                                                                                                                                                                            , CCall
+                                                                                                                                                                                ( CVar "showThree" )
+                                                                                                                                                                                [ CVar "wE1" ]
+                                                                                                                                                                            ]
+                                                                                                                                                                        )
+                                                                                                                                                                        [
+                                                                                                                                                                            ( 3
+                                                                                                                                                                            , [ "$do_e_5" ]
+                                                                                                                                                                            , CCon 3
+                                                                                                                                                                                [ CVar "$do_e_5" ]
+                                                                                                                                                                            )
+                                                                                                                                                                        ,
+                                                                                                                                                                            ( 4
+                                                                                                                                                                            , [ "r20" ]
+                                                                                                                                                                            , CCase
+                                                                                                                                                                                ( CCall
+                                                                                                                                                                                    ( CVar "appendTagged" )
+                                                                                                                                                                                    [ CVar "r20"
+                                                                                                                                                                                    , CString "wE2str"
+                                                                                                                                                                                    , CCall
+                                                                                                                                                                                        ( CVar "showThree" )
+                                                                                                                                                                                        [ CVar "wE2str" ]
+                                                                                                                                                                                    ]
+                                                                                                                                                                                )
+                                                                                                                                                                                [
+                                                                                                                                                                                    ( 3
+                                                                                                                                                                                    , [ "$do_e_4" ]
+                                                                                                                                                                                    , CCon 3
+                                                                                                                                                                                        [ CVar "$do_e_4" ]
+                                                                                                                                                                                    )
+                                                                                                                                                                                ,
+                                                                                                                                                                                    ( 4
+                                                                                                                                                                                    , [ "r21" ]
+                                                                                                                                                                                    , CCase
+                                                                                                                                                                                        ( CCall
+                                                                                                                                                                                            ( CVar "appendTagged" )
+                                                                                                                                                                                            [ CVar "r21"
+                                                                                                                                                                                            , CString "wE3"
+                                                                                                                                                                                            , CCall
+                                                                                                                                                                                                ( CVar "showThree" )
+                                                                                                                                                                                                [ CVar "wE3" ]
+                                                                                                                                                                                            ]
+                                                                                                                                                                                        )
+                                                                                                                                                                                        [
+                                                                                                                                                                                            ( 3
+                                                                                                                                                                                            , [ "$do_e_3" ]
+                                                                                                                                                                                            , CCon 3
+                                                                                                                                                                                                [ CVar "$do_e_3" ]
+                                                                                                                                                                                            )
+                                                                                                                                                                                        ,
+                                                                                                                                                                                            ( 4
+                                                                                                                                                                                            , [ "r22" ]
+                                                                                                                                                                                            , CCall
+                                                                                                                                                                                                ( CVar "appendTagged" )
+                                                                                                                                                                                                [ CVar "r22"
+                                                                                                                                                                                                , CString "wOk"
+                                                                                                                                                                                                , CCall
+                                                                                                                                                                                                    ( CVar "showThree" )
+                                                                                                                                                                                                    [ CVar "wOk" ]
+                                                                                                                                                                                                ]
+                                                                                                                                                                                            )
+                                                                                                                                                                                        ]
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                            )
+                                                                                                                                                                        ]
+                                                                                                                                                                    )
+                                                                                                                                                                ]
+                                                                                                                                                            )
+                                                                                                                                                        ]
+                                                                                                                                                    )
+                                                                                                                                                ]
+                                                                                                                                            )
+                                                                                                                                        ]
+                                                                                                                                    )
+                                                                                                                                ]
+                                                                                                                            )
+                                                                                                                        ]
+                                                                                                                    )
+                                                                                                                ]
+                                                                                                            )
+                                                                                                        ]
+                                                                                                    )
+                                                                                                ]
+                                                                                            )
+                                                                                        ]
+                                                                                    )
+                                                                                ]
+                                                                            )
+                                                                        ]
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "printErr" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 18
+                    , []
+                    , CCon 7
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$df$handleErrorIO$14" )
+                [ CCall
+                    ( CVar "$df$andThenIO$17" )
+                    [ CCall
+                        ( CVar "$lift$26" )
+                        [ CCall
+                            ( CVar "eitherToIO" )
+                            [ CVar "render" ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$lift$0" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$1" )
+                [ CVar "__input"
+                , CCon 47 []
+                ]
+            )
+        , CFunDef "$cps$$lift$1"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 5
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$1" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$1" )
+                                [ CVar "$k"
+                                , CCon 6
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 48
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$1" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 32
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$1" )
+                                [ CVar "$k"
+                                , CCon 9
+                                    [ CCon 35
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$1"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 47
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 48
+                        ,
+                            [ "$pk_48"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_48"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_48"
+                                        , CReuse "$k" 7
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$lift$12" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$12" )
+                [ CVar "__input"
+                , CCon 49 []
+                ]
+            )
+        , CFunDef "$cps$$lift$12"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 5
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$12" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$12" )
+                                [ CVar "$k"
+                                , CCon 6
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 50
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$12" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 30
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$12" )
+                                [ CVar "$k"
+                                , CCon 9
+                                    [ CCon 31
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$12"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 49
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 50
+                        ,
+                            [ "$pk_50"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_50"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_50"
+                                        , CReuse "$k" 7
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$lift$16" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 2252990199
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$18" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 2269767818
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$20" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 2252990199
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$22" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 2252990199
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$24" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 1615808600
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$25" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$26" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$26" )
+                [ CVar "__input"
+                , CCon 51 []
+                ]
+            )
+        , CFunDef "$cps$$lift$26"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 5
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$26" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$26" )
+                                [ CVar "$k"
+                                , CCon 6
+                                    [ CVar "__f0" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 52
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$26" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 33
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "__f0" ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CCall
+                                ( CVar "$apply$$lift$26" )
+                                [ CVar "$k"
+                                , CCon 9
+                                    [ CCon 34
+                                        [ CVar "__f0" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$26"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 51
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 52
+                        ,
+                            [ "$pk_52"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_52"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_52"
+                                        , CReuse "$k" 7
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$bi$IO.Stdout.print" [ "$x0" ]
+            ( CCon 7
+                [ CVar "$x0"
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$df$bindEither$0" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "kAOk" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$bindEither$1" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "kAFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$bindEither$2" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "kNever" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$15$3" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 1615808600
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$16" )
+                            [ CCall
+                                ( CVar "kAOk" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$15$4" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 1615808600
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$16" )
+                            [ CCall
+                                ( CVar "kAFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$bindEither$5" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "kSFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$17$6" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 2252990199
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$18" )
+                            [ CCall
+                                ( CVar "kBFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$19$7" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 925038822
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$20" )
+                            [ CCall
+                                ( CVar "kAOk" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$19$8" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 925038822
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$20" )
+                            [ CCall
+                                ( CVar "kAFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$bindEither$9" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "kSecond" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$21$10" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$22" )
+                            [ CCall
+                                ( CVar "kAOk" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$23$11" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 925038822
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$24" )
+                            [ CCall
+                                ( CVar "kSOk" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$23$12" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 925038822
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$24" )
+                            [ CCall
+                                ( CVar "kSFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowspec$21$13" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$22" )
+                            [ CCall
+                                ( CVar "kAFail" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$handleErrorIO$14" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$14" )
+                [ CVar "io"
+                , CCon 53 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$14"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$14" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "a" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CDrop DropFreeUnchecked "e"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$14" )
+                                [ CVar "$k"
+                                , CCall
+                                    ( CVar "printErr" )
+                                    [ CVar "e" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse "io" 54
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$14" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 26
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$14" )
+                                [ CVar "$k"
+                                , CCon 9
+                                    [ CCon 27
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$14"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 53
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 54
+                        ,
+                            [ "$pk_54"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_54"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_54"
+                                        , CReuse "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$df$andThenIO$17" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$andThenIO$17" )
+                [ CVar "io"
+                , CCon 55 []
+                ]
+            )
+        , CFunDef "$cps$$df$andThenIO$17"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCall
+                                ( CVar "$apply$$df$andThenIO$17" )
+                                [ CVar "$k"
+                                , CCall
+                                    ( CVar "$lift$1" )
+                                    [ CCall
+                                        ( CVar "$bi$IO.Stdout.print" )
+                                        [ CVar "a" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CDrop DropFreeUnchecked "e"
+                            ( CCall
+                                ( CVar "$apply$$df$andThenIO$17" )
+                                [ CVar "$k"
+                                , CCon 6
+                                    [ CVar "e" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse "io" 56
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$andThenIO$17" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 28
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 9
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$andThenIO$17" )
+                                [ CVar "$k"
+                                , CCon 9
+                                    [ CCon 29
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$17"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 55
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 56
+                        ,
+                            [ "$pk_56"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_56"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_56"
+                                        , CReuse "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$scc$$apply1_$df$$lam$10$15_$df$$lam$11$16_$df$$lam$4$18_$df$$lam$5$19_$lift$13_$lift$14_$lift$2_$lift$27_$lift$28_$lift$3" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$apply1_$df$$lam$10$15_$df$$lam$11$16_$df$$lam$4$18_$df$$lam$5$19_$lift$13_$lift$14_$lift$2_$lift$27_$lift$28_$lift$3" )
+                [ CVar "$args"
+                , CCon 57 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$10$15_$df$$lam$11$16_$df$$lam$4$18_$df$$lam$5$19_$lift$13_$lift$14_$lift$2_$lift$27_$lift$28_$lift$3"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 36
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CDrop DropFreeUnchecked "$cl"
+                            ( CDrop DropFreeUnchecked "$arg0"
+                                ( CCase
+                                    ( CVar "$cl" )
+                                    [
+                                        ( 26
+                                        , [ "$cap26_0" ]
+                                        , CDrop DropFreeUnchecked "$cap26_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 37
+                                                        [ CVar "$cap26_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 27
+                                        , [ "$cap27_0" ]
+                                        , CDrop DropFreeUnchecked "$cap27_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 38
+                                                        [ CVar "$cap27_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 28
+                                        , [ "$cap28_0" ]
+                                        , CDrop DropFreeUnchecked "$cap28_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 39
+                                                        [ CVar "$cap28_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 29
+                                        , [ "$cap29_0" ]
+                                        , CDrop DropFreeUnchecked "$cap29_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 40
+                                                        [ CVar "$cap29_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 30
+                                        , [ "$cap30_0" ]
+                                        , CDrop DropFreeUnchecked "$cap30_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 41
+                                                        [ CVar "$cap30_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 31
+                                        , [ "$cap31_0" ]
+                                        , CDrop DropFreeUnchecked "$cap31_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 42
+                                                        [ CVar "$cap31_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 32
+                                        , [ "$cap32_0" ]
+                                        , CDrop DropFreeUnchecked "$cap32_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 43
+                                                        [ CVar "$cap32_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 33
+                                        , [ "$cap33_0" ]
+                                        , CDrop DropFreeUnchecked "$cap33_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 44
+                                                        [ CVar "$cap33_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 34
+                                        , [ "$cap34_0" ]
+                                        , CDrop DropFreeUnchecked "$cap34_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 45
+                                                        [ CVar "$cap34_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 35
+                                        , [ "$cap35_0" ]
+                                        , CDrop DropFreeUnchecked "$cap35_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 46
+                                                        [ CVar "$cap35_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 37
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 58
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 38
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 59
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 39
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 60
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 40
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 61
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 41
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 62
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 42
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 63
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 43
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 64
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 44
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 65
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 45
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 66
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 46
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 36
+                                            [ CVar "__f"
+                                            , CVar "__arg"
+                                            ]
+                                        , CCon 67
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_$df$$lam$10$15_$df$$lam$11$16_$df$$lam$4$18_$df$$lam$5$19_$lift$13_$lift$14_$lift$2_$lift$27_$lift$28_$lift$3" )
+                [ CCon 36
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
+            )
+        ]
+    }

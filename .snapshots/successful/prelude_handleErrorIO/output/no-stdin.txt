@@ -1,0 +1,9 @@
+recover=11
+dispatchA=21
+dispatchB=22
+passthrough=33
+nested=55
+refailNarrow=ErrB
+refailRow=ErrC
+treePreserve=[X][R]
+treeNoError=[Y]

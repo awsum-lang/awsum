@@ -1,0 +1,119 @@
+{- Row union by /value flow/, not by a combinator: a bare narrow-error
+   `Either` value (a variable, not a fresh `Left …` construction and not
+   a constructor field) is used where a wider row is expected — as a def
+   body, a `let` body, a `case`-arm body, and nested `case`-arm bodies.
+   Each such position must inject the row tag so the error survives;
+   every case takes a `Left` path (or a `Right`) and is matched back by
+   row ascription. The union here is formed directly by value flow into
+   the wider-row binding, not by `do` or an explicit combinator. Output
+   is `label=value` per line. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrTwo = First | Second
+
+vErrA : Either ErrA Int32
+vErrA = Left ErrA
+
+vErrB : Either ErrB Int32
+vErrB = Left ErrB
+
+vOkA : Either ErrA Int32
+vOkA = Right 7
+
+vFirst : Either ErrTwo Int32
+vFirst = Left First
+
+vSecond : Either ErrTwo Int32
+vSecond = Left Second
+
+vStr : Either String Int32
+vStr = Left "strErr"
+
+{- def body: a bare narrow var used where a wider row is expected. -}
+defBodyLeft : Either (ErrA | ErrB) Int32
+defBodyLeft = vErrA
+
+defBodyRight : Either (ErrA | ErrB) Int32
+defBodyRight = vOkA
+
+{- let body: the narrow var leaves the `let` at the wider row type. -}
+letBody : Either (ErrA | ErrB) Int32
+letBody =
+  let x : Either ErrB Int32 = vErrB
+   in x
+
+{- case-arm union: each arm returns a bare narrow var of a different
+error type; the signature unifies them into the row. -}
+caseUnion : Bool -> Either (ErrA | ErrB) Int32
+caseUnion flag = case flag of
+  True -> vErrA
+  False -> vErrB
+
+{- nested-case union into a two-constructor + one-constructor row. -}
+nestedUnion : Maybe Bool -> Either (ErrTwo | ErrA) Int32
+nestedUnion m = case m of
+  Nothing -> vFirst
+  Just b -> case b of
+    True -> vErrA
+    False -> vSecond
+
+{- String alternative widened by value flow. -}
+strWiden : Either (String | ErrA) Int32
+strWiden = vStr
+
+showAB : Either (ErrA | ErrB) Int32 -> String
+showAB e = case e of
+  Left (_a : ErrA) -> "ErrA"
+  Left (_b : ErrB) -> "ErrB"
+  Right n -> showInt32 n
+
+showTwoA : Either (ErrTwo | ErrA) Int32 -> String
+showTwoA e = case e of
+  Left (t : ErrTwo) -> case t of
+    First -> "First"
+    Second -> "Second"
+  Left (_a : ErrA) -> "ErrA"
+  Right n -> showInt32 n
+
+showStrA : Either (String | ErrA) Int32 -> String
+showStrA e = case e of
+  Left (s : String) -> s
+  Left (_a : ErrA) -> "ErrA"
+  Right n -> showInt32 n
+
+tagged : String -> String -> Either StringTooLong String
+tagged label val = do
+  a <- label ++ "="
+  b <- a ++ val
+  b ++ "\n"
+
+appendTagged : String -> String -> String -> Either StringTooLong String
+appendTagged acc label val = do
+  line <- tagged label val
+  acc ++ line
+
+render : Either StringTooLong String
+render = do
+  r01 <- tagged "defBodyLeft" (showAB defBodyLeft)
+  r02 <- appendTagged r01 "defBodyRight" (showAB defBodyRight)
+  r03 <- appendTagged r02 "letBody" (showAB letBody)
+  r04 <- appendTagged r03 "caseTrue" (showAB (caseUnion True))
+  r05 <- appendTagged r04 "caseFalse" (showAB (caseUnion False))
+  r06 <- appendTagged r05 "nestedNothing" (showTwoA (nestedUnion Nothing))
+  r07 <- appendTagged r06 "nestedJustTrue" (showTwoA (nestedUnion (Just True)))
+  r08 <- appendTagged r07 "nestedJustFalse" (showTwoA (nestedUnion (Just False)))
+  appendTagged r08 "strWiden" (showStrA strWiden)
+
+printErr : StringTooLong -> IO Never Unit
+printErr e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main = eitherToIO render
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO printErr

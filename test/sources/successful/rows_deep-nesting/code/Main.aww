@@ -1,0 +1,62 @@
+{- Row injected four nominal heads deep: `Box > Maybe (Just) > Either
+   (Right) > (Bool | Unit)`. Two paths: direct construction at the deep
+   row type, and a value-flow widen where a narrow `Box (Maybe (Either
+   ErrA Bool))` flows into the `(Bool | Unit)`-rowed type — the coercion
+   lift must recurse through `Box`, `Maybe` and `Either` to reach and
+   tag the innermost `Bool`. Output is `label=value` per line. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type Box a = Box a
+
+directDeepT : Box (Maybe (Either ErrA (Bool | Unit)))
+directDeepT = Box (Just (Right True))
+
+directDeepU : Box (Maybe (Either ErrA (Bool | Unit)))
+directDeepU = Box (Just (Right Unit))
+
+narrowDeep : Box (Maybe (Either ErrA Bool))
+narrowDeep = Box (Just (Right True))
+
+widenedDeep : Box (Maybe (Either ErrA (Bool | Unit)))
+widenedDeep = narrowDeep
+
+showDeep : Box (Maybe (Either ErrA (Bool | Unit))) -> String
+showDeep b = case b of
+  Box m -> case m of
+    Nothing -> "N"
+    Just inner -> case inner of
+      Left _e -> "L"
+      Right bu -> case bu of
+        (x : Bool) -> case x of
+          True -> "RT"
+          False -> "RF"
+        (u : Unit) -> "RU"
+
+tagged : String -> String -> Either StringTooLong String
+tagged label val = do
+  a <- label ++ "="
+  b <- a ++ val
+  b ++ "\n"
+
+appendTagged : String -> String -> String -> Either StringTooLong String
+appendTagged acc label val = do
+  line <- tagged label val
+  acc ++ line
+
+render : Either StringTooLong String
+render = do
+  r01 <- tagged "directDeepT" (showDeep directDeepT)
+  r02 <- appendTagged r01 "directDeepU" (showDeep directDeepU)
+  appendTagged r02 "widenedDeep" (showDeep widenedDeep)
+
+printErr : StringTooLong -> IO Never Unit
+printErr e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main = eitherToIO render
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO printErr

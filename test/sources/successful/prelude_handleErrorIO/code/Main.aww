@@ -1,0 +1,123 @@
+{- Thorough test of `handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a`.
+   It eliminates the input error row `e1` (the handler dispatches on it)
+   and introduces the handler's own row `e2`; it also walks the whole IO
+   tree, so effects before a failure are preserved. Scenarios:
+     recover       — failure recovered to a success value
+     dispatchA/B   — handler dispatches on a multi-alternative input row
+     passthrough   — success ignores the handler
+     refailNarrow  — handler re-fails with a different single error
+     refailRow     — handler re-fails into a row (e2 multi-alternative)
+     nested        — re-fail then a second handler recovers
+     treePreserve  — print then fail: the print survives, the fail is handled
+     treeNoError   — print over an `IO Never` tree (handler unreachable)
+   Output is `label=value` per line. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+type ErrC = ErrC
+
+recoverH : ErrA -> IO Never Int32
+recoverH _e = pureIO 11
+
+dispatchH : (ErrA | ErrB) -> IO Never Int32
+dispatchH e = case e of
+  (_a : ErrA) -> pureIO 21
+  (_b : ErrB) -> pureIO 22
+
+refailNarrowH : ErrA -> IO ErrB Int32
+refailNarrowH _e = failIO ErrB
+
+reFailC : IO (ErrB | ErrC) Int32
+reFailC = failIO ErrC
+
+refailRowH : ErrA -> IO (ErrB | ErrC) Int32
+refailRowH _e = reFailC
+
+nestedRecoverH : ErrB -> IO Never Int32
+nestedRecoverH _e = pureIO 55
+
+treePreserveH : ErrA -> IO Never Unit
+treePreserveH _e = IO.Stdout.print "[R]"
+
+treeNoErrorH : Never -> IO Never Unit
+treeNoErrorH _e = IO.Stdout.print "[!]"
+
+inErrA : IO (ErrA | ErrB) Int32
+inErrA = failIO ErrA
+
+inErrB : IO (ErrA | ErrB) Int32
+inErrB = failIO ErrB
+
+recover : IO Never Int32
+recover = failIO ErrA |> handleErrorIO recoverH
+
+dispatchA : IO Never Int32
+dispatchA = inErrA |> handleErrorIO dispatchH
+
+dispatchB : IO Never Int32
+dispatchB = inErrB |> handleErrorIO dispatchH
+
+passthrough : IO Never Int32
+passthrough = pureIO 33 |> handleErrorIO recoverH
+
+nested : IO Never Int32
+nested = failIO ErrA
+  |> handleErrorIO refailNarrowH
+  |> handleErrorIO nestedRecoverH
+
+refailNarrow : IO ErrB Int32
+refailNarrow = failIO ErrA |> handleErrorIO refailNarrowH
+
+refailRow : IO (ErrB | ErrC) Int32
+refailRow = failIO ErrA |> handleErrorIO refailRowH
+
+treePreserve : IO Never Unit
+treePreserve = IO.Stdout.print "[X]"
+  |> andThenIO (\_u -> failIO ErrA)
+  |> handleErrorIO treePreserveH
+
+treeNoError : IO Never Unit
+treeNoError = IO.Stdout.print "[Y]" |> handleErrorIO treeNoErrorH
+
+observeNever : IO Never Int32 -> IO Never Unit
+observeNever io = mapIO io showInt32 |> andThenIO IO.Stdout.print
+
+handlerB : ErrB -> IO Never Unit
+handlerB e = case e of
+  ErrB -> IO.Stdout.print "ErrB"
+
+observeB : IO ErrB Int32 -> IO Never Unit
+observeB io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerB
+
+handlerBC : (ErrB | ErrC) -> IO Never Unit
+handlerBC e = case e of
+  (_b : ErrB) -> IO.Stdout.print "ErrB"
+  (_c : ErrC) -> IO.Stdout.print "ErrC"
+
+observeBC : IO (ErrB | ErrC) Int32 -> IO Never Unit
+observeBC io = mapIO io showInt32
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handlerBC
+
+line : String -> IO Never Unit -> IO Never Unit
+line label act = IO.Stdout.print label
+  |> andThenIO (\_u -> IO.Stdout.print "=")
+  |> andThenIO (\_u -> act)
+  |> andThenIO (\_u -> IO.Stdout.print "\n")
+
+main : IO Never Unit
+main = line "recover" (observeNever recover)
+  |> andThenIO (\_u -> line "dispatchA" (observeNever dispatchA))
+  |> andThenIO (\_u -> line "dispatchB" (observeNever dispatchB))
+  |> andThenIO (\_u -> line "passthrough" (observeNever passthrough))
+  |> andThenIO (\_u -> line "nested" (observeNever nested))
+  |> andThenIO (\_u -> line "refailNarrow" (observeB refailNarrow))
+  |> andThenIO (\_u -> line "refailRow" (observeBC refailRow))
+  |> andThenIO (\_u -> line "treePreserve" treePreserve)
+  |> andThenIO (\_u -> line "treeNoError" treeNoError)
