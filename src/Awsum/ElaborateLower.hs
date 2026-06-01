@@ -1340,7 +1340,14 @@ lowerExprM env locals expected = \case
   -- ascription is the one place a user can write that pin inside an
   -- expression. Surface AST -> Core erases the boundary; no @CAscribe@
   -- node exists.
-  EAscribe _sp e ty -> lowerExprM env locals (Just ty) e
+  EAscribe _sp e ty -> do
+    inner <- lowerExprM env locals (Just ty) e
+    -- The ascription pins the inner expression's type. If the ambient
+    -- expected type is a wider row, inject the pinned value into it — a
+    -- '(0 : Int32)' arm of a function returning '(Int32 | String)' must
+    -- become a 'CRow', not a bare 'Int32' the row-consumer would misread.
+    -- No-op when 'expected' already agrees with 'ty' or carries no row.
+    wrapInjectedM (leConInfo env) expected (Just ty) inner
   EVar _sp qn -> do
     bare <- liftEither (lowerVar env qn)
     -- Implicit row injection at a value-flow boundary: when this var is
@@ -1355,6 +1362,16 @@ lowerExprM env locals expected = \case
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
     Just (TyCon _ "UInt32") -> pure (CIntLit n TUInt32)
+    -- A bare literal flowing into a structural sum with a unique int label
+    -- (e.g. '0' in an '(Int32 | String)' arm): resolve to that label and
+    -- inject, mirroring 'lowerArgWithRowInjectionM' in argument position.
+    Just row@(TyOr {}) ->
+      case [TyCon noSpan nm | TyCon _ nm <- flattenRow row, isJust (intTypeRange nm)] of
+        [intLabel] -> do
+          v <- lowerExprM env locals (Just intLabel) (ELit sp (LInt n))
+          tag <- recordRowTag intLabel
+          pure (CRow tag v)
+        _ -> liftEither $ Left (TELowering ("integer literal in row position has no unique int label at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     -- (a ++ b) lowers to a direct call to 'BuiltIn.concatString', which
@@ -2093,14 +2110,27 @@ synthLabelType env = \case
             let (allParams, fullRet) = splitArrow t
              in if length args == length allParams
                   then
-                    let step acc (paramT, argE) =
-                          case synthLabelType env argE of
-                            Just argT ->
-                              acc <> fromRight mempty (unify (applySubst acc paramT) argT)
-                            Nothing -> acc
-                        argSubsts = foldl' step mempty (zip allParams args)
+                    let synthed = [(paramT, synthLabelType env argE) | (paramT, argE) <- zip allParams args]
+                        step acc (paramT, mArgT) = case mArgT of
+                          Just argT -> acc <> fromRight mempty (unify (applySubst acc paramT) argT)
+                          Nothing -> acc
+                        argSubsts = foldl' step mempty synthed
                         finalRet = applySubst argSubsts fullRet
-                     in if hasFreeTyVars finalRet
+                        retVars = typeTyVars fullRet
+                        -- An argument that can't be synthesised (a bare int
+                        -- literal) drops its constraint on its slot's tyvar; if
+                        -- that tyvar reaches the result, the synthesised type is
+                        -- an under-approximation — the tail of a mixed list,
+                        -- @Cons 2 (Cons "x" Nil)@, would come back @List String@
+                        -- rather than @List (Int32 | String)@, and the int would
+                        -- then be lowered against a @String@ element type. Fail
+                        -- synthesis so the caller propagates its own
+                        -- (authoritative) expected type to every element.
+                        droppedRelevant =
+                          any
+                            (\(paramT, mArgT) -> isNothing mArgT && not (Set.null (typeTyVars paramT `Set.intersection` retVars)))
+                            synthed
+                     in if hasFreeTyVars finalRet || droppedRelevant
                           then Nothing
                           else Just finalRet
                   else Nothing
@@ -2187,6 +2217,18 @@ hasFreeTyVars = \case
   TyApp _ a b -> hasFreeTyVars a || hasFreeTyVars b
   TyArrow _ a b -> hasFreeTyVars a || hasFreeTyVars b
   TyOr _ a b -> hasFreeTyVars a || hasFreeTyVars b
+
+-- | The set of type variables occurring in a type. Mirror of
+--   'hasFreeTyVars'; used by 'synthLabelType' to tell whether an argument it
+--   could not synthesise still influences the result type.
+typeTyVars :: Type' -> Set Name
+typeTyVars = \case
+  TyVar _ n -> Set.singleton n
+  TyCon _ _ -> Set.empty
+  TyEmpty _ _ -> Set.empty
+  TyApp _ a b -> typeTyVars a <> typeTyVars b
+  TyArrow _ a b -> typeTyVars a <> typeTyVars b
+  TyOr _ a b -> typeTyVars a <> typeTyVars b
 
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.

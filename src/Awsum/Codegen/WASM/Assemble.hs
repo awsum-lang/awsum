@@ -1545,6 +1545,11 @@ emitTailPendingI tcoTempBase params depth ctx pending freshScrutDepth = \case
                 <> [LocalSet (fromIntegral ctx.ecScrutSlot)]
         freshScrutDepth' = if scrutFresh then freshScrutDepth + 1 else freshScrutDepth
      in scrutCode <> emitTailArmChainI tcoTempBase params depth ctx scrutName pending freshScrutDepth' sorted
+  -- Row dispatch: same wire layout as a one-field 'CCase', so delegate. This
+  -- keeps a 'CContinue' in a row-case arm in tail position; without it the arm
+  -- falls to the value 'other' path, whose emitter rejects 'CContinue'.
+  CRowCase scrut alts ->
+    emitTailPendingI tcoTempBase params depth ctx pending freshScrutDepth (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   -- Push the drop onto the pending stack; drain at terminator.
   CDrop _ n body -> emitTailPendingI tcoTempBase params depth ctx (n : pending) freshScrutDepth body
   other ->

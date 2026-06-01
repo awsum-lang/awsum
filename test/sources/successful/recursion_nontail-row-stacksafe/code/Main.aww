@@ -1,0 +1,55 @@
+{- Non-tail self-recursion under a structural-sum (row) case and row
+   injection, at depth 1_000_000 — the shapes `Awsum.Cps.goTail` had to learn
+   to descend into ('CRowCase' arms and tail 'CRow' injections). Before the
+   fix these were rejected by the stack-safety verifier; they must now run in
+   bounded stack on every backend.
+
+   `sumRow` folds a `List (Int32 | String)` with a non-tail self-call inside
+   the `(n : Int32)` row arm and a tail self-call in the `(_s : String)` arm.
+   `countRow` returns a row and injects its non-tail self-call's result at the
+   tail (`extract (countRow m)` lowers to `CRow tag (extract …)`). -}
+
+import IO.Stdout
+
+buildOnes : Int32 -> List (Int32 | String) -> List (Int32 | String)
+buildOnes n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> buildOnes m (Cons 1 acc)
+
+buildMixed : Int32 -> List (Int32 | String) -> List (Int32 | String)
+buildMixed n acc = case eqInt32 n 0 of
+  True -> Cons "s" acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> buildMixed m (Cons 1 acc)
+
+sumRow : List (Int32 | String) -> Int32
+sumRow xs = case xs of
+  Nil -> 0
+  Cons h t -> case h of
+    (n : Int32) -> case addInt32 n (sumRow t) of
+      Left _e -> 0
+      Right r -> r
+    (_s : String) -> sumRow t
+
+extract : (Int32 | String) -> Int32
+extract x = case x of
+  (n : Int32) -> n
+  (_s : String) -> 0
+
+countRow : Int32 -> (Int32 | String)
+countRow n = case eqInt32 n 0 of
+  True -> n
+  False -> case predInt32 n of
+    Left _e -> n
+    Right m -> extract (countRow m)
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (showInt32 (sumRow (buildOnes 1000000 Nil)))
+    |> andThenIO (\_u -> IO.Stdout.print " ")
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (sumRow (buildMixed 3 Nil))))
+    |> andThenIO (\_u -> IO.Stdout.print " ")
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (countRow 1000000))))

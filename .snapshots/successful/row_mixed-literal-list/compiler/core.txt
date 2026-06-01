@@ -1,0 +1,291 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "sumRow" [ "xs" ]
+            ( CCall
+                ( CVar "$cps$sumRow" )
+                [ CVar "xs"
+                , CCon 14 []
+                ]
+            )
+        , CFunDef "$cps$sumRow"
+            [ "xs"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "xs" )
+                    [
+                        ( 12
+                        , []
+                        , CCall
+                            ( CVar "$apply$sumRow" )
+                            [ CVar "$k"
+                            , CIntLit 0 TInt32
+                            ]
+                        )
+                    ,
+                        ( 13
+                        ,
+                            [ "h"
+                            , "t"
+                            ]
+                        , CDrop DropFreeUnchecked "h"
+                            ( CDrop DropFreeUnchecked "t"
+                                ( CRowCase
+                                    ( CVar "h" )
+                                    [
+                                        ( 1615808600
+                                        , "_s"
+                                        , CDrop DropFreeUnchecked "_s"
+                                            ( CDrop DropFreeUnchecked "xs"
+                                                ( CDrop DropFreeUnchecked "$k"
+                                                    ( CContinue
+                                                        [ CVar "t"
+                                                        , CVar "$k"
+                                                        ]
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 2711245919
+                                        , "n"
+                                        , CDrop DropFreeUnchecked "n"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CVar "t"
+                                                    , CReuse "xs" 15
+                                                        [ CVar "$k"
+                                                        , CVar "n"
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$sumRow"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 14
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 15
+                        ,
+                            [ "$pk_15"
+                            , "n"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_15"
+                            ( CDrop DropFreeUnchecked "n"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "addInt32" )
+                                        [ CVar "n"
+                                        , CVar "$x"
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "_e" ]
+                                        , CDrop DropFreeUnchecked "_e"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CDrop DropFreeUnchecked "$x"
+                                                    ( CContinue
+                                                        [ CVar "$pk_15"
+                                                        , CIntLit 0 TInt32
+                                                        ]
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "r" ]
+                                        , CDrop DropFreeUnchecked "r"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CDrop DropFreeUnchecked "$x"
+                                                    ( CContinue
+                                                        [ CVar "$pk_15"
+                                                        , CVar "r"
+                                                        ]
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "mixed"
+            ( CCon 13
+                [ CRow 2711245919
+                    ( CIntLit 1 TInt32 )
+                , CCon 13
+                    [ CRow 1615808600
+                        ( CString "x" )
+                    , CCon 13
+                        [ CRow 2711245919
+                            ( CIntLit 2 TInt32 )
+                        , CCon 13
+                            [ CRow 1615808600
+                                ( CString "y" )
+                            , CCon 13
+                                [ CRow 2711245919
+                                    ( CIntLit 3 TInt32 )
+                                , CCall
+                                    ( CVar "$lift$15" )
+                                    [ CCon 12 [] ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "sumRow" )
+                        [ CVar "mixed" ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lift$15" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$15" )
+                [ CVar "__input"
+                , CCon 16 []
+                ]
+            )
+        , CFunDef "$cps$$lift$15"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 12
+                        , []
+                        , CCall
+                            ( CVar "$apply$$lift$15" )
+                            [ CVar "$k"
+                            , CCon 12 []
+                            ]
+                        )
+                    ,
+                        ( 13
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 17
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$15"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 16
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 17
+                        ,
+                            [ "$pk_17"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_17"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_17"
+                                        , CReuse "$k" 13
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

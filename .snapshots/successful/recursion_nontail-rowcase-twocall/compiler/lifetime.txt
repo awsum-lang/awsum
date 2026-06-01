@@ -1,0 +1,40 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+buildLeft:
+  param           n                               count=2
+  param           acc                             count=2
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+sumTree:
+  param           t                               count=1
+
+$scc$$apply$sumTree_$cps$sumTree:
+  param           $args                           count=7
+  case-pattern    $k                              count=0
+  case-pattern    $x                              count=0
+  case-pattern    $pk_26                          count=0
+  case-pattern    $rcv_0                          count=0
+  case-pattern    n                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    s                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    s2                              count=0
+  case-pattern    $pk_25                          count=0
+  case-pattern    n                               count=0
+  case-pattern    r                               count=0
+  case-pattern    t                               count=0
+  case-pattern    $k                              count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    r                               count=0
+  row-case        n                               count=0
+
+$cps$sumTree:
+  param           t                               count=1
+  param           $k                              count=1
+
