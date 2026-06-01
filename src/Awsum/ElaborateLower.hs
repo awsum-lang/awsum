@@ -1340,7 +1340,14 @@ lowerExprM env locals expected = \case
   -- ascription is the one place a user can write that pin inside an
   -- expression. Surface AST -> Core erases the boundary; no @CAscribe@
   -- node exists.
-  EAscribe _sp e ty -> lowerExprM env locals (Just ty) e
+  EAscribe _sp e ty -> do
+    inner <- lowerExprM env locals (Just ty) e
+    -- The ascription pins the inner expression's type. If the ambient
+    -- expected type is a wider row, inject the pinned value into it — a
+    -- '(0 : Int32)' arm of a function returning '(Int32 | String)' must
+    -- become a 'CRow', not a bare 'Int32' the row-consumer would misread.
+    -- No-op when 'expected' already agrees with 'ty' or carries no row.
+    wrapInjectedM (leConInfo env) expected (Just ty) inner
   EVar _sp qn -> do
     bare <- liftEither (lowerVar env qn)
     -- Implicit row injection at a value-flow boundary: when this var is
@@ -1355,6 +1362,16 @@ lowerExprM env locals expected = \case
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
     Just (TyCon _ "UInt32") -> pure (CIntLit n TUInt32)
+    -- A bare literal flowing into a structural sum with a unique int label
+    -- (e.g. '0' in an '(Int32 | String)' arm): resolve to that label and
+    -- inject, mirroring 'lowerArgWithRowInjectionM' in argument position.
+    Just row@(TyOr {}) ->
+      case [TyCon noSpan nm | TyCon _ nm <- flattenRow row, isJust (intTypeRange nm)] of
+        [intLabel] -> do
+          v <- lowerExprM env locals (Just intLabel) (ELit sp (LInt n))
+          tag <- recordRowTag intLabel
+          pure (CRow tag v)
+        _ -> liftEither $ Left (TELowering ("integer literal in row position has no unique int label at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     -- (a ++ b) lowers to a direct call to 'BuiltIn.concatString', which

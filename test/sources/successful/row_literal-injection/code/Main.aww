@@ -1,0 +1,43 @@
+{- Integer-literal injection into a structural sum at a value-flow boundary.
+   A `case` arm (or any non-argument position) returning an integer literal
+   into a row type used to lower to a bare `Int32`/`UInt32` rather than a
+   `CRow` — the typechecker accepted the implicit injection but lowering
+   dropped it, so a row-consumer (`extract`) misread the cell and the five
+   backends diverged. Both the ascribed form `(7 : Int32)` and the bare form
+   `7` (resolved against the row's unique int label) must now inject. -}
+
+import IO.Stdout
+
+extract : (Int32 | String) -> Int32
+extract x = case x of
+  (n : Int32) -> n
+  (_s : String) -> 0
+
+extractU : (UInt32 | String) -> UInt32
+extractU x = case x of
+  (n : UInt32) -> n
+  (_s : String) -> 0
+
+gAsc : Int32 -> (Int32 | String)
+gAsc n = case eqInt32 n 0 of
+  True -> (7 : Int32)
+  False -> (9 : Int32)
+
+gBare : Int32 -> (Int32 | String)
+gBare n = case eqInt32 n 0 of
+  True -> 7
+  False -> 9
+
+gU : Int32 -> (UInt32 | String)
+gU n = case eqInt32 n 0 of
+  True -> 11
+  False -> 13
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (showInt32 (extract (gAsc 0)))
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gAsc 1))))
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 0))))
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 1))))
+    |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 0))))
+    |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 1))))

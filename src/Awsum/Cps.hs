@@ -209,6 +209,17 @@ goTail env = go
             b' <- goTail env b
             pure (t, vs, b')
           pure (CCase scrutVal alts')
+      -- Tail row-case (structural sum): same shape as the nominal 'CCase'
+      -- above — scrutinee non-tail, each arm body in tail position. Without
+      -- this arm a tail-position row-case falls to the 'other' catch-all,
+      -- which wraps the whole case (self-call and all) in 'applyK' and leaves
+      -- a buried non-tail self-call un-CPS'd.
+      CRowCase scrut alts ->
+        goNonTail env scrut $ \scrutVal -> do
+          alts' <- forM alts $ \(t, v, b) -> do
+            b' <- goTail env b
+            pure (t, v, b')
+          pure (CRowCase scrutVal alts')
       -- Tail general call (non-self).
       CCall callee args ->
         goArgs env args $ \argVals ->
@@ -217,6 +228,13 @@ goTail env = go
       CCon tag fields ->
         goArgs env fields $ \fieldVals ->
           pure (applyK env (CCon tag fieldVals))
+      -- Tail row injection: the injected value is the only sub-expression,
+      -- like a one-field 'CCon' — evaluate it non-tail so a buried self-call
+      -- is CPS'd, then apply the continuation to the tagged value. Identical
+      -- to the 'other' catch-all when the value harbours no self-call.
+      CRow tag v ->
+        goNonTail env v $ \vVal ->
+          pure (applyK env (CRow tag vVal))
       -- Tail trivial: pass straight to apply.
       other -> pure (applyK env other)
 
