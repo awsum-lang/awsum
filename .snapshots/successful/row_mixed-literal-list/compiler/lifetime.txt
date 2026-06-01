@@ -1,0 +1,40 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+sumRow:
+  param           xs                              count=1
+
+$cps$sumRow:
+  param           xs                              count=2
+  param           $k                              count=1
+  case-pattern    h                               count=0
+  case-pattern    t                               count=0
+  row-case        _s                              count=0
+  row-case        n                               count=0
+
+$apply$sumRow:
+  param           $k                              count=1
+  param           $x                              count=2
+  case-pattern    $pk_15                          count=0
+  case-pattern    n                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    r                               count=0
+
+$lift$15:
+  param           __input                         count=1
+
+$cps$$lift$15:
+  param           __input                         count=2
+  param           $k                              count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+
+$apply$$lift$15:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_17                          count=0
+  case-pattern    __f0                            count=0
+
