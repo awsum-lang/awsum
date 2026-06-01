@@ -8,7 +8,7 @@ import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
-import Awsum.Codegen.JVM.Assemble (assembleJVM)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
@@ -244,11 +244,13 @@ runCommand = \case
     (ptags, core) <- compileToCoreOrDie progType filePath
     -- (warnings are emitted to stderr by compileToCoreOrDie)
     case target of
-      TargetJVM -> do
-        let bytes = assembleJVM ptags core
-        case mOut of
-          Nothing -> BS.hPut stdout bytes
-          Just out -> writeFileBS out bytes
+      TargetJVM ->
+        case assembleJVM ptags core of
+          Left err -> die (toString (renderJvmLimitExceeded err))
+          Right bytes ->
+            case mOut of
+              Nothing -> BS.hPut stdout bytes
+              Just out -> writeFileBS out bytes
       TargetCLR -> do
         let bytes = assembleCLR ptags core
         case mOut of
@@ -352,16 +354,19 @@ runOnTarget progType target ptags core args = case target of
             <> toText stdoutClang
         ExitSuccess -> runChild "runtime error" binPath (map toString args)
   TargetJVM ->
-    withSystemTempDirectory "awsum" $ \dir -> do
-      let classPath = dir </> "AwsumMain.class"
-      writeFileBS classPath (assembleJVM ptags core)
-      -- Pin the JVM's I/O charsets to UTF-8 so 'argv' survives the
-      -- startup decode on hosts whose default charset isn't UTF-8 (the
-      -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
-      -- from the system ANSI code page and supplementary code points
-      -- collapse to '?' before our 'main' runs). Stdout side is handled
-      -- inside the emitted 'main' itself via a 'System.setOut' prologue.
-      runChild "java error" "java" (["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] <> map toString args)
+    case assembleJVM ptags core of
+      Left err -> die (toString (renderJvmLimitExceeded err))
+      Right bytes ->
+        withSystemTempDirectory "awsum" $ \dir -> do
+          let classPath = dir </> "AwsumMain.class"
+          writeFileBS classPath bytes
+          -- Pin the JVM's I/O charsets to UTF-8 so 'argv' survives the
+          -- startup decode on hosts whose default charset isn't UTF-8 (the
+          -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
+          -- from the system ANSI code page and supplementary code points
+          -- collapse to '?' before our 'main' runs). Stdout side is handled
+          -- inside the emitted 'main' itself via a 'System.setOut' prologue.
+          runChild "java error" "java" (["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] <> map toString args)
   TargetCLR ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let dllPath = dir </> "AwsumMain.dll"

@@ -6,7 +6,7 @@
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
-module Awsum.Codegen.JVM.Assemble (assembleJVM, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
+module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Core
@@ -25,13 +25,61 @@ import Relude
 -- Public API
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Produce a complete .class file as a strict ByteString.
-assembleJVM :: PreludeTags -> CoreProgram -> BS.ByteString
+-- | The JVM caps a method's @Code@ attribute at 65535 bytes (@code_length@,
+--   JVM Spec §4.7.3). A larger method yields a class the JVM rejects at load
+--   time, so we refuse it at compile time instead — a per-target compile-time
+--   limit (see docs/targets.md). The other four targets impose no such cap and
+--   are deliberately not restricted to match.
+jvmMaxMethodCodeBytes :: Int
+jvmMaxMethodCodeBytes = 65535
+
+-- | A method whose assembled bytecode crosses 'jvmMaxMethodCodeBytes', with
+--   its name and actual byte size for the diagnostic.
+data JvmLimitExceeded = JvmMethodTooLarge
+  { jleMethod :: Text,
+    jleBytes :: Int
+  }
+  deriving stock (Eq, Show)
+
+-- | Render a 'JvmLimitExceeded' as the build-time error the user sees: the
+--   method, its size against the 65535-byte ceiling, and — only for the
+--   compiler-synthesised @$scc$@ \/ @$cps$@ functions no user wrote — one line
+--   on where the method came from. Long synthesised names are abbreviated.
+renderJvmLimitExceeded :: JvmLimitExceeded -> Text
+renderJvmLimitExceeded (JvmMethodTooLarge name n) =
+  "JVM target — "
+    <> subject
+    <> " compiles to "
+    <> show n
+    <> " bytes, over the JVM's hard limit of 65535 bytes per method."
+    <> provenance
+    <> " This program can't be built for the JVM target."
+  where
+    synthetic = any (`T.isPrefixOf` name) ["$scc$", "$cps$", "$apply$"]
+    subject
+      | synthetic = "synthetic method `" <> abbreviate name <> "`"
+      | otherwise = "function `" <> abbreviate name <> "`"
+    provenance
+      | "$scc$" `T.isPrefixOf` name =
+          " (`$scc$…` is one function the compiler fuses from a mutual-recursion group to keep it stack-safe.)"
+      | "$cps$" `T.isPrefixOf` name || "$apply$" `T.isPrefixOf` name =
+          " (`$cps$…` is the continuation-passing form the compiler synthesises to make non-tail recursion stack-safe.)"
+      | otherwise = ""
+    abbreviate t
+      | T.length t <= 48 = t
+      | otherwise = T.take 47 t <> "…"
+
+-- | Produce a complete .class file as a strict ByteString, unless some method
+--   crosses the JVM's per-method bytecode ceiling ('jvmMaxMethodCodeBytes') —
+--   in which case the program is refused for this target ('JvmLimitExceeded').
+assembleJVM :: PreludeTags -> CoreProgram -> Either JvmLimitExceeded BS.ByteString
 assembleJVM ptags prog =
   let (methods, finalSt) = runState (doAssemble prog) (emptyPool ptags)
       argvFieldNameIdx = fromMaybe (error "assembleJVM: missing __argv name") (Map.lookup (KUtf8 "__argv") finalSt.cache)
       argvFieldDescIdx = fromMaybe (error "assembleJVM: missing __argv descriptor") (Map.lookup (KUtf8 "[Ljava/lang/String;") finalSt.cache)
-   in toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods))
+   in case finalSt.oversizedMethods of
+        ((nm, n) : _) -> Left (JvmMethodTooLarge nm n)
+        [] -> Right (toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods)))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Constant pool types
@@ -72,11 +120,18 @@ data Pool = Pool
     -- unified user-code emitter ('emitExprI'). Labels only need to be
     -- unique within one 'JvmMethod' body, but a global counter trivially
     -- guarantees that.
-    labelCtr :: Int
+    labelCtr :: Int,
+    -- | Methods whose assembled @Code@ crossed 'jvmMaxMethodCodeBytes',
+    -- in encounter order, as @(name, byteSize)@. Recorded by
+    -- 'assembleMethod' at the one point the final bytes and the method
+    -- name are both in hand; 'assembleJVM' turns a non-empty list into a
+    -- 'JvmLimitExceeded' rather than emitting a class the JVM would reject
+    -- at load.
+    oversizedMethods :: [(Text, Int)]
   }
 
 emptyPool :: PreludeTags -> Pool
-emptyPool ptags = Pool {entries = [], nextIdx = 1, cache = Map.empty, poolTags = ptags, labelCtr = 0}
+emptyPool ptags = Pool {entries = [], nextIdx = 1, cache = Map.empty, poolTags = ptags, labelCtr = 0, oversizedMethods = []}
 
 -- | A fresh, unique 'LabelId' with the given prefix (e.g. @"L_case"@).
 freshLabel :: Text -> AsmM LabelId
@@ -414,6 +469,11 @@ assembleMethod m = do
   ni <- addUtf8 (jmName m)
   di <- addUtf8 (jmDesc m)
   (code, attrCount, attrs) <- assembleBody (entryLocalsFromDesc (jmDesc m)) (jmBody m)
+  -- The one point where this method's final bytes and its name coexist:
+  -- record an over-limit body for 'assembleJVM' to refuse (JVM Spec §4.7.3
+  -- caps 'code_length' at 65535).
+  when (length code > jvmMaxMethodCodeBytes)
+    $ modify' (\st -> st {oversizedMethods = st.oversizedMethods <> [(jmName m, length code)]})
   pure
     MInfo
       { mFlags = if jmPublic m then 0x0009 else 0x0008,

@@ -22,7 +22,7 @@ import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
-import Awsum.Codegen.JVM.Assemble (assembleJVM)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
@@ -106,6 +106,13 @@ compileFromText src = do
       (ptags, core) = case elaborateLowerProgram ProgramCli (withPrelude ast) of
         Left err -> error $ "elaborate failed" <> show err
         Right (_warns, pt, x) -> (pt, x)
+      -- A per-target JVM refusal (method over the 65535-byte ceiling) is a
+      -- test bug here, like a parse/elaborate failure — the shared harness
+      -- assumes all five backends compile. Programs that exercise the
+      -- refusal call 'assembleJVM' directly in their own spec.
+      jvmBytes = case assembleJVM ptags core of
+        Left e -> error ("assembleJVM refused this program: " <> renderJvmLimitExceeded e)
+        Right b -> b
   -- Binary built from the host-native variant — only that one can actually
   -- be linked and run by the host's clang. Snapshot tests pull text for
   -- other hosts via the 'caLLVM' field, which is a closure over 'core'.
@@ -114,7 +121,7 @@ compileFromText src = do
     CompiledArtifacts
       { caLLVM = \host -> codegenLLVM host ptags core,
         caLLVMBinPath = llvmBinPath,
-        caJVMBytes = assembleJVM ptags core,
+        caJVMBytes = jvmBytes,
         caCLRBytes = assembleCLR ptags core,
         caWASMBytes = assembleWASM ptags core,
         caJS = codegenJS ProgramCli ptags core,

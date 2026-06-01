@@ -201,6 +201,7 @@ test-suite awsum-test
       Awsum.FormattingSnapshotsSpec
       Awsum.HMSpec
       Awsum.HoverSpec
+      Awsum.JvmMethodLimitSpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
       Awsum.RunBackend
