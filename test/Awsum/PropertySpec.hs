@@ -748,9 +748,26 @@ lengthUtf8BytesHs = fromIntegral . BS.length . encodeUtf8
 -- Property catalogue
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | A generated Int32 round-tripped through a '(Int32 | String)' row:
+--   injected as the int and as a string, dispatched in both label orders
+--   (commutativity). Self-verifying — the program prints OK iff every path
+--   recovers 'showInt32 a'. The first property test exercising rows, so the
+--   injection/dispatch machinery is fuzzed cross-backend.
+rowInjectionRoundtripProp :: Property Int32V
+rowInjectionRoundtripProp =
+  Property
+    { propName = "row-injection-roundtrip",
+      propSourceDir = "row-injection-roundtrip",
+      propGen = arbitrary,
+      propEncode = \(Int32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
 properties :: [SomeProperty]
 properties =
-  [ -- ── Integer arithmetic (commutativity, identity, agreement) ──
+  [ -- ── Structural unions (rows) ──
+    SomeProperty rowInjectionRoundtripProp,
+    -- ── Integer arithmetic (commutativity, identity, agreement) ──
     SomeProperty addInt32CommutativeProp,
     SomeProperty addInt32ZeroIdentityLeftProp,
     SomeProperty addInt32ZeroIdentityRightProp,

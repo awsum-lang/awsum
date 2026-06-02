@@ -1,0 +1,28 @@
+{- Pins a named top-level function passed as the continuation of a
+   row-unioning combinator. The combinator is body-specialised at concrete
+   error types and `kk` flows into a function-typed slot; before the fix the
+   Defunctionalize pass looped forever when the slot-parameter name and the
+   passed function's name coincided, so the compiler hung (no diagnostic). -}
+
+import IO.Stdout
+
+type EA = EA
+type EB = EB
+
+oa : Either EA Int32
+oa = Left EA
+
+kk : Int32 -> Either EB Int32
+kk _n = Right 7
+
+r : Either (EA | EB) Int32
+r = bindEither oa kk
+
+de : Either (EA | EB) Int32 -> String
+de x = case x of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (de r)

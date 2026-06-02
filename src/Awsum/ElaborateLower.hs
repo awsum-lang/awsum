@@ -1379,7 +1379,15 @@ lowerExprM env locals expected = \case
     -- a @CRow@-tagged value. No-op when the types already agree or the
     -- expected type carries no row.
     wrapInjectedM (leConInfo env) expected (leTypeOf env qn) bare
-  ELit _sp (LString t) -> pure (CString t)
+  ELit sp (LString t) -> case expected of
+    -- A string literal flowing into a structural sum: defer to the shared
+    -- row-injection lowering (mirrors the integer-literal arm below) so the
+    -- row-case sees a 'CRow'-tagged value. 'synthLabelType' resolves the
+    -- 'String' label, so this injects without looping. Without it a string
+    -- literal in a row-typed def body / let RHS / case arm stayed unwrapped.
+    Just row@(TyOr {}) ->
+      lowerWithRowInjectionM env locals (Just row) (ELit sp (LString t))
+    _ -> pure (CString t)
   ELit sp (LInt n) -> case expected of
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
@@ -1534,7 +1542,7 @@ lowerExprM env locals expected = \case
         -- distinct concrete error types), dispatch to a body-specialised
         -- copy lowered at those concrete types — the polymorphic original
         -- cannot inject the row tag (its error types are still tyvars).
-        case rowUnioningSpec env f0 xs mHeadTy of
+        case rowUnioningSpec env f0 xs mHeadTy expected of
           Just (specN, concreteSig, params, body) -> do
             specName <- getOrCreateRowSpec env specN concreteSig params body
             xs' <- zipWithM (lowerWithRowInjectionM env locals) argExpected xs
@@ -1988,8 +1996,8 @@ firstConName [] = "" -- empty type: no constructors, body never runs
 --   the resulting bare cell is mis-read by the row-case at runtime.
 --   Re-lowering the body at the concrete error types lets the
 --   construction-site injection (which is correct) fire.
-rowUnioningSpec :: LowerEnv -> Expr -> [Expr] -> Maybe Type' -> Maybe (Name, Type', [Param], Expr)
-rowUnioningSpec env f0 xs mHeadTy = do
+rowUnioningSpec :: LowerEnv -> Expr -> [Expr] -> Maybe Type' -> Maybe Type' -> Maybe (Name, Type', [Param], Expr)
+rowUnioningSpec env f0 xs mHeadTy mExpected = do
   n <- case f0 of
     EVar _ (QName [] nm) -> Just nm
     _ -> Nothing
@@ -2005,14 +2013,30 @@ rowUnioningSpec env f0 xs mHeadTy = do
   -- @(e1 | e2)@ has fewer alternatives than the concrete one, so unifying
   -- result-against-expected would fail by cardinality; deriving the
   -- substitution from the arguments avoids that.
-  let (genArgTys, _) = splitArrowN (length xs) genSig
+  let (genArgTys, genResultTy) = splitArrowN (length xs) genSig
       step acc (paramT, argE) = case synthLabelType env argE of
         Just argT -> acc <> fromRight mempty (unify (applySubst acc paramT) argT)
         Nothing -> acc
       argSub = foldl' step mempty (zip genArgTys xs)
       concreteSig = applySubst argSub genSig
-  guard (rowWidenedToConcrete genSig concreteSig)
-  pure (n, concreteSig, params, body)
+      -- Fallback when the arguments alone leave a row-variable in the widened
+      -- result — a continuation whose type 'synthLabelType' can't pin (e.g.
+      -- @const opB@, a lambda), so its error label stays abstract. Recover the
+      -- leftover labels from the caller's expected result type. Only consulted
+      -- when the argument-derived 'concreteSig' isn't already fully concrete,
+      -- so the nested-combinator cases that rely on the argument path (and the
+      -- cardinality reasoning above) are untouched. 'unify' runs on the
+      -- argSub-applied result, so 'resultSub' only binds variables the
+      -- arguments left open — no conflict with 'argSub'.
+      finalSig
+        | rowWidenedToConcrete genSig concreteSig = concreteSig
+        | Just expectedResult <- mExpected,
+          Just grt <- genResultTy =
+            let resultSub = fromRight mempty (unify (applySubst argSub grt) expectedResult)
+             in applySubst (argSub <> resultSub) genSig
+        | otherwise = concreteSig
+  guard (rowWidenedToConcrete genSig finalSig)
+  pure (n, finalSig, params, body)
 
 -- | True when, somewhere in the same structural position, the generic
 --   type has a row (@TyOr@) containing a type variable while the

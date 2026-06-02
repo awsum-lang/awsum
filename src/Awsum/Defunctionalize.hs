@@ -211,10 +211,17 @@ transformCall env callee args = do
   case callee of
     CVar n | Just clos <- M.lookup n env -> do
       args' <- traverse (transformExpr env) args
-      transformCall
-        env
-        (CVar (closHelper clos))
-        (closCaptures clos <> args')
+      let fullArgs = closCaptures clos <> args'
+      if closHelper clos == n
+        then
+          -- Self-closure: the combinator's slot-parameter name collided with
+          -- the passed function's own name, so 'n' maps to a closure whose
+          -- helper is 'n' itself. Recursing with the same 'env' would not
+          -- terminate (M.lookup n env keeps yielding the same closure). Drop
+          -- 'n' from env and re-resolve, so it dispatches as the top-level
+          -- function it is (captures prepended) rather than looping.
+          transformCall (M.delete n env) (CVar n) fullArgs
+        else transformCall env (CVar (closHelper clos)) fullArgs
     CVar f | Just _ <- M.lookup f arities -> do
       let slotClosures =
             [ (i, c)

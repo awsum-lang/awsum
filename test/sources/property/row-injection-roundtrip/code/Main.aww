@@ -1,0 +1,49 @@
+{- Property: a generated Int32 round-trips through a `(Int32 | String)` row.
+   The int is injected and dispatched in both label orders (commutativity),
+   and a string is injected and dispatched — all must recover `showInt32 a`.
+   Self-verifying (prints OK/FAIL). The first property test to exercise
+   structural unions, so the row injection/dispatch machinery is fuzzed
+   cross-backend rather than only pinned by fixed snapshots. -}
+
+import IO.Stdout
+import IO.Stdin
+
+intToRow : Int32 -> (Int32 | String)
+intToRow a = a
+
+strToRow : String -> (Int32 | String)
+strToRow s = s
+
+d : (Int32 | String) -> String
+d x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+
+d2 : (String | Int32) -> String
+d2 x = case x of
+  (s : String) -> s
+  (n : Int32) -> showInt32 n
+
+property : Int32 -> Bool
+property a =
+  and (and (eqString (d (intToRow a)) (showInt32 a)) (eqString (d2 (intToRow a)) (showInt32 a))) (eqString (d (strToRow (showInt32 a))) (showInt32 a))
+
+runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
+runMain rawArg =
+  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
+        raw <- rawArg
+        a <- parseInt32 raw
+        pureEither (property a)
+      )
+   in case res of
+        Left e -> case e of
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Stdin.readAllString
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))
