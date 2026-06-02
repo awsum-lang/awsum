@@ -11,9 +11,9 @@ property x = case predInt32 x of
   Left _ -> eqInt32 x minInt32
   Right _ -> not (eqInt32 x minInt32)
 
-runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
 runMain rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
+  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
         raw <- rawArg
         x <- parseInt32 raw
         pureEither (property x)
@@ -21,12 +21,12 @@ runMain rawArg =
    in case res of
         Left e -> case e of
           StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Stdin.readAll
+main = IO.Stdin.readAllString
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

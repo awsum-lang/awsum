@@ -1,0 +1,13 @@
+{- Exercises the hex helpers on literal bytes: `byteToHexStringNoPrefix`
+   (a per-target built-in) and `bytesToHexStringNoPrefix` (pure Awsum,
+   a non-tail fold over `(++)`). Deterministic output `000f10abff` pins
+   the hex codegen on all five backends. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main =
+  let bytes : List UInt8 = Cons 0 (Cons 15 (Cons 16 (Cons 171 (Cons 255 Nil))))
+   in case bytesToHexStringNoPrefix bytes of
+        Left _e -> IO.Stdout.print "TOO_LONG"
+        Right hex -> IO.Stdout.print hex

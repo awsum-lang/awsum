@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -147,7 +147,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 10
+    ldc.i4.s 11
     bne.un IL_c1
     pop
     ldc.i4.2
@@ -250,7 +250,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 11
+    ldc.i4.s 12
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -266,7 +266,7 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_15(object)
+    call object AwsumMain::v__lift_23(object)
     call object AwsumMain::v_whatsInside(object)
     stloc.0
     ldloc.0
@@ -306,7 +306,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 11
+    ldc.i4.s 12
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -322,7 +322,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__lift_16(object)
+    call object AwsumMain::v__lift_24(object)
     call object AwsumMain::v_whatsInside(object)
     stloc.2
     ldloc.2
@@ -362,11 +362,11 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 10
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
-    call object AwsumMain::v__lift_17(object)
+    call object AwsumMain::v__lift_25(object)
     call object AwsumMain::v_whatsInside(object)
     stloc.s 4
     ldloc.s 4
@@ -526,12 +526,12 @@
   {
     .maxstack 1
     call object AwsumMain::v_summary()
-    call object AwsumMain::v__let_18(object)
+    call object AwsumMain::v__let_26(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lift_15(object) cil managed
+  .method private hidebysig static object v__lift_23(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -542,7 +542,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 10
+    ldc.i4.s 11
     bne.un IL_c1
     pop
     ldc.i4.1
@@ -550,7 +550,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 10
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -566,7 +566,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 11
+    ldc.i4.s 12
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -591,7 +591,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_16(object) cil managed
+  .method private hidebysig static object v__lift_24(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -602,7 +602,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 10
+    ldc.i4.s 11
     bne.un IL_c1
     pop
     ldc.i4.1
@@ -610,7 +610,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 10
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -626,7 +626,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 11
+    ldc.i4.s 12
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -651,7 +651,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_17(object) cil managed
+  .method private hidebysig static object v__lift_25(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2)
@@ -662,7 +662,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 10
+    ldc.i4.s 11
     bne.un IL_c1
     pop
     ldc.i4.1
@@ -670,7 +670,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 10
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -686,7 +686,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 11
+    ldc.i4.s 12
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -699,7 +699,7 @@
   }
 
 
-  .method private hidebysig static object v__let_18(object) cil managed
+  .method private hidebysig static object v__let_26(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

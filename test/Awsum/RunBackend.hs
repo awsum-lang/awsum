@@ -15,6 +15,8 @@ module Awsum.RunBackend
     runOnAll,
     runOnStdin,
     runOnAllStdin,
+    runOnStdinBytes,
+    runOnAllStdinBytes,
     runJVM,
     runJVMStdin,
   )
@@ -273,9 +275,9 @@ runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
 -- Per-backend runners — stdin input variant (property tests)
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Run a child process feeding the input as **raw UTF-8 bytes** on its
+-- | Run a child process feeding the input as **raw bytes** on its
 --   stdin (rather than as a CLI arg). Used by property tests after the
---   migration to 'IO.Stdin.readAll' — argv runs through the host's
+--   migration to 'IO.Stdin.readAllString' — argv runs through the host's
 --   startup decoder ('sun.jnu.encoding' on Windows JVM, ANSI codepage
 --   for MSVCRT) and silently mangles supplementary-plane characters,
 --   while stdin is delivered verbatim to the program.
@@ -287,8 +289,8 @@ runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
 --   pipe-buffer's worth of bytes (64 KiB on Linux, often less on
 --   other hosts) doesn't deadlock waiting for us to drain it before
 --   we finish sending input.
-runProcStdinUtf8 :: FilePath -> [String] -> Text -> IO (Either Text Text)
-runProcStdinUtf8 cmd args input = do
+runProcStdinBytes :: FilePath -> [String] -> ByteString -> IO (Either Text Text)
+runProcStdinBytes cmd args input = do
   eRes <- try @IOException $ do
     (Just hin, Just hout, Just herr, ph) <-
       createProcess
@@ -301,7 +303,7 @@ runProcStdinUtf8 cmd args input = do
     hSetBinaryMode hout True
     hSetBinaryMode herr True
     writeAsync <- async $ do
-      BS.hPut hin (encodeUtf8 input)
+      BS.hPut hin input
       hClose hin
     outAsync <- async (BS.hGetContents hout)
     errAsync <- async (BS.hGetContents herr)
@@ -316,30 +318,42 @@ runProcStdinUtf8 cmd args input = do
     Right (ExitFailure _, _out, err) ->
       pure (Left (toText cmd <> " exited with non-zero status:\n" <> decodeUtf8 err))
 
+-- | Feed the input as UTF-8 bytes; the 'ByteString' variant
+--   'runOnStdinBytes' takes raw bytes for tests that need malformed input.
 runOnStdin :: Backend -> CompiledArtifacts -> Text -> IO (Either Text Text)
-runOnStdin LLVM ca = runProcStdinUtf8 ca.caLLVMBinPath []
-runOnStdin JVM ca = runJVMStdin ca.caJVMBytes
-runOnStdin CLR ca = runCLRStdin ca.caCLRBytes
-runOnStdin WASM ca = runWASMStdin ca.caWASMBytes
-runOnStdin JS ca = runJsStdin ca.caJS
+runOnStdin be ca input = runOnStdinBytes be ca (encodeUtf8 input)
+
+runOnStdinBytes :: Backend -> CompiledArtifacts -> ByteString -> IO (Either Text Text)
+runOnStdinBytes LLVM ca = runProcStdinBytes ca.caLLVMBinPath []
+runOnStdinBytes JVM ca = runJVMStdin ca.caJVMBytes
+runOnStdinBytes CLR ca = runCLRStdin ca.caCLRBytes
+runOnStdinBytes WASM ca = runWASMStdin ca.caWASMBytes
+runOnStdinBytes JS ca = runJsStdin ca.caJS
 
 -- | Stdin-input counterpart to 'runOnAll'. Used by property tests after
 --   their 'main' was migrated from 'IO.Args.getArgs' to
---   'IO.Stdin.readAll'.
+--   'IO.Stdin.readAllString'.
 runOnAllStdin :: CompiledArtifacts -> Text -> IO [(Backend, Either Text Text)]
-runOnAllStdin ca input = do
+runOnAllStdin ca input = runOnAllStdinBytes ca (encodeUtf8 input)
+
+-- | Raw-bytes counterpart to 'runOnAllStdin' — feeds an arbitrary
+--   'ByteString' (possibly malformed UTF-8) on stdin. Used by the
+--   'IO.Stdin.readAllString' / 'IO.Stdin.readAllBytes' property tests,
+--   whose generators produce byte sequences a 'Text' could not hold.
+runOnAllStdinBytes :: CompiledArtifacts -> ByteString -> IO [(Backend, Either Text Text)]
+runOnAllStdinBytes ca input = do
   ((llvmO, jvmO), ((clrO, wasmO), jsO)) <-
     concurrently
       ( concurrently
-          (runOnStdin LLVM ca input)
-          (runOnStdin JVM ca input)
+          (runOnStdinBytes LLVM ca input)
+          (runOnStdinBytes JVM ca input)
       )
       ( concurrently
           ( concurrently
-              (runOnStdin CLR ca input)
-              (runOnStdin WASM ca input)
+              (runOnStdinBytes CLR ca input)
+              (runOnStdinBytes WASM ca input)
           )
-          (runOnStdin JS ca input)
+          (runOnStdinBytes JS ca input)
       )
   pure
     [ (LLVM, llvmO),
@@ -349,7 +363,7 @@ runOnAllStdin ca input = do
       (JS, jsO)
     ]
 
-runJVMStdin :: ByteString -> Text -> IO (Either Text Text)
+runJVMStdin :: ByteString -> ByteString -> IO (Either Text Text)
 runJVMStdin classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let classFile = dir </> "AwsumMain.class"
   writeFileBS classFile classBytes
@@ -357,27 +371,27 @@ runJVMStdin classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   -- 'System.in' which we wire to an explicit UTF-8 'StreamReader' on
   -- the program side. '-Dfile.encoding' still matters for stdout
   -- formatting in case other code paths reach the default charset.
-  runProcStdinUtf8 "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] input
+  runProcStdinBytes "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] input
 
-runCLRStdin :: ByteString -> Text -> IO (Either Text Text)
+runCLRStdin :: ByteString -> ByteString -> IO (Either Text Text)
 runCLRStdin dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let dllFile = dir </> "AwsumMain.dll"
       rcFile = dir </> "AwsumMain.runtimeconfig.json"
   writeFileBS dllFile dllBytes
   writeFileText rcFile runtimeConfigJson
-  runProcStdinUtf8 "dotnet" [dllFile] input
+  runProcStdinBytes "dotnet" [dllFile] input
 
-runWASMStdin :: ByteString -> Text -> IO (Either Text Text)
+runWASMStdin :: ByteString -> ByteString -> IO (Either Text Text)
 runWASMStdin wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let wasmFile = dir </> "out.wasm"
   writeFileBS wasmFile wasmBytes
-  runProcStdinUtf8 "wasmtime" [wasmFile] input
+  runProcStdinBytes "wasmtime" [wasmFile] input
 
-runJsStdin :: Text -> Text -> IO (Either Text Text)
+runJsStdin :: Text -> ByteString -> IO (Either Text Text)
 runJsStdin code input = withSystemTempDirectory "awsum" $ \dir -> do
   let tempFile = dir </> "out.js"
   writeFileText tempFile code
-  runProcStdinUtf8 "node" [tempFile] input
+  runProcStdinBytes "node" [tempFile] input
 
 runtimeConfigJson :: Text
 runtimeConfigJson =

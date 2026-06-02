@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 22
+                    ( 24
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -53,7 +53,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "unwrap" )
-                    [ CCon 22
+                    [ CCon 24
                         [ CString "hello" ]
                     ]
                 , CCon 5

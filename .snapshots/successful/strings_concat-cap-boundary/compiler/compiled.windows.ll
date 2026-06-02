@@ -142,7 +142,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -201,7 +201,7 @@ define internal ptr @__predUInt32(ptr %p) {
   br i1 %is_zero, label %overflow, label %ok
 overflow:
   %ue = call ptr @__alloc(i64 8, i32 0)
-  %ue_tag = inttoptr i64 16 to ptr
+  %ue_tag = inttoptr i64 17 to ptr
   store ptr %ue_tag, ptr %ue
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -444,7 +444,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lift_16(ptr %v___input) {
+define internal ptr @v__lift_21(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -481,18 +481,18 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__scc__df_andThenEither_0__lam_15_build(ptr %v__args) {
+define internal ptr @v__scc__df_andThenEither_0__lam_23_build(ptr %v__args) {
   call void @__inc_ref(ptr %v__args)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 11 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__scc__df_andThenEither_0__lam_15_build(ptr %v__args, ptr %t0)
+  %t3 = call ptr @v__cps__scc__df_andThenEither_0__lam_23_build(ptr %v__args, ptr %t0)
   call void @__free_recursive(ptr %v__args)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__scc__df_andThenEither_0__lam_15_build(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc__df_andThenEither_0__lam_23_build(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -529,7 +529,7 @@ tco.case.arm.3.20:
   call void @__inc_ref(ptr %t22)
   %t26 = getelementptr ptr, ptr %t23, i32 1
   store ptr %t22, ptr %t26
-  %t27 = call ptr @v__apply__scc__df_andThenEither_0__lam_15_build(ptr %t6, ptr %t23)
+  %t27 = call ptr @v__apply__scc__df_andThenEither_0__lam_23_build(ptr %t6, ptr %t23)
   call void @__free_recursive(ptr %t22)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
@@ -646,7 +646,7 @@ tco.case.arm.3.82:
   call void @__inc_ref(ptr %t76)
   %t88 = getelementptr ptr, ptr %t85, i32 1
   store ptr %t76, ptr %t88
-  %t89 = call ptr @v__apply__scc__df_andThenEither_0__lam_15_build(ptr %t6, ptr %t85)
+  %t89 = call ptr @v__apply__scc__df_andThenEither_0__lam_23_build(ptr %t6, ptr %t85)
   call void @__free_recursive(ptr %t77)
   call void @__free_recursive(ptr %t84)
   call void @__free_recursive(ptr %t76)
@@ -662,7 +662,7 @@ tco.case.arm.4.90:
   call void @__inc_ref(ptr %t76)
   call void @__inc_ref(ptr %t76)
   %t93 = call ptr @__concat(ptr %t76, ptr %t76)
-  %t94 = call ptr @v__lift_16(ptr %t93)
+  %t94 = call ptr @v__lift_21(ptr %t93)
   %t95 = getelementptr i8, ptr %t5, i64 -8
   %t96 = load i32, ptr %t95
   %t97 = icmp eq i32 %t96, 1
@@ -715,7 +715,7 @@ tco.exit.1:
   ret ptr %t115
 }
 
-define internal ptr @v__apply__scc__df_andThenEither_0__lam_15_build(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__scc__df_andThenEither_0__lam_23_build(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -765,7 +765,7 @@ define internal ptr @v_build(ptr %v_n, ptr %v_acc) {
   call void @__inc_ref(ptr %v_acc)
   %t4 = getelementptr ptr, ptr %t0, i32 2
   store ptr %v_acc, ptr %t4
-  %t5 = call ptr @v__scc__df_andThenEither_0__lam_15_build(ptr %t0)
+  %t5 = call ptr @v__scc__df_andThenEither_0__lam_23_build(ptr %t0)
   call void @__free_recursive(ptr %v_n)
   call void @__free_recursive(ptr %v_acc)
   ret ptr %t5

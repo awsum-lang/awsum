@@ -32,12 +32,12 @@ const v_runIO = (v_io) => {
 
 const v_answer = (42|0);
 
-const v__lam_15 = (v_k, v__n) => {
+const v__lam_23 = (v_k, v__n) => {
     return v_k;
 };
 
 const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0) => {
-    return (v__lam_15)(v__df_apply_0_cap0_0, v_x);
+    return (v__lam_23)(v__df_apply_0_cap0_0, v_x);
 };
 
 const v_captureFn = (v_k) => {

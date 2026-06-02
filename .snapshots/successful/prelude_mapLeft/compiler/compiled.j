@@ -51,7 +51,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 18
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -156,7 +156,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -188,12 +188,12 @@ L_tarm1:
   .limit locals 0
   invokestatic AwsumMain/v_bad()Ljava/lang/Object;
   invokestatic AwsumMain/v__df_mapLeft_0(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_27(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -285,21 +285,21 @@ L_join2:
 .end method
 
 
-.method static v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_24(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   areturn
 .end method
 
 
-.method static v__let_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_25(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 14
   aload_0
@@ -395,32 +395,32 @@ L_arm5:
 L_join4:
   astore_2
   aload_2
-  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_26(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   areturn
 .end method
 
 
-.method static v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_27(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   aload_0
   invokestatic AwsumMain/v_good()Ljava/lang/Object;
   invokestatic AwsumMain/v__df_mapLeft_1(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_25(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -454,7 +454,7 @@ L_join4:
   dup
   iconst_1
   aload_3
-  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_26(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   goto L_join8
 L_arm9:
@@ -507,7 +507,7 @@ L_join8:
   dup
   iconst_1
   aload_3
-  invokestatic AwsumMain/v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_24(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   goto L_join10
 L_arm11:

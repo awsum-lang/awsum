@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -175,13 +175,13 @@
   {
     .maxstack 1
     call object AwsumMain::v_opA()
-    call object AwsumMain::v__df__rowspec_16_0(object)
-    call object AwsumMain::v__let_18(object)
+    call object AwsumMain::v__df__rowspec_24_0(object)
+    call object AwsumMain::v__let_26(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_15(object) cil managed
+  .method private hidebysig static object v__let_23(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -285,7 +285,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_17(object) cil managed
+  .method private hidebysig static object v__lift_25(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -353,7 +353,7 @@
   }
 
 
-  .method private hidebysig static object v__let_18(object) cil managed
+  .method private hidebysig static object v__let_26(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -431,12 +431,12 @@
     callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
   IL_c0:
-    call object AwsumMain::v__let_15(object)
+    call object AwsumMain::v__let_23(object)
     ret
   }
 
 
-  .method private hidebysig static object v__df__rowspec_16_0(object) cil managed
+  .method private hidebysig static object v__df__rowspec_24_0(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -488,7 +488,7 @@
     stloc.1
     ldloc.1
     call object AwsumMain::v_opB(object)
-    call object AwsumMain::v__lift_17(object)
+    call object AwsumMain::v__lift_25(object)
   IL_c0:
     ret
   }

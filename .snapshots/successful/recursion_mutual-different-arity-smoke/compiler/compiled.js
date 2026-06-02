@@ -35,33 +35,33 @@ const v__scc_parseBinary_parseExpr = (v__args) => {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 24: {
+        case 26: {
           const v_tok = __s[1];
           const v__acc = __s[2];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 22: {
+              case 24: {
                 return (0|0);
               }
-              case 23: {
-                const __t0 = [25, [22]];
+              case 25: {
+                const __t0 = [27, [24]];
                 v__args = __t0;
                 continue;
               }
             }
           }
         }
-        case 25: {
+        case 27: {
           const v_tok = __s[1];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 22: {
+              case 24: {
                 return (0|0);
               }
-              case 23: {
-                const __t0 = [24, v_tok, (0|0)];
+              case 25: {
+                const __t0 = [26, v_tok, (0|0)];
                 v__args = __t0;
                 continue;
               }
@@ -74,10 +74,10 @@ const v__scc_parseBinary_parseExpr = (v__args) => {
 };
 
 const v_parseExpr = (v_tok) => {
-    return (v__scc_parseBinary_parseExpr)([25, v_tok]);
+    return (v__scc_parseBinary_parseExpr)([27, v_tok]);
 };
 
-const main = [7, String((v_parseExpr)([23])), [5, [0]]];
+const main = [7, String((v_parseExpr)([25])), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

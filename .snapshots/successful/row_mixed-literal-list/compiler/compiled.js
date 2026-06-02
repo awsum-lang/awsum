@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [18]]]; if (s < -2147483648) return [3, [3768445577, [17]]]; return [4, s|0]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -36,18 +36,18 @@ const v__apply_sumRow = (v__k, v__x) => {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 14: {
+        case 15: {
           return v__x;
         }
-        case 15: {
-          const v__pk_15 = __s[1];
+        case 16: {
+          const v__pk_16 = __s[1];
           const v_n = __s[2];
           {
             const __s = __addInt32(v_n, v__x);
             switch (__s[0]) {
               case 3: {
                 const v__e = __s[1];
-                const __t0 = v__pk_15;
+                const __t0 = v__pk_16;
                 const __t1 = (0|0);
                 v__k = __t0;
                 v__x = __t1;
@@ -55,7 +55,7 @@ const v__apply_sumRow = (v__k, v__x) => {
               }
               case 4: {
                 const v_r = __s[1];
-                const __t0 = v__pk_15;
+                const __t0 = v__pk_16;
                 const __t1 = v_r;
                 v__k = __t0;
                 v__x = __t1;
@@ -74,10 +74,10 @@ const v__cps_sumRow = (v_xs, v__k) => {
     {
       const __s = v_xs;
       switch (__s[0]) {
-        case 12: {
+        case 13: {
           return (v__apply_sumRow)(v__k, (0|0));
         }
-        case 13: {
+        case 14: {
           const v_h = __s[1];
           const v_t = __s[2];
           {
@@ -94,7 +94,7 @@ const v__cps_sumRow = (v_xs, v__k) => {
               case 2711245919: {
                 const v_n = __s[1];
                 const __t0 = v_t;
-                const __t1 = (v_xs[0] = 15, v_xs[1] = v__k, v_xs[2] = v_n, v_xs);
+                const __t1 = (v_xs[0] = 16, v_xs[1] = v__k, v_xs[2] = v_n, v_xs);
                 v_xs = __t0;
                 v__k = __t1;
                 continue;
@@ -108,22 +108,22 @@ const v__cps_sumRow = (v_xs, v__k) => {
 };
 
 const v_sumRow = (v_xs) => {
-    return (v__cps_sumRow)(v_xs, [14]);
+    return (v__cps_sumRow)(v_xs, [15]);
 };
 
-const v__apply__lift_15 = (v__k, v__x) => {
+const v__apply__lift_23 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 16: {
+        case 17: {
           return v__x;
         }
-        case 17: {
-          const v__pk_17 = __s[1];
+        case 18: {
+          const v__pk_18 = __s[1];
           const v___f0 = __s[2];
-          const __t0 = v__pk_17;
-          const __t1 = (v__k[0] = 13, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+          const __t0 = v__pk_18;
+          const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -133,19 +133,19 @@ const v__apply__lift_15 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_15 = (v___input, v__k) => {
+const v__cps__lift_23 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
-        case 12: {
-          return (v__apply__lift_15)(v__k, [12]);
-        }
         case 13: {
+          return (v__apply__lift_23)(v__k, [13]);
+        }
+        case 14: {
           const v___f0 = __s[1];
           const v___f1 = __s[2];
           const __t0 = v___f1;
-          const __t1 = (v___input[0] = 17, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+          const __t1 = (v___input[0] = 18, v___input[1] = v__k, v___input[2] = v___f0, v___input);
           v___input = __t0;
           v__k = __t1;
           continue;
@@ -155,11 +155,11 @@ const v__cps__lift_15 = (v___input, v__k) => {
   }
 };
 
-const v__lift_15 = (v___input) => {
-    return (v__cps__lift_15)(v___input, [16]);
+const v__lift_23 = (v___input) => {
+    return (v__cps__lift_23)(v___input, [17]);
 };
 
-const v_mixed = [13, [2711245919, (1|0)], [13, [1615808600, "x"], [13, [2711245919, (2|0)], [13, [1615808600, "y"], [13, [2711245919, (3|0)], (v__lift_15)([12])]]]]];
+const v_mixed = [14, [2711245919, (1|0)], [14, [1615808600, "x"], [14, [2711245919, (2|0)], [14, [1615808600, "y"], [14, [2711245919, (3|0)], (v__lift_23)([13])]]]]];
 
 const main = [7, String((v_sumRow)(v_mixed)), [5, [0]]];
 

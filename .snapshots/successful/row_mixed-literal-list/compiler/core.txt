@@ -42,7 +42,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$sumRow" )
                 [ CVar "xs"
-                , CCon 14 []
+                , CCon 15 []
                 ]
             )
         , CFunDef "$cps$sumRow"
@@ -53,7 +53,7 @@ CoreProgram
                 ( CCase
                     ( CVar "xs" )
                     [
-                        ( 12
+                        ( 13
                         , []
                         , CCall
                             ( CVar "$apply$sumRow" )
@@ -62,7 +62,7 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 13
+                        ( 14
                         ,
                             [ "h"
                             , "t"
@@ -92,7 +92,7 @@ CoreProgram
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
                                                     [ CVar "t"
-                                                    , CReuse "xs" 15
+                                                    , CReuse "xs" 16
                                                         [ CVar "$k"
                                                         , CVar "n"
                                                         ]
@@ -115,17 +115,17 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 14
+                        ( 15
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 15
+                        ( 16
                         ,
-                            [ "$pk_15"
+                            [ "$pk_16"
                             , "n"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_15"
+                        , CDrop DropFreeUnchecked "$pk_16"
                             ( CDrop DropFreeUnchecked "n"
                                 ( CCase
                                     ( CCall
@@ -141,7 +141,7 @@ CoreProgram
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CDrop DropFreeUnchecked "$x"
                                                     ( CContinue
-                                                        [ CVar "$pk_15"
+                                                        [ CVar "$pk_16"
                                                         , CIntLit 0 TInt32
                                                         ]
                                                     )
@@ -155,7 +155,7 @@ CoreProgram
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CDrop DropFreeUnchecked "$x"
                                                     ( CContinue
-                                                        [ CVar "$pk_15"
+                                                        [ CVar "$pk_16"
                                                         , CVar "r"
                                                         ]
                                                     )
@@ -170,24 +170,24 @@ CoreProgram
                 )
             )
         , CValDef "mixed"
-            ( CCon 13
+            ( CCon 14
                 [ CRow 2711245919
                     ( CIntLit 1 TInt32 )
-                , CCon 13
+                , CCon 14
                     [ CRow 1615808600
                         ( CString "x" )
-                    , CCon 13
+                    , CCon 14
                         [ CRow 2711245919
                             ( CIntLit 2 TInt32 )
-                        , CCon 13
+                        , CCon 14
                             [ CRow 1615808600
                                 ( CString "y" )
-                            , CCon 13
+                            , CCon 14
                                 [ CRow 2711245919
                                     ( CIntLit 3 TInt32 )
                                 , CCall
-                                    ( CVar "$lift$15" )
-                                    [ CCon 12 [] ]
+                                    ( CVar "$lift$23" )
+                                    [ CCon 13 [] ]
                                 ]
                             ]
                         ]
@@ -206,14 +206,14 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$15" [ "__input" ]
+        , CFunDef "$lift$23" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$15" )
+                ( CVar "$cps$$lift$23" )
                 [ CVar "__input"
-                , CCon 16 []
+                , CCon 17 []
                 ]
             )
-        , CFunDef "$cps$$lift$15"
+        , CFunDef "$cps$$lift$23"
             [ "__input"
             , "$k"
             ]
@@ -221,16 +221,16 @@ CoreProgram
                 ( CCase
                     ( CVar "__input" )
                     [
-                        ( 12
+                        ( 13
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$15" )
+                            ( CVar "$apply$$lift$23" )
                             [ CVar "$k"
-                            , CCon 12 []
+                            , CCon 13 []
                             ]
                         )
                     ,
-                        ( 13
+                        ( 14
                         ,
                             [ "__f0"
                             , "__f1"
@@ -240,7 +240,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "__f1"
-                                        , CReuse "__input" 17
+                                        , CReuse "__input" 18
                                             [ CVar "$k"
                                             , CVar "__f0"
                                             ]
@@ -252,7 +252,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$15"
+        , CFunDef "$apply$$lift$23"
             [ "$k"
             , "$x"
             ]
@@ -260,22 +260,22 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 16
+                        ( 17
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 17
+                        ( 18
                         ,
-                            [ "$pk_17"
+                            [ "$pk_18"
                             , "__f0"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_17"
+                        , CDrop DropFreeUnchecked "$pk_18"
                             ( CDrop DropFreeUnchecked "__f0"
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
-                                        [ CVar "$pk_17"
-                                        , CReuse "$k" 13
+                                        [ CVar "$pk_18"
+                                        , CReuse "$k" 14
                                             [ CVar "__f0"
                                             , CVar "$x"
                                             ]

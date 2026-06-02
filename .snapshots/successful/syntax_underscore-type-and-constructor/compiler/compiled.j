@@ -115,7 +115,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;

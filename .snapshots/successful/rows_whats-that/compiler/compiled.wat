@@ -18,7 +18,7 @@
   (data (i32.const 140) "\00\00\00\00\00\00\00\00\00\00\00\00\0a\00\00\00\0a\00\00\00Just False")
   (data (i32.const 170) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_whatsThat $v__lift_15 $v__let_16)
+  (elem (i32.const 0) $v_runIO $v_whatsThat $v__lift_23 $v__let_24)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -492,7 +492,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     block (result i32)
@@ -603,7 +603,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 1
     i32.const 4
@@ -622,7 +622,7 @@
     call 12
     call 15)
 
-  (func $v__lift_15 (param i32) (result i32)
+  (func $v__lift_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -633,7 +633,7 @@
     local.set 3
     local.get 3
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     block (result i32)
@@ -642,7 +642,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 10
+    i32.const 11
     i32.store
     local.get 1
     local.set 5
@@ -662,7 +662,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 1
     i32.const 8
@@ -690,7 +690,7 @@
     end
     end)
 
-  (func $v__let_16 (param i32) (result i32)
+  (func $v__let_24 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

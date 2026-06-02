@@ -43,25 +43,39 @@ cliPlatformTable =
       ( QName ["IO", "Args"] "getArgs",
         ioInputDecodeListStringTy
       ),
-      -- Read stdin to EOF as an Awsum 'String' (strict UTF-16). Same
-      -- error row as 'IO.Args.getArgs' — the two decoding failures the
-      -- entry-point validator rejects ('StringTooLong',
-      -- 'UnpairedUtf16Surrogate'). Compiled per-target via
-      -- 'BuiltIn.internalStdinReadAllAsUtf16': the lowering rewrites
-      -- the platform call into an 'IOStdinReadAll' constructor whose
-      -- continuation routes 'Left' to 'IOFail' and 'Right' to 'IOPure';
-      -- 'runIO' walks the cell and fires the read at that point.
-      -- Per the no-memoisation decision (POSIX-honest), each call
-      -- reads whatever bytes remain on fd 0; a second call after EOF
-      -- consequently sees an empty input and decodes to 'Right ""'.
-      ( QName ["IO", "Stdin"] "readAll",
-        ioInputDecodeStringTy
+      -- Read stdin to EOF as an Awsum 'String', decoding the raw bytes
+      -- as strict UTF-8 (RFC 3629). The error row carries the length
+      -- cap ('StringTooLong') and byte-level malformation
+      -- ('InvalidUtf8') — distinct from 'IO.Args.getArgs', whose
+      -- host-decoded argv can only fail with 'UnpairedUtf16Surrogate'.
+      -- Compiled per-target via 'BuiltIn.internalStdinReadAllString':
+      -- the lowering rewrites the platform call into an
+      -- 'IOStdinReadAllString' constructor whose continuation routes
+      -- 'Left' to 'IOFail' and 'Right' to 'IOPure'; 'runIO' walks the
+      -- cell and fires the read at that point. Per the no-memoisation
+      -- decision (POSIX-honest), each call reads whatever bytes remain
+      -- on fd 0; a second call after EOF decodes to 'Right ""'.
+      ( QName ["IO", "Stdin"] "readAllString",
+        ioStdinDecodeStringTy
+      ),
+      -- Read stdin to EOF as raw bytes ('List UInt8'), no decode. The
+      -- result type carries no error row ('Never') because raw-byte
+      -- capture cannot fail on content. Compiled per-target via
+      -- 'BuiltIn.internalStdinReadAllBytes': the lowering rewrites the
+      -- platform call into an 'IOStdinReadAllBytes' constructor whose
+      -- continuation lifts the bytes straight to 'IOPure'. Same
+      -- POSIX-honest no-memoisation semantics; a second call after EOF
+      -- yields 'Nil'.
+      ( QName ["IO", "Stdin"] "readAllBytes",
+        ioNeverListUInt8Ty
       )
     ]
   where
     stringTy = TyCon noSpan "String"
+    uint8Ty = TyCon noSpan "UInt8"
     stringTooLongTy = TyCon noSpan "StringTooLong"
     unpairedUtf16SurrogateTy = TyCon noSpan "UnpairedUtf16Surrogate"
+    invalidUtf8Ty = TyCon noSpan "InvalidUtf8"
     -- 'Never' is declared as 'empty type Never' in 'Prelude.aww', so
     -- the row-identity slot here uses 'TyEmpty' rather than 'TyCon'.
     -- Without this, the typechecker would only know 'Never' as a
@@ -73,19 +87,28 @@ cliPlatformTable =
         noSpan
         (TyApp noSpan (TyCon noSpan "IO") (TyEmpty noSpan "Never"))
         (TyCon noSpan "Unit")
-    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String' — used by
-    -- 'IO.Stdin.readAll'. Mirrors the 'inputDecodeRowTy' in
+    -- 'IO (StringTooLong | InvalidUtf8) String' — used by
+    -- 'IO.Stdin.readAllString'. Mirrors the 'stdinDecodeRowTy' in
     -- 'Awsum.BuiltIn' that types the matching low-level
-    -- 'internalStdinReadAllAsUtf16'.
-    ioInputDecodeStringTy =
+    -- 'internalStdinReadAllString'.
+    ioStdinDecodeStringTy =
       TyApp
         noSpan
         ( TyApp
             noSpan
             (TyCon noSpan "IO")
-            (TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy)
+            (TyOr noSpan stringTooLongTy invalidUtf8Ty)
         )
         stringTy
+    -- 'IO Never (List UInt8)' — used by 'IO.Stdin.readAllBytes'. The
+    -- 'Never' error row uses 'TyEmpty' for the same row-identity reason
+    -- as 'ioNeverUnitTy' above.
+    listUInt8Ty = TyApp noSpan (TyCon noSpan "List") uint8Ty
+    ioNeverListUInt8Ty =
+      TyApp
+        noSpan
+        (TyApp noSpan (TyCon noSpan "IO") (TyEmpty noSpan "Never"))
+        listUInt8Ty
     -- 'IO (StringTooLong | UnpairedUtf16Surrogate) (List String)' —
     -- used by 'IO.Args.getArgs'. Same error row as the singleton
     -- variant above; the result is the prelude 'List String' carrying

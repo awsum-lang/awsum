@@ -96,26 +96,26 @@ L_tco2:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 22
+  bipush 24
   if_icmpne L_tarm3
   aload_0
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_0
   goto L_tco2
 L_tarm3:
   iload_2
-  bipush 23
+  bipush 25
   if_icmpne L_tarm4
   aload_0
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_0
@@ -142,7 +142,7 @@ L_tarm4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_advanceStep(Ljava/lang/Object;)Ljava/lang/Object;

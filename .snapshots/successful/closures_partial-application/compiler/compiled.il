@@ -83,7 +83,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -148,7 +148,7 @@
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
@@ -157,7 +157,7 @@
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
@@ -214,7 +214,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 23
+    ldc.i4.s 25
     bne.un IL_c1
     pop
     ldarg.1

@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -35,10 +35,10 @@ const v_colorName = (v_c) => {
     {
       const __s = v_c;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           return "red";
         }
-        case 23: {
+        case 25: {
           return "green";
         }
       }
@@ -49,7 +49,7 @@ const v_showBoxedColor = (v_bc) => {
     {
       const __s = v_bc;
       switch (__s[0]) {
-        case 25: {
+        case 27: {
           const v_c = __s[1];
           return (v_colorName)(v_c);
         }
@@ -61,7 +61,7 @@ const v_showResult = (v_r) => {
     {
       const __s = v_r;
       switch (__s[0]) {
-        case 26: {
+        case 28: {
           const v_box = __s[1];
           return (v_showBoxedColor)(v_box);
         }
@@ -69,7 +69,7 @@ const v_showResult = (v_r) => {
     }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -85,7 +85,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([26, [25, [23]]])); } } })(__concat((v_showBoxedColor)([25, [22]]), " ")));
+const main = (v__let_23)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([28, [27, [25]]])); } } })(__concat((v_showBoxedColor)([27, [24]]), " ")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

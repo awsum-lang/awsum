@@ -18,7 +18,7 @@
   (data (i32.const 133) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00nested")
   (data (i32.const 159) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_unwrap $v_showResult $v__let_15)
+  (elem (i32.const 0) $v_runIO $v_unwrap $v_showResult $v__let_23)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -128,7 +128,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -649,7 +649,7 @@
     call 9
     local.set 0
     local.get 0
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 0
     i32.const 96
@@ -702,7 +702,7 @@
     call 9
     local.set 0
     local.get 0
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 0
     i32.const 8
@@ -710,7 +710,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 1
     i32.const 145
@@ -724,7 +724,7 @@
     end
     call 17)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

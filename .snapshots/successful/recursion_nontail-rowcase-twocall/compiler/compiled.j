@@ -41,7 +41,7 @@
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -147,7 +147,7 @@ L_addi32_over:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 17
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore 5
@@ -180,7 +180,7 @@ L_addi32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore 5
@@ -318,7 +318,7 @@ L_tarm4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -346,7 +346,7 @@ L_tarm4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -366,7 +366,7 @@ L_tarm4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v__cps_sumTree(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -392,7 +392,7 @@ L_tarm4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_buildLeft(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -438,7 +438,7 @@ L_tco5:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 27
+  bipush 29
   if_icmpne L_tarm6
   aload_1
   iconst_1
@@ -458,7 +458,7 @@ L_tco5:
   invokevirtual java/lang/Integer/intValue()I
   istore 6
   iload 6
-  bipush 24
+  bipush 26
   if_icmpne L_tarm7
   aconst_null
   astore 7
@@ -474,7 +474,7 @@ L_tco5:
   areturn
 L_tarm7:
   iload 6
-  bipush 25
+  bipush 27
   if_icmpne L_tarm8
   aload 5
   iconst_1
@@ -492,7 +492,7 @@ L_tarm7:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 28
+  bipush 30
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -505,7 +505,7 @@ L_tarm7:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 26
+  bipush 28
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -568,7 +568,7 @@ L_tarm8:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 27
+  bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -621,7 +621,7 @@ L_tarm9:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 27
+  bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -658,7 +658,7 @@ L_tarm10:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 27
+  bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -704,7 +704,7 @@ L_tarm6:
   invokevirtual java/lang/Integer/intValue()I
   istore 6
   iload 6
-  bipush 22
+  bipush 24
   if_icmpne L_tarm11
   aconst_null
   astore 7
@@ -716,7 +716,7 @@ L_tarm6:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 27
+  bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -764,7 +764,7 @@ L_tarm11:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 28
+  bipush 30
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -777,7 +777,7 @@ L_tarm11:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 25
+  bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -817,7 +817,7 @@ L_tarm11:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 28
+  bipush 30
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup

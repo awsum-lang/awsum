@@ -509,7 +509,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 1
     i32.const 96

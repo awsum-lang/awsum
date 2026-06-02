@@ -1,0 +1,16 @@
+{- Property: `IO.Stdin.readAllBytes` returns the stdin bytes verbatim,
+   for any byte sequence (including malformed UTF-8). The program
+   hex-encodes the captured bytes; the Haskell side compares against its
+   own hex of the same bytes. Exercises byte-exactness across all five
+   backends and that the string-validation path never interferes with
+   raw-byte capture. -}
+
+import IO.Stdout
+import IO.Stdin
+
+main : IO Never Unit
+main =
+  IO.Stdin.readAllBytes
+    |> andThenIO (\bytes -> case bytesToHexStringNoPrefix bytes of
+        Left _e -> IO.Stdout.print "TOO_LONG"
+        Right hex -> IO.Stdout.print hex)

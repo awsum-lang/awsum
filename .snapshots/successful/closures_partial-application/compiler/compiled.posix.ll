@@ -188,7 +188,7 @@ tco.exit.1:
 
 define internal ptr @v_wrap(ptr %v_s) {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 22 to ptr
+  %t1 = inttoptr i64 24 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   call void @__inc_ref(ptr %v_s)
@@ -202,8 +202,8 @@ define internal ptr @v_unwrap(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
-case.arm.22.4:
+  switch i64 %t2, label %case.default.3 [ i64 24, label %case.arm.24.4 ]
+case.arm.24.4:
   %t5 = getelementptr ptr, ptr %v_b, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -231,11 +231,11 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 23 to ptr
+  %t4 = inttoptr i64 25 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @__alloc(i64 8, i32 0)
-  %t7 = inttoptr i64 24 to ptr
+  %t7 = inttoptr i64 26 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
   %t9 = call ptr @v__df_apply_0(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr %t3, ptr %t6)
@@ -271,14 +271,14 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
   %t0 = getelementptr ptr, ptr %v__cl, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 23, label %case.arm.23.4 i64 24, label %case.arm.24.6 ]
-case.arm.23.4:
+  switch i64 %t2, label %case.default.3 [ i64 25, label %case.arm.25.4 i64 26, label %case.arm.26.6 ]
+case.arm.25.4:
   call void @__inc_ref(ptr %v__arg0)
   %t5 = call ptr @v_unwrap(ptr %v__arg0)
   call void @__free_recursive(ptr %v__cl)
   call void @__free_recursive(ptr %v__arg0)
   ret ptr %t5
-case.arm.24.6:
+case.arm.26.6:
   call void @__inc_ref(ptr %v__arg0)
   %t7 = call ptr @v_wrap(ptr %v__arg0)
   call void @__free_recursive(ptr %v__cl)

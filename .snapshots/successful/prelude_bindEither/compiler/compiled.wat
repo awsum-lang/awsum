@@ -18,7 +18,7 @@
   (data (i32.const 143) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00ErrB")
   (data (i32.const 167) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00Ok ")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_opB $v__let_15 $v__lift_17 $v__let_18 $v__df__rowspec_16_0)
+  (elem (i32.const 0) $v_runIO $v_opB $v__let_23 $v__lift_25 $v__let_26 $v__df__rowspec_24_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -128,7 +128,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -764,7 +764,7 @@
     call 22
     call 21)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -873,7 +873,7 @@
     end
     end)
 
-  (func $v__lift_17 (param i32) (result i32)
+  (func $v__lift_25 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -954,7 +954,7 @@
     end
     end)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_26 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1060,7 +1060,7 @@
     local.get 5
     end)
 
-  (func $v__df__rowspec_16_0 (param i32) (result i32)
+  (func $v__df__rowspec_24_0 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

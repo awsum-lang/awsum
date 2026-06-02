@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -37,7 +37,7 @@ const v_opB = (v_n) => {
 
 const v_opA = [4, (1|0)];
 
-const v__lift_17 = (v___input) => {
+const v__lift_25 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -53,7 +53,7 @@ const v__lift_17 = (v___input) => {
     }
 };
 
-const v__let_15 = (v_msg) => {
+const v__let_23 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -69,11 +69,11 @@ const v__let_15 = (v_msg) => {
     }
 };
 
-const v__let_18 = (v_chained) => {
-    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
+const v__let_26 = (v_chained) => {
+    return (v__let_23)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
 };
 
-const v__df__rowspec_16_0 = (v_x) => {
+const v__df__rowspec_24_0 = (v_x) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -83,13 +83,13 @@ const v__df__rowspec_16_0 = (v_x) => {
         }
         case 4: {
           const v_a = __s[1];
-          return (v__lift_17)((v_opB)(v_a));
+          return (v__lift_25)((v_opB)(v_a));
         }
       }
     }
 };
 
-const main = (v__let_18)((v__df__rowspec_16_0)(v_opA));
+const main = (v__let_26)((v__df__rowspec_24_0)(v_opA));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -1,16 +1,16 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [18]]]; if (s < -2147483648) return [3, [3768445577, [17]]]; return [4, s|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
-const v_triple = [15, (10|0), (20|0), (30|0)];
+const v_triple = [16, (10|0), (20|0), (30|0)];
 
 const v_sumTriple = (v__arg_0) => {
     {
       const __s = v__arg_0;
       switch (__s[0]) {
-        case 15: {
+        case 16: {
           const v_a = __s[1];
           const v_b = __s[2];
           const v_c = __s[3];
@@ -48,7 +48,7 @@ const v_sumPair = (v__arg_1) => {
     {
       const __s = v__arg_1;
       switch (__s[0]) {
-        case 14: {
+        case 15: {
           const v_a = __s[1];
           const v_b = __s[2];
           {
@@ -97,9 +97,9 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v_pair = [14, (100|0), (200|0)];
+const v_pair = [15, (100|0), (200|0)];
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -115,32 +115,32 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const v__let_17 = (v_n, v_m) => {
-    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
+const v__let_25 = (v_n, v_m) => {
+    return (v__let_23)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
 };
 
-const v__lam_16 = (v__arg_2) => {
+const v__lam_24 = (v__arg_2) => {
     {
       const __s = v__arg_2;
       switch (__s[0]) {
-        case 14: {
+        case 15: {
           const v_a = __s[1];
           const v_b = __s[2];
-          return (v_sumPair)([14, v_a, v_b]);
+          return (v_sumPair)([15, v_a, v_b]);
         }
       }
     }
 };
 
 const v__df_apply_0 = (v_t) => {
-    return (v__lam_16)(v_t);
+    return (v__lam_24)(v_t);
 };
 
-const v__let_18 = (v_n) => {
-    return (v__let_17)(v_n, (v__df_apply_0)(v_pair));
+const v__let_26 = (v_n) => {
+    return (v__let_25)(v_n, (v__df_apply_0)(v_pair));
 };
 
-const main = (v__let_18)((v_sumTriple)(v_triple));
+const main = (v__let_26)((v_sumTriple)(v_triple));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

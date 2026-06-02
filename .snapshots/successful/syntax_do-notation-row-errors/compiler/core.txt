@@ -49,7 +49,7 @@ CoreProgram
         , CValDef "op2"
             ( CCon 3
                 [ CRow 435006518
-                    ( CCon 24 [] )
+                    ( CCon 26 [] )
                 ]
             )
         , CValDef "op3"
@@ -120,7 +120,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 22
+                                            ( 24
                                             , []
                                             , CCon 4
                                                 [ CString "ErrorA" ]
@@ -135,7 +135,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 24
+                                            ( 26
                                             , []
                                             , CCon 4
                                                 [ CString "ErrorC" ]
@@ -150,7 +150,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 23
+                                            ( 25
                                             , []
                                             , CCon 4
                                                 [ CString "ErrorB" ]
@@ -178,13 +178,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCall
                     ( CVar "describe" )
                     [ CVar "f" ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

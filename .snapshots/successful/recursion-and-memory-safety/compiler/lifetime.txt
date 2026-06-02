@@ -45,10 +45,10 @@ mirrorN:
   case-pattern    $do_e_6                         count=0
   case-pattern    m                               count=0
 
-$lift$15:
+$lift$23:
   param           __input                         count=1
 
-$lift$16:
+$lift$24:
   param           __input                         count=1
 
 $scc$deepestLeftA_deepestLeftB_deepestLeftC:
@@ -77,10 +77,10 @@ $scc$$apply$mirror_$cps$mirror:
   param           $args                           count=5
   case-pattern    $k                              count=0
   case-pattern    $x                              count=0
-  case-pattern    $pk_29                          count=0
+  case-pattern    $pk_31                          count=0
   case-pattern    $rcv_0                          count=0
   case-pattern    v                               count=0
-  case-pattern    $pk_28                          count=0
+  case-pattern    $pk_30                          count=0
   case-pattern    l                               count=0
   case-pattern    v                               count=0
   case-pattern    t                               count=0
@@ -93,14 +93,14 @@ $cps$mirror:
   param           t                               count=1
   param           $k                              count=1
 
-$scc$$apply$$lift$16_$cps$$lift$16:
+$scc$$apply$$lift$24_$cps$$lift$24:
   param           $args                           count=5
   case-pattern    $k                              count=0
   case-pattern    $x                              count=0
-  case-pattern    $pk_35                          count=0
+  case-pattern    $pk_37                          count=0
   case-pattern    $rcv_0                          count=0
   case-pattern    __f1                            count=0
-  case-pattern    $pk_34                          count=0
+  case-pattern    $pk_36                          count=0
   case-pattern    __f1                            count=0
   case-pattern    __f2                            count=0
   case-pattern    __input                         count=0
@@ -109,18 +109,18 @@ $scc$$apply$$lift$16_$cps$$lift$16:
   case-pattern    __f1                            count=0
   case-pattern    __f2                            count=0
 
-$cps$$lift$16:
+$cps$$lift$24:
   param           __input                         count=1
   param           $k                              count=1
 
-$scc$$apply$$lift$15_$cps$$lift$15:
+$scc$$apply$$lift$23_$cps$$lift$23:
   param           $args                           count=5
   case-pattern    $k                              count=0
   case-pattern    $x                              count=0
-  case-pattern    $pk_32                          count=0
+  case-pattern    $pk_34                          count=0
   case-pattern    $rcv_0                          count=0
   case-pattern    __f1                            count=0
-  case-pattern    $pk_31                          count=0
+  case-pattern    $pk_33                          count=0
   case-pattern    __f1                            count=0
   case-pattern    __f2                            count=0
   case-pattern    __input                         count=0
@@ -129,7 +129,7 @@ $scc$$apply$$lift$15_$cps$$lift$15:
   case-pattern    __f1                            count=0
   case-pattern    __f2                            count=0
 
-$cps$$lift$15:
+$cps$$lift$23:
   param           __input                         count=1
   param           $k                              count=1
 

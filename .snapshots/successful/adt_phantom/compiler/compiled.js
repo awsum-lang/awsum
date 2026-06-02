@@ -6,7 +6,7 @@ const v_show = (v_p) => {
     {
       const __s = v_p;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           return "Phantom";
         }
       }
@@ -41,18 +41,18 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__lift_15 = (v___input) => {
+const v__lift_23 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
-        case 22: {
-          return [22];
+        case 24: {
+          return [24];
         }
       }
     }
 };
 
-const main = [7, (v_show)((v__lift_15)([22])), [5, [0]]];
+const main = [7, (v_show)((v__lift_23)([24])), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

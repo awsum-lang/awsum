@@ -143,7 +143,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -402,8 +402,8 @@ case.arm.2252990199.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
-case.arm.22.18:
+  switch i64 %t16, label %case.default.17 [ i64 24, label %case.arm.24.18 ]
+case.arm.24.18:
   %t19 = call ptr @__alloc(i64 16, i32 1)
   %t20 = inttoptr i64 4 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -423,8 +423,8 @@ case.arm.2269767818.23:
   %t26 = getelementptr ptr, ptr %t25, i32 0
   %t27 = load ptr, ptr %t26
   %t28 = ptrtoint ptr %t27 to i64
-  switch i64 %t28, label %case.default.29 [ i64 23, label %case.arm.23.30 ]
-case.arm.23.30:
+  switch i64 %t28, label %case.default.29 [ i64 25, label %case.arm.25.30 ]
+case.arm.25.30:
   %t31 = call ptr @__alloc(i64 16, i32 1)
   %t32 = inttoptr i64 4 to ptr
   %t33 = getelementptr ptr, ptr %t31, i32 0
@@ -522,15 +522,15 @@ case.default.5:
 case.join.6:
   %t41 = phi ptr [%t11, %case.end.3.8], [%t40, %case.end.4.16]
   call void @__free_recursive(ptr %t1)
-  %t42 = call ptr @v__let_16(ptr %t41)
+  %t42 = call ptr @v__let_24(ptr %t41)
   ret ptr %t42
 }
 
-define internal ptr @v__lam_15(ptr %v_n) {
+define internal ptr @v__lam_23(ptr %v_n) {
   ret ptr %v_n
 }
 
-define internal ptr @v__let_16(ptr %v_res) {
+define internal ptr @v__let_24(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -592,7 +592,7 @@ case.default.3:
 
 define internal ptr @v__df_apply_0(ptr %v_x) {
   call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_15(ptr %v_x)
+  %t0 = call ptr @v__lam_23(ptr %v_x)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t0
 }

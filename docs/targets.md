@@ -217,6 +217,19 @@ All backends print without a trailing newline — `IO.Stdout.print` outputs exac
 
 **JS**: `process.stdout.write(String(s))` — unbuffered for TTY, buffered for pipes, flushed on exit.
 
+## Reading stdin
+
+`IO.Stdin.readAllString` and `IO.Stdin.readAllBytes` both consume fd 0 to EOF. Each backend first reads the raw bytes into a growing buffer (`read(2)` on LLVM, `System.in` into a `ByteArrayOutputStream` on JVM, `Console.OpenStandardInput()` → `MemoryStream` on CLR, WASI `fd_read` on WASM, `fs.readFileSync(0)` on JS), then either builds a `List UInt8` from those bytes (`readAllBytes`) or strict-UTF-8-decodes them (`readAllString`).
+
+The decode is **strict** (RFC 3629 / Unicode Table 3-7): a well-formed byte stream decodes to its `String`; any malformation is `Left InvalidUtf8`. This is the input counterpart of the cross-target equivalence guarantee — a malformed stream must be rejected identically everywhere, not silently repaired by whatever decoder a host happens to provide. The five backends reach that one definition by different means:
+
+- **LLVM / WASM** — a hand-rolled single-pass state machine over the byte buffer (`__stdinDecodeStrict`), classifying each leading byte into a 1/2/3/4-byte sequence and checking its continuation bytes plus the overlong / surrogate / range constraints. The first malformation returns `Left InvalidUtf8`; a fully-valid scan length-caps the UTF-16 code-unit count, else copies the bytes verbatim into a length-prefixed `String` cell.
+- **JVM** — the platform's fatal UTF-8 decoder via the exception-free lower-level API: `StandardCharsets.UTF_8.newDecoder()` (REPORT mode by default) driven through `decode(in, out, true)`, with `CoderResult.isError()` standing in for the missing try/catch (the bytecode model has no exception table).
+- **JS** — `new TextDecoder("utf-8", {fatal: true}).decode(buf)`, which throws on the WHATWG-spec malformed set; the throw becomes `Left InvalidUtf8`.
+- **CLR** — a re-encode round-trip: lenient `Encoding.UTF8.GetString` then `GetBytes`, comparing the result to the original bytes. A byte sequence round-trips byte-for-byte iff it is well-formed — every malformed subsequence decodes to U+FFFD, which re-encodes to `EF BF BD`, never the original malformed bytes (those are not `EF BF BD`, which is itself valid). Used because the framework's strict decoders need either an exception handler or `Span` signatures, neither available in the CIL emitter.
+
+`InvalidUtf8` (which only `readAllString` produces) takes priority over `StringTooLong`: the cap is consulted only after the whole input is confirmed well-formed, matching the fatal decoders the managed backends use. A property test compares all five backends against a Haskell strict-decoder oracle over arbitrary byte sequences.
+
 ## Constants (CValDef)
 
 Zero-argument definitions like `greeting = "Hello"` are compiled differently per target:

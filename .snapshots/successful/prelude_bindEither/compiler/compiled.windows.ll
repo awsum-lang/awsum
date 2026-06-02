@@ -142,7 +142,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -283,12 +283,12 @@ define internal ptr @v_opB(ptr %v_n) {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_opA()
-  %t1 = call ptr @v__df__rowspec_16_0(ptr %t0)
-  %t2 = call ptr @v__let_18(ptr %t1)
+  %t1 = call ptr @v__df__rowspec_24_0(ptr %t0)
+  %t2 = call ptr @v__let_26(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_15(ptr %v_msg) {
+define internal ptr @v__let_23(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -348,7 +348,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lift_17(ptr %v___input) {
+define internal ptr @v__lift_25(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -391,7 +391,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_18(ptr %v_chained) {
+define internal ptr @v__let_26(ptr %v_chained) {
   %t0 = getelementptr ptr, ptr %v_chained, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -455,12 +455,12 @@ case.default.3:
   unreachable
 case.join.4:
   %t37 = phi ptr [%t30, %case.end.3.6], [%t36, %case.end.4.32]
-  %t38 = call ptr @v__let_15(ptr %t37)
+  %t38 = call ptr @v__let_23(ptr %t37)
   call void @__free_recursive(ptr %v_chained)
   ret ptr %t38
 }
 
-define internal ptr @v__df__rowspec_16_0(ptr %v_x) {
+define internal ptr @v__df__rowspec_24_0(ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_x, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -491,7 +491,7 @@ case.arm.4.15:
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
   %t18 = call ptr @v_opB(ptr %t17)
-  %t19 = call ptr @v__lift_17(ptr %t18)
+  %t19 = call ptr @v__lift_25(ptr %t18)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t19

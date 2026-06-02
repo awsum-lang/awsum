@@ -8,7 +8,7 @@
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
 module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
-import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Type' (..), noSpan)
@@ -343,6 +343,12 @@ stringTooLongRowTag = fromIntegral (rowTag (TyCon noSpan "StringTooLong"))
 unpairedSurrogateRowTag :: Int32
 unpairedSurrogateRowTag = fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
 
+-- | InvalidUtf8 row tag, used when '__stdinDecodeStrict' rejects malformed
+--   UTF-8 read from stdin. Word32 wraps to signed Int32 the same way
+--   'stringTooLongRowTag' does.
+invalidUtf8RowTag :: Int32
+invalidUtf8RowTag = fromIntegral (rowTag (TyCon noSpan "InvalidUtf8"))
+
 -- | Push an arbitrary signed 32-bit integer on the stack.
 --   Uses iconst/bipush/sipush for values that fit in a short, otherwise
 --   loads a CPInteger from the constant pool via ldc.
@@ -429,6 +435,7 @@ assembleInstr = \case
   Pop -> pure [0x57]
   ArrayLength -> pure [0xBE]
   Aaload -> pure [0x32]
+  Baload -> pure [0x33]
   AconstNull -> pure [0x01]
   AReturn -> pure [0xB0]
   Return -> pure [0xB1]
@@ -805,9 +812,10 @@ jvmModule ptags prog@(CoreProgram decls) =
           jmUserDefs = userJvmMethods ptags valNames funNames arities decls,
           jmEntry =
             concat
-              [ gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) [entryArgEitherSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags, ptUnpairedUtf16Surrogate ptags, stringTooLongRowTag, unpairedSurrogateRowTag)],
+              [ gate (Set.member "internalGetArgs" builtIns) [entryArgEitherSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags, ptUnpairedUtf16Surrogate ptags, stringTooLongRowTag, unpairedSurrogateRowTag)],
                 gate (Set.member "internalGetArgs" builtIns) [getArgsSpec (ptNil ptags, ptCons ptags, ptRight ptags)],
-                gate (Set.member "internalStdinReadAllAsUtf16" builtIns) [stdinReadAllSpec],
+                gate (Set.member "internalStdinReadAllString" builtIns) [stdinReadAllSpec, stdinDecodeStrictSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags, ptInvalidUtf8 ptags, stringTooLongRowTag, invalidUtf8RowTag)],
+                gate (Set.member "internalStdinReadAllBytes" builtIns) [stdinReadAllBytesSpec (ptNil ptags, ptCons ptags)],
                 [mainSpec (mangle "main") (mangle "runIO")]
               ]
         }
@@ -1385,9 +1393,12 @@ emitArgsViaLocalsI ctx args = do
 emitCallI :: ECtx -> CExpr -> [CExpr] -> AsmM [JvmInstr]
 emitCallI ctx f xs = case f of
   CBuiltIn "internalStdoutPrint" | [x] <- xs -> unary x "__print"
-  CBuiltIn "internalStdinReadAllAsUtf16"
+  CBuiltIn "internalStdinReadAllString"
     | [] <- xs ->
         pure [InvokeStatic (MethodRef "AwsumMain" "__stdinReadAll" "()Ljava/lang/Object;")]
+  CBuiltIn "internalStdinReadAllBytes"
+    | [] <- xs ->
+        pure [InvokeStatic (MethodRef "AwsumMain" "__stdinReadAllBytes" "()Ljava/lang/Object;")]
   CBuiltIn "internalGetArgs"
     | [] <- xs ->
         pure [InvokeStatic (MethodRef "AwsumMain" "__getArgs" "()Ljava/lang/Object;")]
@@ -1396,6 +1407,22 @@ emitCallI ctx f xs = case f of
       [x] <- xs -> do
         ai <- callArgs [x]
         pure $ ai <> [CheckCast integerClassRef, InvokeVirtual (MethodRef "java/lang/Integer" "toString" "()Ljava/lang/String;")]
+  -- byteToHexStringNoPrefix: 'Integer.toHexString(256 + v).substring(1)' —
+  -- adding 256 forces a leading "1" so the result is always 3 chars
+  -- ("100".."1ff"); dropping it leaves two zero-padded lowercase hex digits.
+  CBuiltIn "byteToHexStringNoPrefix"
+    | [x] <- xs -> do
+        ai <- callArgs [x]
+        pure
+          $ ai
+          <> [ CheckCast integerClassRef,
+               InvokeVirtual (MethodRef "java/lang/Integer" "intValue" "()I"),
+               PushInt 256,
+               IAdd,
+               InvokeStatic (MethodRef "java/lang/Integer" "toHexString" "(I)Ljava/lang/String;"),
+               PushInt 1,
+               InvokeVirtual (MethodRef "java/lang/String" "substring" "(I)Ljava/lang/String;")
+             ]
   CBuiltIn "showUInt32" | [x] <- xs -> unary x "__showUInt32"
   CBuiltIn "predInt32" | [x] <- xs -> unary x "__predInt32"
   CBuiltIn "predUInt8" | [x] <- xs -> unary x "__predUInt8"

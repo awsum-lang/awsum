@@ -89,7 +89,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -150,14 +150,14 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -210,7 +210,7 @@ L_tarm1:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   iload_3
-  bipush 23
+  bipush 25
   if_icmpne L_arm3
   aload_1
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;

@@ -140,7 +140,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -318,11 +318,11 @@ define internal ptr @v_main() {
   %t1 = call ptr @__alloc(i64 4, i32 0)
   store i32 22, ptr %t1
   %t2 = call ptr @v_both(ptr %t0, ptr %t1)
-  %t3 = call ptr @v__let_16(ptr %t2)
+  %t3 = call ptr @v__let_24(ptr %t2)
   ret ptr %t3
 }
 
-define internal ptr @v__lam_15(ptr %v_a, ptr %v_b, ptr %v__n) {
+define internal ptr @v__lam_23(ptr %v_a, ptr %v_b, ptr %v__n) {
   call void @__inc_ref(ptr %v_a)
   call void @__inc_ref(ptr %v_b)
   %t0 = call ptr @v_bothBody(ptr %v_a, ptr %v_b)
@@ -332,7 +332,7 @@ define internal ptr @v__lam_15(ptr %v_a, ptr %v_b, ptr %v__n) {
   ret ptr %t0
 }
 
-define internal ptr @v__let_16(ptr %v_res) {
+define internal ptr @v__let_24(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -396,7 +396,7 @@ define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0, ptr %v__
   call void @__inc_ref(ptr %v__df_apply_0_cap0_0)
   call void @__inc_ref(ptr %v__df_apply_0_cap0_1)
   call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_15(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
+  %t0 = call ptr @v__lam_23(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
   call void @__free_recursive(ptr %v_x)
   call void @__free_recursive(ptr %v__df_apply_0_cap0_0)
   call void @__free_recursive(ptr %v__df_apply_0_cap0_1)

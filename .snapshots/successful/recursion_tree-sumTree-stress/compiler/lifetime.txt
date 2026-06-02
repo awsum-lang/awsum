@@ -28,7 +28,7 @@ $scc$$apply$sumTree_$cps$sumTree:
   param           $args                           count=2
   case-pattern    $k                              count=0
   case-pattern    $x                              count=0
-  case-pattern    $pk_25                          count=0
+  case-pattern    $pk_27                          count=0
   case-pattern    r                               count=0
   case-pattern    t                               count=0
   case-pattern    acc                             count=0

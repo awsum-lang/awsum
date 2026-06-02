@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predInt32(x){ return x === -2147483648 ? [3, [16]] : [4, ((x - 1)|0)]; }
+function __predInt32(x){ return x === -2147483648 ? [3, [17]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 
 const v_runIO = (v_io) => {
@@ -40,7 +40,7 @@ const v__apply1 = (v__cl, v__arg0) => {
     {
       const __s = v__cl;
       switch (__s[0]) {
-        case 23: {
+        case 25: {
           return (v_identity)(v__arg0);
         }
       }
@@ -52,18 +52,18 @@ const v__apply_countWithBox = (v__k, v__x) => {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 24: {
+        case 26: {
           return v__x;
         }
-        case 25: {
-          const v__pk_25 = __s[1];
+        case 27: {
+          const v__pk_27 = __s[1];
           const v_b = __s[2];
           {
             const __s = v__x;
             switch (__s[0]) {
               case 3: {
                 const v_e = __s[1];
-                const __t0 = v__pk_25;
+                const __t0 = v__pk_27;
                 const __t1 = (v__x[0] = 3, v__x[1] = v_e, v__x);
                 v__k = __t0;
                 v__x = __t1;
@@ -74,9 +74,9 @@ const v__apply_countWithBox = (v__k, v__x) => {
                 {
                   const __s = v_b;
                   switch (__s[0]) {
-                    case 22: {
+                    case 24: {
                       const v_f = __s[1];
-                      const __t0 = v__pk_25;
+                      const __t0 = v__pk_27;
                       const __t1 = (v__x[0] = 4, v__x[1] = (v__apply1)(v_f, v_v), v__x);
                       v__k = __t0;
                       v__x = __t1;
@@ -113,7 +113,7 @@ const v__cps_countWithBox = (v_b, v_n, v__k) => {
                 const v_m = __s[1];
                 const __t0 = v_b;
                 const __t1 = v_m;
-                const __t2 = [25, v__k, v_b];
+                const __t2 = [27, v__k, v_b];
                 v_b = __t0;
                 v_n = __t1;
                 v__k = __t2;
@@ -128,10 +128,10 @@ const v__cps_countWithBox = (v_b, v_n, v__k) => {
 };
 
 const v_countWithBox = (v_b, v_n) => {
-    return (v__cps_countWithBox)(v_b, v_n, [24]);
+    return (v__cps_countWithBox)(v_b, v_n, [26]);
 };
 
-const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_countWithBox)([22, [23]], (1000000|0)));
+const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_countWithBox)([24, [25]], (1000000|0)));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

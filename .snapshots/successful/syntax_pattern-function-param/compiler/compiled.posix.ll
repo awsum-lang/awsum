@@ -141,7 +141,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -217,7 +217,7 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
 err:
   %is_pos = icmp sge i32 %a, 0
   %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
-  %inner_tag_idx = select i1 %is_pos, i64 17, i64 16
+  %inner_tag_idx = select i1 %is_pos, i64 18, i64 17
   %inner = call ptr @__alloc(i64 8, i32 0)
   %inner_tag = inttoptr i64 %inner_tag_idx to ptr
   store ptr %inner_tag, ptr %inner
@@ -302,8 +302,8 @@ define internal ptr @v_sumTriple(ptr %v__arg_0) {
   %t0 = getelementptr ptr, ptr %v__arg_0, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 15, label %case.arm.15.4 ]
-case.arm.15.4:
+  switch i64 %t2, label %case.default.3 [ i64 16, label %case.arm.16.4 ]
+case.arm.16.4:
   %t5 = getelementptr ptr, ptr %v__arg_0, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -383,8 +383,8 @@ define internal ptr @v_sumPair(ptr %v__arg_1) {
   %t0 = getelementptr ptr, ptr %v__arg_1, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 14, label %case.arm.14.4 ]
-case.arm.14.4:
+  switch i64 %t2, label %case.default.3 [ i64 15, label %case.arm.15.4 ]
+case.arm.15.4:
   %t5 = getelementptr ptr, ptr %v__arg_1, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -427,7 +427,7 @@ case.default.3:
 
 define internal ptr @v_triple() {
   %t0 = call ptr @__alloc(i64 32, i32 3)
-  %t1 = inttoptr i64 15 to ptr
+  %t1 = inttoptr i64 16 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 4, i32 0)
@@ -447,7 +447,7 @@ define internal ptr @v_triple() {
 
 define internal ptr @v_pair() {
   %t0 = call ptr @__alloc(i64 24, i32 2)
-  %t1 = inttoptr i64 14 to ptr
+  %t1 = inttoptr i64 15 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 4, i32 0)
@@ -464,11 +464,11 @@ define internal ptr @v_pair() {
 define internal ptr @v_main() {
   %t0 = call ptr @v_triple()
   %t1 = call ptr @v_sumTriple(ptr %t0)
-  %t2 = call ptr @v__let_18(ptr %t1)
+  %t2 = call ptr @v__let_26(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_15(ptr %v_res) {
+define internal ptr @v__let_23(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -528,12 +528,12 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lam_16(ptr %v__arg_2) {
+define internal ptr @v__lam_24(ptr %v__arg_2) {
   %t0 = getelementptr ptr, ptr %v__arg_2, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 14, label %case.arm.14.4 ]
-case.arm.14.4:
+  switch i64 %t2, label %case.default.3 [ i64 15, label %case.arm.15.4 ]
+case.arm.15.4:
   %t5 = getelementptr ptr, ptr %v__arg_2, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -541,7 +541,7 @@ case.arm.14.4:
   %t8 = load ptr, ptr %t7
   call void @__inc_ref(ptr %t8)
   %t9 = call ptr @__alloc(i64 24, i32 2)
-  %t10 = inttoptr i64 14 to ptr
+  %t10 = inttoptr i64 15 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
   call void @__inc_ref(ptr %t6)
@@ -559,7 +559,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_17(ptr %v_n, ptr %v_m) {
+define internal ptr @v__let_25(ptr %v_n, ptr %v_m) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @__showInt32(ptr %v_n)
   %t1 = call ptr @__concat(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
@@ -599,24 +599,24 @@ case.default.5:
 case.join.6:
   %t21 = phi ptr [%t11, %case.end.3.8], [%t20, %case.end.4.16]
   call void @__free_recursive(ptr %t1)
-  %t22 = call ptr @v__let_15(ptr %t21)
+  %t22 = call ptr @v__let_23(ptr %t21)
   call void @__free_recursive(ptr %v_n)
   call void @__free_recursive(ptr %v_m)
   ret ptr %t22
 }
 
-define internal ptr @v__let_18(ptr %v_n) {
+define internal ptr @v__let_26(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v_pair()
   %t1 = call ptr @v__df_apply_0(ptr %t0)
-  %t2 = call ptr @v__let_17(ptr %v_n, ptr %t1)
+  %t2 = call ptr @v__let_25(ptr %v_n, ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr %t2
 }
 
 define internal ptr @v__df_apply_0(ptr %v_t) {
   call void @__inc_ref(ptr %v_t)
-  %t0 = call ptr @v__lam_16(ptr %v_t)
+  %t0 = call ptr @v__lam_24(ptr %v_t)
   call void @__free_recursive(ptr %v_t)
   ret ptr %t0
 }

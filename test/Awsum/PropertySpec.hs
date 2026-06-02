@@ -19,9 +19,10 @@
 -- construction.
 module Awsum.PropertySpec (spec) where
 
-import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAllStdin)
+import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAllStdin, runOnAllStdinBytes)
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
+import Numeric (showHex)
 import Relude
 import System.FilePath ((</>))
 import Test.Hspec
@@ -62,11 +63,101 @@ spec = describe "Property tests"
   -- property at ~100ms) compared to 100 input runs × 5 backends each.
   $ parallel
   $ modifyMaxSuccess (const 100)
-  $ forM_ properties
-  $ \(SomeProperty p) ->
-    describe (toString p.propName) $ do
-      artifacts <- runIO (compileFromFile (propertySourceFile p.propSourceDir))
-      prop "holds on every backend" (runProperty artifacts p)
+  $ do
+    forM_ properties $ \(SomeProperty p) ->
+      describe (toString p.propName) $ do
+        artifacts <- runIO (compileFromFile (propertySourceFile p.propSourceDir))
+        prop "holds on every backend" (runProperty artifacts p)
+    -- Byte-level stdin properties — these feed arbitrary 'ByteString's a
+    -- 'Text' could not hold, so they sit outside the 'Property a' record.
+    byteStdinProperty "readAllBytes-roundtrip" "readallbytes-roundtrip" hexOf
+    byteStdinProperty "readAllString-strict-decode" "readallstring-strict-decode" expectedStrictDecode
+    -- Fixed-input guard: 'genStdinBytes' almost never begins with the exact
+    -- 3-byte UTF-8 BOM, so the leading-BOM divergence stays invisible to the
+    -- random property above. This pins it deterministically.
+    leadingBomPreserved
+    -- The random stdin inputs stay under the 4096-byte initial read buffer, so
+    -- the grow path (and the buffer free on grow) is otherwise unexercised.
+    stdinGrowPathReclaimed
+
+-- | A property whose input is raw stdin bytes (possibly malformed UTF-8):
+--   generate a byte sequence, feed it to every backend, and assert all five
+--   emit the @oracle@'s stdout. The generator mixes valid UTF-8 (encoded
+--   from valid Unicode text) with arbitrary bytes so both the decode-success
+--   and decode-failure paths are exercised.
+byteStdinProperty :: Text -> FilePath -> (ByteString -> Text) -> Spec
+byteStdinProperty name dir oracle =
+  describe (toString name) $ do
+    artifacts <- runIO (compileFromFile (propertySourceFile dir))
+    prop "holds on every backend"
+      $ forAll genStdinBytes
+      $ \bs -> ioProperty $ do
+        results <- runOnAllStdinBytes artifacts bs
+        let expected = oracle bs
+        pure
+          $ counterexample (toString (formatFailure (hexOf bs) expected results))
+          $ allMatch expected results
+
+-- | Fixed regression for 'readAllString': a leading UTF-8 BOM (@EF BB BF@,
+--   U+FEFF) is a valid scalar that every backend must echo verbatim. The
+--   strict oracle ('decodeUtf8'') keeps it and so do the four hand-written
+--   decoders; Node's 'TextDecoder' keeps it only with @ignoreBOM: true@,
+--   without which a leading BOM is silently dropped — an identical-stdout
+--   break the random 'genStdinBytes' arms never surface (they essentially
+--   never start with the exact 3-byte BOM).
+leadingBomPreserved :: Spec
+leadingBomPreserved =
+  describe "readAllString-leading-BOM" $ do
+    artifacts <- runIO (compileFromFile (propertySourceFile "readallstring-strict-decode"))
+    it "keeps a leading UTF-8 BOM on every backend" $ do
+      let input = BS.pack [0xEF, 0xBB, 0xBF] <> encodeUtf8 ("hi" :: Text)
+          expected = expectedStrictDecode input
+      results <- runOnAllStdinBytes artifacts input
+      unless (T.isPrefixOf "\xFEFF" expected)
+        $ expectationFailure "strict oracle dropped the BOM — regression test is mis-set-up"
+      unless (allMatch expected results)
+        $ expectationFailure (toString (formatFailure (hexOf input) expected results))
+
+-- | Fixed regression for the stdin read-buffer grow path. The small random
+--   'genStdinBytes' inputs stay under the 4096-byte initial buffer, so the
+--   doubling-and-copy path — and the buffer free added alongside it — is
+--   otherwise never run. A >8 KiB input forces two grows; the read/grow/free
+--   logic is shared by both readers, so 'readAllString' exercises it cheaply
+--   (no O(n^2) hex). The decoded echo must be byte-exact on every backend.
+stdinGrowPathReclaimed :: Spec
+stdinGrowPathReclaimed =
+  describe "readAllString-grow-path" $ do
+    artifacts <- runIO (compileFromFile (propertySourceFile "readallstring-strict-decode"))
+    it "decodes a >8 KiB stream (forces buffer growth) on every backend" $ do
+      let input = BS.replicate 9000 0x61 -- 9000 'a': valid UTF-8, two grows (4096 -> 8192 -> 16384)
+          expected = expectedStrictDecode input
+      results <- runOnAllStdinBytes artifacts input
+      unless (allMatch expected results)
+        $ expectationFailure (toString (formatFailure "9000 x 0x61" expected results))
+
+-- | Stdin byte generator: a mix of valid UTF-8 (so the decode-success path
+--   runs) and arbitrary bytes (so the malformed path runs).
+genStdinBytes :: Gen ByteString
+genStdinBytes =
+  frequency
+    [ (2, encodeUtf8 <$> genUtf16Str),
+      (2, BS.pack <$> listOf (chooseBoundedIntegral (0, 255))),
+      (1, (BS.append . encodeUtf8 <$> genUtf16Str) <*> (BS.pack <$> listOf (chooseBoundedIntegral (0, 255))))
+    ]
+
+-- | Lowercase, zero-padded, no-prefix hex of a byte string — the oracle for
+--   the @readAllBytes@ round-trip (matches @bytesToHexStringNoPrefix@).
+hexOf :: ByteString -> Text
+hexOf bs = T.concat [T.justifyRight 2 '0' (toText (showHex b "")) | b <- BS.unpack bs]
+
+-- | Strict-UTF-8 oracle for @readAllString@: a well-formed byte sequence
+--   decodes to its 'Text' (echoed verbatim); a malformed one yields the
+--   @INVALID_UTF8@ marker. The length cap is unreachable for test-sized
+--   inputs, so @STRING_TOO_LONG@ never appears here.
+expectedStrictDecode :: ByteString -> Text
+expectedStrictDecode bs = case decodeUtf8' bs of
+  Right t -> t
+  Left _ -> "INVALID_UTF8"
 
 runProperty :: (Show a) => CompiledArtifacts -> Property a -> QC.Property
 runProperty artifacts p =

@@ -109,7 +109,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 22
+                                            ( 24
                                             , []
                                             , CCon 4
                                                 [ CString "ErrA" ]
@@ -124,7 +124,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 23
+                                            ( 25
                                             , []
                                             , CCon 4
                                                 [ CString "ErrB" ]
@@ -152,7 +152,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$16" )
+                ( CVar "$let$24" )
                 [ CCase
                     ( CCall
                         ( CVar "describe" )
@@ -196,9 +196,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$15" [ "n" ]
+        , CFunDef "$lam$23" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$16" [ "res" ]
+        , CFunDef "$let$24" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -227,7 +227,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "x" ]
             ( CCall
-                ( CVar "$lam$15" )
+                ( CVar "$lam$23" )
                 [ CVar "x" ]
             )
         ]

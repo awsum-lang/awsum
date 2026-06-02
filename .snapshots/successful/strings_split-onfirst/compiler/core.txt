@@ -42,19 +42,19 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 10
+                    ( 11
                     , []
                     , CCon 4
                         [ CString "Nothing" ]
                     )
                 ,
-                    ( 11
+                    ( 12
                     , [ "t" ]
                     , CDrop DropFreeUnchecked "t"
                         ( CCase
                             ( CVar "t" )
                             [
-                                ( 14
+                                ( 15
                                 ,
                                     [ "a"
                                     , "b"
@@ -152,7 +152,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CCall
                         ( CVar "render" )
@@ -562,7 +562,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

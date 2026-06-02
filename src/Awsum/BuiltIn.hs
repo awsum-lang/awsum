@@ -28,6 +28,15 @@ builtIns =
   M.fromList
     [ ("showInt32", TyArrow noSpan int32Ty stringTy),
       ("showUInt8", TyArrow noSpan uint8Ty stringTy),
+      -- byteToHexStringNoPrefix : UInt8 -> String
+      -- Renders a byte as exactly two lowercase hex digits, no "0x"
+      -- prefix (0 -> "00", 255 -> "ff"). Built-in because pure Awsum
+      -- can't split a byte into nibbles without div/mod or bitwise ops
+      -- on UInt8 (none exist), and the only no-new-primitive Awsum form
+      -- is a 256-arm 'eqUInt8' lookup. The result is always 2 ASCII
+      -- chars, so it never hits the string cap — hence 'String', not
+      -- 'Either StringTooLong String'.
+      ("byteToHexStringNoPrefix", TyArrow noSpan uint8Ty stringTy),
       -- predInt32 : Int32 -> Either UnderflowError Int32
       -- Returns `Left UnderflowError` on 'minInt32', `Right (x - 1)` elsewhere.
       ("predInt32", TyArrow noSpan int32Ty (eitherTy underflowErrorTy int32Ty)),
@@ -184,21 +193,33 @@ builtIns =
       -- routes 'Left' to 'IOFail' and 'Right' to 'IOPure'). Per the
       -- no-memoisation decision, each call re-reads argv; deterministic
       -- because argv does not change during program execution.
-      ("internalGetArgs", eitherTy inputDecodeRowTy listStringTy),
-      -- internalStdinReadAllAsUtf16 : Either (StringTooLong | UnpairedUtf16Surrogate) String
+      ("internalGetArgs", eitherTy argvDecodeRowTy listStringTy),
+      -- internalStdinReadAllString : Either (StringTooLong | InvalidUtf8) String
       -- Privileged zero-arg low-level primitive: reads the platform's
-      -- raw stdin to EOF and decodes it into Awsum's strict UTF-16
-      -- 'String'; same error row and decoder as 'internalGetArgs', the
-      -- byte source is the only difference. Used exclusively by the
-      -- prelude's 'runIO' to perform the effect of an 'IOStdinReadAll'
-      -- arm during IO-tree walking. The user-facing wrapper is
-      -- 'IO.Stdin.readAll' (a CLI platform built-in that elaborates to
-      -- an 'IOStdinReadAll' constructor whose continuation routes
-      -- 'Left' to 'IOFail' and 'Right' to 'IOPure'). Each call reads
-      -- whatever bytes remain on fd 0; a second call after EOF
-      -- consequently returns 'Right ""'. No per-backend state — the
-      -- OS-natural semantics of a consumed stream is exposed as-is.
-      ("internalStdinReadAllAsUtf16", eitherTy inputDecodeRowTy stringTy)
+      -- raw stdin to EOF and decodes the bytes as strict UTF-8 (RFC
+      -- 3629) into Awsum's 'String'. Unlike 'internalGetArgs' (whose
+      -- bytes are host-decoded before Awsum sees them, so only the
+      -- UTF-16-level 'UnpairedUtf16Surrogate' can arise), stdin is read
+      -- as raw bytes and decoded by Awsum itself, so it owns the whole
+      -- UTF-8 validity check: any malformation surfaces as 'InvalidUtf8'.
+      -- Used exclusively by the prelude's 'runIO' to perform the effect
+      -- of an 'IOStdinReadAllString' arm during IO-tree walking. The
+      -- user-facing wrapper is 'IO.Stdin.readAllString' (a CLI platform
+      -- built-in that elaborates to an 'IOStdinReadAllString' constructor
+      -- whose continuation routes 'Left' to 'IOFail' and 'Right' to
+      -- 'IOPure'). Each call reads whatever bytes remain on fd 0; a
+      -- second call after EOF consequently returns 'Right ""'.
+      ("internalStdinReadAllString", eitherTy stdinDecodeRowTy stringTy),
+      -- internalStdinReadAllBytes : List UInt8
+      -- Privileged zero-arg low-level primitive: reads the platform's
+      -- raw stdin to EOF and returns the bytes verbatim as a prelude
+      -- 'List UInt8' — no decode, so no content-dependent failure (the
+      -- result type carries no error row). Used exclusively by the
+      -- prelude's 'runIO' to perform the effect of an 'IOStdinReadAllBytes'
+      -- arm. The user-facing wrapper is 'IO.Stdin.readAllBytes'. Same
+      -- POSIX-honest no-memoisation semantics as the string reader: a
+      -- second call after EOF returns 'Nil'.
+      ("internalStdinReadAllBytes", listUInt8Ty)
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -215,13 +236,17 @@ builtIns =
     parseErrorTy = TyCon noSpan "ParseError"
     stringTooLongTy = TyCon noSpan "StringTooLong"
     unpairedUtf16SurrogateTy = TyCon noSpan "UnpairedUtf16Surrogate"
-    -- Structural row of the two decode-failure labels — the error side
-    -- shared by every primitive that reads platform-encoded text and
-    -- must report both length-cap and surrogate-validity violations
-    -- ('internalGetArgs', 'internalStdinReadAllAsUtf16', and any future
-    -- input-parsing primitive of the same shape).
-    inputDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
+    invalidUtf8Ty = TyCon noSpan "InvalidUtf8"
+    -- Error row of 'internalGetArgs': argv is host-decoded before Awsum
+    -- sees it, so the only failures are the length cap ('StringTooLong')
+    -- and a UTF-16 lone surrogate ('UnpairedUtf16Surrogate').
+    argvDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
+    -- Error row of 'internalStdinReadAllString': stdin is read as raw
+    -- bytes and strict-UTF-8 decoded by Awsum, so byte-level
+    -- malformation surfaces as 'InvalidUtf8' alongside the length cap.
+    stdinDecodeRowTy = TyOr noSpan stringTooLongTy invalidUtf8Ty
     listStringTy = TyApp noSpan (TyCon noSpan "List") stringTy
+    listUInt8Ty = TyApp noSpan (TyCon noSpan "List") uint8Ty
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

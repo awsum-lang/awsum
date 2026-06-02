@@ -1,9 +1,9 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predInt32(x){ return x === -2147483648 ? [3, [16]] : [4, ((x - 1)|0)]; }
+function __predInt32(x){ return x === -2147483648 ? [3, [17]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [18]]]; if (s < -2147483648) return [3, [3768445577, [17]]]; return [4, s|0]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -52,7 +52,7 @@ const v_buildLeft = (v_n, v_acc) => {
               case 4: {
                 const v_m = __s[1];
                 const __t0 = v_m;
-                const __t1 = [23, v_acc, [2711245919, (1|0)], [22]];
+                const __t1 = [25, v_acc, [2711245919, (1|0)], [24]];
                 v_n = __t0;
                 v_acc = __t1;
                 continue;
@@ -70,17 +70,17 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 27: {
+        case 29: {
           const v__k = __s[1];
           const v__x = __s[2];
           {
             const __s = v__k;
             switch (__s[0]) {
-              case 24: {
+              case 26: {
                 return v__x;
               }
-              case 26: {
-                const v__pk_26 = __s[1];
+              case 28: {
+                const v__pk_28 = __s[1];
                 const v__rcv_0 = __s[2];
                 const v_n = __s[3];
                 {
@@ -88,7 +88,7 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
                   switch (__s[0]) {
                     case 3: {
                       const v__e = __s[1];
-                      const __t0 = (v__args[0] = 27, v__args[1] = v__pk_26, v__args[2] = (0|0), v__args);
+                      const __t0 = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = (0|0), v__args);
                       v__args = __t0;
                       continue;
                     }
@@ -99,13 +99,13 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
                         switch (__s[0]) {
                           case 3: {
                             const v__e = __s[1];
-                            const __t0 = (v__args[0] = 27, v__args[1] = v__pk_26, v__args[2] = (0|0), v__args);
+                            const __t0 = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = (0|0), v__args);
                             v__args = __t0;
                             continue;
                           }
                           case 4: {
                             const v_s2 = __s[1];
-                            const __t0 = (v__args[0] = 27, v__args[1] = v__pk_26, v__args[2] = v_s2, v__args);
+                            const __t0 = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = v_s2, v__args);
                             v__args = __t0;
                             continue;
                           }
@@ -115,29 +115,29 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
                   }
                 }
               }
-              case 25: {
-                const v__pk_25 = __s[1];
+              case 27: {
+                const v__pk_27 = __s[1];
                 const v_n = __s[2];
                 const v_r = __s[3];
-                const __t0 = (v__args[0] = 28, v__args[1] = v_r, v__args[2] = [26, v__pk_25, v__x, v_n], v__args);
+                const __t0 = (v__args[0] = 30, v__args[1] = v_r, v__args[2] = [28, v__pk_27, v__x, v_n], v__args);
                 v__args = __t0;
                 continue;
               }
             }
           }
         }
-        case 28: {
+        case 30: {
           const v_t = __s[1];
           const v__k = __s[2];
           {
             const __s = v_t;
             switch (__s[0]) {
-              case 22: {
-                const __t0 = (v__args[0] = 27, v__args[1] = v__k, v__args[2] = (0|0), v__args);
+              case 24: {
+                const __t0 = (v__args[0] = 29, v__args[1] = v__k, v__args[2] = (0|0), v__args);
                 v__args = __t0;
                 continue;
               }
-              case 23: {
+              case 25: {
                 const v_l = __s[1];
                 const v_v = __s[2];
                 const v_r = __s[3];
@@ -146,7 +146,7 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
                   switch (__s[0]) {
                     case 2711245919: {
                       const v_n = __s[1];
-                      const __t0 = (v__args[0] = 28, v__args[1] = v_l, v__args[2] = [25, v__k, v_n, v_r], v__args);
+                      const __t0 = (v__args[0] = 30, v__args[1] = v_l, v__args[2] = [27, v__k, v_n, v_r], v__args);
                       v__args = __t0;
                       continue;
                     }
@@ -162,14 +162,14 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
 };
 
 const v__cps_sumTree = (v_t, v__k) => {
-    return (v__scc__apply_sumTree__cps_sumTree)([28, v_t, v__k]);
+    return (v__scc__apply_sumTree__cps_sumTree)([30, v_t, v__k]);
 };
 
 const v_sumTree = (v_t) => {
-    return (v__cps_sumTree)(v_t, [24]);
+    return (v__cps_sumTree)(v_t, [26]);
 };
 
-const main = [7, String((v_sumTree)((v_buildLeft)((200000|0), [22]))), [5, [0]]];
+const main = [7, String((v_sumTree)((v_buildLeft)((200000|0), [24]))), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

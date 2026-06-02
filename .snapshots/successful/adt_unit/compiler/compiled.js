@@ -6,7 +6,7 @@ const v_show = (v_u) => {
     {
       const __s = v_u;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           return "CustomUnit";
         }
       }
@@ -41,7 +41,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const main = [7, (v_show)([22]), [5, [0]]];
+const main = [7, (v_show)([24]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

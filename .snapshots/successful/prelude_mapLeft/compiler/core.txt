@@ -40,7 +40,7 @@ CoreProgram
             )
         , CValDef "bad"
             ( CCon 3
-                [ CCon 22 [] ]
+                [ CCon 24 [] ]
             )
         , CValDef "good"
             ( CCon 4
@@ -48,13 +48,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$27" )
                 [ CCall
                     ( CVar "$df$mapLeft$0" )
                     [ CVar "bad" ]
                 ]
             )
-        , CFunDef "$let$15" [ "msg" ]
+        , CFunDef "$let$23" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,14 +81,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$16" [ "_a" ]
-            ( CCon 23 [] )
-        , CFunDef "$let$17"
+        , CFunDef "$lam$24" [ "_a" ]
+            ( CCon 25 [] )
+        , CFunDef "$let$25"
             [ "renamedBad"
             , "renamedGood"
             ]
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CVar "renamedBad" )
                     [
@@ -98,7 +98,7 @@ CoreProgram
                             ( CCase
                                 ( CVar "__p0" )
                                 [
-                                    ( 23
+                                    ( 25
                                     , []
                                     , CCase
                                         ( CVar "renamedGood" )
@@ -109,7 +109,7 @@ CoreProgram
                                                 ( CCase
                                                     ( CVar "__p0" )
                                                     [
-                                                        ( 23
+                                                        ( 25
                                                         , []
                                                         , CCon 4
                                                             [ CString "bad-Left bad-Left" ]
@@ -146,11 +146,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$18" [ "_a" ]
-            ( CCon 23 [] )
-        , CFunDef "$let$19" [ "renamedBad" ]
+        , CFunDef "$lam$26" [ "_a" ]
+            ( CCon 25 [] )
+        , CFunDef "$let$27" [ "renamedBad" ]
             ( CCall
-                ( CVar "$let$17" )
+                ( CVar "$let$25" )
                 [ CVar "renamedBad"
                 , CCall
                     ( CVar "$df$mapLeft$1" )
@@ -166,7 +166,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "e"
                         ( CCon 3
                             [ CCall
-                                ( CVar "$lam$18" )
+                                ( CVar "$lam$26" )
                                 [ CVar "e" ]
                             ]
                         )
@@ -190,7 +190,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "e"
                         ( CCon 3
                             [ CCall
-                                ( CVar "$lam$16" )
+                                ( CVar "$lam$24" )
                                 [ CVar "e" ]
                             ]
                         )

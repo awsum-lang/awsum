@@ -166,7 +166,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 18
+                                            ( 19
                                             , []
                                             , CCon 4
                                                 [ CString "STRING_TOO_LONG" ]
@@ -205,7 +205,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
@@ -216,7 +216,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

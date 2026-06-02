@@ -20,7 +20,7 @@
   (data (i32.const 200) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00, ")
   (data (i32.const 222) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_showOverflowError $v_render $v__let_15)
+  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_showOverflowError $v_render $v__let_23)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -130,7 +130,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -378,9 +378,9 @@
     i32.const 0
     i32.ge_s
     if (result i32)
-    i32.const 17
+    i32.const 18
     else
-    i32.const 16
+    i32.const 17
     end
     i32.store
     i32.const 8
@@ -1487,7 +1487,7 @@
     end
     call 23)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

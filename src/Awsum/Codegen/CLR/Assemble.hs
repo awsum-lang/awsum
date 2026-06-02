@@ -18,7 +18,7 @@ module Awsum.Codegen.CLR.Assemble
   )
 where
 
-import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllBytesSpec, stdinReadAllSpec, strRef, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Core
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
@@ -563,9 +563,10 @@ cilModule ptags prog@(CoreProgram decls) =
           clmUserDefs = map (declCilMethod ectx) decls,
           clmEntry =
             concat
-              [ gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) [entryArgEitherSpec (ptRight ptags) (ptStringTooLong ptags) (ptUnpairedUtf16Surrogate ptags) (ptLeft ptags)],
+              [ gate (Set.member "internalGetArgs" builtIns) [entryArgEitherSpec (ptRight ptags) (ptStringTooLong ptags) (ptUnpairedUtf16Surrogate ptags) (ptLeft ptags)],
                 gate (Set.member "internalGetArgs" builtIns) [getArgsSpec (ptRight ptags) (ptNil ptags) (ptCons ptags)],
-                gate (Set.member "internalStdinReadAllAsUtf16" builtIns) [stdinReadAllSpec],
+                gate (Set.member "internalStdinReadAllString" builtIns) [stdinReadAllSpec (ptRight ptags) (ptStringTooLong ptags) (ptInvalidUtf8 ptags) (ptLeft ptags)],
+                gate (Set.member "internalStdinReadAllBytes" builtIns) [stdinReadAllBytesSpec (ptNil ptags) (ptCons ptags)],
                 [mainSpec]
               ]
         }
@@ -669,6 +670,7 @@ assembleCilMethod m = do
       SeObject -> pure [0x1C]
       SeString -> pure [0x0E]
       SeInt32 -> pure [0x08]
+      SeUInt8 -> pure [0x05]
       SeInt64 -> pure [0x0A]
       SeChar -> pure [0x03]
       SeBool -> pure [0x02]
@@ -707,6 +709,7 @@ assembleCilMethod m = do
       Newarr _ -> 5
       StelemRef -> 1
       LdelemRef -> 1
+      LdelemU1 -> 1
       Box _ -> 5
       UnboxAny _ -> 5
       Castclass _ -> 5
@@ -776,6 +779,7 @@ assembleCilMethod m = do
       Newarr tr -> cilNewarr <$> trTok tr
       StelemRef -> pure cilStelemRef
       LdelemRef -> pure cilLdelemRef'
+      LdelemU1 -> pure [0x91]
       Box tr -> cilBox <$> trTok tr
       UnboxAny tr -> cilUnboxAny <$> trTok tr
       Castclass tr -> cilCastclass <$> trTok tr
@@ -848,7 +852,8 @@ builtinHelperName =
   Map.fromList
     [ ("internalStdoutPrint", "__print"),
       ("internalGetArgs", "__getArgs"),
-      ("internalStdinReadAllAsUtf16", "__stdinReadAll"),
+      ("internalStdinReadAllString", "__stdinReadAll"),
+      ("internalStdinReadAllBytes", "__stdinReadAllBytes"),
       ("showUInt32", "__showUInt32"),
       ("predInt32", "__predInt32"),
       ("predUInt8", "__predUInt8"),
@@ -964,6 +969,12 @@ emitCallI ctx f xs = case f of
       [x] <- xs -> do
         cx <- emitExprI ctx x
         pure (cx <> [Callvirt (CilMemberRef objectRef "ToString" True SeString [])])
+  -- byteToHexStringNoPrefix: 'String.Format("{0:x2}", boxedByte)' — the "x2"
+  -- format renders the boxed Int32 as two lowercase zero-padded hex digits.
+  CBuiltIn "byteToHexStringNoPrefix"
+    | [x] <- xs -> do
+        cx <- emitExprI ctx x
+        pure ([Ldstr "{0:x2}"] <> cx <> [Call (CilMemberRef strRef "Format" False SeString [SeString, SeObject])])
   CBuiltIn name
     | Just helper <- Map.lookup name builtinHelperName -> do
         argCodes <- traverse (emitExprI ctx) xs

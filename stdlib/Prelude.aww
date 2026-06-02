@@ -206,7 +206,8 @@ type IO e a
   | IOFail e
   | IOStdoutPrint String (IO e a)
   | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e a)
-  | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOStdinReadAllString (Either (StringTooLong | InvalidUtf8) String -> IO e a)
+  | IOStdinReadAllBytes (List UInt8 -> IO e a)
 
 {- Lift a pure value into IO. -}
 pureIO : a -> IO e a
@@ -228,17 +229,25 @@ bindIO io k = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (bindIO next k)
   IOGetArgs cont -> IOGetArgs (bindIOAfterArgs cont k)
-  IOStdinReadAll cont -> IOStdinReadAll (bindIOAfterStdin cont k)
+  IOStdinReadAllString cont -> IOStdinReadAllString (bindIOAfterStdinString cont k)
+  IOStdinReadAllBytes cont -> IOStdinReadAllBytes (bindIOAfterStdinBytes cont k)
 
 {- Internal helper for `bindIO`'s `IOGetArgs` arm; top-level so the
    typechecker pins `cont`'s type via the signature. -}
 bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO (e1 | e2) b
 bindIOAfterArgs cont k result = bindIO (cont result) k
 
-{- Internal helper for `bindIO`'s `IOStdinReadAll` arm; top-level so the
-   typechecker pins `cont`'s type via the signature. -}
-bindIOAfterStdin : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
-bindIOAfterStdin cont k result = bindIO (cont result) k
+{- Internal helper for `bindIO`'s `IOStdinReadAllString` arm; top-level
+   so the typechecker pins `cont`'s type via the signature. -}
+bindIOAfterStdinString : (Either (StringTooLong | InvalidUtf8) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | InvalidUtf8) String -> IO (e1 | e2) b
+bindIOAfterStdinString cont k result = bindIO (cont result) k
+
+{- Internal helper for `bindIO`'s `IOStdinReadAllBytes` arm; top-level
+   so the typechecker pins `cont`'s type via the signature. The raw-byte
+   read cannot fail on content, so the continuation takes a bare
+   `List UInt8` rather than an `Either`. -}
+bindIOAfterStdinBytes : (List UInt8 -> IO e1 a) -> (a -> IO e2 b) -> List UInt8 -> IO (e1 | e2) b
+bindIOAfterStdinBytes cont k bytes = bindIO (cont bytes) k
 
 {- Sequence two IO actions in continuation-first order: takes the
    continuation, then the IO value to feed it. The error row of the
@@ -250,7 +259,8 @@ andThenIO k io = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (andThenIO k next)
   IOGetArgs cont -> IOGetArgs (\result -> andThenIO k (cont result))
-  IOStdinReadAll cont -> IOStdinReadAll (\result -> andThenIO k (cont result))
+  IOStdinReadAllString cont -> IOStdinReadAllString (\result -> andThenIO k (cont result))
+  IOStdinReadAllBytes cont -> IOStdinReadAllBytes (\bytes -> andThenIO k (cont bytes))
 
 {- Apply `f` to the success value of an IO action; leave the error row
    and the surrounding effect tree alone. The action structure is
@@ -261,7 +271,8 @@ mapIO io f = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (mapIO next f)
   IOGetArgs cont -> IOGetArgs (\result -> mapIO (cont result) f)
-  IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIO (cont result) f)
+  IOStdinReadAllString cont -> IOStdinReadAllString (\result -> mapIO (cont result) f)
+  IOStdinReadAllBytes cont -> IOStdinReadAllBytes (\bytes -> mapIO (cont bytes) f)
 
 {- Apply `f` to the failure value of an IO action; leave the success
    and effect tree alone. Used to widen / narrow / rename the error row. -}
@@ -271,7 +282,8 @@ mapIOError io f = case io of
   IOFail e -> IOFail (f e)
   IOStdoutPrint s next -> IOStdoutPrint s (mapIOError next f)
   IOGetArgs cont -> IOGetArgs (\result -> mapIOError (cont result) f)
-  IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIOError (cont result) f)
+  IOStdinReadAllString cont -> IOStdinReadAllString (\result -> mapIOError (cont result) f)
+  IOStdinReadAllBytes cont -> IOStdinReadAllBytes (\bytes -> mapIOError (cont bytes) f)
 
 {- Route `IOFail` through a recovery handler. The handler may fully
    recover (return `IO Never a`), partially handle (return an IO with
@@ -283,7 +295,8 @@ handleErrorIO h io = case io of
   IOFail e -> h e
   IOStdoutPrint s next -> IOStdoutPrint s (handleErrorIO h next)
   IOGetArgs cont -> IOGetArgs (\result -> handleErrorIO h (cont result))
-  IOStdinReadAll cont -> IOStdinReadAll (\result -> handleErrorIO h (cont result))
+  IOStdinReadAllString cont -> IOStdinReadAllString (\result -> handleErrorIO h (cont result))
+  IOStdinReadAllBytes cont -> IOStdinReadAllBytes (\bytes -> handleErrorIO h (cont bytes))
 
 {- Walk the IO tree returned from `main` and perform the effects in
    order. Called by per-target entry-point glue; user code never calls
@@ -295,7 +308,8 @@ runIO io = case io of
   IOStdoutPrint s next -> case BuiltIn.internalStdoutPrint s of
     Unit -> runIO next
   IOGetArgs cont -> runIO (cont BuiltIn.internalGetArgs)
-  IOStdinReadAll cont -> runIO (cont BuiltIn.internalStdinReadAllAsUtf16)
+  IOStdinReadAllString cont -> runIO (cont BuiltIn.internalStdinReadAllString)
+  IOStdinReadAllBytes cont -> runIO (cont BuiltIn.internalStdinReadAllBytes)
 
 {- Lift an `Either` into IO: `Left` becomes a failed action, `Right` a
    pure success. The error row `e` carries over unchanged, so a fallible
@@ -394,11 +408,16 @@ showStringTooLong _ = "StringTooLong"
 
 -- ---------------------- UnpairedUtf16Surrogate
 
-{- Reported by string-construction primitives reading external bytes
-   (CLI arguments, stdin, future FFI) when a UTF-16 half-surrogate
+{- Reported by string-construction primitives reading host-decoded
+   text (CLI arguments, future FFI) when a UTF-16 half-surrogate
    appears without its mate. Awsum strings are strict UTF-16; lone
-   surrogates are not representable. Never appears as the result of a
-   pure computation — only at the I/O boundary. -}
+   surrogates are not representable. This is a UTF-16-level failure:
+   the host (e.g. Windows `CommandLineToArgvW`, the JVM's argv
+   decoder) has already produced a code-unit sequence, and one of
+   those code units is an unpaired surrogate. Stdin, read as raw
+   bytes and decoded by Awsum itself, reports byte-level malformation
+   as `InvalidUtf8` instead. Never appears as the result of a pure
+   computation — only at the I/O boundary. -}
 type UnpairedUtf16Surrogate = UnpairedUtf16Surrogate
 
 {- Render the `UnpairedUtf16Surrogate` value as the literal string
@@ -406,6 +425,25 @@ type UnpairedUtf16Surrogate = UnpairedUtf16Surrogate
    ever one value to render. -}
 showUnpairedUtf16Surrogate : UnpairedUtf16Surrogate -> String
 showUnpairedUtf16Surrogate _ = "UnpairedUtf16Surrogate"
+
+-- ---------------------- InvalidUtf8
+
+{- Reported by `IO.Stdin.readAllString` when the raw bytes read from
+   stdin are not well-formed UTF-8 (RFC 3629): overlong encodings,
+   truncated multi-byte sequences, stray continuation bytes, code
+   points above U+10FFFF, or surrogate code points encoded in UTF-8
+   (`ED A0 80`..). This is a byte-level failure, distinct from
+   `UnpairedUtf16Surrogate`: stdin is decoded by Awsum from bytes, so
+   it owns the full UTF-8 validity check, whereas host-decoded argv
+   only exposes UTF-16-level surrogate errors. Never appears as the
+   result of a pure computation — only at the I/O boundary. -}
+type InvalidUtf8 = InvalidUtf8
+
+{- Render the `InvalidUtf8` value as the literal string
+   `"InvalidUtf8"`. The type is nullary, so there is only ever one
+   value to render. -}
+showInvalidUtf8 : InvalidUtf8 -> String
+showInvalidUtf8 _ = "InvalidUtf8"
 
 -- ---------------------- ParseError
 
@@ -457,6 +495,19 @@ eqUInt8 = BuiltIn.eqUInt8
    leading zeroes and no sign. -}
 showUInt8 : UInt8 -> String
 showUInt8 = BuiltIn.showUInt8
+
+{- Render a `UInt8` as exactly two lowercase hex digits with no `0x`
+   prefix (`0` -> `"00"`, `255` -> `"ff"`). -}
+byteToHexStringNoPrefix : UInt8 -> String
+byteToHexStringNoPrefix = BuiltIn.byteToHexStringNoPrefix
+
+{- Render a list of bytes as their concatenated two-digit lowercase hex,
+   no separators and no prefix (`[0, 255, 16]` -> `"00ff10"`). Fails with
+   `StringTooLong` only if the combined hex would exceed the string cap. -}
+bytesToHexStringNoPrefix : List UInt8 -> Either StringTooLong String
+bytesToHexStringNoPrefix bytes = case bytes of
+  Nil -> Right ""
+  Cons b rest -> bindEither (bytesToHexStringNoPrefix rest) (\restHex -> byteToHexStringNoPrefix b ++ restHex)
 
 {- Predecessor (`n - 1`). Returns `UnderflowError` when `n = 0`
    because the mathematical result is outside the `UInt8` range. -}

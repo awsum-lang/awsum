@@ -44,7 +44,7 @@ CoreProgram
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "parseExpr" )
-                        [ CCon 23 [] ]
+                        [ CCon 25 [] ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
@@ -55,7 +55,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 24
+                        ( 26
                         ,
                             [ "tok"
                             , "_acc"
@@ -65,17 +65,17 @@ CoreProgram
                                 ( CCase
                                     ( CVar "tok" )
                                     [
-                                        ( 22
+                                        ( 24
                                         , []
                                         , CIntLit 0 TInt32
                                         )
                                     ,
-                                        ( 23
+                                        ( 25
                                         , []
                                         , CDrop DropFreeUnchecked "$args"
                                             ( CContinue
-                                                [ CCon 25
-                                                    [ CCon 22 [] ]
+                                                [ CCon 27
+                                                    [ CCon 24 [] ]
                                                 ]
                                             )
                                         )
@@ -84,22 +84,22 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 25
+                        ( 27
                         , [ "tok" ]
                         , CDrop DropFreeUnchecked "tok"
                             ( CCase
                                 ( CVar "tok" )
                                 [
-                                    ( 22
+                                    ( 24
                                     , []
                                     , CIntLit 0 TInt32
                                     )
                                 ,
-                                    ( 23
+                                    ( 25
                                     , []
                                     , CDrop DropFreeUnchecked "$args"
                                         ( CContinue
-                                            [ CCon 24
+                                            [ CCon 26
                                                 [ CVar "tok"
                                                 , CIntLit 0 TInt32
                                                 ]
@@ -115,7 +115,7 @@ CoreProgram
         , CFunDef "parseExpr" [ "tok" ]
             ( CCall
                 ( CVar "$scc$parseBinary_parseExpr" )
-                [ CCon 25
+                [ CCon 27
                     [ CVar "tok" ]
                 ]
             )

@@ -256,7 +256,7 @@
     call 4
     local.set 2
     local.get 2
-    i32.const 16
+    i32.const 17
     i32.store
     i32.const 8
     i32.const 1
@@ -353,9 +353,9 @@
     i32.const 0
     i32.ge_s
     if (result i32)
-    i32.const 17
+    i32.const 18
     else
-    i32.const 16
+    i32.const 17
     end
     i32.store
     i32.const 8
@@ -893,7 +893,7 @@
     call 13
     local.set 2
     local.get 2
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 2
     local.get 1
@@ -911,7 +911,7 @@
     call 13
     local.set 3
     local.get 3
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 3
     i32.store offset=12
@@ -1016,7 +1016,7 @@
     call 13
     local.set 2
     local.get 2
-    i32.const 24
+    i32.const 26
     i32.store
     local.get 2
     call 23
@@ -1044,7 +1044,7 @@
     call 13
     local.set 0
     local.get 0
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 0
     call 18
@@ -1157,7 +1157,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 26
+    i32.const 28
     i32.eq
     if (result i32)
     local.get 2
@@ -1174,7 +1174,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 24
+    i32.const 26
     i32.eq
     if (result i32)
     block (result i32)
@@ -1202,7 +1202,7 @@
     call 13
     local.set 1
     local.get 1
-    i32.const 27
+    i32.const 29
     i32.store
     local.get 1
     local.get 6
@@ -1258,7 +1258,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 22
+    i32.const 24
     i32.eq
     if (result i32)
     i32.const 12
@@ -1266,7 +1266,7 @@
     call 13
     local.set 1
     local.get 1
-    i32.const 26
+    i32.const 28
     i32.store
     local.get 1
     local.get 5
@@ -1319,7 +1319,7 @@
     i32.load offset=12
     call 15
     local.get 0
-    i32.const 27
+    i32.const 29
     i32.store
     local.get 0
     local.get 6
@@ -1344,7 +1344,7 @@
     call 13
     local.set 1
     local.get 1
-    i32.const 25
+    i32.const 27
     i32.store
     local.get 1
     local.get 5
@@ -1391,7 +1391,7 @@
     call 13
     local.set 3
     local.get 3
-    i32.const 27
+    i32.const 29
     i32.store
     local.get 3
     local.get 0

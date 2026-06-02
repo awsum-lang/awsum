@@ -18,7 +18,7 @@
   (data (i32.const 139) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 174) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00err: ")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_step1 $v_step2 $v_run $v_renderErr $v__let_15)
+  (elem (i32.const 0) $v_runIO $v_step1 $v_step2 $v_run $v_renderErr $v__let_23)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -128,7 +128,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -376,9 +376,9 @@
     i32.const 0
     i32.ge_s
     if (result i32)
-    i32.const 17
+    i32.const 18
     else
-    i32.const 16
+    i32.const 17
     end
     i32.store
     i32.const 8
@@ -454,7 +454,7 @@
     call 4
     local.set 3
     local.get 3
-    i32.const 17
+    i32.const 18
     i32.store
     i32.const 8
     i32.const 1
@@ -485,7 +485,7 @@
     call 4
     local.set 3
     local.get 3
-    i32.const 16
+    i32.const 17
     i32.store
     i32.const 8
     i32.const 1
@@ -1373,7 +1373,7 @@
     local.get 0
     end)
 
-  (func $v__let_15 (param i32 i32) (result i32)
+  (func $v__let_23 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

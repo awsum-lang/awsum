@@ -238,7 +238,8 @@ data PreludeTags = PreludeTags
     ptOverflowError :: !Int,
     ptParseError :: !Int,
     ptStringTooLong :: !Int,
-    ptUnpairedUtf16Surrogate :: !Int
+    ptUnpairedUtf16Surrogate :: !Int,
+    ptInvalidUtf8 :: !Int
   }
   deriving stock (Show, Eq)
 

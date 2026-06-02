@@ -94,14 +94,14 @@ mkHugeArmCase depth =
           "  B -> sumList " <> nested <> " 0",
           "  C -> 3",
           "",
-          "handleErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit",
+          "handleErr : (StringTooLong | InvalidUtf8) -> IO Never Unit",
           "handleErr _e = IO.Stdout.print \"ERR\"",
           "",
           "run : String -> IO Never Unit",
           "run s = IO.Stdout.print (showInt32 (pick (classify s)))",
           "",
           "main : IO Never Unit",
-          "main = IO.Stdin.readAll |> andThenIO run |> handleErrorIO handleErr"
+          "main = IO.Stdin.readAllString |> andThenIO run |> handleErrorIO handleErr"
         ]
 
 spec :: Spec

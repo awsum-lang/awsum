@@ -1,13 +1,13 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_unwrap = (v_box) => {
     {
       const __s = v_box;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           const v_value = __s[1];
           return v_value;
         }
@@ -19,7 +19,7 @@ const v_showResult = (v_r) => {
     {
       const __s = v_r;
       switch (__s[0]) {
-        case 23: {
+        case 25: {
           const v_a = __s[1];
           return v_a;
         }
@@ -55,7 +55,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -71,7 +71,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([22, [23, "nested"]]))); } } })(__concat((v_unwrap)([22, "from box"]), " ")));
+const main = (v__let_23)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([24, [25, "nested"]]))); } } })(__concat((v_unwrap)([24, "from box"]), " ")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

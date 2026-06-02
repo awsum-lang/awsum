@@ -315,11 +315,11 @@ case.default.4:
 case.join.5:
   %t46 = phi ptr [%t10, %case.end.3.7], [%t45, %case.end.4.19]
   call void @__free_recursive(ptr %t0)
-  %t47 = call ptr @v__let_15(ptr %t46)
+  %t47 = call ptr @v__let_23(ptr %t46)
   ret ptr %t47
 }
 
-define internal ptr @v__let_15(ptr %v_res) {
+define internal ptr @v__let_23(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -339,8 +339,8 @@ case.arm.2252990199.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
-case.arm.22.18:
+  switch i64 %t16, label %case.default.17 [ i64 24, label %case.arm.24.18 ]
+case.arm.24.18:
   %t19 = call ptr @__alloc(i64 24, i32 2)
   %t20 = inttoptr i64 7 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -372,8 +372,8 @@ case.arm.2269767818.31:
   %t34 = getelementptr ptr, ptr %t33, i32 0
   %t35 = load ptr, ptr %t34
   %t36 = ptrtoint ptr %t35 to i64
-  switch i64 %t36, label %case.default.37 [ i64 23, label %case.arm.23.38 ]
-case.arm.23.38:
+  switch i64 %t36, label %case.default.37 [ i64 25, label %case.arm.25.38 ]
+case.arm.25.38:
   %t39 = call ptr @__alloc(i64 24, i32 2)
   %t40 = inttoptr i64 7 to ptr
   %t41 = getelementptr ptr, ptr %t39, i32 0

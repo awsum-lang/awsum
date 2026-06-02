@@ -1,0 +1,493 @@
+Program
+    { moduleComment = Just " Exercises the hex helpers on literal bytes: `byteToHexStringNoPrefix`
+         (a per-target built-in) and `bytesToHexStringNoPrefix` (pure Awsum,
+         a non-tail fold over `(++)`). Deterministic output `000f10abff` pins
+         the hex codegen on all five backends. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 8
+            , spanStartCol = 1
+            , spanEndLine = 8
+            , spanEndCol = 21
+            }
+        ) "main"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 8
+                , spanEndLine = 8
+                , spanEndCol = 21
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 8
+                    , spanEndLine = 8
+                    , spanEndCol = 16
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 8
+                        , spanEndLine = 8
+                        , spanEndCol = 10
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 11
+                        , spanEndLine = 8
+                        , spanEndCol = 16
+                        }
+                    ) "Never"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 17
+                    , spanEndLine = 8
+                    , spanEndCol = 21
+                    }
+                ) "Unit"
+            )
+        ) Nothing Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 41
+                }
+            ) "main" []
+            ( ELet
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 7
+                    , spanEndLine = 10
+                    , spanEndCol = 80
+                    }
+                )
+                ( PVar
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 7
+                        , spanEndLine = 10
+                        , spanEndCol = 12
+                        }
+                    ) "bytes"
+                )
+                ( Just
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 15
+                            , spanEndLine = 10
+                            , spanEndCol = 25
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 15
+                                , spanEndLine = 10
+                                , spanEndCol = 19
+                                }
+                            ) "List"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 20
+                                , spanEndLine = 10
+                                , spanEndCol = 25
+                                }
+                            ) "UInt8"
+                        )
+                    )
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 28
+                        , spanEndLine = 10
+                        , spanEndCol = 80
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 28
+                            , spanEndLine = 10
+                            , spanEndCol = 35
+                            }
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 28
+                                , spanEndLine = 10
+                                , spanEndCol = 33
+                                }
+                            ) "Cons"
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 33
+                                , spanEndLine = 10
+                                , spanEndCol = 35
+                                }
+                            )
+                            ( LInt 0 )
+                        )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 35
+                            , spanEndLine = 10
+                            , spanEndCol = 80
+                            }
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 36
+                                , spanEndLine = 10
+                                , spanEndCol = 79
+                                }
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 36
+                                    , spanEndLine = 10
+                                    , spanEndCol = 44
+                                    }
+                                )
+                                ( ECon
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 36
+                                        , spanEndLine = 10
+                                        , spanEndCol = 41
+                                        }
+                                    ) "Cons"
+                                )
+                                ( ELit
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 41
+                                        , spanEndLine = 10
+                                        , spanEndCol = 44
+                                        }
+                                    )
+                                    ( LInt 15 )
+                                )
+                            )
+                            ( EParens
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 44
+                                    , spanEndLine = 10
+                                    , spanEndCol = 79
+                                    }
+                                )
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 45
+                                        , spanEndLine = 10
+                                        , spanEndCol = 78
+                                        }
+                                    )
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 45
+                                            , spanEndLine = 10
+                                            , spanEndCol = 53
+                                            }
+                                        )
+                                        ( ECon
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 45
+                                                , spanEndLine = 10
+                                                , spanEndCol = 50
+                                                }
+                                            ) "Cons"
+                                        )
+                                        ( ELit
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 50
+                                                , spanEndLine = 10
+                                                , spanEndCol = 53
+                                                }
+                                            )
+                                            ( LInt 16 )
+                                        )
+                                    )
+                                    ( EParens
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 53
+                                            , spanEndLine = 10
+                                            , spanEndCol = 78
+                                            }
+                                        )
+                                        ( EApp
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 54
+                                                , spanEndLine = 10
+                                                , spanEndCol = 77
+                                                }
+                                            )
+                                            ( EApp
+                                                ( SrcSpan
+                                                    { spanStartLine = 10
+                                                    , spanStartCol = 54
+                                                    , spanEndLine = 10
+                                                    , spanEndCol = 63
+                                                    }
+                                                )
+                                                ( ECon
+                                                    ( SrcSpan
+                                                        { spanStartLine = 10
+                                                        , spanStartCol = 54
+                                                        , spanEndLine = 10
+                                                        , spanEndCol = 59
+                                                        }
+                                                    ) "Cons"
+                                                )
+                                                ( ELit
+                                                    ( SrcSpan
+                                                        { spanStartLine = 10
+                                                        , spanStartCol = 59
+                                                        , spanEndLine = 10
+                                                        , spanEndCol = 63
+                                                        }
+                                                    )
+                                                    ( LInt 171 )
+                                                )
+                                            )
+                                            ( EParens
+                                                ( SrcSpan
+                                                    { spanStartLine = 10
+                                                    , spanStartCol = 63
+                                                    , spanEndLine = 10
+                                                    , spanEndCol = 77
+                                                    }
+                                                )
+                                                ( EApp
+                                                    ( SrcSpan
+                                                        { spanStartLine = 10
+                                                        , spanStartCol = 64
+                                                        , spanEndLine = 10
+                                                        , spanEndCol = 76
+                                                        }
+                                                    )
+                                                    ( EApp
+                                                        ( SrcSpan
+                                                            { spanStartLine = 10
+                                                            , spanStartCol = 64
+                                                            , spanEndLine = 10
+                                                            , spanEndCol = 73
+                                                            }
+                                                        )
+                                                        ( ECon
+                                                            ( SrcSpan
+                                                                { spanStartLine = 10
+                                                                , spanStartCol = 64
+                                                                , spanEndLine = 10
+                                                                , spanEndCol = 69
+                                                                }
+                                                            ) "Cons"
+                                                        )
+                                                        ( ELit
+                                                            ( SrcSpan
+                                                                { spanStartLine = 10
+                                                                , spanStartCol = 69
+                                                                , spanEndLine = 10
+                                                                , spanEndCol = 73
+                                                                }
+                                                            )
+                                                            ( LInt 255 )
+                                                        )
+                                                    )
+                                                    ( ECon
+                                                        ( SrcSpan
+                                                            { spanStartLine = 10
+                                                            , spanStartCol = 73
+                                                            , spanEndLine = 10
+                                                            , spanEndCol = 76
+                                                            }
+                                                        ) "Nil"
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                ( ECase
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 7
+                        , spanEndLine = 13
+                        , spanEndCol = 41
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 12
+                            , spanEndLine = 11
+                            , spanEndCol = 43
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 12
+                                , spanEndLine = 11
+                                , spanEndCol = 37
+                                }
+                            )
+                            ( QName [] "bytesToHexStringNoPrefix" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 37
+                                , spanEndLine = 11
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [] "bytes" )
+                        )
+                    )
+                    ( CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 9
+                                , spanEndLine = 12
+                                , spanEndCol = 13
+                                }
+                            ) "Left"
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 14
+                                    , spanEndLine = 12
+                                    , spanEndCol = 16
+                                    }
+                                ) "_e"
+                            ]
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 20
+                                , spanEndLine = 12
+                                , spanEndCol = 46
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 20
+                                    , spanEndLine = 12
+                                    , spanEndCol = 36
+                                    }
+                                )
+                                ( QName
+                                    [ "IO"
+                                    , "Stdout"
+                                    ] "print"
+                                )
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 36
+                                    , spanEndLine = 12
+                                    , spanEndCol = 46
+                                    }
+                                )
+                                ( LString "TOO_LONG" )
+                            )
+                        ) Nothing :|
+                        [ CaseAltLeaf []
+                            ( PCon
+                                ( SrcSpan
+                                    { spanStartLine = 13
+                                    , spanStartCol = 9
+                                    , spanEndLine = 13
+                                    , spanEndCol = 14
+                                    }
+                                ) "Right"
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 15
+                                        , spanEndLine = 13
+                                        , spanEndCol = 18
+                                        }
+                                    ) "hex"
+                                ]
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 13
+                                    , spanStartCol = 22
+                                    , spanEndLine = 13
+                                    , spanEndCol = 41
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 22
+                                        , spanEndLine = 13
+                                        , spanEndCol = 38
+                                        }
+                                    )
+                                    ( QName
+                                        [ "IO"
+                                        , "Stdout"
+                                        ] "print"
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 38
+                                        , spanEndLine = 13
+                                        , spanEndCol = 41
+                                        }
+                                    )
+                                    ( QName [] "hex" )
+                                )
+                            ) Nothing
+                        ]
+                    ) []
+                )
+            ) Nothing Nothing
+        ]
+    }

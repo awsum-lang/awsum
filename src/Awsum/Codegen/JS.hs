@@ -115,6 +115,7 @@ header ptags builtIns =
       overflowTag = rowTag (TyCon noSpan "OverflowError")
       stringTooLongRowTag = rowTag (TyCon noSpan "StringTooLong")
       unpairedSurrogateRowTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
+      invalidUtf8RowTag = rowTag (TyCon noSpan "InvalidUtf8")
       -- Constructor tags fed in from 'PreludeTags'. Under globally
       -- unique tags every constructor's tag depends on declaration
       -- order, so the runtime helpers — which build these values out
@@ -135,6 +136,7 @@ header ptags builtIns =
       ptPE = show (ptParseError ptags)
       ptSTL = show (ptStringTooLong ptags)
       ptUS = show (ptUnpairedUtf16Surrogate ptags)
+      ptIU = show (ptInvalidUtf8 ptags)
       lns =
         filter
           (not . T.null)
@@ -343,11 +345,10 @@ header ptags builtIns =
             -- Encoding mirrors the other backends: Right=[1, arg];
             -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
             -- wrap, Left).
-            -- '__entryArgEither' is shared by '__getArgs' (argv source)
-            -- and '__stdinReadAll' (stdin source). Gate on either
-            -- builtin's presence so a program that needs neither pays
-            -- nothing for the validator.
-            if Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns
+            -- '__entryArgEither' validates host-decoded argv strings only
+            -- (stdin has its own strict byte decoder below). Gate on the
+            -- argv builtin so a program that never reads argv pays nothing.
+            if Set.member "internalGetArgs" builtIns
               then "function __entryArgEither(arg){ if (arg.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; } return [" <> ptR <> ", arg]; }"
               else "",
             -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
@@ -366,17 +367,31 @@ header ptags builtIns =
               then "function __getArgs(){ const args = process.argv.slice(2); let list = [" <> ptNil_ <> "]; for (let i = args.length - 1; i >= 0; i--) { const v = __entryArgEither(args[i]); if (v[0] !== " <> ptR <> ") return v; list = [" <> ptCons_ <> ", v[1], list]; } return [" <> ptR <> ", list]; }"
               else "",
             -- __stdinReadAll: zero-arg helper for
-            -- 'BuiltIn.internalStdinReadAllAsUtf16', called from
-            -- 'runIO''s 'IOStdinReadAll' arm. Reads fd 0 to EOF via
-            -- 'fs.readFileSync(0)' (which works on POSIX and Windows,
-            -- handles binary input correctly, and blocks until EOF),
-            -- then UTF-8 decodes the resulting Buffer and routes the
-            -- string through '__entryArgEither'. Per the POSIX-honest
-            -- no-memoisation decision, each call reads whatever bytes
-            -- remain on stdin; a second call after EOF reads zero
-            -- bytes and decodes to @Right ""@.
-            if Set.member "internalStdinReadAllAsUtf16" builtIns
-              then "function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }"
+            -- 'BuiltIn.internalStdinReadAllString', called from 'runIO''s
+            -- 'IOStdinReadAllString' arm. Reads fd 0 to EOF via
+            -- 'fs.readFileSync(0)' (POSIX + Windows, binary-safe, blocks
+            -- until EOF), then decodes the Buffer as strict UTF-8 via a
+            -- fatal 'TextDecoder' — any RFC-3629 malformation throws and
+            -- becomes 'Left InvalidUtf8'. 'ignoreBOM: true' keeps a leading
+            -- U+FEFF as data: without it Node's decoder silently strips a
+            -- leading BOM, while the four hand-written decoders treat it as
+            -- an ordinary scalar — the flag is what keeps stdout identical
+            -- across backends. A successful decode is then
+            -- length-capped ('Left StringTooLong' over 2^27 UTF-16 code
+            -- units). Per the POSIX-honest no-memoisation decision a
+            -- second call after EOF reads zero bytes and yields @Right ""@.
+            if Set.member "internalStdinReadAllString" builtIns
+              then "function __stdinReadAll(){ let s; try { s = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(require('fs').readFileSync(0)); } catch (e) { return [" <> ptL <> ", [" <> show invalidUtf8RowTag <> ", [" <> ptIU <> "]]]; } if (s.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; return [" <> ptR <> ", s]; }"
+              else "",
+            -- __stdinReadAllBytes: zero-arg helper for
+            -- 'BuiltIn.internalStdinReadAllBytes', called from 'runIO''s
+            -- 'IOStdinReadAllBytes' arm. Reads fd 0 to EOF and returns the
+            -- raw bytes as an Awsum 'List UInt8' (each element a 0..255
+            -- number), built right-to-left so the cons chain needs no
+            -- recursion. No decode, no error row. A second call after EOF
+            -- yields 'Nil'.
+            if Set.member "internalStdinReadAllBytes" builtIns
+              then "function __stdinReadAllBytes(){ const buf = require('fs').readFileSync(0); let list = [" <> ptNil_ <> "]; for (let i = buf.length - 1; i >= 0; i--) { list = [" <> ptCons_ <> ", buf[i], list]; } return list; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -632,18 +647,27 @@ emitExpr = \case
         case xs of
           [] -> "__getArgs()"
           _ -> error "__getArgs: arity mismatch"
-      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAll' arm:
-      -- consumes stdin via 'fs.readFileSync(0)' and routes the decoded
-      -- UTF-8 through '__entryArgEither'.
-      CBuiltIn "internalStdinReadAllAsUtf16" ->
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAllString' arm:
+      -- consumes stdin and strict-UTF-8 decodes it (see '__stdinReadAll').
+      CBuiltIn "internalStdinReadAllString" ->
         case xs of
           [] -> "__stdinReadAll()"
           _ -> error "__stdinReadAll: arity mismatch"
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAllBytes' arm:
+      -- consumes stdin and returns the raw bytes as 'List UInt8'.
+      CBuiltIn "internalStdinReadAllBytes" ->
+        case xs of
+          [] -> "__stdinReadAllBytes()"
+          _ -> error "__stdinReadAllBytes: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of
               [x] -> "String(" <> emitExpr x <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "byteToHexStringNoPrefix" ->
+        case xs of
+          [x] -> "(" <> emitExpr x <> ").toString(16).padStart(2, \"0\")"
+          _ -> error "BuiltIn.byteToHexStringNoPrefix: arity mismatch"
       CBuiltIn "predInt32" ->
         case xs of
           [x] -> "__predInt32(" <> emitExpr x <> ")"

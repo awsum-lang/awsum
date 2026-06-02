@@ -15,7 +15,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00underflow")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v__scc__apply1__lam_15_a_b $v_a)
+  (elem (i32.const 0) $v_runIO $v__scc__apply1__lam_23_a_b $v_a)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -256,7 +256,7 @@
     call 4
     local.set 2
     local.get 2
-    i32.const 16
+    i32.const 17
     i32.store
     i32.const 8
     i32.const 1
@@ -702,7 +702,7 @@
     call 12
     local.set 0
     local.get 0
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 0
     i32.const 4
@@ -710,7 +710,7 @@
     call 12
     local.set 1
     local.get 1
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 1
     i32.store offset=4
@@ -817,7 +817,7 @@
     local.get 0
     end)
 
-  (func $v__scc__apply1__lam_15_a_b (param i32) (result i32)
+  (func $v__scc__apply1__lam_23_a_b (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -833,7 +833,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 24
+    i32.const 26
     i32.eq
     if (result i32)
     local.get 2
@@ -853,7 +853,7 @@
     call 12
     local.set 1
     local.get 1
-    i32.const 25
+    i32.const 27
     i32.store
     local.get 1
     local.get 4
@@ -875,7 +875,7 @@
     else
     local.get 2
     i32.load
-    i32.const 25
+    i32.const 27
     i32.eq
     if (result i32)
     local.get 2
@@ -884,7 +884,7 @@
     local.get 3
     call 13
     local.get 0
-    i32.const 27
+    i32.const 29
     i32.store
     local.get 0
     local.set 6
@@ -896,7 +896,7 @@
     else
     local.get 2
     i32.load
-    i32.const 26
+    i32.const 28
     i32.eq
     if (result i32)
     local.get 2
@@ -1004,7 +1004,7 @@
     call 12
     local.set 1
     local.get 1
-    i32.const 24
+    i32.const 26
     i32.store
     local.get 1
     local.get 5
@@ -1135,7 +1135,7 @@
     i32.load offset=4
     call 14
     local.get 0
-    i32.const 26
+    i32.const 28
     i32.store
     local.get 0
     local.get 4
@@ -1173,7 +1173,7 @@
     call 12
     local.set 1
     local.get 1
-    i32.const 26
+    i32.const 28
     i32.store
     local.get 1
     local.get 0
