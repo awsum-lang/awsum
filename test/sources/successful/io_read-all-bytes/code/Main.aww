@@ -1,0 +1,14 @@
+{- Pins the `IO.Stdin.readAllBytes` codegen on every backend: the raw-byte
+   reader (fd 0 → `List UInt8`) plus the hex fold. Runtime behaviour over
+   real byte streams is covered by the `readAllBytes-roundtrip` property
+   test; this snapshot locks the generated code. -}
+
+import IO.Stdout
+import IO.Stdin
+
+main : IO Never Unit
+main =
+  IO.Stdin.readAllBytes
+    |> andThenIO (\bytes -> case bytesToHexStringNoPrefix bytes of
+        Left _e -> IO.Stdout.print "TOO_LONG"
+        Right hex -> IO.Stdout.print hex)

@@ -46,7 +46,7 @@ Commands that go through the typechecker require `--program-type cli` (currently
 
 ```bash
 awsum build --program-type cli -t llvm|jvm|clr|wasm|js [-o OUT] FILE     # Compile to file/stdout (binary for jvm/clr/wasm)
-awsum run   --program-type cli -t llvm|jvm|clr|wasm|js FILE [-- ARG …]   # Compile and execute (argv after --, read via IO.Args.getArgs as List String; stdin inherits — pipe or < file to feed IO.Stdin.readAll)
+awsum run   --program-type cli -t llvm|jvm|clr|wasm|js FILE [-- ARG …]   # Compile and execute (argv after --, read via IO.Args.getArgs as List String; stdin inherits — pipe or < file to feed IO.Stdin.readAllString/readAllBytes)
 awsum check --program-type cli [--json] [--strict] FILE                  # Typecheck only
 awsum core  --program-type cli FILE                                      # Print Core IR
 awsum asm   --program-type cli -t jvm|clr|wasm FILE                      # Print target assembly text
@@ -63,7 +63,7 @@ awsum symbols [--json] FILE                                              # Top-l
 just build                                                                              # ensure the local binary is current
 
 stack exec awsum -- run   --program-type cli -t jvm path/to/Main.aww -- "world"         # argv path: run on one backend, see real stdout (no snapshot comparison)
-printf '1:1' | stack exec awsum -- run --program-type cli -t jvm    path/to/Main.aww    # stdin path: byte-exact input via pipe reaches IO.Stdin.readAll
+printf '1:1' | stack exec awsum -- run --program-type cli -t jvm    path/to/Main.aww    # stdin path: byte-exact input via pipe reaches IO.Stdin.readAllString/readAllBytes
 stack exec awsum -- check --program-type cli --json                 path/to/Main.aww    # diagnostics in the JSON shape awsum-vscode consumes
 stack exec awsum -- core  --program-type cli                        path/to/Main.aww    # Core IR after typecheck + every Core-to-Core pass
 stack exec awsum -- asm   --program-type cli -t jvm                 path/to/Main.aww    # text-form generated assembly (Jasmin-like for jvm, CIL for clr, WAT for wasm)

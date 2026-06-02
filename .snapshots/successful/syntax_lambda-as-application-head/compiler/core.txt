@@ -40,12 +40,12 @@ CoreProgram
             )
         , CValDef "runMe"
             ( CCall
-                ( CVar "$lam$15" )
+                ( CVar "$lam$23" )
                 [ CIntLit 5 TInt32 ]
             )
         , CValDef "doubled"
             ( CCall
-                ( CVar "$lam$16" )
+                ( CVar "$lam$24" )
                 [ CVar "runMe" ]
             )
         , CValDef "main"
@@ -57,9 +57,9 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$15" [ "x" ]
+        , CFunDef "$lam$23" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$lam$16" [ "n" ]
+        , CFunDef "$lam$24" [ "n" ]
             ( CVar "n" )
         ]
     }

@@ -140,7 +140,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -277,7 +277,7 @@ define internal ptr @v_chained() {
 
 define internal ptr @v_viaLambda() {
   %t0 = call ptr @v_n()
-  %t1 = call ptr @v__lam_15(ptr %t0)
+  %t1 = call ptr @v__lam_23(ptr %t0)
   ret ptr %t1
 }
 
@@ -454,7 +454,7 @@ case.join.5:
   ret ptr %t38
 }
 
-define internal ptr @v__lam_15(ptr %v_i) {
+define internal ptr @v__lam_23(ptr %v_i) {
   call void @__inc_ref(ptr %v_i)
   %t0 = call ptr @__showInt32(ptr %v_i)
   call void @__free_recursive(ptr %v_i)

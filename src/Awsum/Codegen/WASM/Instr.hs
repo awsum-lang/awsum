@@ -22,6 +22,7 @@ module Awsum.Codegen.WASM.Instr
     renderValType,
     renderWat,
     boxI32Spec,
+    byteToHexSpec,
     incRefSpec,
     freeRecursiveSpec,
     freeWorklistPushSpec,
@@ -57,7 +58,10 @@ module Awsum.Codegen.WASM.Instr
     concatSpec,
     printSpec,
     getArgsSpec,
+    readStdinSpec,
     stdinReadAllSpec,
+    stdinReadAllBytesSpec,
+    stdinDecodeStrictSpec,
     entryArgEitherSpec,
     parseInt32Spec,
     parseUInt8Spec,
@@ -327,6 +331,11 @@ stringTooLongTagWord = rowTag (TyCon noSpan "StringTooLong")
 unpairedSurrogateTagWord :: Word32
 unpairedSurrogateTagWord = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
 
+-- | FNV-1a 32-bit row tag for 'InvalidUtf8' — the @CRow@ box tag of the
+--   @Left@ that @__stdinDecodeStrict@ produces on malformed UTF-8.
+invalidUtf8TagWord :: Word32
+invalidUtf8TagWord = rowTag (TyCon noSpan "InvalidUtf8")
+
 -- | @__box_i32@: allocate a 4-byte cell and store the value into it — the
 --   pointer is the boxed @i32@. Branchless leaf helper. Local 0 is the param
 --   @v@; local 1 is the cell pointer @p@.
@@ -345,6 +354,87 @@ boxI32Spec =
           LocalGet 0,
           I32Store (MemArg 2 0),
           LocalGet 1
+        ]
+    }
+
+-- | @__byteToHex@: render a 'UInt8' cell as two lowercase hex digits into a
+--   freshly allocated length-prefixed string @[len_utf8 | len_utf16 | bytes]@
+--   (both lengths 2; payload at @+8@). Splits the byte into high/low nibbles
+--   (@/ 16@, @rem 16@) and maps each to its ASCII hex char (0-9 -> '0'..'9' =
+--   @+48@, 10-15 -> 'a'..'f' = @+87@). Locals: 0 = param (cell ptr), 1 = byte,
+--   2 = buf, 3 = high nibble, 4 = low nibble, 5 = char.
+byteToHexSpec :: WasmFunc
+byteToHexSpec =
+  WasmFunc
+    { wfName = "__byteToHex",
+      wfParams = [I32],
+      wfResults = [I32],
+      wfLocals = [I32, I32, I32, I32, I32],
+      wfBody =
+        [ LocalGet 0,
+          I32Load (MemArg 2 0),
+          LocalSet 1,
+          I32Const 10,
+          Call "__alloc",
+          LocalSet 2,
+          LocalGet 2,
+          I32Const 2,
+          I32Store (MemArg 2 0),
+          LocalGet 2,
+          I32Const 2,
+          I32Store (MemArg 2 4),
+          LocalGet 1,
+          I32Const 16,
+          I32DivU,
+          LocalSet 3,
+          LocalGet 1,
+          I32Const 16,
+          I32RemU,
+          LocalSet 4,
+          LocalGet 3,
+          I32Const 10,
+          I32LtU,
+          If BtVoid,
+          LocalGet 3,
+          I32Const 48,
+          I32Add,
+          LocalSet 5,
+          Else,
+          LocalGet 3,
+          I32Const 87,
+          I32Add,
+          LocalSet 5,
+          End,
+          LocalGet 2,
+          I32Const 8,
+          I32Add,
+          LocalGet 5,
+          I32Store8 (MemArg 0 0),
+          LocalGet 4,
+          I32Const 10,
+          I32LtU,
+          If BtVoid,
+          LocalGet 4,
+          I32Const 48,
+          I32Add,
+          LocalSet 5,
+          Else,
+          LocalGet 4,
+          I32Const 87,
+          I32Add,
+          LocalSet 5,
+          End,
+          LocalGet 2,
+          I32Const 9,
+          I32Add,
+          LocalGet 5,
+          I32Store8 (MemArg 0 0),
+          -- Free the input UInt8 cell (consumes the reference the call site
+          -- inc-ref'd), exactly as '__show_i32' does — otherwise every call
+          -- leaks the cell on the refcounted WASM/LLVM targets.
+          LocalGet 0,
+          Call "__free_recursive",
+          LocalGet 2
         ]
     }
 
@@ -2641,11 +2731,20 @@ getArgsSpec tags =
         ]
     }
 
--- | @__stdinReadAll@: read stdin to EOF via WASI @fd_read@ into a growing buffer\n--   (@__memcpy@ on grow), then decode the bytes via @__entryArgEither@.
-stdinReadAllSpec :: WasmFunc
-stdinReadAllSpec =
+-- | @__readStdin@: read fd 0 to EOF via WASI @fd_read@ into a @__alloc@'d buffer
+--   that doubles (@__memcpy@ into the new buffer, then @__free@ the old one)
+--   whenever free space drops below 4096. Returns the buffer pointer and leaves
+--   the total byte length at the fixed scratch slot @addr 12@ (the @fd_read@
+--   nread cell, dead once the loop ends) for the caller to read. The single
+--   source of the read/grow/free loop, shared by both stdin readers — LLVM has
+--   the same @__readStdin@; WASM's assembler can't return two values, so the
+--   length comes back via @addr 12@ rather than a second result. The caller
+--   owns the buffer and frees it. Locals: 0=buf 1=cap 2=len 3=remain 4=newbuf
+--   5=newcap 6=got.
+readStdinSpec :: WasmFunc
+readStdinSpec =
   WasmFunc
-    { wfName = "__stdinReadAll",
+    { wfName = "__readStdin",
       wfParams = [],
       wfResults = [I32],
       wfLocals = [I32, I32, I32, I32, I32, I32, I32],
@@ -2678,6 +2777,11 @@ stdinReadAllSpec =
           LocalGet 0,
           LocalGet 2,
           Call "__memcpy",
+          -- Free the old buffer before installing the larger one (LLVM's
+          -- realloc frees it implicitly). '__free' self-guards: it reclaims
+          -- the 4096-byte bin and no-ops on bigger blocks.
+          LocalGet 0,
+          Call "__free",
           LocalGet 4,
           LocalSet 0,
           LocalGet 5,
@@ -2714,18 +2818,479 @@ stdinReadAllSpec =
           Br 0,
           End,
           End,
-          LocalGet 0,
-          LocalGet 2,
-          I32Add,
+          -- Hand back the buffer; leave the total byte length at addr 12 (the
+          -- now-dead fd_read nread slot) for the caller to read.
           I32Const 0,
-          I32Store8 (MemArg 0 0),
-          LocalGet 0,
           LocalGet 2,
-          Call "__entryArgEither"
+          I32Store (MemArg 2 12),
+          LocalGet 0
         ]
     }
 
--- | @__entryArgEither(payload, byteLen)@: validate a UTF-8 byte range and build the\n--   string cell, or @Left StringTooLong@/@Left UnpairedUtf16Surrogate@ on failure.\n--   Shared by @__getArgs@ and @__stdinReadAll@; the source of both decode errors.
+-- | @__stdinReadAll@: drive the prelude's @IOStdinReadAllString@ effect — read
+--   fd 0 to EOF via the shared @__readStdin@, strict-UTF-8 decode the bytes via
+--   @__stdinDecodeStrict@, then free the buffer.
+stdinReadAllSpec :: WasmFunc
+stdinReadAllSpec =
+  WasmFunc
+    { wfName = "__stdinReadAll",
+      wfParams = [],
+      wfResults = [I32],
+      wfLocals = [I32, I32],
+      wfBody =
+        [ -- buf in local 0; the byte length (left at addr 12 by '__readStdin') in 1.
+          Call "__readStdin",
+          LocalSet 0,
+          I32Const 0,
+          I32Load (MemArg 2 12),
+          LocalSet 1,
+          -- 'buf[len] = 0': a now-unnecessary sentinel carried over from the argv
+          -- decoder's one-past-end peek; '__readStdin' guarantees the headroom,
+          -- so it stays in bounds and harmless.
+          LocalGet 0,
+          LocalGet 1,
+          I32Add,
+          I32Const 0,
+          I32Store8 (MemArg 0 0),
+          -- Decode (copies any Right payload into its own cell), then free the
+          -- buffer; the decode result stays on the stack as the return value.
+          LocalGet 0,
+          LocalGet 1,
+          Call "__stdinDecodeStrict",
+          LocalGet 0,
+          Call "__free"
+        ]
+    }
+
+-- | @__stdinReadAllBytes@: drive the prelude's @IOStdinReadAllBytes@ effect —
+--   read fd 0 to EOF via the shared @__readStdin@, build an Awsum @List UInt8@
+--   (each byte boxed via @__box_i32@) folded right-to-left, then free the
+--   buffer. No decode, no error row.
+stdinReadAllBytesSpec :: PreludeTags -> WasmFunc
+stdinReadAllBytesSpec tags =
+  WasmFunc
+    { wfName = "__stdinReadAllBytes",
+      wfParams = [],
+      wfResults = [I32],
+      wfLocals = [I32, I32, I32, I32, I32],
+      wfBody =
+        [ -- buf in local 0; 'i' (local 1) starts at the byte length left at
+          -- addr 12 by '__readStdin' and counts down. acc=2, u8=3, cons=4.
+          Call "__readStdin",
+          LocalSet 0,
+          I32Const 0,
+          I32Load (MemArg 2 12),
+          LocalSet 1,
+          I32Const 4,
+          I32Const 0,
+          Call "__alloc_shaped",
+          LocalSet 2,
+          LocalGet 2,
+          I32Const (ptNil tags),
+          I32Store (MemArg 2 0),
+          Block BtVoid,
+          Loop BtVoid,
+          LocalGet 1,
+          I32Eqz,
+          BrIf 1,
+          LocalGet 1,
+          I32Const 1,
+          I32Sub,
+          LocalSet 1,
+          LocalGet 0,
+          LocalGet 1,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          Call "__box_i32",
+          LocalSet 3,
+          I32Const 12,
+          I32Const 2,
+          Call "__alloc_shaped",
+          LocalSet 4,
+          LocalGet 4,
+          I32Const (ptCons tags),
+          I32Store (MemArg 2 0),
+          LocalGet 4,
+          LocalGet 3,
+          I32Store (MemArg 2 4),
+          LocalGet 4,
+          LocalGet 2,
+          I32Store (MemArg 2 8),
+          LocalGet 4,
+          LocalSet 2,
+          Br 0,
+          End,
+          End,
+          -- Buffer fully consumed — free it; the built list stays on the stack.
+          LocalGet 0,
+          Call "__free",
+          LocalGet 2
+        ]
+    }
+
+-- | @__stdinDecodeStrict(buf, len)@: validate @buf[0..len)@ as well-formed UTF-8\n--   (RFC 3629 / Unicode Table 3-7) and return @Either (StringTooLong | InvalidUtf8)\n--   String@. One left-to-right pass classifies each leading byte into a 1/2/3/4-byte\n--   sequence and checks its continuation bytes plus overlong / surrogate / range\n--   constraints; the first malformation yields @Left InvalidUtf8@. A fully-valid\n--   scan then length-caps on the UTF-16 code-unit count (@Left StringTooLong@ over\n--   2^27), else copies the bytes verbatim into a length-prefixed @Right@ cell.\n--   @InvalidUtf8@ takes priority over @StringTooLong@: the cap is consulted only\n--   after the whole input is confirmed well-formed, matching the other backends'\n--   fatal decoders. Locals: i=2, n=3, b0=4, b1=5, bad=6, seqlen=7, ninc=8,\n--   res=9, tmp=10, tmp=11.
+stdinDecodeStrictSpec :: PreludeTags -> WasmFunc
+stdinDecodeStrictSpec tags =
+  WasmFunc
+    { wfName = "__stdinDecodeStrict",
+      wfParams = [I32, I32],
+      wfResults = [I32],
+      wfLocals = [I32, I32, I32, I32, I32, I32, I32, I32, I32, I32],
+      wfBody =
+        [ I32Const 0,
+          LocalSet 2,
+          I32Const 0,
+          LocalSet 3,
+          Block BtVoid, -- block done
+          Block BtVoid, -- block exit (InvalidUtf8)
+          Block BtVoid, -- block valid (clean finish)
+          Loop BtVoid,
+          -- i >= len -> valid done
+          LocalGet 2,
+          LocalGet 1,
+          I32GeU,
+          BrIf 1,
+          -- b0 = buf[i]
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          LocalSet 4,
+          -- defaults: bad=0, seqlen=1, ninc=1
+          I32Const 0,
+          LocalSet 6,
+          I32Const 1,
+          LocalSet 7,
+          I32Const 1,
+          LocalSet 8,
+          -- 1-byte ASCII?
+          LocalGet 4,
+          I32Const 128,
+          I32LtU,
+          If BtVoid,
+          Else,
+          -- 0x80..0xC1: invalid lead
+          LocalGet 4,
+          I32Const 194,
+          I32LtU,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          Else,
+          -- 2-byte: C2..DF
+          LocalGet 4,
+          I32Const 224,
+          I32LtU,
+          If BtVoid,
+          I32Const 2,
+          LocalSet 7,
+          LocalGet 2,
+          I32Const 2,
+          I32Add,
+          LocalGet 1,
+          I32GtU,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          Else,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 1,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          LocalSet 5,
+          LocalGet 5,
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          End,
+          Else,
+          -- 3-byte: E0..EF
+          LocalGet 4,
+          I32Const 240,
+          I32LtU,
+          If BtVoid,
+          I32Const 3,
+          LocalSet 7,
+          LocalGet 2,
+          I32Const 3,
+          I32Add,
+          LocalGet 1,
+          I32GtU,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          Else,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 1,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          LocalSet 5,
+          LocalGet 5,
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 2,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          -- E0 with b1 < 0xA0: overlong
+          LocalGet 4,
+          I32Const 224,
+          I32Eq,
+          LocalGet 5,
+          I32Const 160,
+          I32LtU,
+          I32And,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          -- ED with b1 >= 0xA0: surrogate
+          LocalGet 4,
+          I32Const 237,
+          I32Eq,
+          LocalGet 5,
+          I32Const 160,
+          I32GeU,
+          I32And,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          End,
+          Else,
+          -- 4-byte: F0..F4
+          LocalGet 4,
+          I32Const 245,
+          I32LtU,
+          If BtVoid,
+          I32Const 4,
+          LocalSet 7,
+          I32Const 2,
+          LocalSet 8,
+          LocalGet 2,
+          I32Const 4,
+          I32Add,
+          LocalGet 1,
+          I32GtU,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          Else,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 1,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          LocalSet 5,
+          LocalGet 5,
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 2,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          LocalGet 0,
+          LocalGet 2,
+          I32Add,
+          I32Const 3,
+          I32Add,
+          I32Load8U (MemArg 0 0),
+          I32Const 192,
+          I32And,
+          I32Const 128,
+          I32Ne,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          -- F0 with b1 < 0x90: overlong
+          LocalGet 4,
+          I32Const 240,
+          I32Eq,
+          LocalGet 5,
+          I32Const 144,
+          I32LtU,
+          I32And,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          -- F4 with b1 >= 0x90: > U+10FFFF
+          LocalGet 4,
+          I32Const 244,
+          I32Eq,
+          LocalGet 5,
+          I32Const 144,
+          I32GeU,
+          I32And,
+          If BtVoid,
+          I32Const 1,
+          LocalSet 6,
+          End,
+          End,
+          Else,
+          -- 0xF5..0xFF: invalid lead
+          I32Const 1,
+          LocalSet 6,
+          End, -- close 4-byte if
+          End, -- close 3-byte if
+          End, -- close 2-byte if
+          End, -- close 0x80..0xC1 if
+          End, -- close ASCII if
+          -- bad -> exit to InvalidUtf8 (block exit, depth 2 from loop top)
+          LocalGet 6,
+          BrIf 2,
+          -- advance: n += ninc; i += seqlen
+          LocalGet 3,
+          LocalGet 8,
+          I32Add,
+          LocalSet 3,
+          LocalGet 2,
+          LocalGet 7,
+          I32Add,
+          LocalSet 2,
+          Br 0,
+          End, -- loop
+          End, -- block valid: clean finish lands here
+          -- cap check
+          LocalGet 3,
+          I32Const 134217728,
+          I32GtU,
+          If BtVoid,
+          -- Left StringTooLong -> res
+          I32Const 4,
+          Call "__alloc",
+          LocalSet 10,
+          LocalGet 10,
+          I32Const (ptStringTooLong tags),
+          I32Store (MemArg 2 0),
+          I32Const 8,
+          I32Const 1,
+          Call "__alloc_shaped",
+          LocalSet 11,
+          LocalGet 11,
+          I32Const (fromIntegral stringTooLongTagWord),
+          I32Store (MemArg 2 0),
+          LocalGet 11,
+          LocalGet 10,
+          I32Store (MemArg 2 4),
+          I32Const 8,
+          I32Const 1,
+          Call "__alloc_shaped",
+          LocalSet 9,
+          LocalGet 9,
+          I32Const (ptLeft tags),
+          I32Store (MemArg 2 0),
+          LocalGet 9,
+          LocalGet 11,
+          I32Store (MemArg 2 4),
+          Else,
+          -- Right (copy buf[0..len) into [len_utf8 | len_utf16 | payload]) -> res
+          LocalGet 1,
+          I32Const 8,
+          I32Add,
+          Call "__alloc",
+          LocalSet 10,
+          LocalGet 10,
+          LocalGet 1,
+          I32Store (MemArg 2 0),
+          LocalGet 10,
+          LocalGet 3,
+          I32Store (MemArg 2 4),
+          LocalGet 10,
+          I32Const 8,
+          I32Add,
+          LocalGet 0,
+          LocalGet 1,
+          Call "__memcpy",
+          I32Const 8,
+          I32Const 1,
+          Call "__alloc_shaped",
+          LocalSet 9,
+          LocalGet 9,
+          I32Const (ptRight tags),
+          I32Store (MemArg 2 0),
+          LocalGet 9,
+          LocalGet 10,
+          I32Store (MemArg 2 4),
+          End,
+          Br 1, -- skip the invalid handler, go to block done
+          End, -- block exit: malformation lands here
+          -- Left InvalidUtf8 -> res
+          I32Const 4,
+          Call "__alloc",
+          LocalSet 10,
+          LocalGet 10,
+          I32Const (ptInvalidUtf8 tags),
+          I32Store (MemArg 2 0),
+          I32Const 8,
+          I32Const 1,
+          Call "__alloc_shaped",
+          LocalSet 11,
+          LocalGet 11,
+          I32Const (fromIntegral invalidUtf8TagWord),
+          I32Store (MemArg 2 0),
+          LocalGet 11,
+          LocalGet 10,
+          I32Store (MemArg 2 4),
+          I32Const 8,
+          I32Const 1,
+          Call "__alloc_shaped",
+          LocalSet 9,
+          LocalGet 9,
+          I32Const (ptLeft tags),
+          I32Store (MemArg 2 0),
+          LocalGet 9,
+          LocalGet 11,
+          I32Store (MemArg 2 4),
+          End, -- block done
+          LocalGet 9
+        ]
+    }
+
+-- | @__entryArgEither(payload, byteLen)@: validate a UTF-8 byte range and build the\n--   string cell, or @Left StringTooLong@/@Left UnpairedUtf16Surrogate@ on failure.\n--   Used by @__getArgs@ (argv source); the source of the argv decode errors.
 entryArgEitherSpec :: PreludeTags -> WasmFunc
 entryArgEitherSpec tags =
   WasmFunc

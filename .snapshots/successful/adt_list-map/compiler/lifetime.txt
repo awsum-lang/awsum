@@ -7,22 +7,22 @@ runIO:
 shout:
   param           s                               count=1
 
-$lift$15:
+$lift$23:
   param           __input                         count=1
 
-$cps$$lift$15:
+$cps$$lift$23:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$15:
+$apply$$lift$23:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_17                          count=0
+  case-pattern    $pk_18                          count=0
   case-pattern    __f0                            count=0
 
-$let$16:
+$let$24:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
@@ -39,7 +39,7 @@ $cps$$df$map$0:
 $apply$$df$map$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_19                          count=0
+  case-pattern    $pk_20                          count=0
   case-pattern    head                            count=0
 
 $scc$show_showCons:
@@ -59,7 +59,7 @@ $cps$$scc$show_showCons:
 $apply$$scc$show_showCons:
   param           $k                              count=1
   param           $x                              count=4
-  case-pattern    $pk_21                          count=0
+  case-pattern    $pk_22                          count=0
   case-pattern    hStr                            count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    rest                            count=0

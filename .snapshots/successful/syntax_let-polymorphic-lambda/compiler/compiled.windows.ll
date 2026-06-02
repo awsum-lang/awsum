@@ -142,7 +142,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -261,8 +261,8 @@ define internal ptr @v_showTri(ptr %v_t) {
   %t0 = getelementptr ptr, ptr %v_t, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
-case.arm.22.4:
+  switch i64 %t2, label %case.default.3 [ i64 24, label %case.arm.24.4 ]
+case.arm.24.4:
   call void @__free_recursive(ptr %v_t)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
 case.default.3:
@@ -273,7 +273,7 @@ define internal ptr @v_threeTypes(ptr %v_n, ptr %v_s, ptr %v_b) {
   call void @__inc_ref(ptr %v_b)
   call void @__inc_ref(ptr %v_n)
   call void @__inc_ref(ptr %v_s)
-  %t0 = call ptr @v__df__let_16_0(ptr %v_b, ptr %v_n, ptr %v_s)
+  %t0 = call ptr @v__df__let_24_0(ptr %v_b, ptr %v_n, ptr %v_s)
   call void @__free_recursive(ptr %v_n)
   call void @__free_recursive(ptr %v_s)
   call void @__free_recursive(ptr %v_b)
@@ -284,19 +284,19 @@ define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 4, i32 0)
   store i32 42, ptr %t0
   %t1 = call ptr @__alloc(i64 8, i32 0)
-  %t2 = inttoptr i64 22 to ptr
+  %t2 = inttoptr i64 24 to ptr
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
   %t4 = call ptr @v_threeTypes(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t1)
-  %t5 = call ptr @v__let_17(ptr %t4)
+  %t5 = call ptr @v__let_25(ptr %t4)
   ret ptr %t5
 }
 
-define internal ptr @v__lam_15(ptr %v_x) {
+define internal ptr @v__lam_23(ptr %v_x) {
   ret ptr %v_x
 }
 
-define internal ptr @v__let_17(ptr %v_res) {
+define internal ptr @v__let_25(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -356,9 +356,9 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__df__let_16_0(ptr %v_b, ptr %v_n, ptr %v_s) {
+define internal ptr @v__df__let_24_0(ptr %v_b, ptr %v_n, ptr %v_s) {
   call void @__inc_ref(ptr %v_n)
-  %t0 = call ptr @v__lam_15(ptr %v_n)
+  %t0 = call ptr @v__lam_23(ptr %v_n)
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = call ptr @__concat(ptr %t1, ptr getelementptr inbounds (i8, ptr @.str.3, i64 12))
   %t3 = getelementptr ptr, ptr %t2, i32 0
@@ -388,7 +388,7 @@ case.arm.4.14:
   call void @__inc_ref(ptr %t16)
   call void @__inc_ref(ptr %t16)
   call void @__inc_ref(ptr %v_s)
-  %t17 = call ptr @v__lam_15(ptr %v_s)
+  %t17 = call ptr @v__lam_23(ptr %v_s)
   %t18 = call ptr @__concat(ptr %t16, ptr %t17)
   %t19 = getelementptr ptr, ptr %t18, i32 0
   %t20 = load ptr, ptr %t19
@@ -450,7 +450,7 @@ case.arm.4.45:
   call void @__inc_ref(ptr %t47)
   call void @__inc_ref(ptr %t47)
   call void @__inc_ref(ptr %v_b)
-  %t48 = call ptr @v__lam_15(ptr %v_b)
+  %t48 = call ptr @v__lam_23(ptr %v_b)
   %t49 = call ptr @v_showTri(ptr %t48)
   %t50 = call ptr @__concat(ptr %t47, ptr %t49)
   call void @__free_recursive(ptr %t33)

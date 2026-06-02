@@ -51,7 +51,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 18
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -181,13 +181,13 @@ L_tarm1:
   .limit stack 3
   .limit locals 0
   invokestatic AwsumMain/v_opA()Ljava/lang/Object;
-  invokestatic AwsumMain/v__df__rowspec_16_0(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df__rowspec_24_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_26(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -279,7 +279,7 @@ L_join2:
 .end method
 
 
-.method static v__lift_17(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_25(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -341,7 +341,7 @@ L_join4:
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_26(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 9
   aload_0
@@ -419,12 +419,12 @@ L_arm7:
 L_join6:
   astore_1
   aload_1
-  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__df__rowspec_16_0(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__df__rowspec_24_0(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -472,7 +472,7 @@ L_arm11:
   astore_3
   aload_3
   invokestatic AwsumMain/v_opB(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_17(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_25(Ljava/lang/Object;)Ljava/lang/Object;
 L_join10:
   areturn
 .end method

@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -206,12 +206,12 @@
     ldc.i4.s 22
     box [System.Runtime]System.Int32
     call object AwsumMain::v_both(object, object)
-    call object AwsumMain::v__let_16(object)
+    call object AwsumMain::v__let_24(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_15(object,object,object) cil managed
+  .method private hidebysig static object v__lam_23(object,object,object) cil managed
   {
     .maxstack 2
     ldarg.0
@@ -221,7 +221,7 @@
   }
 
 
-  .method private hidebysig static object v__let_16(object) cil managed
+  .method private hidebysig static object v__let_24(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -331,7 +331,7 @@
     ldarg.1
     ldarg.2
     ldarg.0
-    call object AwsumMain::v__lam_15(object, object, object)
+    call object AwsumMain::v__lam_23(object, object, object)
     ret
   }
 

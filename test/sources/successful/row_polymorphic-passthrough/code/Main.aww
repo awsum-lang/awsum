@@ -1,0 +1,31 @@
+{- Pins a row-typed value flowing through a polymorphic function whose type
+   variable instantiates to the row. `myId`/`myFirst` are generic; the
+   already-injected `CRow` value must pass through unchanged and still
+   dispatch correctly at the consuming row-case. -}
+
+import IO.Stdout
+
+myId : a -> a
+myId x = x
+
+myFirst : a -> b -> a
+myFirst x _y = x
+
+v : (Int32 | String)
+v = "poly"
+
+w : (Int32 | String)
+w = myId v
+
+z : (Int32 | String)
+z = myFirst v True
+
+d : (Int32 | String) -> String
+d x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (d w)
+    |> andThenIO (\_u -> IO.Stdout.print (d z))

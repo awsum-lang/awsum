@@ -51,7 +51,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 18
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -175,7 +175,7 @@ L_tarm1:
   .limit stack 2
   .limit locals 0
   invokestatic AwsumMain/v_n()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -398,7 +398,7 @@ L_join8:
 .end method
 
 
-.method static v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 2
   .limit locals 1
   aload_0

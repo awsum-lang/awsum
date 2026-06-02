@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -147,7 +147,7 @@
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
@@ -184,12 +184,12 @@
     .maxstack 1
     call object AwsumMain::v_bad()
     call object AwsumMain::v__df_mapLeft_0(object)
-    call object AwsumMain::v__let_19(object)
+    call object AwsumMain::v__let_27(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_15(object) cil managed
+  .method private hidebysig static object v__let_23(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -293,7 +293,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_16(object) cil managed
+  .method private hidebysig static object v__lam_24(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0)
@@ -302,7 +302,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -310,7 +310,7 @@
   }
 
 
-  .method private hidebysig static object v__let_17(object,object) cil managed
+  .method private hidebysig static object v__let_25(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
@@ -404,12 +404,12 @@
     stelem.ref
     ldloc.2
   IL_c0:
-    call object AwsumMain::v__let_15(object)
+    call object AwsumMain::v__let_23(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_18(object) cil managed
+  .method private hidebysig static object v__lam_26(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0)
@@ -418,7 +418,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -426,13 +426,13 @@
   }
 
 
-  .method private hidebysig static object v__let_19(object) cil managed
+  .method private hidebysig static object v__let_27(object) cil managed
   {
     .maxstack 2
     ldarg.0
     call object AwsumMain::v_good()
     call object AwsumMain::v__df_mapLeft_1(object)
-    call object AwsumMain::v__let_17(object, object)
+    call object AwsumMain::v__let_25(object, object)
     ret
   }
 
@@ -466,7 +466,7 @@
     ldloc.2
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lam_18(object)
+    call object AwsumMain::v__lam_26(object)
     stelem.ref
     ldloc.2
     br IL_c0
@@ -523,7 +523,7 @@
     ldloc.2
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lam_16(object)
+    call object AwsumMain::v__lam_24(object)
     stelem.ref
     ldloc.2
     br IL_c0

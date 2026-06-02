@@ -59,7 +59,7 @@ CoreProgram
                     , [ "found" ]
                     , CDrop DropFreeUnchecked "found"
                         ( CCon 4
-                            [ CCon 22
+                            [ CCon 24
                                 [ CVar "found" ]
                             ]
                         )
@@ -68,7 +68,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CCall
                         ( CVar "search" )
@@ -86,7 +86,7 @@ CoreProgram
                         , CCase
                             ( CVar "__p0" )
                             [
-                                ( 22
+                                ( 24
                                 , [ "v" ]
                                 , CCon 4
                                     [ CVar "v" ]
@@ -96,7 +96,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

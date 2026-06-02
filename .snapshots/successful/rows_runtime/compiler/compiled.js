@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -43,7 +43,7 @@ const v_describe = (v_x) => {
     }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -59,7 +59,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)((v_describe)([1615808600, "hello"]));
+const main = (v__let_23)((v_describe)([1615808600, "hello"]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

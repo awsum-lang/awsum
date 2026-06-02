@@ -1,9 +1,9 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predUInt8(x){ return x === 0 ? [3, [16]] : [4, ((x - 1) & 0xFF)]; }
+function __predUInt8(x){ return x === 0 ? [3, [17]] : [4, ((x - 1) & 0xFF)]; }
 function __eqUInt8(a, b){ return a === b ? [1] : [2]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_showUnderflowError = (v__wild0) => {
     return "UnderflowError";
@@ -23,7 +23,7 @@ const v_showResult = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 18: {
+                    case 19: {
                       return [4, "STRING_TOO_LONG"];
                     }
                   }
@@ -128,7 +128,7 @@ const v_countDown = (v_n, v_acc) => {
   }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -144,7 +144,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)((v_showResult)((v_countDown)((255 & 0xFF), "")));
+const main = (v__let_23)((v_showResult)((v_countDown)((255 & 0xFF), "")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -19,7 +19,7 @@ module Awsum.Codegen.WASM.Assemble
   )
 where
 
-import Awsum.Codegen.WASM.Instr (BlockType (..), MemArg (..), ValType (..), WasmFunc (..), WasmInstr (..), addI32Spec, addU32Spec, addU8Spec, allocShapedSpec, allocSpec, boxI32Spec, concatSpec, entryArgEitherSpec, eqI32Spec, eqStringSpec, freeRecursiveSpec, freeSpec, freeWorklistPushSpec, getArgsSpec, incRefSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, memcmpSpec, memcpySpec, mulI32Spec, mulU32Spec, mulU8Spec, negI32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predI32Spec, predU32Spec, predU8Spec, printSpec, showI32Spec, showU32Spec, splitOnFirstSpec, stdinReadAllSpec, subI32Spec, subU32Spec, subU8Spec, succI32Spec, succU32Spec, succU8Spec, utf16OfRangeSpec)
+import Awsum.Codegen.WASM.Instr (BlockType (..), MemArg (..), ValType (..), WasmFunc (..), WasmInstr (..), addI32Spec, addU32Spec, addU8Spec, allocShapedSpec, allocSpec, boxI32Spec, byteToHexSpec, concatSpec, entryArgEitherSpec, eqI32Spec, eqStringSpec, freeRecursiveSpec, freeSpec, freeWorklistPushSpec, getArgsSpec, incRefSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, memcmpSpec, memcpySpec, mulI32Spec, mulU32Spec, mulU8Spec, negI32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predI32Spec, predU32Spec, predU8Spec, printSpec, readStdinSpec, showI32Spec, showU32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subI32Spec, subU32Spec, subU8Spec, succI32Spec, succU32Spec, succU8Spec, utf16OfRangeSpec)
 import Awsum.Core
 import Data.Bits (shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
@@ -240,6 +240,7 @@ runtimeHelperFuncs ptags =
     concatSpec ptags,
     printSpec ptags,
     boxI32Spec,
+    byteToHexSpec,
     showI32Spec,
     showU32Spec,
     predI32Spec ptags,
@@ -269,7 +270,10 @@ runtimeHelperFuncs ptags =
     entryArgEitherSpec ptags,
     utf16OfRangeSpec,
     getArgsSpec ptags,
+    readStdinSpec,
     stdinReadAllSpec,
+    stdinReadAllBytesSpec ptags,
+    stdinDecodeStrictSpec ptags,
     allocShapedSpec,
     incRefSpec,
     freeRecursiveSpec,
@@ -1102,17 +1106,26 @@ emitExprI ctx = \case
       CBuiltIn "internalGetArgs"
         | [] <- xs ->
             [Call "__getArgs"]
-      -- 'BuiltIn.internalStdinReadAllAsUtf16' — call '__stdinReadAll',
-      -- which consumes fd 0 to EOF via WASI 'fd_read' and routes the
-      -- bytes through '__entryArgEither'.
-      CBuiltIn "internalStdinReadAllAsUtf16"
+      -- 'BuiltIn.internalStdinReadAllString' — call '__stdinReadAll',
+      -- which consumes fd 0 to EOF via WASI 'fd_read' and strict-UTF-8
+      -- decodes the bytes via '__stdinDecodeStrict'.
+      CBuiltIn "internalStdinReadAllString"
         | [] <- xs ->
             [Call "__stdinReadAll"]
+      -- 'BuiltIn.internalStdinReadAllBytes' — call '__stdinReadAllBytes',
+      -- which consumes fd 0 to EOF and returns the raw bytes as 'List UInt8'.
+      CBuiltIn "internalStdinReadAllBytes"
+        | [] <- xs ->
+            [Call "__stdinReadAllBytes"]
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
             emitArgWithIncI ctx x
               <> [Call "__show_i32"]
+      CBuiltIn "byteToHexStringNoPrefix"
+        | [x] <- xs ->
+            emitArgWithIncI ctx x
+              <> [Call "__byteToHex"]
       CBuiltIn "showUInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x

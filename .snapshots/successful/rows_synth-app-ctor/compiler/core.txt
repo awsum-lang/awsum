@@ -51,11 +51,11 @@ CoreProgram
             )
         , CValDef "main"
             ( CCase
-                ( CCon 11
+                ( CCon 12
                     [ CString "hello" ]
                 )
                 [
-                    ( 10
+                    ( 11
                     , []
                     , CCon 7
                         [ CString "n"
@@ -64,7 +64,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 11
+                    ( 12
                     , [ "x" ]
                     , CCon 7
                         [ CCall

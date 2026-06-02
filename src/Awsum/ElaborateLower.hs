@@ -128,7 +128,8 @@ preludeTagsFromConInfo conInfo =
           ptOverflowError = tag "OverflowError",
           ptParseError = tag "ParseError",
           ptStringTooLong = tag "StringTooLong",
-          ptUnpairedUtf16Surrogate = tag "UnpairedUtf16Surrogate"
+          ptUnpairedUtf16Surrogate = tag "UnpairedUtf16Surrogate",
+          ptInvalidUtf8 = tag "InvalidUtf8"
         }
 
 -- | Build constructor info from @type@ declarations. Each constructor
@@ -586,7 +587,7 @@ elaborateLowerProgram progType progIn = do
   --    reachability analysis as ordinary `CCon` references.
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
-      declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo, ioStdinReadAllContDecl conInfo]
+      declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo, ioStdinReadAllStringContDecl conInfo, ioStdinReadAllBytesContDecl conInfo]
       -- Eta-expand every bare 'CBuiltIn' that appears in value position
       -- (constructor field, call argument, case scrutinee, etc.) into a
       -- reference to a synthesised wrapper. Restores the pipeline invariant
@@ -764,24 +765,24 @@ ioGetArgsContDecl conInfo =
             ]
         )
 
--- | Synthetic top-level helper used by every @IOStdinReadAll@ rewrite.
---   Structurally identical to @$io_getargs_cont@ — same @Either
---   (StringTooLong | UnpairedUtf16Surrogate) String@ shape, same
---   routing of @Left@ to @IOFail@ and @Right@ to @IOPure@. Kept as a
---   distinct top-level so the two effects' continuations stay
---   separately tree-shakeable: a program that uses only @IO.Stdin.readAll@
---   pays no Core-size cost for @$io_getargs_cont@ and vice versa.
-ioStdinReadAllContDecl :: ConInfoEnv -> CDecl
-ioStdinReadAllContDecl conInfo =
+-- | Synthetic top-level helper used by every @IOStdinReadAllString@
+--   rewrite. Same routing of @Left@ to @IOFail@ and @Right@ to @IOPure@
+--   as @$io_getargs_cont@, over the stdin error row @Either
+--   (StringTooLong | InvalidUtf8) String@. Kept as a distinct top-level
+--   so the effects' continuations stay separately tree-shakeable: a
+--   program that uses only @IO.Stdin.readAllString@ pays no Core-size
+--   cost for @$io_getargs_cont@ and vice versa.
+ioStdinReadAllStringContDecl :: ConInfoEnv -> CDecl
+ioStdinReadAllStringContDecl conInfo =
   let tagFor n = case M.lookup n conInfo of
         Just ci -> ciTag ci
-        Nothing -> error $ "ioStdinReadAllContDecl: prelude missing '" <> n <> "'"
+        Nothing -> error $ "ioStdinReadAllStringContDecl: prelude missing '" <> n <> "'"
       leftTag = tagFor "Left"
       rightTag = tagFor "Right"
       ioFailTag = tagFor "IOFail"
       ioPureTag = tagFor "IOPure"
    in CFunDef
-        "$io_stdinReadAll_cont"
+        "$io_stdinReadAllString_cont"
         ["result"]
         ( CCase
             (CVar "result")
@@ -789,6 +790,21 @@ ioStdinReadAllContDecl conInfo =
               (rightTag, ["s"], CCon ioPureTag [CVar "s"])
             ]
         )
+
+-- | Synthetic top-level helper used by every @IOStdinReadAllBytes@
+--   rewrite. The raw-byte read cannot fail on content, so there is no
+--   @Either@ to unpack — the continuation lifts the @List UInt8@
+--   straight to @IOPure@. Separately tree-shakeable like the others.
+ioStdinReadAllBytesContDecl :: ConInfoEnv -> CDecl
+ioStdinReadAllBytesContDecl conInfo =
+  let tagFor n = case M.lookup n conInfo of
+        Just ci -> ciTag ci
+        Nothing -> error $ "ioStdinReadAllBytesContDecl: prelude missing '" <> n <> "'"
+      ioPureTag = tagFor "IOPure"
+   in CFunDef
+        "$io_stdinReadAllBytes_cont"
+        ["bytes"]
+        (CCon ioPureTag [CVar "bytes"])
 
 -- | Rewrite every @CCall (CBuiltIn "IO.Stdout.print") [arg]@ into the
 --   constructor expression @CCon ioStdoutPrintTag [arg, CCon ioPureTag
@@ -820,7 +836,8 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
     ioPureTag = tagFor "IOPure"
     ioStdoutPrintTag = tagFor "IOStdoutPrint"
     ioGetArgsTag = tagFor "IOGetArgs"
-    ioStdinReadAllTag = tagFor "IOStdinReadAll"
+    ioStdinReadAllStringTag = tagFor "IOStdinReadAllString"
+    ioStdinReadAllBytesTag = tagFor "IOStdinReadAllBytes"
     unitTag = tagFor "Unit"
 
     -- The terminator for a single `IO.Stdout.print s` call: after the
@@ -844,13 +861,18 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
       -- (Either err String)'.
       CCall (CBuiltIn "IO.Args.getArgs") [] ->
         CCon ioGetArgsTag [CVar "$io_getargs_cont"]
-      -- 'IO.Stdin.readAll' is structurally identical to
-      -- 'IO.Args.getArgs' at the Core level: zero-arg platform
-      -- built-in, same 'Either err String' result, same routing of
-      -- failure-vs-success through the synthetic helper. Only the
-      -- byte source differs at runtime (fd 0 vs argv).
-      CCall (CBuiltIn "IO.Stdin.readAll") [] ->
-        CCon ioStdinReadAllTag [CVar "$io_stdinReadAll_cont"]
+      -- 'IO.Stdin.readAllString' mirrors 'IO.Args.getArgs' at the Core
+      -- level: zero-arg platform built-in, 'Either err String' result,
+      -- same routing of failure-vs-success through the synthetic helper.
+      -- The byte source (fd 0 vs argv) and error row (InvalidUtf8 vs
+      -- UnpairedUtf16Surrogate) differ at runtime / in the type.
+      CCall (CBuiltIn "IO.Stdin.readAllString") [] ->
+        CCon ioStdinReadAllStringTag [CVar "$io_stdinReadAllString_cont"]
+      -- 'IO.Stdin.readAllBytes' returns the raw bytes as 'List UInt8'
+      -- with no decode and no error row; its continuation lifts the
+      -- bytes straight to 'IOPure' (see '$io_stdinReadAllBytes_cont').
+      CCall (CBuiltIn "IO.Stdin.readAllBytes") [] ->
+        CCon ioStdinReadAllBytesTag [CVar "$io_stdinReadAllBytes_cont"]
       CCall f args -> CCall (rewriteExpr f) (map rewriteExpr args)
       CCon t fields -> CCon t (map rewriteExpr fields)
       CCase scrut alts ->
@@ -1357,21 +1379,24 @@ lowerExprM env locals expected = \case
     -- a @CRow@-tagged value. No-op when the types already agree or the
     -- expected type carries no row.
     wrapInjectedM (leConInfo env) expected (leTypeOf env qn) bare
-  ELit _sp (LString t) -> pure (CString t)
+  ELit sp (LString t) -> case expected of
+    -- A string literal flowing into a structural sum: defer to the shared
+    -- row-injection lowering (mirrors the integer-literal arm below) so the
+    -- row-case sees a 'CRow'-tagged value. 'synthLabelType' resolves the
+    -- 'String' label, so this injects without looping. Without it a string
+    -- literal in a row-typed def body / let RHS / case arm stayed unwrapped.
+    Just row@(TyOr {}) ->
+      lowerWithRowInjectionM env locals (Just row) (ELit sp (LString t))
+    _ -> pure (CString t)
   ELit sp (LInt n) -> case expected of
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
     Just (TyCon _ "UInt32") -> pure (CIntLit n TUInt32)
-    -- A bare literal flowing into a structural sum with a unique int label
-    -- (e.g. '0' in an '(Int32 | String)' arm): resolve to that label and
-    -- inject, mirroring 'lowerArgWithRowInjectionM' in argument position.
+    -- A bare literal flowing into a structural sum: defer to the shared
+    -- row-injection lowering — the same path argument position uses. It
+    -- resolves the row's unique int label and wraps the result in 'CRow'.
     Just row@(TyOr {}) ->
-      case [TyCon noSpan nm | TyCon _ nm <- flattenRow row, isJust (intTypeRange nm)] of
-        [intLabel] -> do
-          v <- lowerExprM env locals (Just intLabel) (ELit sp (LInt n))
-          tag <- recordRowTag intLabel
-          pure (CRow tag v)
-        _ -> liftEither $ Left (TELowering ("integer literal in row position has no unique int label at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+      lowerWithRowInjectionM env locals (Just row) (ELit sp (LInt n))
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     -- (a ++ b) lowers to a direct call to 'BuiltIn.concatString', which
@@ -1458,7 +1483,7 @@ lowerExprM env locals expected = \case
                 Nothing -> (Nothing, Nothing)
               argExpected = constructorArgExpected ci effectiveOuter
           mWrapTag <- traverse recordRowTag mWrapLabel
-          xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+          xs' <- zipWithM (lowerWithRowInjectionM env locals) argExpected xs
           let bare = CCon (ciTag ci) xs'
           pure $ case mWrapTag of
             Just t -> CRow t bare
@@ -1517,15 +1542,15 @@ lowerExprM env locals expected = \case
         -- distinct concrete error types), dispatch to a body-specialised
         -- copy lowered at those concrete types — the polymorphic original
         -- cannot inject the row tag (its error types are still tyvars).
-        case rowUnioningSpec env f0 xs mHeadTy of
+        case rowUnioningSpec env f0 xs mHeadTy expected of
           Just (specN, concreteSig, params, body) -> do
             specName <- getOrCreateRowSpec env specN concreteSig params body
-            xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+            xs' <- zipWithM (lowerWithRowInjectionM env locals) argExpected xs
             pure (CCall (CVar specName) xs')
           Nothing -> do
             let f0Expected = if isLamHead f0 then mHeadTy else Nothing
             f0' <- lowerExprM env locals f0Expected f0
-            xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+            xs' <- zipWithM (lowerWithRowInjectionM env locals) argExpected xs
             let bare = CCall f0' xs'
                 mResultTy' = applySubst sFinal <$> mResultTy
             wrapInjectedM (leConInfo env) expected mResultTy' bare
@@ -1714,8 +1739,8 @@ applyTyParams n tvs = foldl' (\acc tv -> TyApp noSpan acc (TyVar noSpan tv)) (Ty
 --   the target via cross-boundary coercion, in which case 'synthCoerce'
 --   emits a @$lift$N@ helper that walks the value and rebuilds it in
 --   the target shape.
-lowerArgWithRowInjectionM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
-lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
+lowerWithRowInjectionM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
+lowerWithRowInjectionM env locals mExpected x = case mExpected of
   Just expected@(TyOr {}) ->
     let labels = flattenRow expected
         intLabels = [TyCon noSpan n | TyCon _ n <- labels, isJust (intTypeRange n)]
@@ -1726,8 +1751,8 @@ lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
               tag <- recordRowTag intLabel
               pure (CRow tag v)
             _ -> liftEither $ Left (TELowering "lowering: integer literal in row position has no unique int label")
-          EParens _ inner -> lowerArgWithRowInjectionM env locals mExpected inner
-          EAscribe _ inner _ -> lowerArgWithRowInjectionM env locals mExpected inner
+          EParens _ inner -> lowerWithRowInjectionM env locals mExpected inner
+          EAscribe _ inner _ -> lowerWithRowInjectionM env locals mExpected inner
           _ -> case synthLabelType env x of
             Just lbl@(TyVar _ _)
               | lbl `elem` labels ->
@@ -1796,7 +1821,7 @@ findCoercibleLabel src = find (coercible src)
 
 -- | Apply implicit row-injection to an already-lowered CExpr based on
 --   the expression's source and expected types. Mirrors
---   'lowerArgWithRowInjectionM' but operates post-lowering, so it can
+--   'lowerWithRowInjectionM' but operates post-lowering, so it can
 --   wrap expression positions whose lowering doesn't recursively
 --   thread the expected type — e.g. the result of a non-constructor
 --   call, where the expected type informs argument lowering but the
@@ -1971,8 +1996,8 @@ firstConName [] = "" -- empty type: no constructors, body never runs
 --   the resulting bare cell is mis-read by the row-case at runtime.
 --   Re-lowering the body at the concrete error types lets the
 --   construction-site injection (which is correct) fire.
-rowUnioningSpec :: LowerEnv -> Expr -> [Expr] -> Maybe Type' -> Maybe (Name, Type', [Param], Expr)
-rowUnioningSpec env f0 xs mHeadTy = do
+rowUnioningSpec :: LowerEnv -> Expr -> [Expr] -> Maybe Type' -> Maybe Type' -> Maybe (Name, Type', [Param], Expr)
+rowUnioningSpec env f0 xs mHeadTy mExpected = do
   n <- case f0 of
     EVar _ (QName [] nm) -> Just nm
     _ -> Nothing
@@ -1988,14 +2013,30 @@ rowUnioningSpec env f0 xs mHeadTy = do
   -- @(e1 | e2)@ has fewer alternatives than the concrete one, so unifying
   -- result-against-expected would fail by cardinality; deriving the
   -- substitution from the arguments avoids that.
-  let (genArgTys, _) = splitArrowN (length xs) genSig
+  let (genArgTys, genResultTy) = splitArrowN (length xs) genSig
       step acc (paramT, argE) = case synthLabelType env argE of
         Just argT -> acc <> fromRight mempty (unify (applySubst acc paramT) argT)
         Nothing -> acc
       argSub = foldl' step mempty (zip genArgTys xs)
       concreteSig = applySubst argSub genSig
-  guard (rowWidenedToConcrete genSig concreteSig)
-  pure (n, concreteSig, params, body)
+      -- Fallback when the arguments alone leave a row-variable in the widened
+      -- result — a continuation whose type 'synthLabelType' can't pin (e.g.
+      -- @const opB@, a lambda), so its error label stays abstract. Recover the
+      -- leftover labels from the caller's expected result type. Only consulted
+      -- when the argument-derived 'concreteSig' isn't already fully concrete,
+      -- so the nested-combinator cases that rely on the argument path (and the
+      -- cardinality reasoning above) are untouched. 'unify' runs on the
+      -- argSub-applied result, so 'resultSub' only binds variables the
+      -- arguments left open — no conflict with 'argSub'.
+      finalSig
+        | rowWidenedToConcrete genSig concreteSig = concreteSig
+        | Just expectedResult <- mExpected,
+          Just grt <- genResultTy =
+            let resultSub = fromRight mempty (unify (applySubst argSub grt) expectedResult)
+             in applySubst (argSub <> resultSub) genSig
+        | otherwise = concreteSig
+  guard (rowWidenedToConcrete genSig finalSig)
+  pure (n, finalSig, params, body)
 
 -- | True when, somewhere in the same structural position, the generic
 --   type has a row (@TyOr@) containing a type variable while the
@@ -2087,7 +2128,7 @@ synthLabelType env = \case
     -- the parameter slots to propagate the type-arg substitution
     -- through to the result. A generic-headed call like
     -- @Just "hello"@ comes back as @Maybe String@ — concrete enough
-    -- that 'lowerArgWithRowInjectionM' can pick the right row label.
+    -- that 'lowerWithRowInjectionM' can pick the right row label.
     --
     -- /Why we accept partial argument synthesis but reject a
     -- polymorphic result:/ for a call like @double 24 "abc"@ whose

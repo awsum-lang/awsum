@@ -1,0 +1,17 @@
+{- Pins row commutativity with a literal-defined value: `mk : (Int32 | String)`
+   flowing into a consumer expecting `(String | Int32)`. Rows are set-semantic,
+   so the order of alternatives is irrelevant; combined with string-literal
+   injection this exercised a crash on all five backends before the fix. -}
+
+import IO.Stdout
+
+mk : (Int32 | String)
+mk = "comm"
+
+d : (String | Int32) -> String
+d x = case x of
+  (s : String) -> s
+  (n : Int32) -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (d mk)

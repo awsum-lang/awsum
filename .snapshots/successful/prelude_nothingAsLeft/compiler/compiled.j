@@ -51,7 +51,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 18
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -116,7 +116,7 @@ L_concat_too_long:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   iload_3
-  bipush 10
+  bipush 11
   if_icmpne L_arm1
   aconst_null
   astore 4
@@ -221,7 +221,7 @@ L_tarm3:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 12
+  bipush 13
   if_icmpne L_arm5
   aconst_null
   astore_3
@@ -231,7 +231,7 @@ L_tarm3:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join4
@@ -248,7 +248,7 @@ L_arm5:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -320,24 +320,24 @@ L_join6:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_20(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_28(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_nothingAsLeft(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_21(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_29(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -429,7 +429,7 @@ L_join8:
 .end method
 
 
-.method static v__lift_16(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_24(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 1
   aload_0
@@ -437,15 +437,15 @@ L_join8:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__lift_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__lift_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 6
 L_tco10:
@@ -459,7 +459,7 @@ L_tco10:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   iload_3
-  bipush 12
+  bipush 13
   if_icmpne L_tarm11
   aconst_null
   astore 4
@@ -470,10 +470,10 @@ L_tco10:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 13
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm11:
   aload_2
@@ -489,7 +489,7 @@ L_tarm11:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -510,7 +510,7 @@ L_tarm11:
 .end method
 
 
-.method static v__apply__lift_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__lift_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 6
 L_tco12:
@@ -524,7 +524,7 @@ L_tco12:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   iload_3
-  bipush 23
+  bipush 25
   if_icmpne L_tarm13
   aconst_null
   astore 4
@@ -546,7 +546,7 @@ L_tarm13:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -567,7 +567,7 @@ L_tarm13:
 .end method
 
 
-.method static v__lift_17(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_25(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 4
   aload_0
@@ -580,7 +580,7 @@ L_tarm13:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 10
+  bipush 11
   if_icmpne L_arm15
   aconst_null
   astore_3
@@ -588,7 +588,7 @@ L_tarm13:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join14
@@ -601,7 +601,7 @@ L_arm15:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -613,7 +613,7 @@ L_join14:
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_26(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 23
   aload_1
@@ -834,12 +834,12 @@ L_join18:
 L_join16:
   astore_3
   aload_3
-  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_19(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_27(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 18
   .limit locals 9
   aload_1
@@ -850,14 +850,14 @@ L_join16:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   iconst_3
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -870,7 +870,7 @@ L_join16:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -883,14 +883,14 @@ L_join16:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 13
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_16(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_24(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   aastore
   invokestatic AwsumMain/v_headList(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_17(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_25(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_nothingAsLeft(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 5
@@ -931,12 +931,12 @@ L_join28:
   aload_2
   aload_3
   aload 4
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_26(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_20(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_28(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 4
   aload_0
@@ -949,7 +949,7 @@ L_join28:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 10
+  bipush 11
   if_icmpne L_arm31
   aconst_null
   astore_3
@@ -957,7 +957,7 @@ L_join28:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join30
@@ -970,7 +970,7 @@ L_arm31:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -982,7 +982,7 @@ L_join30:
 .end method
 
 
-.method static v__let_21(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_29(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 8
   .limit locals 1
   aload_0
@@ -990,14 +990,14 @@ L_join30:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -1005,7 +1005,7 @@ L_join30:
   ldc "hi"
   aastore
   invokestatic AwsumMain/v_nothingAsLeft(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_19(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_27(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

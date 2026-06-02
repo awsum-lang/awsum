@@ -77,11 +77,11 @@ CoreProgram
                                         ( CDrop DropFreeUnchecked "acc"
                                             ( CContinue
                                                 [ CVar "m"
-                                                , CCon 23
+                                                , CCon 25
                                                     [ CVar "acc"
                                                     , CRow 2711245919
                                                         ( CIntLit 1 TInt32 )
-                                                    , CCon 22 []
+                                                    , CCon 24 []
                                                     ]
                                                 ]
                                             )
@@ -97,7 +97,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$sumTree" )
                 [ CVar "t"
-                , CCon 24 []
+                , CCon 26 []
                 ]
             )
         , CValDef "main"
@@ -109,7 +109,7 @@ CoreProgram
                         [ CCall
                             ( CVar "buildLeft" )
                             [ CIntLit 200000 TInt32
-                            , CCon 22 []
+                            , CCon 24 []
                             ]
                         ]
                     ]
@@ -122,7 +122,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 27
+                        ( 29
                         ,
                             [ "$k"
                             , "$x"
@@ -132,18 +132,18 @@ CoreProgram
                                 ( CCase
                                     ( CVar "$k" )
                                     [
-                                        ( 24
+                                        ( 26
                                         , []
                                         , CVar "$x"
                                         )
                                     ,
-                                        ( 26
+                                        ( 28
                                         ,
-                                            [ "$pk_26"
+                                            [ "$pk_28"
                                             , "$rcv_0"
                                             , "n"
                                             ]
-                                        , CDrop DropFreeUnchecked "$pk_26"
+                                        , CDrop DropFreeUnchecked "$pk_28"
                                             ( CDrop DropFreeUnchecked "$rcv_0"
                                                 ( CDrop DropFreeUnchecked "n"
                                                     ( CCase
@@ -158,8 +158,8 @@ CoreProgram
                                                             , [ "_e" ]
                                                             , CDrop DropFreeUnchecked "_e"
                                                                 ( CContinue
-                                                                    [ CReuse "$args" 27
-                                                                        [ CVar "$pk_26"
+                                                                    [ CReuse "$args" 29
+                                                                        [ CVar "$pk_28"
                                                                         , CIntLit 0 TInt32
                                                                         ]
                                                                     ]
@@ -181,8 +181,8 @@ CoreProgram
                                                                         , [ "_e" ]
                                                                         , CDrop DropFreeUnchecked "_e"
                                                                             ( CContinue
-                                                                                [ CReuse "$args" 27
-                                                                                    [ CVar "$pk_26"
+                                                                                [ CReuse "$args" 29
+                                                                                    [ CVar "$pk_28"
                                                                                     , CIntLit 0 TInt32
                                                                                     ]
                                                                                 ]
@@ -193,8 +193,8 @@ CoreProgram
                                                                         , [ "s2" ]
                                                                         , CDrop DropFreeUnchecked "s2"
                                                                             ( CContinue
-                                                                                [ CReuse "$args" 27
-                                                                                    [ CVar "$pk_26"
+                                                                                [ CReuse "$args" 29
+                                                                                    [ CVar "$pk_28"
                                                                                     , CVar "s2"
                                                                                     ]
                                                                                 ]
@@ -209,20 +209,20 @@ CoreProgram
                                             )
                                         )
                                     ,
-                                        ( 25
+                                        ( 27
                                         ,
-                                            [ "$pk_25"
+                                            [ "$pk_27"
                                             , "n"
                                             , "r"
                                             ]
-                                        , CDrop DropFreeUnchecked "$pk_25"
+                                        , CDrop DropFreeUnchecked "$pk_27"
                                             ( CDrop DropFreeUnchecked "n"
                                                 ( CDrop DropFreeUnchecked "r"
                                                     ( CContinue
-                                                        [ CReuse "$args" 28
+                                                        [ CReuse "$args" 30
                                                             [ CVar "r"
-                                                            , CCon 26
-                                                                [ CVar "$pk_25"
+                                                            , CCon 28
+                                                                [ CVar "$pk_27"
                                                                 , CVar "$x"
                                                                 , CVar "n"
                                                                 ]
@@ -237,7 +237,7 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 28
+                        ( 30
                         ,
                             [ "t"
                             , "$k"
@@ -247,17 +247,17 @@ CoreProgram
                                 ( CCase
                                     ( CVar "t" )
                                     [
-                                        ( 22
+                                        ( 24
                                         , []
                                         , CContinue
-                                            [ CReuse "$args" 27
+                                            [ CReuse "$args" 29
                                                 [ CVar "$k"
                                                 , CIntLit 0 TInt32
                                                 ]
                                             ]
                                         )
                                     ,
-                                        ( 23
+                                        ( 25
                                         ,
                                             [ "l"
                                             , "v"
@@ -273,9 +273,9 @@ CoreProgram
                                                             , "n"
                                                             , CDrop DropFreeUnchecked "n"
                                                                 ( CContinue
-                                                                    [ CReuse "$args" 28
+                                                                    [ CReuse "$args" 30
                                                                         [ CVar "l"
-                                                                        , CCon 25
+                                                                        , CCon 27
                                                                             [ CVar "$k"
                                                                             , CVar "n"
                                                                             , CVar "r"
@@ -302,7 +302,7 @@ CoreProgram
             ]
             ( CCall
                 ( CVar "$scc$$apply$sumTree_$cps$sumTree" )
-                [ CCon 28
+                [ CCon 30
                     [ CVar "t"
                     , CVar "$k"
                     ]

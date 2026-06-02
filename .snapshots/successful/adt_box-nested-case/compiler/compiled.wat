@@ -530,7 +530,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 1
     i32.const 8
@@ -538,7 +538,7 @@
     call 7
     local.set 2
     local.get 2
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 2
     i32.const 8
@@ -546,7 +546,7 @@
     call 7
     local.set 3
     local.get 3
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 3
     i32.const 96

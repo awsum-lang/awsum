@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "t" )
                 [
-                    ( 22
+                    ( 24
                     ,
                         [ "a"
                         , "b"
@@ -65,10 +65,10 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCall
                     ( CVar "showTriple" )
-                    [ CCon 22
+                    [ CCon 24
                         [ CString "one"
                         , CString "two"
                         , CString "three"
@@ -153,7 +153,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

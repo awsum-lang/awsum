@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -32,7 +32,7 @@ const v_runIO = (v_io) => {
 };
 
 const v_opB = (v__n) => {
-    return [3, [23]];
+    return [3, [25]];
 };
 
 const v_opA = (v_n) => {
@@ -53,7 +53,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 22: {
+                    case 24: {
                       return [4, "ErrA"];
                     }
                   }
@@ -64,7 +64,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 23: {
+                    case 25: {
                       return [4, "ErrB"];
                     }
                   }
@@ -81,7 +81,7 @@ const v_describe = (v_r) => {
     }
 };
 
-const v__lift_15 = (v___input) => {
+const v__lift_23 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -107,13 +107,13 @@ const v_run = (v_x) => {
         }
         case 4: {
           const v_a = __s[1];
-          return (v__lift_15)((v_opB)(v_a));
+          return (v__lift_23)((v_opB)(v_a));
         }
       }
     }
 };
 
-const v__let_16 = (v_res) => {
+const v__let_24 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -129,7 +129,7 @@ const v__let_16 = (v_res) => {
     }
 };
 
-const main = (v__let_16)((v_describe)((v_run)((5|0))));
+const main = (v__let_24)((v_describe)((v_run)((5|0))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

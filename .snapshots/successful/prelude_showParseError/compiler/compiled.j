@@ -106,7 +106,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_showParseError(Ljava/lang/Object;)Ljava/lang/Object;

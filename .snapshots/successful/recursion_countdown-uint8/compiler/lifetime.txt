@@ -19,7 +19,7 @@ $cps$countDown:
 $apply$countDown:
   param           $k                              count=1
   param           $x                              count=4
-  case-pattern    $pk_20                          count=0
+  case-pattern    $pk_21                          count=0
   case-pattern    n                               count=0
   case-pattern    e                               count=0
   case-pattern    s                               count=0
@@ -33,7 +33,7 @@ showResult:
   row-case        u                               count=0
   case-pattern    s                               count=0
 
-$let$15:
+$let$23:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

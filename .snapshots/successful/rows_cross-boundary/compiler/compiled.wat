@@ -21,7 +21,7 @@
   (data (i32.const 192) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00 / ")
   (data (i32.const 215) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 16 funcref)
-  (elem (i32.const 0) $v_runIO $v_dispatchInner $v_describeMaybe $v_describeLst $v__cps_describeLst $v__apply_describeLst $v_describeEither $v__lift_15 $v__cps__lift_15 $v__apply__lift_15 $v__lift_16 $v__lift_17 $v__cps__lift_17 $v__apply__lift_17 $v__lift_18 $v__let_19)
+  (elem (i32.const 0) $v_runIO $v_dispatchInner $v_describeMaybe $v_describeLst $v__cps_describeLst $v__apply_describeLst $v_describeEither $v__lift_23 $v__cps__lift_23 $v__apply__lift_23 $v__lift_24 $v__lift_25 $v__cps__lift_25 $v__apply__lift_25 $v__lift_26 $v__let_27)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -131,7 +131,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -609,7 +609,7 @@
     call 9
     local.set 0
     local.get 0
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 0
     i32.const 4
@@ -634,7 +634,7 @@
     call 9
     local.set 0
     local.get 0
-    i32.const 24
+    i32.const 26
     i32.store
     local.get 0
     i32.const 4
@@ -652,7 +652,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 24
+    i32.const 26
     i32.store
     local.get 1
     i32.const 4
@@ -670,7 +670,7 @@
     call 9
     local.set 2
     local.get 2
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 2
     call 25
@@ -698,7 +698,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 1
     i32.const 4
@@ -764,7 +764,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     block (result i32)
@@ -821,7 +821,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 25
+    i32.const 27
     i32.store
     local.get 1
     call 20
@@ -845,7 +845,7 @@
     local.set 3
     local.get 3
     i32.load
-    i32.const 23
+    i32.const 25
     i32.eq
     if (result i32)
     block (result i32)
@@ -892,7 +892,7 @@
     i32.load offset=8
     call 11
     local.get 0
-    i32.const 26
+    i32.const 28
     i32.store
     local.get 0
     local.get 1
@@ -938,7 +938,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 25
+    i32.const 27
     i32.eq
     if (result i32)
     block (result i32)
@@ -1370,264 +1370,7 @@
     call 23
     call 33)
 
-  (func $v__lift_15 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-    local.get 0
-    local.tee 3
-    call 10
-    local.get 3
-    i32.const 4
-    i32.const 0
-    call 9
-    local.set 1
-    local.get 1
-    i32.const 27
-    i32.store
-    local.get 1
-    call 26
-    local.set 2
-    local.get 0
-    call 11
-    local.get 2
-    end)
-
-  (func $v__cps__lift_15 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-    local.get 0
-    local.set 3
-    local.get 3
-    i32.load
-    i32.const 23
-    i32.eq
-    if (result i32)
-    block (result i32)
-    local.get 1
-    local.tee 9
-    call 10
-    local.get 9
-    i32.const 4
-    i32.const 0
-    call 9
-    local.set 2
-    local.get 2
-    i32.const 23
-    i32.store
-    local.get 2
-    call 27
-    local.set 8
-    local.get 0
-    call 11
-    local.get 1
-    call 11
-    local.get 8
-    end
-    else
-    local.get 3
-    i32.load offset=4
-    local.set 4
-    local.get 4
-    call 10
-    local.get 3
-    i32.load offset=8
-    local.set 5
-    local.get 5
-    call 10
-    local.get 5
-    local.set 6
-    local.get 0
-    i32.load offset=4
-    call 11
-    local.get 0
-    i32.load offset=8
-    call 11
-    local.get 0
-    i32.const 28
-    i32.store
-    local.get 0
-    local.get 1
-    i32.store offset=4
-    local.get 0
-    i32.load offset=4
-    call 10
-    local.get 0
-    local.get 4
-    i32.store offset=8
-    local.get 0
-    i32.load offset=8
-    call 10
-    local.get 0
-    local.set 7
-    local.get 6
-    call 10
-    local.get 1
-    call 11
-    local.get 5
-    call 11
-    local.get 4
-    call 11
-    local.get 6
-    local.set 0
-    local.get 7
-    local.set 1
-    br 1
-    end
-    end)
-
-  (func $v__apply__lift_15 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-    local.get 0
-    local.set 2
-    local.get 2
-    i32.load
-    i32.const 27
-    i32.eq
-    if (result i32)
-    block (result i32)
-    local.get 1
-    local.set 7
-    local.get 0
-    call 11
-    local.get 7
-    end
-    else
-    local.get 2
-    i32.load offset=4
-    local.set 3
-    local.get 3
-    call 10
-    local.get 2
-    i32.load offset=8
-    local.set 4
-    local.get 4
-    call 10
-    local.get 3
-    local.set 5
-    local.get 0
-    i32.load offset=4
-    call 11
-    local.get 0
-    i32.load offset=8
-    call 11
-    local.get 0
-    i32.const 24
-    i32.store
-    local.get 0
-    local.get 4
-    i32.store offset=4
-    local.get 0
-    i32.load offset=4
-    call 10
-    local.get 0
-    local.get 1
-    i32.store offset=8
-    local.get 0
-    i32.load offset=8
-    call 10
-    local.get 0
-    local.set 6
-    local.get 5
-    call 10
-    local.get 1
-    call 11
-    local.get 4
-    call 11
-    local.get 3
-    call 11
-    local.get 5
-    local.set 0
-    local.get 6
-    local.set 1
-    br 1
-    end
-    end)
-
-  (func $v__lift_16 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 3
-    local.get 3
-    i32.load
-    i32.const 10
-    i32.eq
-    if (result i32)
-    block (result i32)
-    i32.const 4
-    i32.const 0
-    call 9
-    local.set 1
-    local.get 1
-    i32.const 10
-    i32.store
-    local.get 1
-    local.set 5
-    local.get 0
-    call 11
-    local.get 5
-    end
-    else
-    local.get 3
-    i32.load offset=4
-    local.set 4
-    local.get 4
-    call 10
-    block (result i32)
-    i32.const 8
-    i32.const 1
-    call 9
-    local.set 1
-    local.get 1
-    i32.const 11
-    i32.store
-    local.get 1
-    i32.const 8
-    i32.const 1
-    call 9
-    local.set 2
-    local.get 2
-    i32.const 796142685
-    i32.store
-    local.get 2
-    local.get 4
-    i32.store offset=4
-    local.get 2
-    i32.load offset=4
-    call 10
-    local.get 2
-    i32.store offset=4
-    local.get 1
-    local.set 5
-    local.get 4
-    call 11
-    local.get 0
-    call 11
-    local.get 5
-    end
-    end)
-
-  (func $v__lift_17 (param i32) (result i32)
+  (func $v__lift_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1644,14 +1387,14 @@
     i32.const 29
     i32.store
     local.get 1
-    call 30
+    call 26
     local.set 2
     local.get 0
     call 11
     local.get 2
     end)
 
-  (func $v__cps__lift_17 (param i32 i32) (result i32)
+  (func $v__cps__lift_23 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1665,7 +1408,7 @@
     local.set 3
     local.get 3
     i32.load
-    i32.const 23
+    i32.const 25
     i32.eq
     if (result i32)
     block (result i32)
@@ -1678,10 +1421,10 @@
     call 9
     local.set 2
     local.get 2
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 2
-    call 31
+    call 27
     local.set 8
     local.get 0
     call 11
@@ -1741,7 +1484,7 @@
     end
     end)
 
-  (func $v__apply__lift_17 (param i32 i32) (result i32)
+  (func $v__apply__lift_23 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1784,7 +1527,264 @@
     i32.load offset=8
     call 11
     local.get 0
-    i32.const 24
+    i32.const 26
+    i32.store
+    local.get 0
+    local.get 4
+    i32.store offset=4
+    local.get 0
+    i32.load offset=4
+    call 10
+    local.get 0
+    local.get 1
+    i32.store offset=8
+    local.get 0
+    i32.load offset=8
+    call 10
+    local.get 0
+    local.set 6
+    local.get 5
+    call 10
+    local.get 1
+    call 11
+    local.get 4
+    call 11
+    local.get 3
+    call 11
+    local.get 5
+    local.set 0
+    local.get 6
+    local.set 1
+    br 1
+    end
+    end)
+
+  (func $v__lift_24 (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    local.set 3
+    local.get 3
+    i32.load
+    i32.const 11
+    i32.eq
+    if (result i32)
+    block (result i32)
+    i32.const 4
+    i32.const 0
+    call 9
+    local.set 1
+    local.get 1
+    i32.const 11
+    i32.store
+    local.get 1
+    local.set 5
+    local.get 0
+    call 11
+    local.get 5
+    end
+    else
+    local.get 3
+    i32.load offset=4
+    local.set 4
+    local.get 4
+    call 10
+    block (result i32)
+    i32.const 8
+    i32.const 1
+    call 9
+    local.set 1
+    local.get 1
+    i32.const 12
+    i32.store
+    local.get 1
+    i32.const 8
+    i32.const 1
+    call 9
+    local.set 2
+    local.get 2
+    i32.const 796142685
+    i32.store
+    local.get 2
+    local.get 4
+    i32.store offset=4
+    local.get 2
+    i32.load offset=4
+    call 10
+    local.get 2
+    i32.store offset=4
+    local.get 1
+    local.set 5
+    local.get 4
+    call 11
+    local.get 0
+    call 11
+    local.get 5
+    end
+    end)
+
+  (func $v__lift_25 (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    block (result i32)
+    local.get 0
+    local.tee 3
+    call 10
+    local.get 3
+    i32.const 4
+    i32.const 0
+    call 9
+    local.set 1
+    local.get 1
+    i32.const 31
+    i32.store
+    local.get 1
+    call 30
+    local.set 2
+    local.get 0
+    call 11
+    local.get 2
+    end)
+
+  (func $v__cps__lift_25 (param i32 i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    loop (result i32)
+    local.get 0
+    local.set 3
+    local.get 3
+    i32.load
+    i32.const 25
+    i32.eq
+    if (result i32)
+    block (result i32)
+    local.get 1
+    local.tee 9
+    call 10
+    local.get 9
+    i32.const 4
+    i32.const 0
+    call 9
+    local.set 2
+    local.get 2
+    i32.const 25
+    i32.store
+    local.get 2
+    call 31
+    local.set 8
+    local.get 0
+    call 11
+    local.get 1
+    call 11
+    local.get 8
+    end
+    else
+    local.get 3
+    i32.load offset=4
+    local.set 4
+    local.get 4
+    call 10
+    local.get 3
+    i32.load offset=8
+    local.set 5
+    local.get 5
+    call 10
+    local.get 5
+    local.set 6
+    local.get 0
+    i32.load offset=4
+    call 11
+    local.get 0
+    i32.load offset=8
+    call 11
+    local.get 0
+    i32.const 32
+    i32.store
+    local.get 0
+    local.get 1
+    i32.store offset=4
+    local.get 0
+    i32.load offset=4
+    call 10
+    local.get 0
+    local.get 4
+    i32.store offset=8
+    local.get 0
+    i32.load offset=8
+    call 10
+    local.get 0
+    local.set 7
+    local.get 6
+    call 10
+    local.get 1
+    call 11
+    local.get 5
+    call 11
+    local.get 4
+    call 11
+    local.get 6
+    local.set 0
+    local.get 7
+    local.set 1
+    br 1
+    end
+    end)
+
+  (func $v__apply__lift_25 (param i32 i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    loop (result i32)
+    local.get 0
+    local.set 2
+    local.get 2
+    i32.load
+    i32.const 31
+    i32.eq
+    if (result i32)
+    block (result i32)
+    local.get 1
+    local.set 7
+    local.get 0
+    call 11
+    local.get 7
+    end
+    else
+    local.get 2
+    i32.load offset=4
+    local.set 3
+    local.get 3
+    call 10
+    local.get 2
+    i32.load offset=8
+    local.set 4
+    local.get 4
+    call 10
+    local.get 3
+    local.set 5
+    local.get 0
+    i32.load offset=4
+    call 11
+    local.get 0
+    i32.load offset=8
+    call 11
+    local.get 0
+    i32.const 26
     i32.store
     local.get 0
     i32.const 8
@@ -1826,7 +1826,7 @@
     end
     end)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_26 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1897,7 +1897,7 @@
     end
     end)
 
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_27 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

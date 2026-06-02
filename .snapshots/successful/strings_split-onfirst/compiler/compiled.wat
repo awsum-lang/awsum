@@ -31,7 +31,7 @@
   (data (i32.const 441) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00, ")
   (data (i32.const 463) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_render $v_renderTuple $v__let_15)
+  (elem (i32.const 0) $v_runIO $v_render $v_renderTuple $v__let_23)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -141,7 +141,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -319,7 +319,7 @@
     call 4
     local.set 11
     local.get 11
-    i32.const 10
+    i32.const 11
     i32.store
     else
     local.get 6
@@ -391,7 +391,7 @@
     call 11
     local.set 10
     local.get 10
-    i32.const 14
+    i32.const 15
     i32.store
     local.get 10
     local.get 8
@@ -404,7 +404,7 @@
     call 11
     local.set 11
     local.get 11
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 11
     local.get 10
@@ -854,7 +854,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     block (result i32)
@@ -2063,7 +2063,7 @@
     end
     call 19)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -42,12 +42,12 @@ CoreProgram
             ( CCase
                 ( CVar "c" )
                 [
-                    ( 22
+                    ( 24
                     , []
                     , CString "red"
                     )
                 ,
-                    ( 23
+                    ( 25
                     , []
                     , CString "green"
                     )
@@ -57,7 +57,7 @@ CoreProgram
             ( CCase
                 ( CVar "bc" )
                 [
-                    ( 25
+                    ( 27
                     , [ "c" ]
                     , CDrop DropFreeUnchecked "c"
                         ( CCall
@@ -71,7 +71,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 26
+                    ( 28
                     , [ "box" ]
                     , CDrop DropFreeUnchecked "box"
                         ( CCall
@@ -83,14 +83,14 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "showBoxedColor" )
-                            [ CCon 25
-                                [ CCon 22 [] ]
+                            [ CCon 27
+                                [ CCon 24 [] ]
                             ]
                         , CString " "
                         ]
@@ -109,9 +109,9 @@ CoreProgram
                             [ CVar "s0"
                             , CCall
                                 ( CVar "showResult" )
-                                [ CCon 26
-                                    [ CCon 25
-                                        [ CCon 23 [] ]
+                                [ CCon 28
+                                    [ CCon 27
+                                        [ CCon 25 [] ]
                                     ]
                                 ]
                             ]
@@ -119,7 +119,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

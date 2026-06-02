@@ -480,11 +480,11 @@
     local.set 1
     local.get 1
     i32.load
-    i32.const 22
+    i32.const 24
     i32.eq
     if (result i32)
     local.get 0
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 0
     local.set 2
@@ -494,11 +494,11 @@
     else
     local.get 1
     i32.load
-    i32.const 23
+    i32.const 25
     i32.eq
     if (result i32)
     local.get 0
-    i32.const 24
+    i32.const 26
     i32.store
     local.get 0
     local.set 2
@@ -536,7 +536,7 @@
     call 7
     local.set 1
     local.get 1
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 1
     call 12

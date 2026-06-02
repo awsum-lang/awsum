@@ -51,6 +51,8 @@ module Awsum.Codegen.JVM.Instr
     entryArgEitherSpec,
     getArgsSpec,
     stdinReadAllSpec,
+    stdinDecodeStrictSpec,
+    stdinReadAllBytesSpec,
     mainSpec,
     lengthCodePointsSpec,
     lengthUtf16CodeUnitsSpec,
@@ -130,6 +132,7 @@ data JvmInstr
   | Pop2
   | AAStore
   | Aaload
+  | Baload
   | IAdd
   | ISub
   | IMul
@@ -227,6 +230,7 @@ renderInstr = \case
   Pop2 -> "  pop2"
   AAStore -> "  aastore"
   Aaload -> "  aaload"
+  Baload -> "  baload"
   IAdd -> "  iadd"
   ISub -> "  isub"
   IMul -> "  imul"
@@ -1152,61 +1156,197 @@ getArgsSpec (nilTag, consTag, rightTag) =
               <> [AAStore, Dup, PushInt 1, Aload 2, AAStore, AReturn]
         }
 
--- | @__stdinReadAll@ — consume @System.in@ to EOF into a
---   @ByteArrayOutputStream@ (8192-byte read loop), decode as standard UTF-8
---   via @new String(byte[], UTF_8)@, then route through @__entryArgEither@.
---   Two frames: loop @[ByteArrayOutputStream, byte[]]@, done adds the read
---   count @[…, int]@. Slot 1 is reused for the final @byte[]@ after the loop.
-stdinReadAllSpec :: JvmMethod
-stdinReadAllSpec =
-  let loop = LabelId "L_stdin_loop"
-      done = LabelId "L_stdin_done"
+-- | The @System.in@-to-EOF read loop shared by both stdin primitives:
+--   accumulates bytes into a @ByteArrayOutputStream@ (8192-byte chunks) and
+--   leaves the captured @byte[]@ on the stack. Slots 0 (the stream) and 2
+--   (the per-read count) are consumed; the caller continues from slot 0
+--   onward. Label names are parameterised so the two callers don't collide.
+stdinReadLoop :: Text -> [JvmInstr]
+stdinReadLoop prefix =
+  let loop = LabelId (prefix <> "_loop")
+      done = LabelId (prefix <> "_done")
       baos = ClassRef "java/io/ByteArrayOutputStream"
       byteArr = ClassRef "[B"
-      strCls = ClassRef "java/lang/String"
       f1 = Frame [VObject baos, VObject byteArr] []
       f2 = Frame [VObject baos, VObject byteArr, VInteger] []
+   in [ New baos,
+        Dup,
+        InvokeSpecial (MethodRef "java/io/ByteArrayOutputStream" "<init>" "()V"),
+        Astore 0,
+        PushInt 8192,
+        NewArrayByte,
+        Astore 1,
+        Label loop (Just f1),
+        GetStatic (FieldRef "java/lang/System" "in" "Ljava/io/InputStream;"),
+        Aload 1,
+        PushInt 0,
+        PushInt 8192,
+        InvokeVirtual (MethodRef "java/io/InputStream" "read" "([BII)I"),
+        Istore 2,
+        Iload 2,
+        Ifle done,
+        Aload 0,
+        Aload 1,
+        PushInt 0,
+        Iload 2,
+        InvokeVirtual (MethodRef "java/io/ByteArrayOutputStream" "write" "([BII)V"),
+        Goto loop,
+        Label done (Just f2),
+        Aload 0,
+        InvokeVirtual (MethodRef "java/io/ByteArrayOutputStream" "toByteArray" "()[B")
+      ]
+
+-- | @__stdinReadAll@ — consume @System.in@ to EOF, then strict-UTF-8 decode
+--   the bytes via @__stdinDecodeStrict@.
+stdinReadAllSpec :: JvmMethod
+stdinReadAllSpec =
+  JvmMethod
+    { jmName = "__stdinReadAll",
+      jmPublic = False,
+      jmDesc = "()Ljava/lang/Object;",
+      jmMaxStack = 4,
+      jmMaxLocals = 3,
+      jmBody =
+        stdinReadLoop "L_stdin"
+          <> [ InvokeStatic (MethodRef "AwsumMain" "__stdinDecodeStrict" "([B)Ljava/lang/Object;"),
+               AReturn
+             ]
+    }
+
+-- | @__stdinDecodeStrict(byte[])@ — strict UTF-8 decode (RFC 3629) via a
+--   @CharsetDecoder@ in its default REPORT mode, using the exception-free
+--   @decode(in, out, true)@ + @CoderResult.isError()@ API. On a malformed or
+--   incomplete sequence: @Left InvalidUtf8@. On success: length-cap the
+--   decoded @String@ (@Left StringTooLong@ over 2^27 UTF-16 code units) else
+--   @Right s@. The @CharBuffer@ is sized to @bytes.length@ — always enough,
+--   since UTF-8 never expands to more chars than bytes — so the decode never
+--   reports overflow. Two frames at @too_long@ / @invalid@.
+stdinDecodeStrictSpec :: (Int, Int, Int, Int, Int32, Int32) -> JvmMethod
+stdinDecodeStrictSpec (rightTag, leftTag, stlTag, iuTag, stlRowTag, iuRowTag) =
+  let tooLong = LabelId "L_stdec_too_long"
+      invalid = LabelId "L_stdec_invalid"
+      byteArr = ClassRef "[B"
+      byteBuf = ClassRef "java/nio/ByteBuffer"
+      decoder = ClassRef "java/nio/charset/CharsetDecoder"
+      charBuf = ClassRef "java/nio/CharBuffer"
+      strCls = ClassRef "java/lang/String"
+      fInvalid = Frame [VObject byteArr, VObject byteBuf, VObject decoder, VObject charBuf] []
+      fTooLong = Frame [VObject byteArr, VObject byteBuf, VObject decoder, VObject charBuf, VObject strCls] []
+      -- inner CCon (slot 6) → row cell (slot 7) → Left cell; mirrors
+      -- '__entryArgEither's buildLeft exactly.
+      buildLeft innerTag rowTag =
+        [PushInt 1, ANewArray objectClass, Dup, PushInt 0]
+          <> boxedTag innerTag
+          <> [AAStore, Astore 6, PushInt 2, ANewArray objectClass, Dup, PushInt 0, LoadInt32 rowTag, InvokeStatic integerValueOf, AAStore, Dup, PushInt 1, Aload 6, AAStore, Astore 7, PushInt 2, ANewArray objectClass, Dup, PushInt 0]
+          <> boxedTag leftTag
+          <> [AAStore, Dup, PushInt 1, Aload 7, AAStore, AReturn]
    in JvmMethod
-        { jmName = "__stdinReadAll",
+        { jmName = "__stdinDecodeStrict",
+          jmPublic = False,
+          jmDesc = "([B)Ljava/lang/Object;",
+          jmMaxStack = 5,
+          jmMaxLocals = 8,
+          jmBody =
+            [ Aload 0,
+              InvokeStatic (MethodRef "java/nio/ByteBuffer" "wrap" "([B)Ljava/nio/ByteBuffer;"),
+              Astore 1,
+              GetStatic (FieldRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"),
+              InvokeVirtual (MethodRef "java/nio/charset/Charset" "newDecoder" "()Ljava/nio/charset/CharsetDecoder;"),
+              Astore 2,
+              Aload 0,
+              ArrayLength,
+              InvokeStatic (MethodRef "java/nio/CharBuffer" "allocate" "(I)Ljava/nio/CharBuffer;"),
+              Astore 3,
+              Aload 2,
+              Aload 1,
+              Aload 3,
+              PushInt 1,
+              InvokeVirtual (MethodRef "java/nio/charset/CharsetDecoder" "decode" "(Ljava/nio/ByteBuffer;Ljava/nio/CharBuffer;Z)Ljava/nio/charset/CoderResult;"),
+              InvokeVirtual (MethodRef "java/nio/charset/CoderResult" "isError" "()Z"),
+              Ifne invalid,
+              Aload 3,
+              InvokeVirtual (MethodRef "java/nio/Buffer" "flip" "()Ljava/nio/Buffer;"),
+              Pop,
+              Aload 3,
+              InvokeVirtual (MethodRef "java/nio/CharBuffer" "toString" "()Ljava/lang/String;"),
+              Astore 4,
+              Aload 4,
+              InvokeVirtual (MethodRef "java/lang/String" "length" "()I"),
+              LoadInt32 134217728,
+              IfICmpGt tooLong,
+              PushInt 2,
+              ANewArray objectClass,
+              Dup,
+              PushInt 0
+            ]
+              <> boxedTag rightTag
+              <> [AAStore, Dup, PushInt 1, Aload 4, AAStore, AReturn, Label tooLong (Just fTooLong)]
+              <> buildLeft stlTag stlRowTag
+              <> [Label invalid (Just fInvalid)]
+              <> buildLeft iuTag iuRowTag
+        }
+
+-- | @__stdinReadAllBytes@ — consume @System.in@ to EOF, then build a prelude
+--   @List UInt8@ (Cons cells, slot 1) right-to-left from the captured byte
+--   array (slot 0), each byte boxed as @Integer.valueOf(b & 0xFF)@. No decode,
+--   no error row. One frame at the build loop / done.
+stdinReadAllBytesSpec :: (Int, Int) -> JvmMethod
+stdinReadAllBytesSpec (nilTag, consTag) =
+  let bloop = LabelId "L_stdinbytes_build_loop"
+      bdone = LabelId "L_stdinbytes_build_done"
+      byteArr = ClassRef "[B"
+      objArr = ClassRef "[Ljava/lang/Object;"
+      fBuild = Frame [VObject byteArr, VObject objArr, VInteger] []
+   in JvmMethod
+        { jmName = "__stdinReadAllBytes",
           jmPublic = False,
           jmDesc = "()Ljava/lang/Object;",
-          jmMaxStack = 4,
+          jmMaxStack = 6,
           jmMaxLocals = 3,
           jmBody =
-            [ New baos,
-              Dup,
-              InvokeSpecial (MethodRef "java/io/ByteArrayOutputStream" "<init>" "()V"),
-              Astore 0,
-              PushInt 8192,
-              NewArrayByte,
-              Astore 1,
-              Label loop (Just f1),
-              GetStatic (FieldRef "java/lang/System" "in" "Ljava/io/InputStream;"),
-              Aload 1,
-              PushInt 0,
-              PushInt 8192,
-              InvokeVirtual (MethodRef "java/io/InputStream" "read" "([BII)I"),
-              Istore 2,
-              Iload 2,
-              Ifle done,
-              Aload 0,
-              Aload 1,
-              PushInt 0,
-              Iload 2,
-              InvokeVirtual (MethodRef "java/io/ByteArrayOutputStream" "write" "([BII)V"),
-              Goto loop,
-              Label done (Just f2),
-              Aload 0,
-              InvokeVirtual (MethodRef "java/io/ByteArrayOutputStream" "toByteArray" "()[B"),
-              Astore 1,
-              New strCls,
-              Dup,
-              Aload 1,
-              GetStatic (FieldRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"),
-              InvokeSpecial (MethodRef "java/lang/String" "<init>" "([BLjava/nio/charset/Charset;)V"),
-              InvokeStatic (MethodRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"),
-              AReturn
-            ]
+            stdinReadLoop "L_stdinbytes_read"
+              <> [ Astore 0,
+                   PushInt 1,
+                   ANewArray objectClass,
+                   Dup,
+                   PushInt 0
+                 ]
+              <> boxedTag nilTag
+              <> [ AAStore,
+                   Astore 1,
+                   Aload 0,
+                   ArrayLength,
+                   Istore 2,
+                   Label bloop (Just fBuild),
+                   Iload 2,
+                   Ifle bdone,
+                   Iinc 2 (-1),
+                   PushInt 3,
+                   ANewArray objectClass,
+                   Dup,
+                   PushInt 0
+                 ]
+              <> boxedTag consTag
+              <> [ AAStore,
+                   Dup,
+                   PushInt 1,
+                   Aload 0,
+                   Iload 2,
+                   Baload,
+                   PushInt 255,
+                   IAnd,
+                   InvokeStatic integerValueOf,
+                   AAStore,
+                   Dup,
+                   PushInt 2,
+                   Aload 1,
+                   AAStore,
+                   Astore 1,
+                   Goto bloop,
+                   Label bdone (Just fBuild),
+                   Aload 1,
+                   AReturn
+                 ]
         }
 
 -- | @main@ — the JVM entry point (the only @public static@ method). Redirects

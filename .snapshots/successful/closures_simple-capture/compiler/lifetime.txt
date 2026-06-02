@@ -7,7 +7,7 @@ runIO:
 captureFn:
   param           k                               count=1
 
-$lam$15:
+$lam$23:
   param           k                               count=1
   param           _n                              count=0
 

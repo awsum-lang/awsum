@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -139,7 +139,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 22
+    ldc.i4.s 24
     bne.un IL_c1
     pop
     ldstr "red"
@@ -205,7 +205,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -215,7 +215,7 @@
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
@@ -263,7 +263,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -273,7 +273,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -283,7 +283,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -294,12 +294,12 @@
     call object AwsumMain::v_showResult(object)
     call object AwsumMain::__concat(object, object)
   IL_c0:
-    call object AwsumMain::v__let_15(object)
+    call object AwsumMain::v__let_23(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_15(object) cil managed
+  .method private hidebysig static object v__let_23(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

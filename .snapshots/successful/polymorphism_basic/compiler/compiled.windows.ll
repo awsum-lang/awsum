@@ -141,7 +141,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 18 to ptr
+  %stl_tag = inttoptr i64 19 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -284,7 +284,7 @@ case.default.5:
 case.join.6:
   %t21 = phi ptr [%t11, %case.end.3.8], [%t20, %case.end.4.16]
   call void @__free_recursive(ptr %t1)
-  %t22 = call ptr @v__let_15(ptr %t21)
+  %t22 = call ptr @v__let_23(ptr %t21)
   ret ptr %t22
 }
 
@@ -306,7 +306,7 @@ define internal ptr @v_appendY(ptr %v_s) {
   ret ptr %t0
 }
 
-define internal ptr @v__let_15(ptr %v_res) {
+define internal ptr @v__let_23(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

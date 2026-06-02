@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -127,7 +127,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -160,7 +160,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -233,7 +233,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -266,7 +266,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -512,7 +512,7 @@
     stloc.1
     ldloc.1
     ldstr "answer="
-    call object AwsumMain::v__let_15(object, object)
+    call object AwsumMain::v__let_23(object, object)
   IL_c0:
     ret
   }
@@ -738,7 +738,7 @@
   }
 
 
-  .method private hidebysig static object v__let_15(object,object) cil managed
+  .method private hidebysig static object v__let_23(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)

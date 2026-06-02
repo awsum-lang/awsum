@@ -39,8 +39,8 @@ CoreProgram
                 )
             )
         , CValDef "bBox"
-            ( CCon 22
-                [ CCon 23 [] ]
+            ( CCon 24
+                [ CCon 25 [] ]
             )
         , CValDef "main"
             ( CCase
@@ -70,12 +70,12 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$scc$$apply1_$lam$15_a_b" [ "$args" ]
+        , CFunDef "$scc$$apply1_$lam$23_a_b" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 24
+                        ( 26
                         ,
                             [ "$cl"
                             , "$arg0"
@@ -85,11 +85,11 @@ CoreProgram
                                 ( CCase
                                     ( CVar "$cl" )
                                     [
-                                        ( 23
+                                        ( 25
                                         , []
                                         , CDrop DropFreeUnchecked "$args"
                                             ( CContinue
-                                                [ CCon 25
+                                                [ CCon 27
                                                     [ CVar "$arg0" ]
                                                 ]
                                             )
@@ -99,17 +99,17 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 25
+                        ( 27
                         , [ "n" ]
                         , CDrop DropFreeUnchecked "n"
                             ( CContinue
-                                [ CReuse "$args" 27
+                                [ CReuse "$args" 29
                                     [ CVar "n" ]
                                 ]
                             )
                         )
                     ,
-                        ( 26
+                        ( 28
                         , [ "n" ]
                         , CDrop DropFreeUnchecked "n"
                             ( CCase
@@ -148,12 +148,12 @@ CoreProgram
                                                 ( CCase
                                                     ( CVar "bBox" )
                                                     [
-                                                        ( 22
+                                                        ( 24
                                                         , [ "f" ]
                                                         , CDrop DropFreeUnchecked "f"
                                                             ( CDrop DropFreeUnchecked "$args"
                                                                 ( CContinue
-                                                                    [ CCon 24
+                                                                    [ CCon 26
                                                                         [ CVar "f"
                                                                         , CVar "m"
                                                                         ]
@@ -170,7 +170,7 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 27
+                        ( 29
                         , [ "n" ]
                         , CDrop DropFreeUnchecked "n"
                             ( CCase
@@ -207,7 +207,7 @@ CoreProgram
                                             , [ "m" ]
                                             , CDrop DropFreeUnchecked "m"
                                                 ( CContinue
-                                                    [ CReuse "$args" 26
+                                                    [ CReuse "$args" 28
                                                         [ CVar "m" ]
                                                     ]
                                                 )
@@ -222,8 +222,8 @@ CoreProgram
             )
         , CFunDef "a" [ "n" ]
             ( CCall
-                ( CVar "$scc$$apply1_$lam$15_a_b" )
-                [ CCon 26
+                ( CVar "$scc$$apply1_$lam$23_a_b" )
+                [ CCon 28
                     [ CVar "n" ]
                 ]
             )

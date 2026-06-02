@@ -42,14 +42,14 @@ const v_dispatch = (v_x) => {
     }
 };
 
-const v__let_15 = (v_m) => {
+const v__let_23 = (v_m) => {
     {
       const __s = v_m;
       switch (__s[0]) {
-        case 10: {
+        case 11: {
           return [7, "n", [5, [0]]];
         }
-        case 11: {
+        case 12: {
           const v_x = __s[1];
           return [7, (v_dispatch)([1615808600, v_x]), [5, [0]]];
         }
@@ -57,7 +57,7 @@ const v__let_15 = (v_m) => {
     }
 };
 
-const main = (v__let_15)([11, "world"]);
+const main = (v__let_23)([12, "world"]);
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

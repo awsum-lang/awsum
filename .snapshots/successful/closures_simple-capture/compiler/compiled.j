@@ -143,7 +143,7 @@ L_tarm1:
 .end method
 
 
-.method static v__lam_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_23(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 2
   aload_0
@@ -156,7 +156,7 @@ L_tarm1:
   .limit locals 2
   aload_1
   aload_0
-  invokestatic AwsumMain/v__lam_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_23(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

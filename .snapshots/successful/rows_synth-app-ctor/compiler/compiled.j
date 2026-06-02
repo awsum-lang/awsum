@@ -110,7 +110,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -126,7 +126,7 @@ L_tarm1:
   invokevirtual java/lang/Integer/intValue()I
   istore_1
   iload_1
-  bipush 10
+  bipush 11
   if_icmpne L_arm3
   aconst_null
   astore_2

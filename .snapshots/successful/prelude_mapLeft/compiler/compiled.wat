@@ -18,7 +18,7 @@
   (data (i32.const 156) "\00\00\00\00\00\00\00\00\00\00\00\00\14\00\00\00\14\00\00\00bad-Left good-Right ")
   (data (i32.const 196) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00WAT")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v__let_15 $v__lam_16 $v__let_17 $v__lam_18 $v__let_19 $v__df_mapLeft_0 $v__df_mapLeft_1)
+  (elem (i32.const 0) $v_runIO $v__let_23 $v__lam_24 $v__let_25 $v__lam_26 $v__let_27 $v__df_mapLeft_0 $v__df_mapLeft_1)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -128,7 +128,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -733,7 +733,7 @@
     call 11
     local.set 1
     local.get 1
-    i32.const 22
+    i32.const 24
     i32.store
     local.get 1
     i32.store offset=4
@@ -763,7 +763,7 @@
     call 24
     call 23)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -872,7 +872,7 @@
     end
     end)
 
-  (func $v__lam_16 (param i32) (result i32)
+  (func $v__lam_24 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -882,7 +882,7 @@
     call 11
     local.set 1
     local.get 1
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 1
     local.set 2
@@ -891,7 +891,7 @@
     local.get 2
     end)
 
-  (func $v__let_17 (param i32 i32) (result i32)
+  (func $v__let_25 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1003,7 +1003,7 @@
     local.get 6
     end)
 
-  (func $v__lam_18 (param i32) (result i32)
+  (func $v__lam_26 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1013,7 +1013,7 @@
     call 11
     local.set 1
     local.get 1
-    i32.const 23
+    i32.const 25
     i32.store
     local.get 1
     local.set 2
@@ -1022,7 +1022,7 @@
     local.get 2
     end)
 
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_27 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

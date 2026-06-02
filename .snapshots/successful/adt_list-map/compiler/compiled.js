@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_shout = (v_s) => {
     return __concat(v_s, "!");
@@ -35,7 +35,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_16 = (v_res) => {
+const v__let_24 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -56,18 +56,18 @@ const v__apply__scc_show_showCons = (v__k, v__x) => {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 20: {
+        case 21: {
           return v__x;
         }
-        case 21: {
-          const v__pk_21 = __s[1];
+        case 22: {
+          const v__pk_22 = __s[1];
           const v_hStr = __s[2];
           {
             const __s = v__x;
             switch (__s[0]) {
               case 3: {
                 const v__do_e_1 = __s[1];
-                const __t0 = v__pk_21;
+                const __t0 = v__pk_22;
                 const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_1, v__x);
                 v__k = __t0;
                 v__x = __t1;
@@ -80,7 +80,7 @@ const v__apply__scc_show_showCons = (v__k, v__x) => {
                   switch (__s[0]) {
                     case 3: {
                       const v__do_e_0 = __s[1];
-                      const __t0 = v__pk_21;
+                      const __t0 = v__pk_22;
                       const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_0, v__x);
                       v__k = __t0;
                       v__x = __t1;
@@ -88,7 +88,7 @@ const v__apply__scc_show_showCons = (v__k, v__x) => {
                     }
                     case 4: {
                       const v_comma = __s[1];
-                      const __t0 = v__pk_21;
+                      const __t0 = v__pk_22;
                       const __t1 = __concat(v_comma, v_rest);
                       v__k = __t0;
                       v__x = __t1;
@@ -110,18 +110,18 @@ const v__cps__scc_show_showCons = (v__args, v__k) => {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 14: {
+        case 15: {
           const v_xs = __s[1];
           {
             const __s = v_xs;
             switch (__s[0]) {
-              case 12: {
+              case 13: {
                 return (v__apply__scc_show_showCons)(v__k, [4, ""]);
               }
-              case 13: {
+              case 14: {
                 const v_h = __s[1];
                 const v_t = __s[2];
-                const __t0 = [15, v_h, v_t];
+                const __t0 = [16, v_h, v_t];
                 const __t1 = v__k;
                 v__args = __t0;
                 v__k = __t1;
@@ -130,7 +130,7 @@ const v__cps__scc_show_showCons = (v__args, v__k) => {
             }
           }
         }
-        case 15: {
+        case 16: {
           const v_h = __s[1];
           const v_t = __s[2];
           {
@@ -142,8 +142,8 @@ const v__cps__scc_show_showCons = (v__args, v__k) => {
               }
               case 4: {
                 const v_hStr = __s[1];
-                const __t0 = [14, v_t];
-                const __t1 = (v__args[0] = 21, v__args[1] = v__k, v__args[2] = v_hStr, v__args);
+                const __t0 = [15, v_t];
+                const __t1 = (v__args[0] = 22, v__args[1] = v__k, v__args[2] = v_hStr, v__args);
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -157,26 +157,26 @@ const v__cps__scc_show_showCons = (v__args, v__k) => {
 };
 
 const v__scc_show_showCons = (v__args) => {
-    return (v__cps__scc_show_showCons)(v__args, [20]);
+    return (v__cps__scc_show_showCons)(v__args, [21]);
 };
 
 const v_show = (v_xs) => {
-    return (v__scc_show_showCons)([14, v_xs]);
+    return (v__scc_show_showCons)([15, v_xs]);
 };
 
-const v__apply__lift_15 = (v__k, v__x) => {
+const v__apply__lift_23 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 16: {
+        case 17: {
           return v__x;
         }
-        case 17: {
-          const v__pk_17 = __s[1];
+        case 18: {
+          const v__pk_18 = __s[1];
           const v___f0 = __s[2];
-          const __t0 = v__pk_17;
-          const __t1 = (v__k[0] = 13, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+          const __t0 = v__pk_18;
+          const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -186,19 +186,19 @@ const v__apply__lift_15 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_15 = (v___input, v__k) => {
+const v__cps__lift_23 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
-        case 12: {
-          return (v__apply__lift_15)(v__k, [12]);
-        }
         case 13: {
+          return (v__apply__lift_23)(v__k, [13]);
+        }
+        case 14: {
           const v___f0 = __s[1];
           const v___f1 = __s[2];
           const __t0 = v___f1;
-          const __t1 = (v___input[0] = 17, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+          const __t1 = (v___input[0] = 18, v___input[1] = v__k, v___input[2] = v___f0, v___input);
           v___input = __t0;
           v__k = __t1;
           continue;
@@ -208,8 +208,8 @@ const v__cps__lift_15 = (v___input, v__k) => {
   }
 };
 
-const v__lift_15 = (v___input) => {
-    return (v__cps__lift_15)(v___input, [16]);
+const v__lift_23 = (v___input) => {
+    return (v__cps__lift_23)(v___input, [17]);
 };
 
 const v__apply__df_map_0 = (v__k, v__x) => {
@@ -217,14 +217,14 @@ const v__apply__df_map_0 = (v__k, v__x) => {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 18: {
+        case 19: {
           return v__x;
         }
-        case 19: {
-          const v__pk_19 = __s[1];
+        case 20: {
+          const v__pk_20 = __s[1];
           const v_head = __s[2];
-          const __t0 = v__pk_19;
-          const __t1 = (v__k[0] = 13, v__k[1] = (v_shout)(v_head), v__k[2] = v__x, v__k);
+          const __t0 = v__pk_20;
+          const __t1 = (v__k[0] = 14, v__k[1] = (v_shout)(v_head), v__k[2] = v__x, v__k);
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -239,14 +239,14 @@ const v__cps__df_map_0 = (v_list, v__k) => {
     {
       const __s = v_list;
       switch (__s[0]) {
-        case 12: {
-          return (v__apply__df_map_0)(v__k, [12]);
-        }
         case 13: {
+          return (v__apply__df_map_0)(v__k, [13]);
+        }
+        case 14: {
           const v_head = __s[1];
           const v_tail = __s[2];
           const __t0 = v_tail;
-          const __t1 = (v_list[0] = 19, v_list[1] = v__k, v_list[2] = v_head, v_list);
+          const __t1 = (v_list[0] = 20, v_list[1] = v__k, v_list[2] = v_head, v_list);
           v_list = __t0;
           v__k = __t1;
           continue;
@@ -257,10 +257,10 @@ const v__cps__df_map_0 = (v_list, v__k) => {
 };
 
 const v__df_map_0 = (v_list) => {
-    return (v__cps__df_map_0)(v_list, [18]);
+    return (v__cps__df_map_0)(v_list, [19]);
 };
 
-const main = (v__let_16)((v_show)((v__df_map_0)([13, "a", [13, "b", [13, "c", (v__lift_15)([12])]]])));
+const main = (v__let_24)((v_show)((v__df_map_0)([14, "a", [14, "b", [14, "c", (v__lift_23)([13])]]])));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

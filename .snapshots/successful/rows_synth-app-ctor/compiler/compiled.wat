@@ -508,7 +508,7 @@
     call 7
     local.set 0
     local.get 0
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 0
     i32.const 117
@@ -517,7 +517,7 @@
     local.set 3
     local.get 3
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     local.get 3

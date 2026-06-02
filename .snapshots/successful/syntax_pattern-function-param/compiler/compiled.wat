@@ -16,7 +16,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 119) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00 / ")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v_sumTriple $v_sumPair $v__let_15 $v__lam_16 $v__let_17 $v__let_18 $v__df_apply_0)
+  (elem (i32.const 0) $v_runIO $v_sumTriple $v_sumPair $v__let_23 $v__lam_24 $v__let_25 $v__let_26 $v__df_apply_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -126,7 +126,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -374,9 +374,9 @@
     i32.const 0
     i32.ge_s
     if (result i32)
-    i32.const 17
+    i32.const 18
     else
-    i32.const 16
+    i32.const 17
     end
     i32.store
     i32.const 8
@@ -1036,7 +1036,7 @@
     call 12
     local.set 0
     local.get 0
-    i32.const 15
+    i32.const 16
     i32.store
     local.get 0
     i32.const 10
@@ -1061,7 +1061,7 @@
     call 12
     local.set 0
     local.get 0
-    i32.const 14
+    i32.const 15
     i32.store
     local.get 0
     i32.const 100
@@ -1080,7 +1080,7 @@
     call 17
     call 25)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1189,7 +1189,7 @@
     end
     end)
 
-  (func $v__lam_16 (param i32) (result i32)
+  (func $v__lam_24 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1214,7 +1214,7 @@
     call 12
     local.set 1
     local.get 1
-    i32.const 14
+    i32.const 15
     i32.store
     local.get 1
     local.get 3
@@ -1240,7 +1240,7 @@
     local.get 5
     end)
 
-  (func $v__let_17 (param i32 i32) (result i32)
+  (func $v__let_25 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1322,7 +1322,7 @@
     local.get 5
     end)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_26 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

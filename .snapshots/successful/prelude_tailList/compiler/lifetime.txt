@@ -21,7 +21,7 @@ $cps$showList:
 $apply$showList:
   param           $k                              count=1
   param           $x                              count=4
-  case-pattern    $pk_15                          count=0
+  case-pattern    $pk_16                          count=0
   case-pattern    h                               count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    rest                            count=0
@@ -34,27 +34,27 @@ show:
   case-pattern    $do_e_2                         count=0
   case-pattern    rendered                        count=0
 
-$let$15:
+$let$23:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lift$16:
+$lift$24:
   param           __input                         count=1
 
-$cps$$lift$16:
+$cps$$lift$24:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$16:
+$apply$$lift$24:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_17                          count=0
+  case-pattern    $pk_18                          count=0
   case-pattern    __f0                            count=0
 
-$let$17:
+$let$25:
   param           noElems                         count=1
   param           single                          count=1
   param           multi                           count=1
@@ -71,10 +71,10 @@ $let$17:
   case-pattern    $do_e_3                         count=0
   case-pattern    s2                              count=0
 
-$let$18:
+$let$26:
   param           noElems                         count=1
   param           single                          count=1
 
-$let$19:
+$let$27:
   param           noElems                         count=1
 

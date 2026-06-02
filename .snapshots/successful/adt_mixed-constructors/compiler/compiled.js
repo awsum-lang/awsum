@@ -1,24 +1,24 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_showToken = (v_token) => {
     {
       const __s = v_token;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           const v_w = __s[1];
           return __concat("word:", v_w);
         }
-        case 23: {
+        case 25: {
           const v_n = __s[1];
           return __concat("num:", v_n);
         }
-        case 24: {
+        case 26: {
           return [4, ","];
         }
-        case 25: {
+        case 27: {
           return [4, "<eof>"];
         }
       }
@@ -53,7 +53,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -69,7 +69,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_8 = s[1]; return [3, v__do_e_8]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_7 = s[1]; return [3, v__do_e_7]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_abc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_abcs = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_abcsc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_abcscd = s[1]; return __concat(v_abcscd, v_d); } } })(__concat(v_abcsc, " ")); } } })(__concat(v_abcs, v_c)); } } })(__concat(v_abc, " ")); } } })(__concat(v_ab, v_b)); } } })(__concat(v_a, " ")); } } })((v_showToken)([25])); } } })((v_showToken)([23, "42"])); } } })((v_showToken)([24])); } } })((v_showToken)([22, "hello"])));
+const main = (v__let_23)(((s) => { switch(s[0]) { case 3: { const v__do_e_8 = s[1]; return [3, v__do_e_8]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_7 = s[1]; return [3, v__do_e_7]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_abc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_abcs = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_abcsc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_abcscd = s[1]; return __concat(v_abcscd, v_d); } } })(__concat(v_abcsc, " ")); } } })(__concat(v_abcs, v_c)); } } })(__concat(v_abc, " ")); } } })(__concat(v_ab, v_b)); } } })(__concat(v_a, " ")); } } })((v_showToken)([27])); } } })((v_showToken)([25, "42"])); } } })((v_showToken)([26])); } } })((v_showToken)([24, "hello"])));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

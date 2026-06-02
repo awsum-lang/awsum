@@ -1,0 +1,30 @@
+{- Pins widening a narrower structural sum into a wider one. Row tags are
+   per-label (FNV of the label name), so a value injected at `(String | Int32)`
+   is already correctly tagged for `(String | Int32 | Bool)` — widening is a
+   pass-through. Covers an ascription (`("hi" : (String | Int32))` flowing into
+   the wider row) and a sub-row-returning function whose result widens. -}
+
+import IO.Stdout
+
+asc : (String | Int32 | Bool)
+asc = ("hi" : (String | Int32))
+
+sub : Bool -> (String | Int32)
+sub b = case b of
+  True -> "tt"
+  False -> 2
+
+wide : Bool -> (String | Int32 | Bool)
+wide b = sub b
+
+d3 : (String | Int32 | Bool) -> String
+d3 x = case x of
+  (s : String) -> s
+  (n : Int32) -> showInt32 n
+  (b : Bool) -> showBool b
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (d3 asc)
+    |> andThenIO (\_u -> IO.Stdout.print (d3 (wide True)))
+    |> andThenIO (\_u -> IO.Stdout.print (d3 (wide False)))

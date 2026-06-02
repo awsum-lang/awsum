@@ -3,14 +3,14 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
 const v_wrap = (v_s) => {
-    return [22, v_s];
+    return [24, v_s];
 };
 
 const v_unwrap = (v_b) => {
     {
       const __s = v_b;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           const v_value = __s[1];
           return v_value;
         }
@@ -50,10 +50,10 @@ const v__apply1 = (v__cl, v__arg0) => {
     {
       const __s = v__cl;
       switch (__s[0]) {
-        case 23: {
+        case 25: {
           return (v_unwrap)(v__arg0);
         }
-        case 24: {
+        case 26: {
           return (v_wrap)(v__arg0);
         }
       }
@@ -68,7 +68,7 @@ const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1) => {
     return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
 };
 
-const main = [7, (v__df_apply_0)("chain", [23], [24]), [5, [0]]];
+const main = [7, (v__df_apply_0)("chain", [25], [26]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

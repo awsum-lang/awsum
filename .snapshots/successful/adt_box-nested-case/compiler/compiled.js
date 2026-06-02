@@ -6,17 +6,17 @@ const v_unwrap = (v_b) => {
     {
       const __s = v_b;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           const v_b2 = __s[1];
           {
             const __s = v_b2;
             switch (__s[0]) {
-              case 22: {
+              case 24: {
                 const v_b3 = __s[1];
                 {
                   const __s = v_b3;
                   switch (__s[0]) {
-                    case 22: {
+                    case 24: {
                       const v_value = __s[1];
                       return v_value;
                     }
@@ -58,7 +58,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const main = [7, (v_unwrap)([22, [22, [22, "hello"]]]), [5, [0]]];
+const main = [7, (v_unwrap)([24, [24, [24, "hello"]]]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

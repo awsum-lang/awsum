@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -37,7 +37,7 @@ const v_pureEither = (v_x) => {
 
 const v_op3 = [4, (3|0)];
 
-const v_op2 = [3, [435006518, [24]]];
+const v_op2 = [3, [435006518, [26]]];
 
 const v_op1 = [4, (1|0)];
 
@@ -57,7 +57,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 22: {
+                    case 24: {
                       return [4, "ErrorA"];
                     }
                   }
@@ -68,7 +68,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 24: {
+                    case 26: {
                       return [4, "ErrorC"];
                     }
                   }
@@ -79,7 +79,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 23: {
+                    case 25: {
                       return [4, "ErrorB"];
                     }
                   }
@@ -96,7 +96,7 @@ const v_describe = (v_r) => {
     }
 };
 
-const v__let_15 = (v_res) => {
+const v__let_23 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -112,7 +112,7 @@ const v__let_15 = (v_res) => {
     }
 };
 
-const main = (v__let_15)((v_describe)(v_f));
+const main = (v__let_23)((v_describe)(v_f));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

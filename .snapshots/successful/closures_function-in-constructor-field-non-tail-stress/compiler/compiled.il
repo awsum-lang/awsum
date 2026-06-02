@@ -43,7 +43,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -168,7 +168,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -258,7 +258,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -289,7 +289,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 24
+    ldc.i4.s 26
     bne.un IL_c0
     pop
     ldarg.1
@@ -383,7 +383,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -393,7 +393,7 @@
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1

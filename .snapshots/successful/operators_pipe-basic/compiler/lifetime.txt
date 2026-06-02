@@ -19,6 +19,6 @@ main:
   case-pattern    __w0                            count=0
   case-pattern    s                               count=1
 
-$lam$15:
+$lam$23:
   param           i                               count=1
 

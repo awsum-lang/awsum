@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "u" )
                 [
-                    ( 22
+                    ( 24
                     , []
                     , CString "CustomUnit"
                     )
@@ -52,7 +52,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "show" )
-                    [ CCon 22 [] ]
+                    [ CCon 24 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

@@ -21,7 +21,7 @@
   (data (i32.const 213) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00b")
   (data (i32.const 234) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00c")
   (table 10 funcref)
-  (elem (i32.const 0) $v_runIO $v_headList $v_show $v__let_15 $v__lift_16 $v__cps__lift_16 $v__apply__lift_16 $v__let_17 $v__let_18 $v__let_19)
+  (elem (i32.const 0) $v_runIO $v_headList $v_show $v__let_23 $v__lift_24 $v__cps__lift_24 $v__apply__lift_24 $v__let_25 $v__let_26 $v__let_27)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -131,7 +131,7 @@
     call 4
     local.set 8
     local.get 8
-    i32.const 18
+    i32.const 19
     i32.store
     i32.const 8
     i32.const 1
@@ -610,7 +610,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 12
+    i32.const 13
     i32.eq
     if (result i32)
     block (result i32)
@@ -619,7 +619,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 10
+    i32.const 11
     i32.store
     local.get 1
     local.set 5
@@ -644,7 +644,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 11
+    i32.const 12
     i32.store
     local.get 1
     local.get 3
@@ -674,7 +674,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 10
+    i32.const 11
     i32.eq
     if (result i32)
     block (result i32)
@@ -725,14 +725,14 @@
     call 9
     local.set 0
     local.get 0
-    i32.const 12
+    i32.const 13
     i32.store
     local.get 0
     call 18
     call 14
     call 23)
 
-  (func $v__let_15 (param i32) (result i32)
+  (func $v__let_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -841,7 +841,7 @@
     end
     end)
 
-  (func $v__lift_16 (param i32) (result i32)
+  (func $v__lift_24 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -855,7 +855,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 14
+    i32.const 15
     i32.store
     local.get 1
     call 19
@@ -865,7 +865,7 @@
     local.get 2
     end)
 
-  (func $v__cps__lift_16 (param i32 i32) (result i32)
+  (func $v__cps__lift_24 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -879,7 +879,7 @@
     local.set 3
     local.get 3
     i32.load
-    i32.const 12
+    i32.const 13
     i32.eq
     if (result i32)
     block (result i32)
@@ -892,7 +892,7 @@
     call 9
     local.set 2
     local.get 2
-    i32.const 12
+    i32.const 13
     i32.store
     local.get 2
     call 20
@@ -923,7 +923,7 @@
     i32.load offset=8
     call 11
     local.get 0
-    i32.const 15
+    i32.const 16
     i32.store
     local.get 0
     local.get 1
@@ -955,7 +955,7 @@
     end
     end)
 
-  (func $v__apply__lift_16 (param i32 i32) (result i32)
+  (func $v__apply__lift_24 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -968,7 +968,7 @@
     local.set 2
     local.get 2
     i32.load
-    i32.const 14
+    i32.const 15
     i32.eq
     if (result i32)
     block (result i32)
@@ -998,7 +998,7 @@
     i32.load offset=8
     call 11
     local.get 0
-    i32.const 13
+    i32.const 14
     i32.store
     local.get 0
     local.get 4
@@ -1030,7 +1030,7 @@
     end
     end)
 
-  (func $v__let_17 (param i32 i32 i32) (result i32)
+  (func $v__let_25 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1392,7 +1392,7 @@
     local.get 11
     end)
 
-  (func $v__let_18 (param i32 i32) (result i32)
+  (func $v__let_26 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1413,7 +1413,7 @@
     call 9
     local.set 2
     local.get 2
-    i32.const 13
+    i32.const 14
     i32.store
     local.get 2
     i32.const 204
@@ -1424,7 +1424,7 @@
     call 9
     local.set 3
     local.get 3
-    i32.const 13
+    i32.const 14
     i32.store
     local.get 3
     i32.const 225
@@ -1435,7 +1435,7 @@
     call 9
     local.set 4
     local.get 4
-    i32.const 13
+    i32.const 14
     i32.store
     local.get 4
     i32.const 246
@@ -1446,7 +1446,7 @@
     call 9
     local.set 5
     local.get 5
-    i32.const 12
+    i32.const 13
     i32.store
     local.get 5
     call 18
@@ -1466,7 +1466,7 @@
     local.get 6
     end)
 
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_27 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1481,7 +1481,7 @@
     call 9
     local.set 1
     local.get 1
-    i32.const 13
+    i32.const 14
     i32.store
     local.get 1
     i32.const 204
@@ -1492,7 +1492,7 @@
     call 9
     local.set 2
     local.get 2
-    i32.const 12
+    i32.const 13
     i32.store
     local.get 2
     call 18

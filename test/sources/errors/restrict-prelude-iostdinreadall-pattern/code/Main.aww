@@ -1,5 +1,5 @@
-{- Error: IOStdinReadAll constructor matched in user code. Prelude-private. -}
+{- Error: IOStdinReadAllString constructor matched in user code. Prelude-private. -}
 
 main : IO Never Unit
 main = case main of
-  IOStdinReadAll _k -> main
+  IOStdinReadAllString _k -> main

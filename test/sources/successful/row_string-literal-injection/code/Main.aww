@@ -1,0 +1,38 @@
+{- Pins string-literal injection into a structural sum across the
+   non-argument positions that lower through `lowerExprM` directly:
+   a value-def body (`sv`), a `case`-arm result (`pick`), and a `let`
+   RHS (`fromLet`). Before the fix a string literal in these positions
+   stayed an un-tagged `CString` (the integer-literal arm injected, the
+   string arm did not), so the row-case mis-read it — crash on
+   LLVM/JVM/CLR/WASM, garbage on JS. -}
+
+import IO.Stdout
+
+sv : (Int32 | String)
+sv = "S"
+
+iv : (Int32 | String)
+iv = 9
+
+d : (Int32 | String) -> String
+d x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+
+pick : Bool -> (Int32 | String)
+pick b = case b of
+  True -> "T"
+  False -> 1
+
+fromLet : Bool -> String
+fromLet _b =
+  let lv : (Int32 | String) = "L"
+   in d lv
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (d sv)
+    |> andThenIO (\_u -> IO.Stdout.print (d iv))
+    |> andThenIO (\_u -> IO.Stdout.print (d (pick True)))
+    |> andThenIO (\_u -> IO.Stdout.print (d (pick False)))
+    |> andThenIO (\_u -> IO.Stdout.print (fromLet True))

@@ -361,14 +361,17 @@ header host builtIns =
        | Set.member "showInt32" builtIns
            || Set.member "showUInt8" builtIns
            || Set.member "showUInt32" builtIns
+           || Set.member "byteToHexStringNoPrefix" builtIns
        ]
-    <> [ -- 'read(2)' is used by '__stdinReadAll' to consume fd 0 to EOF
-       -- regardless of NUL bytes in the input. macOS / Linux / mingw
-       -- libc all expose it as 'read'; MSVC's CRT exposes '_read'
-       -- instead — same Windows-host follow-up as 'write'. Gated so
-       -- programs without 'IO.Stdin.readAll' don't pin libc 'read'.
+    <> [ -- 'read(2)' is used by '__readStdin' (shared by both stdin
+       -- primitives) to consume fd 0 to EOF regardless of NUL bytes in
+       -- the input. macOS / Linux / mingw libc all expose it as 'read';
+       -- MSVC's CRT exposes '_read' instead — same Windows-host
+       -- follow-up as 'write'. Gated so programs without a stdin reader
+       -- don't pin libc 'read'.
        "declare i64 @read(i32, ptr, i64)"
-       | Set.member "internalStdinReadAllAsUtf16" builtIns
+       | Set.member "internalStdinReadAllString" builtIns
+           || Set.member "internalStdinReadAllBytes" builtIns
        ]
     <> [ -- 'memcmp' is used only by '__eqString'. Gated so programs that
        -- don't reference 'eqString' don't pin libc 'memcmp'.
@@ -399,6 +402,9 @@ header host builtIns =
        ]
     <> [ "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\""
        | Set.member "showUInt8" builtIns || Set.member "showUInt32" builtIns
+       ]
+    <> [ "@.fmt_hex = private unnamed_addr constant [5 x i8] c\"%02x\\00\""
+       | Set.member "byteToHexStringNoPrefix" builtIns
        ]
     -- '@.empty' is the language-fixed empty string in length-prefixed form
     -- (4-byte 'i32 flag = 0' literal prefix; the user pointer is
@@ -654,11 +660,16 @@ runtime ptags builtIns =
     -- forbids these, but WTF-8 / CESU-8 / Java-modified-UTF-8 do not.
     unpairedSurrogateRowTag :: Text
     unpairedSurrogateRowTag = show (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
+    -- InvalidUtf8 row tag, used when '__stdinDecodeStrict' rejects a
+    -- byte sequence that is not well-formed UTF-8 (RFC 3629 / Unicode
+    -- Table 3-7) read from stdin.
+    invalidUtf8RowTag :: Text
+    invalidUtf8RowTag = show (rowTag (TyCon noSpan "InvalidUtf8"))
     -- Globally-unique constructor tags fed in via 'PreludeTags'. These
     -- show up at every user 'CCon' / 'CCase' arm; runtime helpers
     -- construct values of these types out of band so they need to
     -- match the same numbering.
-    leftLit, rightLit, unitLit, trueLit, falseLit, nothingLit, justLit, tuple2Lit, nilLit, consLit, ueLit, oeLit, peLit, stlLit, usLit :: Text
+    leftLit, rightLit, unitLit, trueLit, falseLit, nothingLit, justLit, tuple2Lit, nilLit, consLit, ueLit, oeLit, peLit, stlLit, usLit, iuLit :: Text
     leftLit = show (ptLeft ptags)
     rightLit = show (ptRight ptags)
     unitLit = show (ptUnit ptags)
@@ -674,6 +685,7 @@ runtime ptags builtIns =
     peLit = show (ptParseError ptags)
     stlLit = show (ptStringTooLong ptags)
     usLit = show (ptUnpairedUtf16Surrogate ptags)
+    iuLit = show (ptInvalidUtf8 ptags)
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
         -- '__print' is the low-level platform primitive driven by the
@@ -686,6 +698,7 @@ runtime ptags builtIns =
         if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
         if Set.member "showInt32" builtIns then rtShowInt32 else "",
         if Set.member "showUInt8" builtIns then rtShowUInt8 else "",
+        if Set.member "byteToHexStringNoPrefix" builtIns then rtByteToHex else "",
         if Set.member "predInt32" builtIns then rtPredInt32 else "",
         if Set.member "predUInt8" builtIns then rtPredUInt8 else "",
         if Set.member "succInt32" builtIns then rtSuccInt32 else "",
@@ -714,13 +727,18 @@ runtime ptags builtIns =
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
         if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
         if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
-        -- '__entryArgEither' is the shared length-aware UTF-8 → UTF-16
-        -- decoder used by '__getArgs' (argv source) and '__stdinReadAll'
-        -- (stdin source). Gated on either built-in's presence so a
-        -- program that needs neither pays nothing for the helper.
-        if Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns then rtEntryArgEither else "",
+        -- '__entryArgEither' validates host-decoded argv strings only;
+        -- stdin has its own strict byte decoder. Gated on the argv
+        -- built-in so an argv-free program pays nothing for it.
+        if Set.member "internalGetArgs" builtIns then rtEntryArgEither else "",
         if Set.member "internalGetArgs" builtIns then rtGetArgs else "",
-        if Set.member "internalStdinReadAllAsUtf16" builtIns then rtStdinReadAll else ""
+        -- '__readStdin' is the shared fd-0-to-EOF reader; both stdin
+        -- primitives call it. '__stdinDecodeStrict' is the strict UTF-8
+        -- decoder used only by the string reader.
+        if Set.member "internalStdinReadAllString" builtIns || Set.member "internalStdinReadAllBytes" builtIns then rtReadStdin else "",
+        if Set.member "internalStdinReadAllString" builtIns then rtStdinDecodeStrict else "",
+        if Set.member "internalStdinReadAllString" builtIns then rtStdinReadAll else "",
+        if Set.member "internalStdinReadAllBytes" builtIns then rtStdinReadAllBytes else ""
       ]
     -- '__concat' implements 'BuiltIn.concatString' on the length-
     -- prefixed string layout. Returns 'Either StringTooLong String' as
@@ -849,6 +867,24 @@ runtime ptags builtIns =
           "  %buf = call ptr @__alloc(i64 24, i32 0)",
           "  %payload = getelementptr i8, ptr %buf, i64 8",
           "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  store i32 %n, ptr %buf",
+          "  %u16p = getelementptr i8, ptr %buf, i64 4",
+          "  store i32 %n, ptr %u16p",
+          "  call void @__free_recursive(ptr %p)",
+          "  ret ptr %buf",
+          "}"
+        ]
+    -- byteToHexStringNoPrefix: same shape as '__showUInt8' but with the
+    -- '%02x' format — always two lowercase hex digits, so the stored length
+    -- is 2 in both the UTF-8 and UTF-16 header slots.
+    rtByteToHex =
+      unlines
+        [ "define internal ptr @__byteToHex(ptr %p) {",
+          "  %b = load i8, ptr %p",
+          "  %v = zext i8 %b to i32",
+          "  %buf = call ptr @__alloc(i64 24, i32 0)",
+          "  %payload = getelementptr i8, ptr %buf, i64 8",
+          "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_hex, i32 %v)",
           "  store i32 %n, ptr %buf",
           "  %u16p = getelementptr i8, ptr %buf, i64 4",
           "  store i32 %n, ptr %u16p",
@@ -2110,20 +2146,15 @@ runtime ptags builtIns =
           "  ret ptr %rightC",
           "}"
         ]
-    -- '__stdinReadAll' is the zero-arg runtime helper for
-    -- 'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
-    -- 'IOStdinReadAll' arm. Reads fd 0 to EOF into a 'malloc'/'realloc'-
-    -- grown scratch buffer (start 4 KiB, double when full), then routes
-    -- the captured bytes through the same '__entryArgEither' decoder
-    -- 'getArgs' uses. After the decode, the scratch buffer is 'free'd
-    -- — '__entryArgEither' has already copied any 'Right' payload into
-    -- a freshly '__alloc'-ed length-prefixed cell. Per the
-    -- POSIX-honest no-memoisation decision, each call consumes whatever
-    -- bytes remain on fd 0; a second call after EOF reads zero bytes
-    -- and decodes to @Right ""@.
-    rtStdinReadAll =
+    -- '__readStdin(len_out)' reads fd 0 to EOF into a 'malloc'/'realloc'-
+    -- grown buffer (start 4 KiB, double when full), writes the final byte
+    -- length through 'len_out', and returns the buffer (caller frees).
+    -- Shared by both stdin primitives. Per the POSIX-honest
+    -- no-memoisation decision, each call consumes whatever bytes remain
+    -- on fd 0; a second call after EOF reads zero bytes.
+    rtReadStdin =
       unlines
-        [ "define internal ptr @__stdinReadAll() {",
+        [ "define internal ptr @__readStdin(ptr %len_out) {",
           "entry:",
           "  %cap_p = alloca i64, align 8",
           "  store i64 4096, ptr %cap_p",
@@ -2159,8 +2190,7 @@ runtime ptags builtIns =
           -- loop; an error is treated as 'whatever we have so far'. Real
           -- I/O errors on stdin are extremely rare for piped input, and
           -- carrying a new row variant for them would mean every program
-          -- using 'IO.Stdin.readAll' would have to handle it. Conscious
-          -- trade-off.
+          -- reading stdin would have to handle it. Conscious trade-off.
           "  %eof = icmp sle i64 %got, 0",
           "  br i1 %eof, label %read_done, label %accumulate",
           "accumulate:",
@@ -2169,28 +2199,292 @@ runtime ptags builtIns =
           "  store i64 %new_len, ptr %len_p",
           "  br label %read_head",
           "read_done:",
-          -- Guarantee a readable byte at @buf[len]@ for '__entryArgEither's
-          -- one-past-end surrogate peek. Grow by one if the buffer is
-          -- exactly full, then store a 0 sentinel.
-          "  %final_cap = load i64, ptr %cap_p",
           "  %final_len = load i64, ptr %len_p",
-          "  %is_full = icmp eq i64 %final_cap, %final_len",
-          "  br i1 %is_full, label %pad_grow, label %pad_write",
-          "pad_grow:",
-          "  %pad_old = load ptr, ptr %buf_p",
-          "  %pad_cap = add i64 %final_cap, 1",
-          "  %pad_new = call ptr @realloc(ptr %pad_old, i64 %pad_cap)",
-          "  store ptr %pad_new, ptr %buf_p",
-          "  br label %pad_write",
-          "pad_write:",
           "  %buf_final = load ptr, ptr %buf_p",
-          "  %past_end = getelementptr i8, ptr %buf_final, i64 %final_len",
-          "  store i8 0, ptr %past_end",
-          "  %either = call ptr @__entryArgEither(ptr %buf_final, i64 %final_len)",
-          -- Scratch buffer is no longer needed: '__entryArgEither' has
-          -- copied any 'Right' payload into a '__alloc'-managed cell.
-          "  call void @free(ptr %buf_final)",
+          "  store i64 %final_len, ptr %len_out",
+          "  ret ptr %buf_final",
+          "}"
+        ]
+    -- '__stdinReadAll' is the zero-arg runtime helper for
+    -- 'BuiltIn.internalStdinReadAllString', called from 'runIO''s
+    -- 'IOStdinReadAllString' arm. Reads stdin via '__readStdin', then
+    -- strict-UTF-8 decodes the bytes via '__stdinDecodeStrict' (which
+    -- copies any 'Right' payload into a fresh '__alloc'-ed cell), then
+    -- frees the scratch buffer.
+    rtStdinReadAll =
+      unlines
+        [ "define internal ptr @__stdinReadAll() {",
+          "entry:",
+          "  %len_slot = alloca i64, align 8",
+          "  %buf = call ptr @__readStdin(ptr %len_slot)",
+          "  %len = load i64, ptr %len_slot",
+          "  %either = call ptr @__stdinDecodeStrict(ptr %buf, i64 %len)",
+          "  call void @free(ptr %buf)",
           "  ret ptr %either",
+          "}"
+        ]
+    -- '__stdinReadAllBytes' is the zero-arg runtime helper for
+    -- 'BuiltIn.internalStdinReadAllBytes', called from 'runIO''s
+    -- 'IOStdinReadAllBytes' arm. Reads stdin via '__readStdin' and builds
+    -- an Awsum 'List UInt8' (each byte boxed as a 1-byte cell), folded
+    -- right-to-left so the cons chain needs no recursion. No decode, no
+    -- error row.
+    rtStdinReadAllBytes =
+      unlines
+        [ "define internal ptr @__stdinReadAllBytes() {",
+          "entry:",
+          "  %len_slot = alloca i64, align 8",
+          "  %buf = call ptr @__readStdin(ptr %len_slot)",
+          "  %len = load i64, ptr %len_slot",
+          "  %i_p = alloca i64, align 8",
+          "  %acc_p = alloca ptr, align 8",
+          -- acc := Nil (8-byte tag-only cell, shape 0).
+          "  %nilC = call ptr @__alloc(i64 8, i32 0)",
+          "  %nilC_tag = inttoptr i64 " <> nilLit <> " to ptr",
+          "  store ptr %nilC_tag, ptr %nilC",
+          "  store ptr %nilC, ptr %acc_p",
+          "  store i64 %len, ptr %i_p",
+          "  br label %bytes_loop",
+          "bytes_loop:",
+          "  %i = load i64, ptr %i_p",
+          "  %at_start = icmp eq i64 %i, 0",
+          "  br i1 %at_start, label %bytes_done, label %bytes_body",
+          "bytes_body:",
+          "  %i_next = sub i64 %i, 1",
+          "  store i64 %i_next, ptr %i_p",
+          "  %byte_ptr = getelementptr i8, ptr %buf, i64 %i_next",
+          "  %byte = load i8, ptr %byte_ptr",
+          -- Box the byte as a 1-byte UInt8 cell (shape 0).
+          "  %u8 = call ptr @__alloc(i64 1, i32 0)",
+          "  store i8 %byte, ptr %u8",
+          "  %acc = load ptr, ptr %acc_p",
+          -- Cons (24-byte cell: tag + 2 ptr fields, shape 2).
+          "  %consC = call ptr @__alloc(i64 24, i32 2)",
+          "  %consC_tag = inttoptr i64 " <> consLit <> " to ptr",
+          "  store ptr %consC_tag, ptr %consC",
+          "  %consC_head = getelementptr ptr, ptr %consC, i32 1",
+          "  store ptr %u8, ptr %consC_head",
+          "  %consC_tail = getelementptr ptr, ptr %consC, i32 2",
+          "  store ptr %acc, ptr %consC_tail",
+          "  store ptr %consC, ptr %acc_p",
+          "  br label %bytes_loop",
+          "bytes_done:",
+          "  call void @free(ptr %buf)",
+          "  %acc_final = load ptr, ptr %acc_p",
+          "  ret ptr %acc_final",
+          "}"
+        ]
+    -- '__stdinDecodeStrict(arg, len)' validates 'arg[0..len)' as
+    -- well-formed UTF-8 (RFC 3629 / Unicode Table 3-7) and returns
+    -- 'Either (StringTooLong | InvalidUtf8) String'. A single
+    -- left-to-right pass: each leading byte selects a 1/2/3/4-byte
+    -- sequence whose continuation bytes and overlong/surrogate/range
+    -- constraints are all checked; the first malformation returns
+    -- 'Left InvalidUtf8'. A fully-valid scan then length-caps on the
+    -- UTF-16 code-unit count ('Left StringTooLong' over 2^27), else
+    -- copies the bytes verbatim into a length-prefixed 'Right' cell.
+    -- 'InvalidUtf8' takes priority over 'StringTooLong': the cap is only
+    -- consulted after the whole input has been confirmed well-formed,
+    -- matching the fatal host decoders the other backends use.
+    rtStdinDecodeStrict =
+      unlines
+        [ "define internal ptr @__stdinDecodeStrict(ptr %arg, i64 %len) {",
+          "entry:",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  %n_p = alloca i64, align 8",
+          "  store i64 0, ptr %n_p",
+          "  br label %head",
+          "head:",
+          "  %i = load i64, ptr %i_p",
+          "  %done = icmp uge i64 %i, %len",
+          "  br i1 %done, label %valid_end, label %body",
+          "body:",
+          "  %b0p = getelementptr i8, ptr %arg, i64 %i",
+          "  %b0 = load i8, ptr %b0p",
+          "  %b0z = zext i8 %b0 to i32",
+          "  %is_ascii = icmp ult i32 %b0z, 128",
+          "  br i1 %is_ascii, label %one_byte, label %chk_lead",
+          "one_byte:",
+          "  %n_o = load i64, ptr %n_p",
+          "  %n_o1 = add i64 %n_o, 1",
+          "  store i64 %n_o1, ptr %n_p",
+          "  %i_o1 = add i64 %i, 1",
+          "  store i64 %i_o1, ptr %i_p",
+          "  br label %head",
+          "chk_lead:",
+          -- 0x80..0xC1 (continuation byte or overlong 2-byte lead) is an
+          -- invalid leading byte.
+          "  %ge_c2 = icmp uge i32 %b0z, 194",
+          "  br i1 %ge_c2, label %chk2, label %invalid",
+          "chk2:",
+          "  %lt_e0 = icmp ult i32 %b0z, 224",
+          "  br i1 %lt_e0, label %two_byte, label %chk3",
+          "chk3:",
+          "  %lt_f0 = icmp ult i32 %b0z, 240",
+          "  br i1 %lt_f0, label %three_byte, label %chk4",
+          "chk4:",
+          "  %lt_f5 = icmp ult i32 %b0z, 245",
+          "  br i1 %lt_f5, label %four_byte, label %invalid",
+          -- 2-byte: C2..DF 80..BF
+          "two_byte:",
+          "  %i_2a = add i64 %i, 1",
+          "  %trunc2 = icmp uge i64 %i_2a, %len",
+          "  br i1 %trunc2, label %invalid, label %two_cont",
+          "two_cont:",
+          "  %b1_2p = getelementptr i8, ptr %arg, i64 %i_2a",
+          "  %b1_2 = load i8, ptr %b1_2p",
+          "  %b1_2z = zext i8 %b1_2 to i32",
+          "  %b1_2m = and i32 %b1_2z, 192",
+          "  %b1_2ok = icmp eq i32 %b1_2m, 128",
+          "  br i1 %b1_2ok, label %two_ok, label %invalid",
+          "two_ok:",
+          "  %n_2 = load i64, ptr %n_p",
+          "  %n_2a = add i64 %n_2, 1",
+          "  store i64 %n_2a, ptr %n_p",
+          "  %i_2b = add i64 %i, 2",
+          "  store i64 %i_2b, ptr %i_p",
+          "  br label %head",
+          -- 3-byte: E0 A0..BF 80..BF | E1..EC 80..BF 80..BF | ED 80..9F 80..BF | EE..EF 80..BF 80..BF
+          "three_byte:",
+          "  %i_3c = add i64 %i, 2",
+          "  %trunc3 = icmp uge i64 %i_3c, %len",
+          "  br i1 %trunc3, label %invalid, label %three_b1",
+          "three_b1:",
+          "  %i_3b1 = add i64 %i, 1",
+          "  %b1_3p = getelementptr i8, ptr %arg, i64 %i_3b1",
+          "  %b1_3 = load i8, ptr %b1_3p",
+          "  %b1_3z = zext i8 %b1_3 to i32",
+          "  %b1_3m = and i32 %b1_3z, 192",
+          "  %b1_3ok = icmp eq i32 %b1_3m, 128",
+          "  br i1 %b1_3ok, label %three_b2, label %invalid",
+          "three_b2:",
+          "  %b2_3p = getelementptr i8, ptr %arg, i64 %i_3c",
+          "  %b2_3 = load i8, ptr %b2_3p",
+          "  %b2_3z = zext i8 %b2_3 to i32",
+          "  %b2_3m = and i32 %b2_3z, 192",
+          "  %b2_3ok = icmp eq i32 %b2_3m, 128",
+          "  br i1 %b2_3ok, label %three_range, label %invalid",
+          "three_range:",
+          -- E0 with second byte < 0xA0 is overlong.
+          "  %is_e0 = icmp eq i32 %b0z, 224",
+          "  %b1_lt_a0 = icmp ult i32 %b1_3z, 160",
+          "  %e0_overlong = and i1 %is_e0, %b1_lt_a0",
+          "  br i1 %e0_overlong, label %invalid, label %three_ed",
+          "three_ed:",
+          -- ED with second byte >= 0xA0 encodes a surrogate (U+D800..DFFF).
+          "  %is_ed = icmp eq i32 %b0z, 237",
+          "  %b1_ge_a0 = icmp uge i32 %b1_3z, 160",
+          "  %ed_surr = and i1 %is_ed, %b1_ge_a0",
+          "  br i1 %ed_surr, label %invalid, label %three_ok",
+          "three_ok:",
+          "  %n_3 = load i64, ptr %n_p",
+          "  %n_3a = add i64 %n_3, 1",
+          "  store i64 %n_3a, ptr %n_p",
+          "  %i_3d = add i64 %i, 3",
+          "  store i64 %i_3d, ptr %i_p",
+          "  br label %head",
+          -- 4-byte: F0 90..BF 80..BF 80..BF | F1..F3 80..BF x3 | F4 80..8F 80..BF 80..BF
+          "four_byte:",
+          "  %i_4c = add i64 %i, 3",
+          "  %trunc4 = icmp uge i64 %i_4c, %len",
+          "  br i1 %trunc4, label %invalid, label %four_b1",
+          "four_b1:",
+          "  %i_4b1 = add i64 %i, 1",
+          "  %b1_4p = getelementptr i8, ptr %arg, i64 %i_4b1",
+          "  %b1_4 = load i8, ptr %b1_4p",
+          "  %b1_4z = zext i8 %b1_4 to i32",
+          "  %b1_4m = and i32 %b1_4z, 192",
+          "  %b1_4ok = icmp eq i32 %b1_4m, 128",
+          "  br i1 %b1_4ok, label %four_b2, label %invalid",
+          "four_b2:",
+          "  %i_4b2 = add i64 %i, 2",
+          "  %b2_4p = getelementptr i8, ptr %arg, i64 %i_4b2",
+          "  %b2_4 = load i8, ptr %b2_4p",
+          "  %b2_4z = zext i8 %b2_4 to i32",
+          "  %b2_4m = and i32 %b2_4z, 192",
+          "  %b2_4ok = icmp eq i32 %b2_4m, 128",
+          "  br i1 %b2_4ok, label %four_b3, label %invalid",
+          "four_b3:",
+          "  %b3_4p = getelementptr i8, ptr %arg, i64 %i_4c",
+          "  %b3_4 = load i8, ptr %b3_4p",
+          "  %b3_4z = zext i8 %b3_4 to i32",
+          "  %b3_4m = and i32 %b3_4z, 192",
+          "  %b3_4ok = icmp eq i32 %b3_4m, 128",
+          "  br i1 %b3_4ok, label %four_range, label %invalid",
+          "four_range:",
+          -- F0 with second byte < 0x90 is overlong.
+          "  %is_f0 = icmp eq i32 %b0z, 240",
+          "  %b1_lt_90 = icmp ult i32 %b1_4z, 144",
+          "  %f0_overlong = and i1 %is_f0, %b1_lt_90",
+          "  br i1 %f0_overlong, label %invalid, label %four_f4",
+          "four_f4:",
+          -- F4 with second byte >= 0x90 exceeds U+10FFFF.
+          "  %is_f4 = icmp eq i32 %b0z, 244",
+          "  %b1_ge_90 = icmp uge i32 %b1_4z, 144",
+          "  %f4_over = and i1 %is_f4, %b1_ge_90",
+          "  br i1 %f4_over, label %invalid, label %four_ok",
+          "four_ok:",
+          "  %n_4 = load i64, ptr %n_p",
+          "  %n_4a = add i64 %n_4, 2",
+          "  store i64 %n_4a, ptr %n_p",
+          "  %i_4d = add i64 %i, 4",
+          "  store i64 %i_4d, ptr %i_p",
+          "  br label %head",
+          "valid_end:",
+          "  %n_final = load i64, ptr %n_p",
+          "  %over = icmp ugt i64 %n_final, 134217728",
+          "  br i1 %over, label %too_long, label %fits",
+          "fits:",
+          -- Copy the validated bytes into a length-prefixed cell:
+          -- [len_utf8 i32 | len_utf16 i32 | payload]. Byte count == len.
+          "  %byte_count = trunc i64 %len to i32",
+          "  %alloc_size = add i64 %len, 8",
+          "  %wrapped = call ptr @__alloc(i64 %alloc_size, i32 0)",
+          "  store i32 %byte_count, ptr %wrapped",
+          "  %n_final32 = trunc i64 %n_final to i32",
+          "  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4",
+          "  store i32 %n_final32, ptr %wrapped_u16p",
+          "  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8",
+          "  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %len)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %wrapped, ptr %right_f",
+          "  ret ptr %right",
+          "too_long:",
+          -- inner: StringTooLong CCon (single ctor) → CRow → Left.
+          "  %tl_inner = call ptr @__alloc(i64 8, i32 0)",
+          "  %tl_inner_tag = inttoptr i64 " <> stlLit <> " to ptr",
+          "  store ptr %tl_inner_tag, ptr %tl_inner",
+          "  %tl_row = call ptr @__alloc(i64 16, i32 1)",
+          "  %tl_row_tag = inttoptr i64 " <> stringTooLongRowTag <> " to ptr",
+          "  store ptr %tl_row_tag, ptr %tl_row",
+          "  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1",
+          "  store ptr %tl_inner, ptr %tl_row_f",
+          "  %tl_left = call ptr @__alloc(i64 16, i32 1)",
+          "  %tl_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
+          "  store ptr %tl_left_tag, ptr %tl_left",
+          "  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1",
+          "  store ptr %tl_row, ptr %tl_left_f",
+          "  ret ptr %tl_left",
+          "invalid:",
+          -- inner: InvalidUtf8 CCon (single ctor) → CRow → Left.
+          "  %iu_inner = call ptr @__alloc(i64 8, i32 0)",
+          "  %iu_inner_tag = inttoptr i64 " <> iuLit <> " to ptr",
+          "  store ptr %iu_inner_tag, ptr %iu_inner",
+          "  %iu_row = call ptr @__alloc(i64 16, i32 1)",
+          "  %iu_row_tag = inttoptr i64 " <> invalidUtf8RowTag <> " to ptr",
+          "  store ptr %iu_row_tag, ptr %iu_row",
+          "  %iu_row_f = getelementptr ptr, ptr %iu_row, i32 1",
+          "  store ptr %iu_inner, ptr %iu_row_f",
+          "  %iu_left = call ptr @__alloc(i64 16, i32 1)",
+          "  %iu_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
+          "  store ptr %iu_left_tag, ptr %iu_left",
+          "  %iu_left_f = getelementptr ptr, ptr %iu_left, i32 1",
+          "  store ptr %iu_row, ptr %iu_left_f",
+          "  ret ptr %iu_left",
           "}"
         ]
     rtEntryArgEither =
@@ -3603,18 +3897,27 @@ emitExpr ctx = \case
             tmp <- freshTemp
             pure ("  " <> tmp <> " = call ptr @__getArgs()\n", tmp)
           _ -> error "__getArgs: arity mismatch"
-      -- Zero-arg primitive driving the prelude's 'runIO' 'IOStdinReadAll'
-      -- arm: consumes fd 0 to EOF and wraps the decoded contents in
-      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' via
-      -- '__stdinReadAll'. Per the POSIX-honest no-memoisation decision,
-      -- a second call after EOF reads zero bytes and decodes to
-      -- @Right ""@.
-      CBuiltIn "internalStdinReadAllAsUtf16" ->
+      -- Zero-arg primitive driving the prelude's 'runIO'
+      -- 'IOStdinReadAllString' arm: consumes fd 0 to EOF and wraps the
+      -- strict-UTF-8-decoded contents in 'Either (StringTooLong |
+      -- InvalidUtf8) String' via '__stdinReadAll'. Per the POSIX-honest
+      -- no-memoisation decision, a second call after EOF reads zero bytes
+      -- and decodes to @Right ""@.
+      CBuiltIn "internalStdinReadAllString" ->
         case xs of
           [] -> do
             tmp <- freshTemp
             pure ("  " <> tmp <> " = call ptr @__stdinReadAll()\n", tmp)
           _ -> error "__stdinReadAll: arity mismatch"
+      -- Zero-arg primitive driving the prelude's 'runIO'
+      -- 'IOStdinReadAllBytes' arm: consumes fd 0 to EOF and returns the
+      -- raw bytes as 'List UInt8' via '__stdinReadAllBytes'.
+      CBuiltIn "internalStdinReadAllBytes" ->
+        case xs of
+          [] -> do
+            tmp <- freshTemp
+            pure ("  " <> tmp <> " = call ptr @__stdinReadAllBytes()\n", tmp)
+          _ -> error "__stdinReadAllBytes: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of
@@ -3631,6 +3934,16 @@ emitExpr ctx = \case
                     tmp
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "byteToHexStringNoPrefix" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitArgWithInc ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__byteToHex(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.byteToHexStringNoPrefix: arity mismatch"
       CBuiltIn "predInt32" ->
         case xs of
           [x] -> do

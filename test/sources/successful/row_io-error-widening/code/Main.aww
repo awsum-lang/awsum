@@ -1,0 +1,20 @@
+{- Pins error-row widening on the IO side: `failIO E1 : IO E1 a` flowing into
+   `IO (E1 | E2) Unit`, then handled by a row-case in `handleErrorIO`. The
+   nominal error must be injected into the wider IO error row so the handler
+   dispatches on the right label. -}
+
+import IO.Stdout
+
+type E1 = E1
+type E2 = E2
+
+act : IO (E1 | E2) Unit
+act = failIO E1
+
+h : (E1 | E2) -> IO Never Unit
+h e = case e of
+  (_a : E1) -> IO.Stdout.print "h-E1"
+  (_b : E2) -> IO.Stdout.print "h-E2"
+
+main : IO Never Unit
+main = act |> handleErrorIO h

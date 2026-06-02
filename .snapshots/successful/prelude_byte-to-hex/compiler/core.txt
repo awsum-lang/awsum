@@ -1,0 +1,347 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "bytesToHexStringNoPrefix" [ "bytes" ]
+            ( CCall
+                ( CVar "$cps$bytesToHexStringNoPrefix" )
+                [ CVar "bytes"
+                , CCon 15 []
+                ]
+            )
+        , CFunDef "$cps$bytesToHexStringNoPrefix"
+            [ "bytes"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "bytes" )
+                    [
+                        ( 13
+                        , []
+                        , CCall
+                            ( CVar "$apply$bytesToHexStringNoPrefix" )
+                            [ CVar "$k"
+                            , CCon 4
+                                [ CString "" ]
+                            ]
+                        )
+                    ,
+                        ( 14
+                        ,
+                            [ "b"
+                            , "rest"
+                            ]
+                        , CDrop DropFreeUnchecked "b"
+                            ( CDrop DropFreeUnchecked "rest"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "rest"
+                                        , CReuse "bytes" 16
+                                            [ CVar "$k"
+                                            , CVar "b"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$bytesToHexStringNoPrefix"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 15
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 16
+                        ,
+                            [ "$pk_16"
+                            , "b"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_16"
+                            ( CDrop DropFreeUnchecked "b"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CDrop DropFreeUnchecked "$x"
+                                        ( CContinue
+                                            [ CVar "$pk_16"
+                                            , CCall
+                                                ( CVar "$df$bindEither$0" )
+                                                [ CCall
+                                                    ( CVar "$lift$21" )
+                                                    [ CVar "$x" ]
+                                                , CVar "b"
+                                                ]
+                                            ]
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$24" )
+                [ CCon 14
+                    [ CIntLit 0 TUInt8
+                    , CCon 14
+                        [ CIntLit 15 TUInt8
+                        , CCon 14
+                            [ CIntLit 16 TUInt8
+                            , CCon 14
+                                [ CIntLit 171 TUInt8
+                                , CCon 14
+                                    [ CIntLit 255 TUInt8
+                                    , CCall
+                                        ( CVar "$lift$23" )
+                                        [ CCon 13 [] ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$lift$0" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lift$21" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lam$22"
+            [ "b"
+            , "restHex"
+            ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CCall
+                    ( CBuiltIn "byteToHexStringNoPrefix" )
+                    [ CVar "b" ]
+                , CVar "restHex"
+                ]
+            )
+        , CFunDef "$lift$23" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$23" )
+                [ CVar "__input"
+                , CCon 17 []
+                ]
+            )
+        , CFunDef "$cps$$lift$23"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 13
+                        , []
+                        , CCall
+                            ( CVar "$apply$$lift$23" )
+                            [ CVar "$k"
+                            , CCon 13 []
+                            ]
+                        )
+                    ,
+                        ( 14
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 18
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$23"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 17
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 18
+                        ,
+                            [ "$pk_18"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_18"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_18"
+                                        , CReuse "$k" 14
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$let$24" [ "bytes" ]
+            ( CCase
+                ( CCall
+                    ( CVar "bytesToHexStringNoPrefix" )
+                    [ CVar "bytes" ]
+                )
+                [
+                    ( 3
+                    , [ "_e" ]
+                    , CDrop DropFreeUnchecked "_e"
+                        ( CCon 7
+                            [ CString "TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "hex" ]
+                    , CDrop DropFreeUnchecked "hex"
+                        ( CCon 7
+                            [ CVar "hex"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$bindEither$0"
+            [ "x"
+            , "$df$bindEither$0$cap1$0"
+            ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "$lam$22" )
+                                [ CVar "$df$bindEither$0$cap1$0"
+                                , CVar "a"
+                                ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }

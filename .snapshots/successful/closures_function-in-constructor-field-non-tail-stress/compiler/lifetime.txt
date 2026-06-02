@@ -21,7 +21,7 @@ $cps$countWithBox:
 $apply$countWithBox:
   param           $k                              count=1
   param           $x                              count=4
-  case-pattern    $pk_25                          count=0
+  case-pattern    $pk_27                          count=0
   case-pattern    b                               count=0
   case-pattern    e                               count=0
   case-pattern    v                               count=0

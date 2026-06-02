@@ -42,19 +42,19 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 22
+                    ( 24
                     , [ "__p0" ]
                     , CDrop DropFreeUnchecked "__p0"
                         ( CCase
                             ( CVar "__p0" )
                             [
-                                ( 22
+                                ( 24
                                 , [ "value" ]
                                 , CDrop DropFreeUnchecked "value"
                                     ( CVar "value" )
                                 )
                             ,
-                                ( 23
+                                ( 25
                                 , [ "value" ]
                                 , CDrop DropFreeUnchecked "value"
                                     ( CVar "value" )
@@ -63,19 +63,19 @@ CoreProgram
                         )
                     )
                 ,
-                    ( 23
+                    ( 25
                     , [ "__p0" ]
                     , CDrop DropFreeUnchecked "__p0"
                         ( CCase
                             ( CVar "__p0" )
                             [
-                                ( 22
+                                ( 24
                                 , [ "value" ]
                                 , CDrop DropFreeUnchecked "value"
                                     ( CVar "value" )
                                 )
                             ,
-                                ( 23
+                                ( 25
                                 , [ "value" ]
                                 , CDrop DropFreeUnchecked "value"
                                     ( CVar "value" )
@@ -87,14 +87,14 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 22
-                                [ CCon 22
+                            [ CCon 24
+                                [ CCon 24
                                     [ CString "1" ]
                                 ]
                             ]
@@ -116,8 +116,8 @@ CoreProgram
                                 [ CVar "s0"
                                 , CCall
                                     ( CVar "unwrap" )
-                                    [ CCon 22
-                                        [ CCon 23
+                                    [ CCon 24
+                                        [ CCon 25
                                             [ CString "2" ]
                                         ]
                                     ]
@@ -154,8 +154,8 @@ CoreProgram
                                                 [ CVar "s2"
                                                 , CCall
                                                     ( CVar "unwrap" )
-                                                    [ CCon 23
-                                                        [ CCon 22
+                                                    [ CCon 25
+                                                        [ CCon 24
                                                             [ CString "3" ]
                                                         ]
                                                     ]
@@ -191,8 +191,8 @@ CoreProgram
                                                             [ CVar "s4"
                                                             , CCall
                                                                 ( CVar "unwrap" )
-                                                                [ CCon 23
-                                                                    [ CCon 23
+                                                                [ CCon 25
+                                                                    [ CCon 25
                                                                         [ CString "4" ]
                                                                     ]
                                                                 ]
@@ -209,7 +209,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

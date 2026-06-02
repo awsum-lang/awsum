@@ -51,7 +51,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 18
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -153,7 +153,7 @@ L_tarm1:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 10
+  bipush 11
   if_icmpne L_arm3
   aconst_null
   astore_3
@@ -189,7 +189,7 @@ L_join2:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -233,10 +233,10 @@ L_arm5:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_23(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 4
@@ -313,12 +313,12 @@ L_join6:
 L_join4:
   astore_0
   aload_0
-  invokestatic AwsumMain/v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 4
   aload_0
@@ -331,7 +331,7 @@ L_join4:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 10
+  bipush 11
   if_icmpne L_arm11
   aconst_null
   astore_3
@@ -339,7 +339,7 @@ L_join4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join10
@@ -352,7 +352,7 @@ L_arm11:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -364,7 +364,7 @@ L_join10:
 .end method
 
 
-.method static v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

@@ -42,23 +42,23 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 10
+                    ( 11
                     , []
                     , CIntLit 0 TInt32
                     )
                 ,
-                    ( 11
+                    ( 12
                     , [ "__p0" ]
                     , CDrop DropFreeUnchecked "__p0"
                         ( CCase
                             ( CVar "__p0" )
                             [
-                                ( 10
+                                ( 11
                                 , []
                                 , CIntLit 0 TInt32
                                 )
                             ,
-                                ( 11
+                                ( 12
                                 , [ "n" ]
                                 , CDrop DropFreeUnchecked "n"
                                     ( CVar "n" )
@@ -75,27 +75,27 @@ CoreProgram
                     [ CCall
                         ( CVar "firstZero" )
                         [ CCall
-                            ( CVar "$lift$15" )
-                            [ CCon 10 [] ]
+                            ( CVar "$lift$23" )
+                            [ CCon 11 [] ]
                         ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$15" [ "__input" ]
+        , CFunDef "$lift$23" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 10
+                    ( 11
                     , []
-                    , CCon 10 []
+                    , CCon 11 []
                     )
                 ,
-                    ( 11
+                    ( 12
                     , [ "__f0" ]
                     , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 11
+                        ( CCon 12
                             [ CVar "__f0" ]
                         )
                     )

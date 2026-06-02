@@ -110,19 +110,19 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 11
+  bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
   iconst_1
   ldc "world"
   aastore
-  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -135,7 +135,7 @@ L_tarm1:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 10
+  bipush 11
   if_icmpne L_arm3
   aconst_null
   astore_3

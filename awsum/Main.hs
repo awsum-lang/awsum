@@ -140,8 +140,8 @@ optOutputPath =
 --   @awsum run … FILE -- a b c@ delivers @["a", "b", "c"]@ and a bare
 --   @awsum run … FILE@ delivers @Nil@. Stdin is a separate, independent
 --   channel: 'awsum run' inherits its own stdin to the child process, so
---   @echo \"data\" | awsum run …@ reaches the child's @IO.Stdin.readAll@
---   verbatim. The two channels can be used together.
+--   @echo \"data\" | awsum run …@ reaches the child's @IO.Stdin.readAllString@
+--   / @IO.Stdin.readAllBytes@ verbatim. The two channels can be used together.
 argForwardedArgs :: OA.Parser [Text]
 argForwardedArgs =
   many
@@ -391,7 +391,7 @@ runText cmd ext code args =
     runChild (toText cmd <> " error") cmd ([outPath] <> map toString args)
 
 -- | Run a compiled program. The child inherits the calling process's
---   stdin so 'IO.Stdin.readAll' receives whatever the user piped into
+--   stdin so 'IO.Stdin.readAllString' / 'IO.Stdin.readAllBytes' receive whatever the user piped into
 --   'awsum run' (single source of truth — no flag, no buffering). The
 --   child's stdout is captured and printed verbatim, preserving the
 --   contract that 'awsum run' writes the program's stdout to its own

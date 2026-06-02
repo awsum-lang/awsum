@@ -21,9 +21,9 @@ property sep s = case splitOnFirst sep s of
     s0 <- a ++ sep
     s0 ++ b
 
-runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
 runMain rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = (do
+  let res : Either (StringTooLong | InvalidUtf8 | ParseError | NoMatch) String = (do
         raw <- rawArg
         Tuple2 sep s <- parseInput raw
         property sep s
@@ -31,12 +31,12 @@ runMain rawArg =
    in case res of
         Left e -> case e of
           StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
           NoMatch -> IO.Stdout.print "NO_MATCH"
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Stdin.readAll
+main = IO.Stdin.readAllString
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

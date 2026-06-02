@@ -215,7 +215,7 @@ define internal ptr @v_main() {
   switch i64 %t5, label %case.default.6 [ i64 1, label %case.arm.1.8 i64 2, label %case.arm.2.14 ]
 case.arm.1.8:
   %t10 = call ptr @__alloc(i64 16, i32 1)
-  %t11 = inttoptr i64 11 to ptr
+  %t11 = inttoptr i64 12 to ptr
   %t12 = getelementptr ptr, ptr %t10, i32 0
   store ptr %t11, ptr %t12
   %t13 = getelementptr ptr, ptr %t10, i32 1
@@ -225,7 +225,7 @@ case.end.1.9:
   br label %case.join.7
 case.arm.2.14:
   %t16 = call ptr @__alloc(i64 8, i32 0)
-  %t17 = inttoptr i64 10 to ptr
+  %t17 = inttoptr i64 11 to ptr
   %t18 = getelementptr ptr, ptr %t16, i32 0
   store ptr %t17, ptr %t18
   br label %case.end.2.15
@@ -239,8 +239,8 @@ case.join.7:
   %t20 = getelementptr ptr, ptr %t19, i32 0
   %t21 = load ptr, ptr %t20
   %t22 = ptrtoint ptr %t21 to i64
-  switch i64 %t22, label %case.default.23 [ i64 10, label %case.arm.10.25 i64 11, label %case.arm.11.39 ]
-case.arm.10.25:
+  switch i64 %t22, label %case.default.23 [ i64 11, label %case.arm.11.25 i64 12, label %case.arm.12.39 ]
+case.arm.11.25:
   %t27 = call ptr @__alloc(i64 24, i32 2)
   %t28 = inttoptr i64 7 to ptr
   %t29 = getelementptr ptr, ptr %t27, i32 0
@@ -259,10 +259,10 @@ case.arm.10.25:
   store ptr %t34, ptr %t37
   %t38 = getelementptr ptr, ptr %t27, i32 2
   store ptr %t31, ptr %t38
-  br label %case.end.10.26
-case.end.10.26:
+  br label %case.end.11.26
+case.end.11.26:
   br label %case.join.24
-case.arm.11.39:
+case.arm.12.39:
   %t41 = getelementptr ptr, ptr %t19, i32 1
   %t42 = load ptr, ptr %t41
   call void @__inc_ref(ptr %t42)
@@ -292,13 +292,13 @@ case.arm.11.39:
   store ptr %t55, ptr %t58
   %t59 = getelementptr ptr, ptr %t43, i32 2
   store ptr %t52, ptr %t59
-  br label %case.end.11.40
-case.end.11.40:
+  br label %case.end.12.40
+case.end.12.40:
   br label %case.join.24
 case.default.23:
   unreachable
 case.join.24:
-  %t60 = phi ptr [%t27, %case.end.10.26], [%t43, %case.end.11.40]
+  %t60 = phi ptr [%t27, %case.end.11.26], [%t43, %case.end.12.40]
   call void @__free_recursive(ptr %t19)
   ret ptr %t60
 }

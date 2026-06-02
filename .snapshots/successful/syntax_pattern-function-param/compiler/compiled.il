@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -127,7 +127,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -160,7 +160,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -376,7 +376,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -408,7 +408,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 15
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -431,12 +431,12 @@
     .maxstack 1
     call object AwsumMain::v_triple()
     call object AwsumMain::v_sumTriple(object)
-    call object AwsumMain::v__let_18(object)
+    call object AwsumMain::v__let_26(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_15(object) cil managed
+  .method private hidebysig static object v__let_23(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -540,7 +540,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_16(object) cil managed
+  .method private hidebysig static object v__lam_24(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -564,7 +564,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 15
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -582,7 +582,7 @@
   }
 
 
-  .method private hidebysig static object v__let_17(object,object) cil managed
+  .method private hidebysig static object v__let_25(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2)
@@ -628,18 +628,18 @@
     callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
   IL_c0:
-    call object AwsumMain::v__let_15(object)
+    call object AwsumMain::v__let_23(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_18(object) cil managed
+  .method private hidebysig static object v__let_26(object) cil managed
   {
     .maxstack 2
     ldarg.0
     call object AwsumMain::v_pair()
     call object AwsumMain::v__df_apply_0(object)
-    call object AwsumMain::v__let_17(object, object)
+    call object AwsumMain::v__let_25(object, object)
     ret
   }
 
@@ -648,7 +648,7 @@
   {
     .maxstack 1
     ldarg.0
-    call object AwsumMain::v__lam_16(object)
+    call object AwsumMain::v__lam_24(object)
     ret
   }
 

@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -137,17 +137,17 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
     call object AwsumMain::v_handleA(object)
-    call object AwsumMain::v__let_15(object)
+    call object AwsumMain::v__let_23(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_15(object) cil managed
+  .method private hidebysig static object v__let_23(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -261,7 +261,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 28
+    ldc.i4.s 30
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -282,7 +282,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 26
+    ldc.i4.s 28
     bne.un IL_c3
     pop
     ldloc.0
@@ -296,7 +296,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 22
+    ldc.i4.s 24
     bne.un IL_c0
     pop
     ldarg.0
@@ -304,7 +304,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 27
+    ldc.i4.s 29
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -314,7 +314,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -325,7 +325,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 29
+    ldc.i4.s 31
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -338,7 +338,7 @@
     br IL_tco_loop
   IL_c0:
     dup
-    ldc.i4.s 23
+    ldc.i4.s 25
     bne.un IL_c1
     pop
     ldarg.0
@@ -346,7 +346,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 27
+    ldc.i4.s 29
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -360,7 +360,7 @@
     br IL_tco_loop
   IL_c1:
     dup
-    ldc.i4.s 24
+    ldc.i4.s 26
     bne.un IL_c2
     pop
     ldarg.0
@@ -368,7 +368,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 27
+    ldc.i4.s 29
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -411,7 +411,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 22
+    ldc.i4.s 24
     bne.un IL_c4
     pop
     ldarg.0
@@ -419,7 +419,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -433,7 +433,7 @@
     br IL_tco_loop
   IL_c4:
     dup
-    ldc.i4.s 23
+    ldc.i4.s 25
     bne.un IL_c5
     pop
     ldarg.0
@@ -441,7 +441,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -451,7 +451,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -462,7 +462,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 30
+    ldc.i4.s 32
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -475,7 +475,7 @@
     br IL_tco_loop
   IL_c5:
     dup
-    ldc.i4.s 24
+    ldc.i4.s 26
     bne.un IL_c6
     pop
     ldarg.0
@@ -483,7 +483,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -493,7 +493,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -504,7 +504,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 31
+    ldc.i4.s 33
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -548,14 +548,14 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 28
+    ldc.i4.s 30
     bne.un IL_c0
     pop
     ldarg.1
     ret
   IL_c0:
     dup
-    ldc.i4.s 29
+    ldc.i4.s 31
     bne.un IL_c2
     pop
     ldloc.0
@@ -608,7 +608,7 @@
     br IL_tco_loop
   IL_c2:
     dup
-    ldc.i4.s 30
+    ldc.i4.s 32
     bne.un IL_c4
     pop
     ldloc.0
@@ -721,7 +721,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0

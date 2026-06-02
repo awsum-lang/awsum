@@ -1,0 +1,20 @@
+{- Property: `IO.Stdin.readAllString` strict-UTF-8-decodes stdin for any
+   byte sequence. On success the program echoes the decoded string; on
+   malformed UTF-8 (RFC 3629) it prints INVALID_UTF8; past the length cap,
+   STRING_TOO_LONG. The Haskell side decides the expected output with its
+   own strict decoder, so this pins all five backends to one definition of
+   "well-formed UTF-8" — the resolution of the malformed-stdin divergence. -}
+
+import IO.Stdout
+import IO.Stdin
+
+handleErr : (StringTooLong | InvalidUtf8) -> IO Never Unit
+handleErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_i : InvalidUtf8) -> IO.Stdout.print "INVALID_UTF8"
+
+main : IO Never Unit
+main =
+  IO.Stdin.readAllString
+    |> andThenIO IO.Stdout.print
+    |> handleErrorIO handleErr

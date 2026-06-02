@@ -42,13 +42,13 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 22
+                    ( 24
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
                     )
                 ,
-                    ( 23
+                    ( 25
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -57,13 +57,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$23" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 22
+                            [ CCon 24
                                 [ CString "1" ]
                             ]
                         , CString ","
@@ -83,7 +83,7 @@ CoreProgram
                             [ CVar "s0"
                             , CCall
                                 ( CVar "unwrap" )
-                                [ CCon 23
+                                [ CCon 25
                                     [ CString "2" ]
                                 ]
                             ]
@@ -91,7 +91,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$23" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

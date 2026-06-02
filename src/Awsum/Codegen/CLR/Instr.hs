@@ -27,6 +27,7 @@ module Awsum.Codegen.CLR.Instr
     maxStackOf,
     int32Ref,
     objectRef,
+    strRef,
     showUInt32Spec,
     predInt32Spec,
     predUInt8Spec,
@@ -58,6 +59,7 @@ module Awsum.Codegen.CLR.Instr
     entryArgEitherSpec,
     getArgsSpec,
     stdinReadAllSpec,
+    stdinReadAllBytesSpec,
     mainSpec,
   )
 where
@@ -86,6 +88,7 @@ data SigElem
   = SeObject -- @object@ / ELEMENT_TYPE_OBJECT (0x1C)
   | SeString -- @string@ / ELEMENT_TYPE_STRING (0x0E)
   | SeInt32 -- @int32@ / ELEMENT_TYPE_I4 (0x08)
+  | SeUInt8 -- @uint8@ / ELEMENT_TYPE_U1 (0x05)
   | SeInt64 -- @int64@ / ELEMENT_TYPE_I8 (0x0A)
   | SeChar -- @char@ / ELEMENT_TYPE_CHAR (0x03)
   | SeBool -- @bool@ / ELEMENT_TYPE_BOOLEAN (0x02)
@@ -137,6 +140,8 @@ data CilInstr
   | Newarr CilTypeRef
   | StelemRef
   | LdelemRef
+  | -- | @ldelem.u1@ — load a zero-extended @uint8@ element from a @uint8[]@.
+    LdelemU1
   | Box CilTypeRef
   | UnboxAny CilTypeRef
   | Castclass CilTypeRef
@@ -257,6 +262,7 @@ maxStackOf = go (Just 0) 0 mempty
       Newarr _ -> 0
       StelemRef -> -3
       LdelemRef -> -1
+      LdelemU1 -> -1
       Box _ -> 0
       UnboxAny _ -> 0
       Castclass _ -> 0
@@ -313,6 +319,7 @@ renderSigElem = \case
   SeObject -> "object"
   SeString -> "string"
   SeInt32 -> "int32"
+  SeUInt8 -> "uint8"
   SeInt64 -> "int64"
   SeChar -> "char"
   SeBool -> "bool"
@@ -361,6 +368,7 @@ renderCilInstr = \case
   Newarr tr -> "    newarr " <> renderTypeRef tr
   StelemRef -> "    stelem.ref"
   LdelemRef -> "    ldelem.ref"
+  LdelemU1 -> "    ldelem.u1"
   Box tr -> "    box " <> renderTypeRef tr
   UnboxAny tr -> "    unbox.any " <> renderTypeRef tr
   Castclass tr -> "    castclass " <> renderTypeRef tr
@@ -645,11 +653,12 @@ leftRowErr nominalTag rowTagVal leftTag innerSlot rowSlot =
 --   alternatives — the tag user-side row dispatch (@v_render@) compares against,
 --   distinct from the nominal constructor index ('PreludeTags'). Cast through
 --   'Int32' so the bit pattern fits @ldc.i4@'s lower 32 bits.
-overflowRowTag, underflowRowTag, stringTooLongRowTag, unpairedSurrogateRowTag :: Int
+overflowRowTag, underflowRowTag, stringTooLongRowTag, unpairedSurrogateRowTag, invalidUtf8RowTag :: Int
 overflowRowTag = fromIntegral (fromIntegral (rowTag (TyCon noSpan "OverflowError")) :: Int32)
 underflowRowTag = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnderflowError")) :: Int32)
 stringTooLongRowTag = fromIntegral (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
 unpairedSurrogateRowTag = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
+invalidUtf8RowTag = fromIntegral (fromIntegral (rowTag (TyCon noSpan "InvalidUtf8")) :: Int32)
 
 -- Tag arguments are passed positionally from the call site's 'PreludeTags':
 -- @right@ = ptRight, @over@ = ptOverflowError, @under@ = ptUnderflowError,
@@ -1318,30 +1327,132 @@ getArgsSpec right nil cons =
     leftLbl = LabelId "IL_args_left"
     doneLbl = LabelId "IL_args_done"
 
--- | @__stdinReadAll@ (@BuiltIn.internalStdinReadAllAsUtf16@): wrap
---   @Console.OpenStandardInput()@ in a @StreamReader@ with explicit UTF-8
---   @Encoding@, read to EOF, and route the string through @__entryArgEither@
---   for the same strict-UTF-16 validation as argv.
-stdinReadAllSpec :: CilMethod
-stdinReadAllSpec =
+-- | @System.Console@ / @System.IO.Stream@ / @System.IO.MemoryStream@ — the BCL
+--   types the stdin readers use.
+clrConsoleRef, clrStreamRef, clrMemStreamRef :: CilTypeRef
+clrConsoleRef = CilTypeRef 2 "System" "Console"
+clrStreamRef = CilTypeRef 1 "System.IO" "Stream"
+clrMemStreamRef = CilTypeRef 1 "System.IO" "MemoryStream"
+
+-- | Read @Console.OpenStandardInput()@ to EOF into a @uint8[]@: copy the stream
+--   into a @MemoryStream@ (slot @msSlot@) and @ToArray@ it (slot @bytesSlot@).
+--   Shared by both stdin primitives.
+readStdinBytesInstrs :: Int -> Int -> [CilInstr]
+readStdinBytesInstrs msSlot bytesSlot =
+  [ Call (CilMemberRef clrConsoleRef "OpenStandardInput" False (SeClass clrStreamRef) []),
+    Newobj (CilMemberRef clrMemStreamRef ".ctor" True SeVoid []),
+    Dup,
+    Stloc msSlot,
+    Callvirt (CilMemberRef clrStreamRef "CopyTo" True SeVoid [SeClass clrStreamRef]),
+    Ldloc msSlot,
+    Callvirt (CilMemberRef clrMemStreamRef "ToArray" True (SeSZArray SeUInt8) []),
+    Stloc bytesSlot
+  ]
+
+-- | @__stdinReadAll@ (@BuiltIn.internalStdinReadAllString@): read stdin to EOF
+--   as raw bytes, then strict-UTF-8 decode by round-trip — lenient
+--   @Encoding.UTF8.GetString@ then @GetBytes@, comparing the re-encoded bytes
+--   to the original. A byte sequence round-trips byte-for-byte iff it is
+--   well-formed UTF-8 (RFC 3629): any malformed subsequence is replaced with
+--   U+FFFD on decode, which re-encodes to @EF BF BD@ — never the original
+--   malformed bytes (those are not @EF BF BD@, which is itself valid). A
+--   mismatch is @Left InvalidUtf8@; a clean round-trip is length-capped
+--   (@Left StringTooLong@ over 2^27 UTF-16 code units) else @Right s@. Locals:
+--   ms, bytes, reenc, s, i, two object scratch slots for the row-error build.
+stdinReadAllSpec :: Int -> Int -> Int -> Int -> CilMethod
+stdinReadAllSpec right stl iu left =
   CilMethod
     { cmName = "__stdinReadAll",
       cmRet = SeObject,
       cmParams = [],
-      cmLocals = [],
+      cmLocals = [SeClass clrMemStreamRef, SeSZArray SeUInt8, SeSZArray SeUInt8, SeString, SeInt32, SeObject, SeObject],
       cmBody =
-        [ Call (CilMemberRef consoleRef "OpenStandardInput" False (SeClass streamRef) []),
-          Call (CilMemberRef encodingRef "get_UTF8" False (SeClass encodingRef) []),
-          Newobj (CilMemberRef streamReaderRef ".ctor" True SeVoid [SeClass streamRef, SeClass encodingRef]),
-          Callvirt (CilMemberRef streamReaderRef "ReadToEnd" True SeString []),
-          CallNamed "__entryArgEither" 1,
-          Ret
-        ]
+        readStdinBytesInstrs 0 1
+          <> [ Call (CilMemberRef encodingRef "get_UTF8" False (SeClass encodingRef) []),
+               Ldloc 1,
+               Callvirt (CilMemberRef encodingRef "GetString" True SeString [SeSZArray SeUInt8]),
+               Stloc 3,
+               Call (CilMemberRef encodingRef "get_UTF8" False (SeClass encodingRef) []),
+               Ldloc 3,
+               Callvirt (CilMemberRef encodingRef "GetBytes" True (SeSZArray SeUInt8) [SeString]),
+               Stloc 2,
+               Ldloc 1,
+               Ldlen,
+               ConvI4,
+               Ldloc 2,
+               Ldlen,
+               ConvI4,
+               BneUn invalidLbl,
+               LdcI4 0,
+               Stloc 4,
+               Label cmpLoop,
+               Ldloc 4,
+               Ldloc 1,
+               Ldlen,
+               ConvI4,
+               Bge cmpDone,
+               Ldloc 1,
+               Ldloc 4,
+               LdelemU1,
+               Ldloc 2,
+               Ldloc 4,
+               LdelemU1,
+               BneUn invalidLbl,
+               Ldloc 4,
+               LdcI4 1,
+               Add,
+               Stloc 4,
+               Br cmpLoop,
+               Label cmpDone,
+               Ldloc 3,
+               Callvirt getLengthRef,
+               LdcI4 134217728,
+               Bgt toolongLbl
+             ]
+          <> unaryCell right [Ldloc 3]
+          <> [Ret, Label toolongLbl]
+          <> leftRowErr stl stringTooLongRowTag left 5 6
+          <> [Label invalidLbl]
+          <> leftRowErr iu invalidUtf8RowTag left 5 6
     }
   where
-    consoleRef = CilTypeRef 2 "System" "Console"
-    streamRef = CilTypeRef 1 "System.IO" "Stream"
-    streamReaderRef = CilTypeRef 1 "System.IO" "StreamReader"
+    cmpLoop = LabelId "IL_stdin_cmp_loop"
+    cmpDone = LabelId "IL_stdin_cmp_done"
+    toolongLbl = LabelId "IL_stdin_toolong"
+    invalidLbl = LabelId "IL_stdin_invalid"
+
+-- | @__stdinReadAllBytes@ (@BuiltIn.internalStdinReadAllBytes@): read stdin to
+--   EOF as raw bytes, then build a prelude @List UInt8@ right-to-left, each
+--   byte boxed as @int32@. No decode, no error row. Locals: ms, bytes, acc, i.
+stdinReadAllBytesSpec :: Int -> Int -> CilMethod
+stdinReadAllBytesSpec nil cons =
+  CilMethod
+    { cmName = "__stdinReadAllBytes",
+      cmRet = SeObject,
+      cmParams = [],
+      cmLocals = [SeClass clrMemStreamRef, SeSZArray SeUInt8, SeObject, SeInt32],
+      cmBody =
+        readStdinBytesInstrs 0 1
+          <> nullaryCell nil
+          <> [ Stloc 2,
+               Ldloc 1,
+               Ldlen,
+               ConvI4,
+               Stloc 3,
+               Label bloop,
+               Ldloc 3,
+               Brfalse bdone,
+               Ldloc 3,
+               LdcI4 1,
+               Sub,
+               Stloc 3
+             ]
+          <> cell cons [[Ldloc 1, Ldloc 3, LdelemU1, Box int32Ref], [Ldloc 2]]
+          <> [Stloc 2, Br bloop, Label bdone, Ldloc 2, Ret]
+    }
+  where
+    bloop = LabelId "IL_stdinbytes_loop"
+    bdone = LabelId "IL_stdinbytes_done"
 
 -- | @Main(string[])@: force stdout to UTF-8 (so supplementary code points are
 --   not mangled by a host ANSI fallback), build the IO tree (@v_main@), walk it

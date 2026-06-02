@@ -206,7 +206,7 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 23 to ptr
+  %t4 = inttoptr i64 25 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @v_parseExpr(ptr %t3)
@@ -239,8 +239,8 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 24, label %tco.case.arm.24.9 i64 25, label %tco.case.arm.25.28 ]
-tco.case.arm.24.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 26, label %tco.case.arm.26.9 i64 27, label %tco.case.arm.27.28 ]
+tco.case.arm.26.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   call void @__inc_ref(ptr %t11)
@@ -250,8 +250,8 @@ tco.case.arm.24.9:
   %t14 = getelementptr ptr, ptr %t11, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %tco.case.default.17 [ i64 22, label %tco.case.arm.22.18 i64 23, label %tco.case.arm.23.20 ]
-tco.case.arm.22.18:
+  switch i64 %t16, label %tco.case.default.17 [ i64 24, label %tco.case.arm.24.18 i64 25, label %tco.case.arm.25.20 ]
+tco.case.arm.24.18:
   %t19 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t19
   call void @__free_recursive(ptr %t13)
@@ -259,13 +259,13 @@ tco.case.arm.22.18:
   call void @__free_recursive(ptr %t4)
   store ptr %t19, ptr %t2
   br label %tco.exit.1
-tco.case.arm.23.20:
+tco.case.arm.25.20:
   %t21 = call ptr @__alloc(i64 16, i32 1)
-  %t22 = inttoptr i64 25 to ptr
+  %t22 = inttoptr i64 27 to ptr
   %t23 = getelementptr ptr, ptr %t21, i32 0
   store ptr %t22, ptr %t23
   %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 22 to ptr
+  %t25 = inttoptr i64 24 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
   %t27 = getelementptr ptr, ptr %t21, i32 1
@@ -277,24 +277,24 @@ tco.case.arm.23.20:
   br label %tco.loop.0
 tco.case.default.17:
   unreachable
-tco.case.arm.25.28:
+tco.case.arm.27.28:
   %t29 = getelementptr ptr, ptr %t4, i32 1
   %t30 = load ptr, ptr %t29
   call void @__inc_ref(ptr %t30)
   %t31 = getelementptr ptr, ptr %t30, i32 0
   %t32 = load ptr, ptr %t31
   %t33 = ptrtoint ptr %t32 to i64
-  switch i64 %t33, label %tco.case.default.34 [ i64 22, label %tco.case.arm.22.35 i64 23, label %tco.case.arm.23.37 ]
-tco.case.arm.22.35:
+  switch i64 %t33, label %tco.case.default.34 [ i64 24, label %tco.case.arm.24.35 i64 25, label %tco.case.arm.25.37 ]
+tco.case.arm.24.35:
   %t36 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t36
   call void @__free_recursive(ptr %t30)
   call void @__free_recursive(ptr %t4)
   store ptr %t36, ptr %t2
   br label %tco.exit.1
-tco.case.arm.23.37:
+tco.case.arm.25.37:
   %t38 = call ptr @__alloc(i64 24, i32 2)
-  %t39 = inttoptr i64 24 to ptr
+  %t39 = inttoptr i64 26 to ptr
   %t40 = getelementptr ptr, ptr %t38, i32 0
   store ptr %t39, ptr %t40
   call void @__inc_ref(ptr %t30)
@@ -319,7 +319,7 @@ tco.exit.1:
 
 define internal ptr @v_parseExpr(ptr %v_tok) {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 25 to ptr
+  %t1 = inttoptr i64 27 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   call void @__inc_ref(ptr %v_tok)

@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 24
+                    ( 26
                     , []
                     , CString "one"
                     )
@@ -52,7 +52,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "show" )
-                    [ CCon 24 [] ]
+                    [ CCon 26 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

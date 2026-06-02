@@ -151,7 +151,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0

@@ -34,9 +34,9 @@ property a b = do
   s2 <- s1 ++ ":"
   s2 ++ bs
 
-runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
 runMain rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
+  let res : Either (StringTooLong | InvalidUtf8 | ParseError) String = (do
         raw <- rawArg
         Tuple2 a b <- parseInput raw
         property a b
@@ -44,11 +44,11 @@ runMain rawArg =
    in case res of
         Left e -> case e of
           StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Stdin.readAll
+main = IO.Stdin.readAllString
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

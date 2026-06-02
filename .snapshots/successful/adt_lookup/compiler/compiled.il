@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -139,7 +139,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 22
+    ldc.i4.s 24
     bne.un IL_c1
     pop
     ldloc.0
@@ -165,7 +165,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -215,20 +215,20 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__lift_15(object)
+    call object AwsumMain::v__lift_23(object)
     call object AwsumMain::v_unwrap(object)
     call object AwsumMain::__concat(object, object)
   IL_c0:
-    call object AwsumMain::v__let_16(object)
+    call object AwsumMain::v__let_24(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lift_15(object) cil managed
+  .method private hidebysig static object v__lift_23(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2)
@@ -239,7 +239,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 22
+    ldc.i4.s 24
     bne.un IL_c1
     pop
     ldloc.0
@@ -251,7 +251,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -267,7 +267,7 @@
     stloc.2
     ldloc.2
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
@@ -276,7 +276,7 @@
   }
 
 
-  .method private hidebysig static object v__let_16(object) cil managed
+  .method private hidebysig static object v__let_24(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

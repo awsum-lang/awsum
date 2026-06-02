@@ -41,7 +41,7 @@
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -166,7 +166,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -175,7 +175,7 @@ L_tarm1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -279,7 +279,7 @@ L_join2:
 .end method
 
 
-.method static v__scc__apply1__lam_15_a_b(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__apply1__lam_23_a_b(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 13
 L_tco4:
@@ -293,7 +293,7 @@ L_tco4:
   invokevirtual java/lang/Integer/intValue()I
   istore_2
   iload_2
-  bipush 24
+  bipush 26
   if_icmpne L_tarm5
   aload_1
   iconst_1
@@ -316,7 +316,7 @@ L_tco4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 25
+  bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -331,7 +331,7 @@ L_tco4:
   goto L_tco4
 L_tarm5:
   iload_2
-  bipush 25
+  bipush 27
   if_icmpne L_tarm6
   aload_1
   iconst_1
@@ -343,7 +343,7 @@ L_tarm5:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 27
+  bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -356,7 +356,7 @@ L_tarm5:
   goto L_tco4
 L_tarm6:
   iload_2
-  bipush 26
+  bipush 28
   if_icmpne L_tarm7
   aload_1
   iconst_1
@@ -450,7 +450,7 @@ L_tarm9:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -549,7 +549,7 @@ L_tarm11:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 26
+  bipush 28
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -572,14 +572,14 @@ L_tarm11:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 26
+  bipush 28
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
   iconst_1
   aload_0
   aastore
-  invokestatic AwsumMain/v__scc__apply1__lam_15_a_b(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__apply1__lam_23_a_b(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

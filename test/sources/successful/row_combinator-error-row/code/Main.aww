@@ -1,0 +1,35 @@
+{- Pins error-row injection when a row-unioning combinator is applied to a
+   continuation whose type the lowering can't synthesise — `const ob` (a
+   partial application) and `\_n -> ob` (a lambda). The combinator's result
+   error row stays partly abstract from the arguments alone, so the concrete
+   `Left` label is recovered from the expected result type before the body is
+   re-lowered at concrete types. Before the fix the `Left EA` payload reached
+   the row-case un-tagged — crash on four backends, garbage on JS. -}
+
+import IO.Stdout
+
+type EA = EA
+type EB = EB
+
+oa : Either EA Int32
+oa = Left EA
+
+ob : Either EB Int32
+ob = Right 5
+
+c1 : Either (EA | EB) Int32
+c1 = bindEither oa (const ob)
+
+c2 : Either (EA | EB) Int32
+c2 = andThenEither (\_n -> ob) oa
+
+de : Either (EA | EB) Int32 -> String
+de x = case x of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (de c1)
+    |> andThenIO (\_u -> IO.Stdout.print (de c2))
