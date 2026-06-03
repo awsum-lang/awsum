@@ -8,6 +8,8 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-06-03
+
 ### Added
 
 - **`IO.Stdin.readAllBytes : IO Never (List UInt8)`** — CLI platform built-in that reads stdin to EOF as raw bytes, with no decode and no content-dependent failure (the result carries no error row). The companion to `readAllString` for input that isn't text, or text the host's argv decoder would mangle: stdin bytes reach the program verbatim on every backend. The per-target reader builds the prelude `List UInt8` directly from the captured bytes.
