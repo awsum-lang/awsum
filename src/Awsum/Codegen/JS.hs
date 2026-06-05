@@ -1,45 +1,44 @@
 -- | JavaScript code generator for Awsum 'Core'.
 --
--- Design goals:
---   • Emit small, readable JS that is easy to snapshot-test.
---   • Keep a tiny "runtime" in 'header' only for what we actually need.
---   • Preserve Core invariants: primitives only appear in callee position.
+-- Builds a 'Awsum.Codegen.JS.Syntax' AST from Core and renders it — the JS
+-- analogue of how the byte backends build a spec ('JvmModule' \/ 'WasmFunc')
+-- and project it. Everything in the emitted file flows through the AST:
+-- the runtime helpers, the user\/prelude declarations, the @main@ value, the
+-- Node runner, and the IIFE wrapper — there are no verbatim JS string blobs.
 --
 -- Semantics & assumptions:
 --   • Strings: we rely on JS '+' to concatenate (both operands are statically 'String').
 --   • Every top-level surface def is lowered to either Core 'CFunDef' or
---     'CValDef' and emitted as a JS @const@ binding — 'CFunDef' as an
---     arrow closure @const name = (args) => { … };@, 'CValDef' as a
---     plain value @const name = <expr>;@.
+--     'CValDef' and emitted as a JS @const@ binding — 'CFunDef' as an arrow
+--     closure, 'CValDef' as a plain value.
 --   • Wrapping is selected by 'ProgramType':
 --
---       - 'ProgramCli' → IIFE (@(function () { ... })()@). Inside a
---         function scope, top-level @const@/@let@ are lexical, so
---         nothing leaks to the global object — whether loaded as a
---         classic @<script>@ or via Node's CommonJS wrapper. The Node
---         runner in the footer still sees @require@/@module@ via
---         closure.
+--       - 'ProgramCli' → IIFE (@(() => { … })()@). Inside a function scope,
+--         top-level @const@\/@let@ are lexical, so nothing leaks to the global
+--         object — whether loaded as a classic @<script>@ or via Node's
+--         CommonJS wrapper. The Node runner in the footer still sees
+--         @require@\/@module@ via closure.
 --
 --     Other program types (browser module, CommonJS, ESM) will pick
 --     different wrappers without changing the name-emission rules below.
 --
--- Declaration order: top-level decls are emitted in the reverse
--- topological order of the call graph ('Awsum.CallGraph.stronglyConnected'
--- already returns SCCs sinks-first). Each SCC's members are emitted as
--- one block; for mutually-recursive 'CFunDef's, order within the block
--- is arbitrary because arrow-closure bodies defer name lookup to call
--- time — by the time any caller of the SCC runs, every member's @const@
--- has been initialized. Mutually-recursive 'CValDef's have no fixed
--- point in strict eval and are rejected by 'Awsum.StackSafety', so any
--- CyclicSCC encountered here contains only 'CFunDef's.
---
--- The result: no reliance on JS function-declaration hoisting; the
--- compiler explicitly enforces an evaluation-safe order. This matters
--- both for correctness inside the IIFE and for future program types
--- (ESM module top level, where 'function' decls behave differently).
+-- Declaration order: top-level decls are emitted in the reverse topological
+-- order of the call graph ('Awsum.CallGraph.stronglyConnected' returns SCCs
+-- sinks-first). Each SCC's members are emitted as one block; for
+-- mutually-recursive 'CFunDef's, order within the block is arbitrary because
+-- arrow-closure bodies defer name lookup to call time — by the time any
+-- caller of the SCC runs, every member's @const@ has been initialized.
+-- Mutually-recursive 'CValDef's have no fixed point in strict eval and are
+-- rejected by 'Awsum.StackSafety', so any CyclicSCC encountered here contains
+-- only 'CFunDef's. The result: no reliance on JS function-declaration
+-- hoisting — every binding is an ordinary @const@ initialized at its line —
+-- which also lets the runtime helpers be plain @const@ arrows like everything
+-- else (the only inter-helper edge, @__getArgs@ → @__entryArgEither@, resolves
+-- at call time, after every helper @const@ is initialized).
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.CallGraph (declName, stronglyConnected)
+import Awsum.Codegen.JS.Syntax
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Program (ProgramType (..))
@@ -55,33 +54,30 @@ import Relude
 --   program type; the inner name-emission rules are shared.
 codegenJS :: ProgramType -> PreludeTags -> CoreProgram -> Text
 codegenJS = \case
-  ProgramCli -> emitCliScript
+  ProgramCli -> \ptags prog -> renderProgram (cliModule ptags prog)
 
--- | CLI script: IIFE-wrapped, with a Node runner inside. Nothing leaks
---   to the global object — neither function declarations (hoisted onto
---   @window@ only at /script/ top level, not inside an IIFE) nor
---   @const@/@let@ (lexically script-scoped).
-emitCliScript :: PreludeTags -> CoreProgram -> Text
-emitCliScript ptags prog =
-  T.intercalate
-    "\n"
-    [ "\"use strict\";",
-      "(function () {",
-      header ptags (usedBuiltIns prog),
-      T.intercalate "\n\n" (map emitDecl (orderTopLevels prog)),
-      cliFooter,
-      "})();"
-    ]
+-- | CLI script: @"use strict";@ directive followed by an IIFE whose body is
+--   the runtime helpers, the ordered declarations, and the Node runner.
+cliModule :: PreludeTags -> CoreProgram -> [JsStmt]
+cliModule ptags prog =
+  [ SExpr (EStr "use strict"),
+    SBlank,
+    SExpr (ECall (EArrow [] iifeBody) [])
+  ]
+  where
+    -- A blank line between each top-level statement (helper, declaration,
+    -- footer) for legibility.
+    iifeBody =
+      intersperse
+        SBlank
+        ( header ptags (usedBuiltIns prog)
+            <> map declStmt (orderTopLevels prog)
+            <> cliFooter
+        )
 
 -- | Reorder top-level declarations so each name's @const@ binding is
--- initialized before any line that needs its value. Uses the call
--- graph's strongly-connected components (sinks first) — each SCC's
--- members emit as one block in arbitrary internal order. Mutual
--- recursion among 'CFunDef's tolerates any order because arrow-closure
--- bodies defer name lookup to call time; mutually-recursive 'CValDef's
--- would be ill-formed in strict eval and are rejected upstream by
--- 'Awsum.StackSafety', so any 'CyclicSCC' encountered here contains
--- only 'CFunDef's.
+--   initialized before any line that needs its value. See the module header
+--   for why arbitrary order within a 'CyclicSCC' is safe.
 orderTopLevels :: CoreProgram -> [CDecl]
 orderTopLevels prog@(CoreProgram decls) =
   let declMap = Map.fromList [(declName d, d) | d <- decls]
@@ -95,703 +91,554 @@ orderTopLevels prog@(CoreProgram decls) =
         G.CyclicSCC vs -> map pickDecl vs
    in concatMap flatten (stronglyConnected prog)
 
--- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
---   is actually referenced from Core are emitted.
---   • '__print' writes without a newline (Awsum's 'IO.Stdout.print' is "print exactly").
---   • '__concat' is a tiny helper that wraps native '+' with the
---     language-fixed length cap (see 'BuiltIn.concatString'); inlining
---     '+' at each site would duplicate the cap check inline at every '++'.
---   Integer stringification doesn't need a helper; @String(x)@ is
---   inlined at each show call site.
-header :: PreludeTags -> Set Name -> Text
+-- ════════════════════════════════════════════════════════════════════════════
+-- Runtime helpers
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Minimal runtime, tree-shaken: only helpers whose primitive \/ built-in is
+--   actually referenced from Core are emitted. Each helper is a @const@ arrow
+--   so it obeys the same no-hoisting discipline as generated declarations.
+--   The constructor\/row tags are looked up (not hardcoded) because globally
+--   unique tags depend on declaration order — the runtime helpers, which build
+--   these values out of band of the user's program, must agree with the
+--   user-side dispatch by construction.
+header :: PreludeTags -> Set Name -> [JsStmt]
 header ptags builtIns =
-  let -- FNV-1a 32-bit row tags for the prelude's nominal labels used
-      -- by the Int32 arithmetic builtins. Hard-wiring them via
-      -- 'rowTag' here (instead of a magic number) keeps the encoding
-      -- in lockstep with 'Awsum.HM.canonicalLabel' / 'Awsum.HM.fnv1a32'
-      -- if either ever changes — the runtime helpers and the
-      -- user-side row dispatch agree by construction, not by accident.
-      underflowTag = rowTag (TyCon noSpan "UnderflowError")
-      overflowTag = rowTag (TyCon noSpan "OverflowError")
-      stringTooLongRowTag = rowTag (TyCon noSpan "StringTooLong")
-      unpairedSurrogateRowTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
-      invalidUtf8RowTag = rowTag (TyCon noSpan "InvalidUtf8")
-      -- Constructor tags fed in from 'PreludeTags'. Under globally
-      -- unique tags every constructor's tag depends on declaration
-      -- order, so the runtime helpers — which build these values out
-      -- of band of the user's program — must look the tags up rather
-      -- than hardcode them.
-      ptL = show (ptLeft ptags)
-      ptR = show (ptRight ptags)
-      ptU = show (ptUnit ptags)
-      ptT = show (ptTrue ptags)
-      ptF = show (ptFalse ptags)
-      ptN = show (ptNothing ptags)
-      ptJ = show (ptJust ptags)
-      ptT2 = show (ptTuple2 ptags)
-      ptNil_ = show (ptNil ptags)
-      ptCons_ = show (ptCons ptags)
-      ptUE = show (ptUnderflowError ptags)
-      ptOE = show (ptOverflowError ptags)
-      ptPE = show (ptParseError ptags)
-      ptSTL = show (ptStringTooLong ptags)
-      ptUS = show (ptUnpairedUtf16Surrogate ptags)
-      ptIU = show (ptInvalidUtf8 ptags)
-      lns =
-        filter
-          (not . T.null)
-          [ -- '__print' writes a string to stdout (no newline) and
-            -- returns the Unit constructor. Driven by the prelude's
-            -- `runIO` walking an 'IOStdoutPrint' arm via
-            -- `BuiltIn.internalStdoutPrint`. Returning a real Unit
-            -- value lets the prelude `case … of Unit -> next`
-            -- dispatch through the standard CCase tag check.
-            if Set.member "internalStdoutPrint" builtIns
-              then "function __print(s){ process.stdout.write(String(s)); return [" <> ptU <> "]; }"
-              else "",
-            -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
-            if Set.member "predInt32" builtIns
-              then "function __predInt32(x){ return x === -2147483648 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1)|0)]; }"
-              else "",
-            -- predUInt8: returns Left UnderflowError on 0, else Right (x - 1).
-            -- When x >= 1, (x - 1) is in 0..254, so no explicit mask is
-            -- needed to stay in UInt8 range — but we keep '& 0xFF' for
-            -- parallel structure with other UInt8 arithmetic helpers.
-            if Set.member "predUInt8" builtIns
-              then "function __predUInt8(x){ return x === 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1) & 0xFF)]; }"
-              else "",
-            -- succInt32: returns Left OverflowError on INT32_MAX, else Right (x + 1).
-            if Set.member "succInt32" builtIns
-              then "function __succInt32(x){ return x === 2147483647 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1)|0)]; }"
-              else "",
-            -- succUInt8: returns Left OverflowError on 255, else Right (x + 1).
-            -- '& 0xFF' kept for parallel structure with __predUInt8.
-            if Set.member "succUInt8" builtIns
-              then "function __succUInt8(x){ return x === 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1) & 0xFF)]; }"
-              else "",
-            -- eqInt32 / eqUInt8: returns Bool. Both incoming values are
-            -- already '|0' / '& 0xFF' coerced, so '===' on JS Numbers
-            -- gives the same answer as native i32/u8 equality.
-            if Set.member "eqInt32" builtIns
-              then "function __eqInt32(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
-              else "",
-            if Set.member "eqUInt8" builtIns
-              then "function __eqUInt8(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
-              else "",
-            -- eqString: returns Bool. JS strings are UTF-16 internally and
-            -- '===' on strings is defined by spec as length-then-code-unit
-            -- comparison — exactly the language-level semantics of
-            -- 'BuiltIn.eqString'.
-            if Set.member "eqString" builtIns
-              then "function __eqString(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
-              else "",
-            -- addInt32: Either (UnderflowError | OverflowError) Int32. JS
-            -- numbers exactly represent the 33-bit sum of two i32s, so the
-            -- range checks are direct without intermediate '|0' wrapping.
-            -- The error side is a structural sum dispatched at runtime by
-            -- FNV-1a row tags; the encoded shape is
-            --   Left UnderflowError = [ptL, [tagU, [ptUE]]]
-            --   Left OverflowError  = [ptL, [tagO, [ptOE]]]
-            -- where the inner [ptUE]/[ptOE] is the nullary CCon for the
-            -- single-constructor type and 'tagU'/'tagO' are
-            -- 'rowTag (TyCon "UnderflowError")'/'rowTag (TyCon "OverflowError")'.
-            if Set.member "addInt32" builtIns
-              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (s < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", s|0]; }"
-              else "",
-            -- subInt32: Either (UnderflowError | OverflowError) Int32. Same
-            -- range-check shape as __addInt32 — the i32 difference fits in
-            -- a JS Number exactly, so direct '> maxInt32' / '< minInt32'
-            -- tests pick the branch. Same row-tagged error encoding.
-            if Set.member "subInt32" builtIns
-              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (d < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", d|0]; }"
-              else "",
-            -- mulInt32: Either (UnderflowError | OverflowError) Int32. JS
-            -- Numbers represent the product of two i32 values exactly (it
-            -- fits in 53-bit mantissa precision, max product is ~2^62).
-            -- Direct range check on the exact product picks the branch;
-            -- '|0' coerces back to i32 on the ok path. Same row-tagged
-            -- error encoding as add/sub.
-            if Set.member "mulInt32" builtIns
-              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (p < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", p|0]; }"
-              else "",
-            -- negInt32: Either OverflowError Int32. Only INT32_MIN overflows
-            -- (negation would yield 2147483648, outside the signed range);
-            -- every other value flips sign cleanly inside JS Number precision.
-            if Set.member "negInt32" builtIns
-              then "function __negInt32(x){ return x === -2147483648 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((-x)|0)]; }"
-              else "",
-            -- addUInt8: Either OverflowError UInt8. Both inputs in 0..255,
-            -- so the unmasked sum is in 0..510 and a single '> 255' check
-            -- separates the branches.
-            if Set.member "addUInt8" builtIns
-              then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", s & 0xFF]; }"
-              else "",
-            -- subUInt8: Either UnderflowError UInt8. Both inputs in 0..255,
-            -- so the difference is in -255..255; a single '< 0' check picks
-            -- the underflow branch. The ok-path mask keeps parallel structure
-            -- with __addUInt8 (the difference is already in 0..255 there).
-            if Set.member "subUInt8" builtIns
-              then "function __subUInt8(a, b){ const d = a - b; return d < 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", d & 0xFF]; }"
-              else "",
-            -- mulUInt8: Either OverflowError UInt8. Both inputs in 0..255,
-            -- so the unmasked product is in 0..65025 — well within JS Number
-            -- precision and the i32 range that '|0' would coerce to. A
-            -- single '> 255' check picks the overflow branch.
-            if Set.member "mulUInt8" builtIns
-              then "function __mulUInt8(a, b){ const p = a * b; return p > 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", p & 0xFF]; }"
-              else "",
-            -- concatString: implements 'BuiltIn.concatString'. Pre-checks
-            -- the combined UTF-16 length against the language-fixed cap
-            -- (134217728 = 2^27, must stay in sync with
-            -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww').
-            -- JS String.length is UTF-16 code units exactly (matches the
-            -- cap unit directly), so the check is one i32 comparison.
-            if Set.member "concatString" builtIns
-              then "function __concat(a, b){ return (a.length + b.length > 134217728) ? [" <> ptL <> ", [" <> ptSTL <> "]] : [" <> ptR <> ", a + b]; }"
-              else "",
-            -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
-            -- naturally yields ["", str]. 'substring' creates fresh strings
-            -- (V8 sometimes shares storage internally — irrelevant at the
-            -- semantic level we observe).
-            if Set.member "splitOnFirst" builtIns
-              then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [" <> ptN <> "]; return [" <> ptJ <> ", [" <> ptT2 <> ", str.substring(0, i), str.substring(i + sep.length)]]; }"
-              else "",
-            -- parseInt32: strict decimal grammar mirroring the language
-            -- literal — optional '-', one or more ASCII digits, nothing else.
-            -- Regex full-match enforces it; Number() then range-checks. JS
-            -- numbers are double-precision and represent every i32 (and the
-            -- absolute minInt32 boundary 2147483648) exactly.
-            if Set.member "parseInt32" builtIns
-              then "function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", n | 0]; }"
-              else "",
-            -- parseUInt8: same shape but no sign accepted; range 0..255.
-            if Set.member "parseUInt8" builtIns
-              then "function __parseUInt8(s){ if (!/^[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n > 255) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", n & 0xFF]; }"
-              else "",
-            -- predUInt32: returns Left UnderflowError on 0, else Right (x - 1).
-            -- '>>> 0' coerces to unsigned 32-bit (where '|0' would give signed).
-            if Set.member "predUInt32" builtIns
-              then "function __predUInt32(x){ return x === 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1) >>> 0)]; }"
-              else "",
-            -- succUInt32: returns Left OverflowError on 4294967295, else Right (x + 1).
-            if Set.member "succUInt32" builtIns
-              then "function __succUInt32(x){ return x === 4294967295 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1) >>> 0)]; }"
-              else "",
-            -- eqUInt32: identical shape to eqInt32 — both inputs are already
-            -- '>>> 0' coerced so '===' on JS Numbers gives native u32 equality.
-            if Set.member "eqUInt32" builtIns
-              then "function __eqUInt32(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
-              else "",
-            -- addUInt32: Either OverflowError UInt32. JS Numbers exactly
-            -- represent the unmasked sum of two u32s (max ~2^33), so a
-            -- direct '> 4294967295' check separates the branches.
-            if Set.member "addUInt32" builtIns
-              then "function __addUInt32(a, b){ const s = a + b; return s > 4294967295 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", (s >>> 0)]; }"
-              else "",
-            -- subUInt32: Either UnderflowError UInt32. Difference is in
-            -- -4294967295..4294967295; '< 0' picks the underflow branch.
-            if Set.member "subUInt32" builtIns
-              then "function __subUInt32(a, b){ const d = a - b; return d < 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", (d >>> 0)]; }"
-              else "",
-            -- mulUInt32: Either OverflowError UInt32. Product of two u32
-            -- values is at most ~2^64; JS Numbers only have 53-bit
-            -- precision so we use BigInt to compute the exact product,
-            -- then range-check before coercing back.
-            if Set.member "mulUInt32" builtIns
-              then "function __mulUInt32(a, b){ const p = BigInt(a) * BigInt(b); return p > 4294967295n ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", (Number(p) >>> 0)]; }"
-              else "",
-            -- parseUInt32: same grammar as parseUInt8 — no sign, decimal
-            -- digits only — range 0..4294967295. JS Numbers represent
-            -- 4294967295 exactly, so direct '> 4294967295' is faithful.
-            if Set.member "parseUInt32" builtIns
-              then "function __parseUInt32(s){ if (!/^[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n > 4294967295) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", (n >>> 0)]; }"
-              else "",
-            -- lengthCodePoints: spread iteration walks the string by code
-            -- point — the JS string iterator yields a surrogate pair as a
-            -- single two-char element, so '[...s].length' gives the USV count.
-            -- The cached UTF-16 'length' would over-count supplementary chars.
-            if Set.member "lengthCodePoints" builtIns
-              then "function __lengthCodePoints(s){ let n = 0; for (const _ of s) n++; return (n >>> 0); }"
-              else "",
-            -- lengthUtf16CodeUnits: native JS string length is the UTF-16
-            -- code-unit count by spec — surrogate pairs contribute 2.
-            if Set.member "lengthUtf16CodeUnits" builtIns
-              then "function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }"
-              else "",
-            -- lengthUtf8Bytes: TextEncoder always uses standard (not
-            -- modified) UTF-8 — 1 byte for ASCII, 2 for U+0080..U+07FF,
-            -- 3 for U+0800..U+FFFF, 4 for U+10000..U+10FFFF.
-            -- Allocating one encoder per call keeps the helper stateless;
-            -- benchmarks haven't motivated hoisting it.
-            if Set.member "lengthUtf8Bytes" builtIns
-              then "function __lengthUtf8Bytes(s){ return (new TextEncoder().encode(s).length >>> 0); }"
-              else "",
-            -- __entryArgEither: wraps a single input string in 'Either
-            -- (StringTooLong | UnpairedUtf16Surrogate) String' for the
-            -- user's 'main'. Called per-element by '__getArgs' (over each
-            -- 'process.argv' element) and once by '__stdinReadAll'. Two
-            -- checks in one helper:
-            --   1. Length cap: JS String.length is UTF-16 code units
-            --      exactly; cap test is a single i32 compare.
-            --   2. Surrogate pairing: walk code units, reject if any high
-            --      surrogate (D800..DBFF) is not immediately followed by
-            --      a low surrogate (DC00..DFFF), or any low surrogate has
-            --      no preceding high. JS strings allow unpaired surrogates
-            --      at the language level — Awsum 'String' is strict UTF-16,
-            --      so the boundary validates.
-            -- Cap value (134217728 = 2^27) and FNV-1a row tags for
-            -- "StringTooLong" / "UnpairedUtf16Surrogate" must stay in sync
-            -- with 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
-            -- Encoding mirrors the other backends: Right=[1, arg];
-            -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
-            -- wrap, Left).
-            -- '__entryArgEither' validates host-decoded argv strings only
-            -- (stdin has its own strict byte decoder below). Gate on the
-            -- argv builtin so a program that never reads argv pays nothing.
-            if Set.member "internalGetArgs" builtIns
-              then "function __entryArgEither(arg){ if (arg.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; } return [" <> ptR <> ", arg]; }"
-              else "",
-            -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
-            -- arm via 'BuiltIn.internalGetArgs'. Reads
-            -- 'process.argv.slice(2)' (every arg after 'node <script>')
-            -- and builds an Awsum 'List String' using the prelude's
-            -- 'Cons'/'Nil' tags. Each element is routed through
-            -- '__entryArgEither' for strict-UTF-16 validation; the
-            -- error semantics is all-or-nothing — the first failing
-            -- element short-circuits the entire call with its 'Left'.
-            -- Walked right-to-left so the cons chain is built bottom-up
-            -- without recursion. Per the no-memoisation decision each
-            -- call re-reads argv; argv is invariant during execution
-            -- so repeat calls return the same value deterministically.
-            if Set.member "internalGetArgs" builtIns
-              then "function __getArgs(){ const args = process.argv.slice(2); let list = [" <> ptNil_ <> "]; for (let i = args.length - 1; i >= 0; i--) { const v = __entryArgEither(args[i]); if (v[0] !== " <> ptR <> ") return v; list = [" <> ptCons_ <> ", v[1], list]; } return [" <> ptR <> ", list]; }"
-              else "",
-            -- __stdinReadAll: zero-arg helper for
-            -- 'BuiltIn.internalStdinReadAllString', called from 'runIO''s
-            -- 'IOStdinReadAllString' arm. Reads fd 0 to EOF via
-            -- 'fs.readFileSync(0)' (POSIX + Windows, binary-safe, blocks
-            -- until EOF), then decodes the Buffer as strict UTF-8 via a
-            -- fatal 'TextDecoder' — any RFC-3629 malformation throws and
-            -- becomes 'Left InvalidUtf8'. 'ignoreBOM: true' keeps a leading
-            -- U+FEFF as data: without it Node's decoder silently strips a
-            -- leading BOM, while the four hand-written decoders treat it as
-            -- an ordinary scalar — the flag is what keeps stdout identical
-            -- across backends. A successful decode is then
-            -- length-capped ('Left StringTooLong' over 2^27 UTF-16 code
-            -- units). Per the POSIX-honest no-memoisation decision a
-            -- second call after EOF reads zero bytes and yields @Right ""@.
-            if Set.member "internalStdinReadAllString" builtIns
-              then "function __stdinReadAll(){ let s; try { s = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(require('fs').readFileSync(0)); } catch (e) { return [" <> ptL <> ", [" <> show invalidUtf8RowTag <> ", [" <> ptIU <> "]]]; } if (s.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; return [" <> ptR <> ", s]; }"
-              else "",
-            -- __stdinReadAllBytes: zero-arg helper for
-            -- 'BuiltIn.internalStdinReadAllBytes', called from 'runIO''s
-            -- 'IOStdinReadAllBytes' arm. Reads fd 0 to EOF and returns the
-            -- raw bytes as an Awsum 'List UInt8' (each element a 0..255
-            -- number), built right-to-left so the cons chain needs no
-            -- recursion. No decode, no error row. A second call after EOF
-            -- yields 'Nil'.
-            if Set.member "internalStdinReadAllBytes" builtIns
-              then "function __stdinReadAllBytes(){ const buf = require('fs').readFileSync(0); let list = [" <> ptNil_ <> "]; for (let i = buf.length - 1; i >= 0; i--) { list = [" <> ptCons_ <> ", buf[i], list]; } return list; }"
-              else ""
-          ]
-   in T.intercalate "\n" lns <> "\n"
-
--- | Node-only convenience runner for CLI scripts:
---   when run as a script (not @require@-d), call @main@ with a single
---   command-line argument (or empty string). Works inside the IIFE
---   because @require@/@module@ are closed over from Node's module wrapper.
-cliFooter :: Text
-cliFooter =
-  unlines
-    [ "",
-      "if (typeof require !== 'undefined' && require.main === module) {",
-      -- v_main is a zero-arg value (CValDef in Core) that the JS
-      -- codegen emits as a top-level 'const main = …' — i.e. the IO
-      -- tree is the value of that binding, not a function. 'v_runIO'
-      -- walks the tree for effects. User code reads argv through
-      -- 'IO.Args.getArgs' inside the chain; that lowers to an
-      -- 'IOGetArgs' constructor whose runIO arm calls '__getArgs'
-      -- (which reads 'process.argv.slice(2)' lazily on each call).
-      "  if (typeof main !== 'undefined') v_runIO(main);",
-      "}"
+  concat
+    [ gate "internalStdoutPrint" printHelper,
+      gate "predInt32" predInt32Helper,
+      gate "predUInt8" predUInt8Helper,
+      gate "succInt32" succInt32Helper,
+      gate "succUInt8" succUInt8Helper,
+      gate "eqInt32" (eqHelper "__eqInt32"),
+      gate "eqUInt8" (eqHelper "__eqUInt8"),
+      gate "eqString" (eqHelper "__eqString"),
+      gate "addInt32" addInt32Helper,
+      gate "subInt32" subInt32Helper,
+      gate "mulInt32" mulInt32Helper,
+      gate "negInt32" negInt32Helper,
+      gate "addUInt8" addUInt8Helper,
+      gate "subUInt8" subUInt8Helper,
+      gate "mulUInt8" mulUInt8Helper,
+      gate "concatString" concatHelper,
+      gate "splitOnFirst" splitOnFirstHelper,
+      gate "parseInt32" parseInt32Helper,
+      gate "parseUInt8" parseUInt8Helper,
+      gate "predUInt32" predUInt32Helper,
+      gate "succUInt32" succUInt32Helper,
+      gate "eqUInt32" (eqHelper "__eqUInt32"),
+      gate "addUInt32" addUInt32Helper,
+      gate "subUInt32" subUInt32Helper,
+      gate "mulUInt32" mulUInt32Helper,
+      gate "parseUInt32" parseUInt32Helper,
+      gate "lengthCodePoints" lengthCodePointsHelper,
+      gate "lengthUtf16CodeUnits" lengthUtf16Helper,
+      gate "lengthUtf8Bytes" lengthUtf8Helper,
+      -- '__entryArgEither' must precede '__getArgs' (its only caller); both
+      -- gate on the argv built-in.
+      gate "internalGetArgs" entryArgEitherHelper,
+      gate "internalGetArgs" getArgsHelper,
+      gate "internalStdinReadAllString" stdinReadAllStringHelper,
+      gate "internalStdinReadAllBytes" stdinReadAllBytesHelper
     ]
-
--- | Top-level declarations:
---   • 'CFunDef' with 'CLoop' body (output of the TCO pass) → arrow
---     closure containing a 'while (true)' loop whose body is emitted in
---     statement form so 'CContinue' can rebind the function's parameters
---     and 'continue' the loop instead of recursing. Rewriting a
---     self-tail-call as a jump keeps the JS engine's call stack bounded,
---     which matters on Node/V8 because ES2015 PTC was never shipped.
---   • 'CFunDef' without 'CLoop' → arrow closure, statement form body.
---     A 'CCase' in tail position becomes a 'switch' whose arms 'return'
---     directly, instead of an IIFE. That keeps deeply nested pattern
---     matches (N nested 'case' expressions in tail position) inside a
---     single stack frame; the IIFE form would burn one frame per level
---     and overflow on platforms with small default stacks (e.g. Windows
---     Node ≈512 KB).
---   • 'CValDef' → 'const name = <expr>;'.
---
--- Arrow closures (rather than @function@ declarations) so the codegen
--- doesn't rely on function-declaration hoisting — 'orderTopLevels'
--- arranges decls in evaluation-safe order, and each binding is an
--- ordinary @const@ that's initialized exactly at its line.
-emitDecl :: CDecl -> Text
-emitDecl = \case
-  CFunDef nm args (CLoop body) ->
-    "const "
-      <> mangle nm
-      <> " = ("
-      <> T.intercalate ", " (map mangle args)
-      <> ") => {\n"
-      <> "  while (true) {\n"
-      <> emitStmt args body
-      <> "  }\n"
-      <> "};"
-  CFunDef nm args body ->
-    "const "
-      <> mangle nm
-      <> " = ("
-      <> T.intercalate ", " (map mangle args)
-      <> ") => {\n"
-      <> emitStmt args body
-      <> "};"
-  CValDef nm rhs ->
-    "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"
-
--- | Emit an expression in /statement form/ for use inside a 'while (true)'
--- loop introduced by 'CLoop':
---   • 'CContinue' rebinds the function's parameters and jumps back to the
---     loop head. Continue args are evaluated into temporaries first so a
---     new value that reads old params (e.g. @acc + "."@) sees the old
---     binding, not a half-updated one.
---   • 'CCase' dispatches through @switch@ and recurses into statement form
---     for each arm's body, because any arm might itself be a 'CContinue'.
---   • Anything else is a final value — we return it.
--- | Emit @body@ in tail position. Threads a 'pending' stack of
--- 'CDrop'-named parameters, drained at every terminator. A param the
--- same 'CContinue' rebinds is not nulled: the rebinding already drops
--- its old reference and nothing allocates between the two writes. A
--- param dropped without a rebind here — and every drop at a
--- value-producing tail — is nulled, since a JS variable is a GC root
--- until reassigned, so snipping the slot lets V8 collect the old graph
--- one iteration sooner. A value tail nulls after the value is
--- captured, then @return@s.
-emitStmt :: [Name] -> CExpr -> Text
-emitStmt params = go []
   where
-    -- 'CDrop' on a function parameter assigns @null@ to the
-    -- (mutable) param slot — managed-GC early root snip — unless the
-    -- same 'CContinue' immediately rebinds that slot, in which case the
-    -- rebind is the snip and the null is omitted.
-    -- 'CDrop' on a 'CCase' arm-binder is a no-op: case-binders
-    -- are declared with @const@ (V8 can't reassign), and the
-    -- block-scoped slot dies as soon as the arm closes, so GC
-    -- collects naturally.
-    isParam :: Name -> Bool
-    isParam n = n `elem` params
+    gate :: Name -> JsStmt -> [JsStmt]
+    gate name s = [s | Set.member name builtIns]
 
-    go :: [Name] -> CExpr -> Text
+    -- Prelude constructor tags as JS number literals.
+    ptL = ENum (toInteger (ptLeft ptags))
+    ptR = ENum (toInteger (ptRight ptags))
+    ptJ = ENum (toInteger (ptJust ptags))
+    ptNothingTag = ENum (toInteger (ptNothing ptags))
+    ptTrueTag = ENum (toInteger (ptTrue ptags))
+    ptFalseTag = ENum (toInteger (ptFalse ptags))
+    ptU = ENum (toInteger (ptUnit ptags))
+    ptT2 = ENum (toInteger (ptTuple2 ptags))
+    ptNilTag = ENum (toInteger (ptNil ptags))
+    ptConsTag = ENum (toInteger (ptCons ptags))
+    ptUE = ENum (toInteger (ptUnderflowError ptags))
+    ptOE = ENum (toInteger (ptOverflowError ptags))
+    ptPE = ENum (toInteger (ptParseError ptags))
+    ptSTL = ENum (toInteger (ptStringTooLong ptags))
+    ptUS = ENum (toInteger (ptUnpairedUtf16Surrogate ptags))
+    ptIU = ENum (toInteger (ptInvalidUtf8 ptags))
+
+    -- FNV-1a row tags for the row-wrapped 'Left' payloads of the Int32
+    -- arithmetic helpers and the input decoders. Looked up via 'rowTag'
+    -- (not magic numbers) so the encoding stays in lockstep with
+    -- 'Awsum.HM.canonicalLabel'.
+    overflowRow = ENum (toInteger (rowTag (TyCon noSpan "OverflowError")))
+    underflowRow = ENum (toInteger (rowTag (TyCon noSpan "UnderflowError")))
+    stringTooLongRow = ENum (toInteger (rowTag (TyCon noSpan "StringTooLong")))
+    unpairedSurrogateRow = ENum (toInteger (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")))
+    invalidUtf8Row = ENum (toInteger (rowTag (TyCon noSpan "InvalidUtf8")))
+
+    -- Encoded-value builders.
+    leftV e = EArray [ptL, e] -- Left e  = [ptL, e]
+    rightV e = EArray [ptR, e] -- Right e = [ptR, e]
+    con0 t = EArray [t] -- nullary constructor [tag]
+    rowOf rt inner = EArray [rt, inner] -- row-tagged [rowTag, inner]
+
+    -- '__print' writes a string to stdout (no newline) and returns the Unit
+    -- constructor. Driven by the prelude's `runIO` walking an 'IOStdoutPrint'
+    -- arm; returning a real Unit value lets the `case … of Unit -> next`
+    -- dispatch through the standard tag check.
+    printHelper =
+      SConst "__print"
+        $ EArrow
+          ["s"]
+          [ SExpr (ECall (EMember (EMember (EVar "process") "stdout") "write") [ECall (EVar "String") [EVar "s"]]),
+            SReturn (con0 ptU)
+          ]
+
+    -- predInt32: Left UnderflowError on INT32_MIN, else Right (x - 1).
+    predInt32Helper =
+      SConst "__predInt32"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum (-2147483648))) (leftV (con0 ptUE)) (rightV (i32 (EBin BSub (EVar "x") (ENum 1)))))]
+
+    -- predUInt8: Left UnderflowError on 0, else Right (x - 1). The mask keeps
+    -- parallel structure with the other UInt8 helpers (x - 1 is already 0..254).
+    predUInt8Helper =
+      SConst "__predUInt8"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum 0)) (leftV (con0 ptUE)) (rightV (u8 (EBin BSub (EVar "x") (ENum 1)))))]
+
+    -- succInt32: Left OverflowError on INT32_MAX, else Right (x + 1).
+    succInt32Helper =
+      SConst "__succInt32"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum 2147483647)) (leftV (con0 ptOE)) (rightV (i32 (EBin BAdd (EVar "x") (ENum 1)))))]
+
+    -- succUInt8: Left OverflowError on 255, else Right (x + 1).
+    succUInt8Helper =
+      SConst "__succUInt8"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum 255)) (leftV (con0 ptOE)) (rightV (u8 (EBin BAdd (EVar "x") (ENum 1)))))]
+
+    -- predUInt32 / succUInt32: '>>> 0' coerces to unsigned 32-bit.
+    predUInt32Helper =
+      SConst "__predUInt32"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum 0)) (leftV (con0 ptUE)) (rightV (u32 (EBin BSub (EVar "x") (ENum 1)))))]
+
+    succUInt32Helper =
+      SConst "__succUInt32"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum 4294967295)) (leftV (con0 ptOE)) (rightV (u32 (EBin BAdd (EVar "x") (ENum 1)))))]
+
+    -- negInt32: only INT32_MIN overflows; every other value flips sign cleanly.
+    negInt32Helper =
+      SConst "__negInt32"
+        $ EArrow ["x"] [SReturn (ECond (EBin BEq (EVar "x") (ENum (-2147483648))) (leftV (con0 ptOE)) (rightV (i32 (EUnary UNeg (EVar "x")))))]
+
+    -- eqInt32 / eqUInt8 / eqUInt32 / eqString: both operands are already
+    -- range-coerced (or JS strings, where '===' is spec length-then-code-unit),
+    -- so '===' matches the language-level equality.
+    eqHelper :: Text -> JsStmt
+    eqHelper fn =
+      SConst fn
+        $ EArrow ["a", "b"] [SReturn (ECond (EBin BEq (EVar "a") (EVar "b")) (con0 ptTrueTag) (con0 ptFalseTag))]
+
+    -- addInt32 / subInt32 / mulInt32: Either (UnderflowError | OverflowError)
+    -- Int32. JS Numbers exactly represent the 33-/62-bit intermediate, so the
+    -- range checks are direct; the error side is the row-tagged structural sum.
+    addInt32Helper = int32ArithHelper "__addInt32" BAdd
+    subInt32Helper = int32ArithHelper "__subInt32" BSub
+    mulInt32Helper = int32ArithHelper "__mulInt32" BMul
+
+    int32ArithHelper :: Text -> BinOp -> JsStmt
+    int32ArithHelper fn op =
+      SConst fn
+        $ EArrow
+          ["a", "b"]
+          [ SConst "r" (EBin op (EVar "a") (EVar "b")),
+            SIf (EBin BGt (EVar "r") (ENum 2147483647)) [SReturn (leftV (rowOf overflowRow (con0 ptOE)))] [],
+            SIf (EBin BLt (EVar "r") (ENum (-2147483648))) [SReturn (leftV (rowOf underflowRow (con0 ptUE)))] [],
+            SReturn (rightV (i32 (EVar "r")))
+          ]
+
+    -- addUInt8 / subUInt8 / mulUInt8: single bound check then mask to 0..255.
+    addUInt8Helper = u8OverflowHelper "__addUInt8" BAdd
+    mulUInt8Helper = u8OverflowHelper "__mulUInt8" BMul
+
+    u8OverflowHelper :: Text -> BinOp -> JsStmt
+    u8OverflowHelper fn op =
+      SConst fn
+        $ EArrow
+          ["a", "b"]
+          [ SConst "r" (EBin op (EVar "a") (EVar "b")),
+            SReturn (ECond (EBin BGt (EVar "r") (ENum 255)) (leftV (con0 ptOE)) (rightV (u8 (EVar "r"))))
+          ]
+
+    subUInt8Helper =
+      SConst "__subUInt8"
+        $ EArrow
+          ["a", "b"]
+          [ SConst "d" (EBin BSub (EVar "a") (EVar "b")),
+            SReturn (ECond (EBin BLt (EVar "d") (ENum 0)) (leftV (con0 ptUE)) (rightV (u8 (EVar "d"))))
+          ]
+
+    -- addUInt32 / subUInt32: difference\/sum fits a JS Number exactly.
+    addUInt32Helper =
+      SConst "__addUInt32"
+        $ EArrow
+          ["a", "b"]
+          [ SConst "s" (EBin BAdd (EVar "a") (EVar "b")),
+            SReturn (ECond (EBin BGt (EVar "s") (ENum 4294967295)) (leftV (con0 ptOE)) (rightV (u32 (EVar "s"))))
+          ]
+
+    subUInt32Helper =
+      SConst "__subUInt32"
+        $ EArrow
+          ["a", "b"]
+          [ SConst "d" (EBin BSub (EVar "a") (EVar "b")),
+            SReturn (ECond (EBin BLt (EVar "d") (ENum 0)) (leftV (con0 ptUE)) (rightV (u32 (EVar "d"))))
+          ]
+
+    -- mulUInt32: product can reach ~2^64, beyond Number precision, so compute
+    -- it exactly with BigInt then range-check before coercing back.
+    mulUInt32Helper =
+      SConst "__mulUInt32"
+        $ EArrow
+          ["a", "b"]
+          [ SConst "p" (EBin BMul (ECall (EVar "BigInt") [EVar "a"]) (ECall (EVar "BigInt") [EVar "b"])),
+            SReturn (ECond (EBin BGt (EVar "p") (EBigInt 4294967295)) (leftV (con0 ptOE)) (rightV (u32 (ECall (EVar "Number") [EVar "p"]))))
+          ]
+
+    -- concatString: pre-check the combined UTF-16 length against the
+    -- language-fixed cap (2^27); JS String.length is UTF-16 code units exactly.
+    concatHelper =
+      SConst "__concat"
+        $ EArrow ["a", "b"] [SReturn (ECond (EBin BGt (EBin BAdd (EMember (EVar "a") "length") (EMember (EVar "b") "length")) (ENum 134217728)) (leftV (con0 ptSTL)) (rightV (EBin BAdd (EVar "a") (EVar "b"))))]
+
+    -- splitOnFirst: 'indexOf("")' is 0 in JS, so an empty separator yields
+    -- ["", str]. 'substring' creates fresh strings.
+    splitOnFirstHelper =
+      SConst "__splitOnFirst"
+        $ EArrow
+          ["sep", "str"]
+          [ SConst "i" (ECall (EMember (EVar "str") "indexOf") [EVar "sep"]),
+            SIf (EBin BLt (EVar "i") (ENum 0)) [SReturn (con0 ptNothingTag)] [],
+            SReturn
+              ( EArray
+                  [ ptJ,
+                    EArray
+                      [ ptT2,
+                        ECall (EMember (EVar "str") "substring") [ENum 0, EVar "i"],
+                        ECall (EMember (EVar "str") "substring") [EBin BAdd (EVar "i") (EMember (EVar "sep") "length")]
+                      ]
+                  ]
+              )
+          ]
+
+    -- parseInt32 / parseUInt8 / parseUInt32: strict decimal grammar mirroring
+    -- the language literal (regex full-match), then Number() + range check.
+    parseInt32Helper =
+      SConst "__parseInt32"
+        $ EArrow
+          ["s"]
+          [ SIf (EUnary UNot (ECall (EMember (ERegex "^-?[0-9]+$") "test") [EVar "s"])) [SReturn (leftV (con0 ptPE))] [],
+            SConst "n" (ECall (EVar "Number") [EVar "s"]),
+            SIf (EBin BOr (EBin BLt (EVar "n") (ENum (-2147483648))) (EBin BGt (EVar "n") (ENum 2147483647))) [SReturn (leftV (con0 ptPE))] [],
+            SReturn (rightV (i32 (EVar "n")))
+          ]
+
+    parseUInt8Helper =
+      SConst "__parseUInt8"
+        $ EArrow
+          ["s"]
+          [ SIf (EUnary UNot (ECall (EMember (ERegex "^[0-9]+$") "test") [EVar "s"])) [SReturn (leftV (con0 ptPE))] [],
+            SConst "n" (ECall (EVar "Number") [EVar "s"]),
+            SIf (EBin BGt (EVar "n") (ENum 255)) [SReturn (leftV (con0 ptPE))] [],
+            SReturn (rightV (u8 (EVar "n")))
+          ]
+
+    parseUInt32Helper =
+      SConst "__parseUInt32"
+        $ EArrow
+          ["s"]
+          [ SIf (EUnary UNot (ECall (EMember (ERegex "^[0-9]+$") "test") [EVar "s"])) [SReturn (leftV (con0 ptPE))] [],
+            SConst "n" (ECall (EVar "Number") [EVar "s"]),
+            SIf (EBin BGt (EVar "n") (ENum 4294967295)) [SReturn (leftV (con0 ptPE))] [],
+            SReturn (rightV (u32 (EVar "n")))
+          ]
+
+    -- lengthCodePoints: 'Array.from' walks the string by its iterator, which
+    -- yields one element per Unicode code point (a surrogate pair counts once)
+    -- — the USV count, where the cached UTF-16 'length' would over-count.
+    lengthCodePointsHelper =
+      SConst "__lengthCodePoints"
+        $ EArrow ["s"] [SReturn (u32 (EMember (ECall (EMember (EVar "Array") "from") [EVar "s"]) "length"))]
+
+    -- lengthUtf16CodeUnits: native JS string length is the UTF-16 code-unit
+    -- count by spec.
+    lengthUtf16Helper =
+      SConst "__lengthUtf16CodeUnits"
+        $ EArrow ["s"] [SReturn (u32 (EMember (EVar "s") "length"))]
+
+    -- lengthUtf8Bytes: TextEncoder always uses standard (not modified) UTF-8.
+    lengthUtf8Helper =
+      SConst "__lengthUtf8Bytes"
+        $ EArrow ["s"] [SReturn (u32 (EMember (ECall (EMember (ENew (EVar "TextEncoder") []) "encode") [EVar "s"]) "length"))]
+
+    -- __entryArgEither: wraps one host-decoded argv string in Either
+    -- (StringTooLong | UnpairedUtf16Surrogate) String. Two checks: the length
+    -- cap, then strict UTF-16 surrogate pairing (JS strings allow unpaired
+    -- surrogates; Awsum 'String' is strict UTF-16, so the boundary validates).
+    entryArgEitherHelper =
+      SConst "__entryArgEither"
+        $ EArrow
+          ["arg"]
+          [ SIf (EBin BGt (EMember (EVar "arg") "length") (ENum 134217728)) [SReturn (leftV (rowOf stringTooLongRow (con0 ptSTL)))] [],
+            SFor
+              "i"
+              (ENum 0)
+              (EBin BLt (EVar "i") (EMember (EVar "arg") "length"))
+              (EUpdate UInc (EVar "i"))
+              [ SConst "c" (ECall (EMember (EVar "arg") "charCodeAt") [EVar "i"]),
+                SIf
+                  (EBin BAnd (EBin BGe (EVar "c") (EHex 0xD800)) (EBin BLe (EVar "c") (EHex 0xDBFF)))
+                  [ SIf (EBin BGe (EBin BAdd (EVar "i") (ENum 1)) (EMember (EVar "arg") "length")) [SReturn (leftV (rowOf unpairedSurrogateRow (con0 ptUS)))] [],
+                    SConst "next" (ECall (EMember (EVar "arg") "charCodeAt") [EBin BAdd (EVar "i") (ENum 1)]),
+                    SIf (EBin BOr (EBin BLt (EVar "next") (EHex 0xDC00)) (EBin BGt (EVar "next") (EHex 0xDFFF))) [SReturn (leftV (rowOf unpairedSurrogateRow (con0 ptUS)))] [],
+                    SExpr (EUpdate UInc (EVar "i"))
+                  ]
+                  [SIf (EBin BAnd (EBin BGe (EVar "c") (EHex 0xDC00)) (EBin BLe (EVar "c") (EHex 0xDFFF))) [SReturn (leftV (rowOf unpairedSurrogateRow (con0 ptUS)))] []]
+              ],
+            SReturn (rightV (EVar "arg"))
+          ]
+
+    -- __getArgs: reads 'process.argv.slice(2)' and builds an Awsum 'List
+    -- String', routing each element through '__entryArgEither' (all-or-nothing:
+    -- the first failing element short-circuits with its Left). Walked
+    -- right-to-left so the cons chain is built bottom-up without recursion.
+    getArgsHelper =
+      SConst "__getArgs"
+        $ EArrow
+          []
+          [ SConst "args" (ECall (EMember (EMember (EVar "process") "argv") "slice") [ENum 2]),
+            SLet "list" (Just (con0 ptNilTag)),
+            SFor
+              "i"
+              (EBin BSub (EMember (EVar "args") "length") (ENum 1))
+              (EBin BGe (EVar "i") (ENum 0))
+              (EUpdate UDec (EVar "i"))
+              [ SConst "v" (ECall (EVar "__entryArgEither") [EIndex (EVar "args") (EVar "i")]),
+                SIf (EBin BNeq (EIndex (EVar "v") (ENum 0)) ptR) [SReturn (EVar "v")] [],
+                SExpr (EAssign (EVar "list") (EArray [ptConsTag, EIndex (EVar "v") (ENum 1), EVar "list"]))
+              ],
+            SReturn (rightV (EVar "list"))
+          ]
+
+    -- __stdinReadAll: reads fd 0 to EOF and strict-UTF-8 decodes it via a fatal
+    -- TextDecoder (any RFC-3629 malformation → Left InvalidUtf8). 'ignoreBOM:
+    -- true' keeps a leading U+FEFF as data, matching the hand-written decoders.
+    -- A successful decode is then length-capped.
+    stdinReadAllStringHelper =
+      SConst "__stdinReadAll"
+        $ EArrow
+          []
+          [ SLet "s" Nothing,
+            STry
+              [SExpr (EAssign (EVar "s") (ECall (EMember (ENew (EVar "TextDecoder") [EStr "utf-8", EObject [("fatal", EBool True), ("ignoreBOM", EBool True)]]) "decode") [readStdin]))]
+              "e"
+              [SReturn (leftV (rowOf invalidUtf8Row (con0 ptIU)))],
+            SIf (EBin BGt (EMember (EVar "s") "length") (ENum 134217728)) [SReturn (leftV (rowOf stringTooLongRow (con0 ptSTL)))] [],
+            SReturn (rightV (EVar "s"))
+          ]
+
+    -- __stdinReadAllBytes: reads fd 0 to EOF and returns the raw bytes as a
+    -- 'List UInt8', built right-to-left. No decode, no error row.
+    stdinReadAllBytesHelper =
+      SConst "__stdinReadAllBytes"
+        $ EArrow
+          []
+          [ SConst "buf" readStdin,
+            SLet "list" (Just (con0 ptNilTag)),
+            SFor
+              "i"
+              (EBin BSub (EMember (EVar "buf") "length") (ENum 1))
+              (EBin BGe (EVar "i") (ENum 0))
+              (EUpdate UDec (EVar "i"))
+              [SExpr (EAssign (EVar "list") (EArray [ptConsTag, EIndex (EVar "buf") (EVar "i"), EVar "list"]))],
+            SReturn (EVar "list")
+          ]
+
+    -- require('fs').readFileSync(0) — blocking read of fd 0 to EOF.
+    readStdin = ECall (EMember (ECall (EVar "require") [EStr "fs"]) "readFileSync") [ENum 0]
+
+-- | Integer-range coercions, as the JS engines define them: signed 32-bit via
+--   @| 0@, unsigned 8-bit via @& 0xFF@, unsigned 32-bit via @>>> 0@.
+i32, u8, u32 :: JsExpr -> JsExpr
+i32 e = EBin BBitOr e (ENum 0)
+u8 e = EBin BBitAnd e (EHex 255)
+u32 e = EBin BUShr e (ENum 0)
+
+-- | Node-only runner for CLI scripts: when run as a script (not @require@-d),
+--   walk @main@'s IO tree for effects. Works inside the IIFE because
+--   @require@\/@module@ are closed over from Node's module wrapper.
+cliFooter :: [JsStmt]
+cliFooter =
+  [ SIf
+      (EBin BAnd (EBin BNeq (EUnary UTypeof (EVar "require")) (EStr "undefined")) (EBin BEq (EMember (EVar "require") "main") (EVar "module")))
+      [SIf (EBin BNeq (EUnary UTypeof (EVar "main")) (EStr "undefined")) [SExpr (ECall (EVar "v_runIO") [EVar "main"])] []]
+      []
+  ]
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Declarations
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | A top-level declaration becomes a @const@ binding: a 'CFunDef' is an arrow
+--   closure (its 'CLoop' body, the output of TCO, becomes a @while (true)@
+--   loop whose 'CContinue's rebind the parameters and @continue@); a 'CValDef'
+--   is a plain value.
+declStmt :: CDecl -> JsStmt
+declStmt = \case
+  CFunDef nm args (CLoop body) -> SConst (mangle nm) (EArrow (map mangle args) [SWhileTrue (stmtBody args body)])
+  CFunDef nm args body -> SConst (mangle nm) (EArrow (map mangle args) (stmtBody args body))
+  CValDef nm rhs -> SConst (mangle nm) (exprE rhs)
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Statement-form bodies (tail position)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Emit a function body in tail position as a list of statements. Threads a
+--   @pending@ stack of 'CDrop'-named parameters, drained at every terminator:
+--   a param dropped at a value tail is nulled after the value is captured (a
+--   managed-GC early root snip — a JS variable is a GC root until reassigned);
+--   a param a 'CContinue' rebinds needs no null (the rebind is the snip, and
+--   nothing allocates between). 'CDrop' on a 'CCase' arm-binder is a no-op:
+--   those are @const@, block-scoped, and collected when the arm closes.
+stmtBody :: [Name] -> CExpr -> [JsStmt]
+stmtBody params = go []
+  where
+    go :: [Name] -> CExpr -> [JsStmt]
     go pending = \case
       CContinue newArgs ->
         let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
-            -- A param this 'CContinue' rebinds needs no null-out:
-            -- 'assignLines' overwrites the slot a few statements later
-            -- with nothing allocating in between, so its old graph is
-            -- already unreachable on the next iteration. Drops on binders
-            -- not rebound here still null.
-            dropsNotRebound = filter (`notElem` params) pending
-            declLines =
-              [ "    const " <> t <> " = " <> emitExpr a <> ";"
-              | (t, a) <- zip temps newArgs
-              ]
-            freeLines =
-              [ "    " <> mangle n <> " = null;"
-              | n <- dropsNotRebound,
-                isParam n
-              ]
-            assignLines =
-              [ "    " <> mangle p <> " = " <> t <> ";"
-              | (p, t) <- zip params temps
-              ]
-         in unlines (declLines <> freeLines <> assignLines <> ["    continue;"])
+            decls = [SConst t (exprE a) | (t, a) <- zip temps newArgs]
+            assigns = [SExpr (EAssign (EVar (mangle p)) (EVar t)) | (p, t) <- zip params temps]
+         in decls <> assigns <> [SContinue]
       CCase scrut alts ->
-        "    {\n      const __s = "
-          <> emitExpr scrut
-          <> ";\n      switch (__s[0]) {\n"
-          <> T.concat (map (emitStmtAlt pending) alts)
-          <> "      }\n    }\n"
+        [SBlock (SConst "__s" (exprE scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (map (stmtAlt pending) alts)])]
       CRowCase scrut alts ->
-        "    {\n      const __s = "
-          <> emitExpr scrut
-          <> ";\n      switch (__s[0]) {\n"
-          <> T.concat (map (emitStmtRowAlt pending) alts)
-          <> "      }\n    }\n"
-      -- Push the drop onto 'pending'; drain at the next terminator.
+        [SBlock (SConst "__s" (exprE scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (map (stmtRowAlt pending) alts)])]
       CDrop _ n body -> go (n : pending) body
       e ->
-        let valExpr = emitExpr e
-            paramPending = filter isParam pending
+        let paramPending = filter (`elem` params) pending
          in if null paramPending
-              then "    return " <> valExpr <> ";\n"
-              else
-                "    {\n"
-                  <> "      const __d = "
-                  <> valExpr
-                  <> ";\n"
-                  <> T.concat ["      " <> mangle n <> " = null;\n" | n <- paramPending]
-                  <> "      return __d;\n"
-                  <> "    }\n"
+              then [SReturn (exprE e)]
+              else [SBlock (SConst "__d" (exprE e) : [SExpr (EAssign (EVar (mangle n)) ENull) | n <- paramPending] <> [SReturn (EVar "__d")])]
 
-    emitStmtAlt :: [Name] -> (Int, [Name], CExpr) -> Text
-    emitStmtAlt pending (tag, vars, body) =
-      let bindings =
-            T.concat
-              [ "          const " <> mangle v <> " = __s[" <> show (i :: Int) <> "];\n"
-              | (v, i) <- zip vars [1 ..]
-              ]
-       in "        case "
-            <> show tag
-            <> ": {\n"
-            <> bindings
-            <> reindentStmt (go pending body)
-            <> "        }\n"
+    stmtAlt :: [Name] -> (Int, [Name], CExpr) -> (Integer, [JsStmt])
+    stmtAlt pending (tag, vars, body) =
+      let binds = [SConst (mangle v) (EIndex (EVar "__s") (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..]]
+       in (toInteger tag, binds <> go pending body)
 
-    emitStmtRowAlt :: [Name] -> (Word32, Name, CExpr) -> Text
-    emitStmtRowAlt pending (tag, var, body) =
-      "        case "
-        <> show tag
-        <> ": {\n"
-        <> "          const "
-        <> mangle var
-        <> " = __s[1];\n"
-        <> reindentStmt (go pending body)
-        <> "        }\n"
+    stmtRowAlt :: [Name] -> (Word32, Name, CExpr) -> (Integer, [JsStmt])
+    stmtRowAlt pending (tag, var, body) =
+      (toInteger tag, SConst (mangle var) (EIndex (EVar "__s") (ENum 1)) : go pending body)
 
-    -- 'emitStmt' produces lines indented for @while (true)@ depth (4 spaces).
-    -- Inside a @case@ we want them two levels deeper (10 spaces), so bump
-    -- each non-empty line by 6 spaces without touching blank ones.
-    reindentStmt :: Text -> Text
-    reindentStmt = unlines . map bump . lines
-      where
-        bump l = if T.null (T.strip l) then l else "      " <> l
+-- ════════════════════════════════════════════════════════════════════════════
+-- Expression-form
+-- ════════════════════════════════════════════════════════════════════════════
 
--- | Expressions:
---   • 'CBuiltIn' is never a standalone value — it only appears in the callee of 'CCall'.
---   • 'IO.Stdout.print' turns into '__print(x)'.
---   • 'BuiltIn.concatString' turns into '(a + b)'.
---   • Generic calls: '(callee)(args...)' — we parenthesize the callee to be safe.
-emitExpr :: CExpr -> Text
-emitExpr = \case
-  CString s -> jsString s
-  CVar n -> mangle n
-  -- Int32: coerce to signed 32-bit via '|0' so later operations match semantics.
-  -- UInt8: mask to 0..255 range so it behaves like the declared type, not a
-  -- free-floating JS Number.
-  CIntLit n TInt32 -> "(" <> show n <> "|0)"
-  CIntLit n TUInt8 -> "(" <> show n <> " & 0xFF)"
-  -- UInt32: '>>> 0' coerces to unsigned 32-bit so values up to
-  -- 4294967295 are preserved (where '|0' would wrap them to signed).
-  CIntLit n TUInt32 -> "(" <> show n <> " >>> 0)"
-  CBuiltIn n -> "/*<builtin " <> n <> ">*/" -- invariant: not a standalone term
-  CCon tag fields ->
-    "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
-  -- Row-tagged value: same `[tag, value]` array layout as a one-field
-  -- 'CCon', so a single 'switch (s[0])' shape serves both kinds of
-  -- dispatch. Hash tags are 32-bit while constructor tags are small
-  -- non-negative integers, so the two namespaces don't collide in
-  -- practice.
-  CRow tag v ->
-    "[" <> show tag <> ", " <> emitExpr v <> "]"
-  -- Liveness annotation; backends treat as a transparent wrapper
-  -- since the managed GC handles reclaim.
-  CDrop _ _ body -> emitExpr body
-  -- Cell reuse. In-place mutation of the JS array at
-  -- @n@: assign each slot then return the array. Emitted as a
-  -- single comma expression so the whole construct is still a
-  -- value-producing JS expression usable in any argument position.
-  --
-  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
-  -- equals the matched arm's pattern arity, so the array has at
-  -- least @1 + length fields@ slots.
+exprE :: CExpr -> JsExpr
+exprE = \case
+  CString s -> EStr s
+  CVar n -> EVar (mangle n)
+  CIntLit n TInt32 -> i32 (ENum n)
+  CIntLit n TUInt8 -> u8 (ENum n)
+  CIntLit n TUInt32 -> u32 (ENum n)
+  CBuiltIn n -> error ("JS codegen: CBuiltIn '" <> n <> "' in term position (invariant: only in CCall callee)")
+  CCon tag fields -> EArray (ENum (toInteger tag) : map exprE fields)
+  CRow tag v -> EArray [ENum (toInteger tag), exprE v]
+  CDrop _ _ body -> exprE body
   CReuse n tag fields ->
     let v = mangle n
-        tagStore = v <> "[0] = " <> show tag
-        fieldStores =
-          [v <> "[" <> show (i :: Int) <> "] = " <> emitExpr fld | (fld, i) <- zip fields [1 ..]]
-     in "(" <> T.intercalate ", " (tagStore : fieldStores <> [v]) <> ")"
-  CCase scrut alts ->
-    "((s) => { switch(s[0]) { "
-      <> T.intercalate " " (map emitAlt alts)
-      <> " } })("
-      <> emitExpr scrut
-      <> ")"
-  CRowCase scrut alts ->
-    "((s) => { switch(s[0]) { "
-      <> T.intercalate " " (map emitRowAlt alts)
-      <> " } })("
-      <> emitExpr scrut
-      <> ")"
-  CCall f xs ->
-    case f of
-      -- Internal print primitive used by the prelude's `runIO`. Returns
-      -- the Unit constructor `[0]` so the surrounding `case … of Unit ->
-      -- next` arm dispatches through the standard tag check. Not exposed
-      -- to user code (no prelude alias); this is a privileged channel
-      -- between `runIO` and the host stdout.
-      CBuiltIn "internalStdoutPrint" ->
-        case xs of
-          [x] -> "__print(" <> emitExpr x <> ")"
-          _ -> error "__print: arity mismatch"
-      CBuiltIn "internalGetArgs" ->
-        case xs of
-          [] -> "__getArgs()"
-          _ -> error "__getArgs: arity mismatch"
-      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAllString' arm:
-      -- consumes stdin and strict-UTF-8 decodes it (see '__stdinReadAll').
-      CBuiltIn "internalStdinReadAllString" ->
-        case xs of
-          [] -> "__stdinReadAll()"
-          _ -> error "__stdinReadAll: arity mismatch"
-      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAllBytes' arm:
-      -- consumes stdin and returns the raw bytes as 'List UInt8'.
-      CBuiltIn "internalStdinReadAllBytes" ->
-        case xs of
-          [] -> "__stdinReadAllBytes()"
-          _ -> error "__stdinReadAllBytes: arity mismatch"
-      CBuiltIn name
-        | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
-            case xs of
-              [x] -> "String(" <> emitExpr x <> ")"
-              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
-      CBuiltIn "byteToHexStringNoPrefix" ->
-        case xs of
-          [x] -> "(" <> emitExpr x <> ").toString(16).padStart(2, \"0\")"
-          _ -> error "BuiltIn.byteToHexStringNoPrefix: arity mismatch"
-      CBuiltIn "predInt32" ->
-        case xs of
-          [x] -> "__predInt32(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.predInt32: arity mismatch"
-      CBuiltIn "predUInt8" ->
-        case xs of
-          [x] -> "__predUInt8(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.predUInt8: arity mismatch"
-      CBuiltIn "predUInt32" ->
-        case xs of
-          [x] -> "__predUInt32(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.predUInt32: arity mismatch"
-      CBuiltIn "succInt32" ->
-        case xs of
-          [x] -> "__succInt32(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.succInt32: arity mismatch"
-      CBuiltIn "succUInt8" ->
-        case xs of
-          [x] -> "__succUInt8(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.succUInt8: arity mismatch"
-      CBuiltIn "succUInt32" ->
-        case xs of
-          [x] -> "__succUInt32(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.succUInt32: arity mismatch"
-      CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString" ->
-            case xs of
-              [a, b] ->
-                let fn = case name of
-                      "eqInt32" -> "__eqInt32"
-                      "eqUInt8" -> "__eqUInt8"
-                      "eqUInt32" -> "__eqUInt32"
-                      _ -> "__eqString"
-                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
-              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
-      CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32" ->
-            case xs of
-              [a, b] ->
-                let fn = case name of
-                      "addInt32" -> "__addInt32"
-                      "addUInt8" -> "__addUInt8"
-                      "addUInt32" -> "__addUInt32"
-                      "subInt32" -> "__subInt32"
-                      "subUInt8" -> "__subUInt8"
-                      "subUInt32" -> "__subUInt32"
-                      "mulInt32" -> "__mulInt32"
-                      "mulUInt32" -> "__mulUInt32"
-                      _ -> "__mulUInt8"
-                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
-              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
-      CBuiltIn "negInt32" ->
-        case xs of
-          [x] -> "__negInt32(" <> emitExpr x <> ")"
-          _ -> error "BuiltIn.negInt32: arity mismatch"
-      CBuiltIn "concatString" ->
-        case xs of
-          [a, b] -> "__concat(" <> emitExpr a <> ", " <> emitExpr b <> ")"
-          _ -> error "BuiltIn.concatString: arity mismatch"
-      CBuiltIn "splitOnFirst" ->
-        case xs of
-          [a, b] -> "__splitOnFirst(" <> emitExpr a <> ", " <> emitExpr b <> ")"
-          _ -> error "BuiltIn.splitOnFirst: arity mismatch"
-      CBuiltIn name
-        | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32" ->
-            case xs of
-              [a] ->
-                let fn = case name of
-                      "parseInt32" -> "__parseInt32"
-                      "parseUInt8" -> "__parseUInt8"
-                      _ -> "__parseUInt32"
-                 in fn <> "(" <> emitExpr a <> ")"
-              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
-      CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
-            case xs of
-              [a] ->
-                let fn = case name of
-                      "lengthCodePoints" -> "__lengthCodePoints"
-                      "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                      _ -> "__lengthUtf8Bytes"
-                 in fn <> "(" <> emitExpr a <> ")"
-              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
-      CBuiltIn n ->
-        error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
-      _ ->
-        "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
-  -- 'CLoop' / 'CContinue' should only appear at function-body-tail and
-  -- inside a 'CLoop' body respectively; the tail walker in 'emitFun'
-  -- handles those positions directly. Hitting either here signals a
-  -- pipeline bug, so crash loudly.
+        tagStore = EAssign (EIndex (EVar v) (ENum 0)) (ENum (toInteger tag))
+        fieldStores = [EAssign (EIndex (EVar v) (ENum (toInteger i))) (exprE fld) | (fld, i) <- zip fields [1 :: Int ..]]
+     in ESeq (tagStore : fieldStores <> [EVar v])
+  CCase scrut alts -> exprCall (map exprAlt alts) scrut
+  CRowCase scrut alts -> exprCall (map exprRowAlt alts) scrut
+  CCall f xs -> callExpr f xs
   CLoop _ -> error "JS codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
   CContinue _ -> error "JS codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
   where
-    emitAlt (tag, vars, body) =
-      let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]
-       in "case " <> show tag <> ": {" <> bindings <> " return " <> emitExpr body <> "; }"
+    -- An expression-position case dispatches through an immediately-invoked
+    -- arrow whose @switch@ arms @return@ directly: @((s) => { switch (s[0]) {
+    -- … } })(scrut)@.
+    exprCall :: [(Integer, [JsStmt])] -> CExpr -> JsExpr
+    exprCall cases scrut =
+      ECall (EArrow ["s"] [SSwitch (EIndex (EVar "s") (ENum 0)) cases]) [exprE scrut]
 
-    emitRowAlt :: (Word32, Name, CExpr) -> Text
-    emitRowAlt (tag, var, body) =
-      "case " <> show tag <> ": { const " <> mangle var <> " = s[1]; return " <> emitExpr body <> "; }"
+    exprAlt :: (Int, [Name], CExpr) -> (Integer, [JsStmt])
+    exprAlt (tag, vars, body) =
+      let binds = [SConst (mangle v) (EIndex (EVar "s") (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..]]
+       in (toInteger tag, binds <> [SReturn (exprE body)])
 
--- | Encode a Haskell 'Text' as a JavaScript string literal with escapes.
---   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0
---   (If you ever embed scripts into HTML, consider also escaping U+2028/U+2029.)
-jsString :: Text -> Text
-jsString = \t -> "\"" <> T.concatMap esc t <> "\""
+    exprRowAlt :: (Word32, Name, CExpr) -> (Integer, [JsStmt])
+    exprRowAlt (tag, var, body) =
+      (toInteger tag, [SConst (mangle var) (EIndex (EVar "s") (ENum 1)), SReturn (exprE body)])
+
+-- | A 'CCall'. A 'CBuiltIn' callee dispatches to its runtime helper (or an
+--   inlined form); any other callee is an ordinary application.
+callExpr :: CExpr -> [CExpr] -> JsExpr
+callExpr f xs = case f of
+  CBuiltIn "internalStdoutPrint" -> unary "__print"
+  CBuiltIn "internalGetArgs" -> nullaryCall "__getArgs"
+  CBuiltIn "internalStdinReadAllString" -> nullaryCall "__stdinReadAll"
+  CBuiltIn "internalStdinReadAllBytes" -> nullaryCall "__stdinReadAllBytes"
+  CBuiltIn name
+    | name `elem` ["showInt32", "showUInt8", "showUInt32"] -> case xs of
+        [x] -> ECall (EVar "String") [exprE x]
+        _ -> arityError name
+  CBuiltIn "byteToHexStringNoPrefix" -> case xs of
+    [x] -> ECall (EMember (ECall (EMember (exprE x) "toString") [ENum 16]) "padStart") [ENum 2, EStr "0"]
+    _ -> arityError "byteToHexStringNoPrefix"
+  CBuiltIn "predInt32" -> unary "__predInt32"
+  CBuiltIn "predUInt8" -> unary "__predUInt8"
+  CBuiltIn "predUInt32" -> unary "__predUInt32"
+  CBuiltIn "succInt32" -> unary "__succInt32"
+  CBuiltIn "succUInt8" -> unary "__succUInt8"
+  CBuiltIn "succUInt32" -> unary "__succUInt32"
+  CBuiltIn "negInt32" -> unary "__negInt32"
+  CBuiltIn name
+    | name `elem` ["eqInt32", "eqUInt8", "eqUInt32", "eqString"] -> binary (helperFor name)
+  CBuiltIn name
+    | name `elem` ["addInt32", "addUInt8", "addUInt32", "subInt32", "subUInt8", "subUInt32", "mulInt32", "mulUInt8", "mulUInt32"] -> binary (helperFor name)
+  CBuiltIn "concatString" -> binary "__concat"
+  CBuiltIn "splitOnFirst" -> binary "__splitOnFirst"
+  CBuiltIn name
+    | name `elem` ["parseInt32", "parseUInt8", "parseUInt32"] -> unary (helperFor name)
+  CBuiltIn name
+    | name `elem` ["lengthCodePoints", "lengthUtf16CodeUnits", "lengthUtf8Bytes"] -> unary (helperFor name)
+  CBuiltIn n -> error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
+  _ -> ECall (exprE f) (map exprE xs)
   where
-    esc c = case c of
-      '\n' -> "\\n"
-      '\t' -> "\\t"
-      '\r' -> "\\r"
-      '\"' -> "\\\""
-      '\\' -> "\\\\"
-      '\0' -> "\\0"
-      _ -> one c
+    -- 'CBuiltIn' name → its '__'-prefixed runtime helper.
+    helperFor :: Text -> Text
+    helperFor n = "__" <> n
 
--- | Simple name mangling:
---   • keep 'main' unchanged (needed by the runner),
---   • otherwise prefix with 'v_' and replace non [A-Za-z0-9_'] with '_'.
-mangle :: Text -> Text
+    arityError :: Text -> a
+    arityError n = error ("BuiltIn." <> n <> ": arity mismatch")
+
+    nullaryCall :: Text -> JsExpr
+    nullaryCall fn = case xs of
+      [] -> ECall (EVar fn) []
+      _ -> error (fn <> ": arity mismatch")
+
+    unary :: Text -> JsExpr
+    unary fn = case xs of
+      [x] -> ECall (EVar fn) [exprE x]
+      _ -> error (fn <> ": arity mismatch")
+
+    binary :: Text -> JsExpr
+    binary fn = case xs of
+      [a, b] -> ECall (EVar fn) [exprE a, exprE b]
+      _ -> error (fn <> ": arity mismatch")
+
+-- | Name mangling: keep @main@ unchanged (needed by the runner); otherwise
+--   prefix with @v_@ and replace any non @[A-Za-z0-9_']@ character with @_@.
+mangle :: Name -> Text
 mangle t
   | t == "main" = "main"
-  | otherwise =
-      let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-          body = T.map (\c -> if ok c then c else '_') t
-       in "v_" <> body
+  | otherwise = "v_" <> T.map (\c -> if ok c then c else '_') t
+  where
+    ok c = Char.isAlphaNum c || c == '_' || c == '\''

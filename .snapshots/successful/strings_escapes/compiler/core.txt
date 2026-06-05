@@ -41,7 +41,7 @@ CoreProgram
         , CValDef "main"
             ( CCon 7
                 [ CString "BS=\ DQ=" CR=\xd LF=
-                   TAB=\x9 NUL=\x0 end"
+                   TAB=\x9 NUL=\x0 NUL7=\x07 end"
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

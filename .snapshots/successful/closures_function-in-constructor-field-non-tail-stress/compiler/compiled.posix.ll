@@ -557,7 +557,7 @@ case.end.4.31:
 case.default.12:
   unreachable
 case.join.13:
-  %t47 = phi ptr [%t18, %case.end.3.15], [%t34, %case.end.4.31]
+  %t47 = phi ptr [ %t18, %case.end.3.15 ], [ %t34, %case.end.4.31 ]
   call void @__free_recursive(ptr %t8)
   ret ptr %t47
 }

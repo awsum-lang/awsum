@@ -9,49 +9,55 @@ Program
          TAB / NUL characters that look unusual in text editors). The NUL
          case in particular verifies that strings are length-prefixed end-to-
          end on every backend — including LLVM and WASM, which moved off
-         C-style null-terminated layout. "
+         C-style null-terminated layout.
+
+         `\0` is exercised twice: before a space, and immediately before a digit
+         (`\07`). The second pins that a NUL adjacent to a digit stays one NUL byte
+         on every backend — on JS the NUL must use a fixed-length Unicode escape
+         (U+0000), since the short escape before a digit would be a strict-mode
+         octal escape. "
     , imports =
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 15
+            { spanStartLine = 21
             , spanStartCol = 1
-            , spanEndLine = 15
+            , spanEndLine = 21
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 15
+                { spanStartLine = 21
                 , spanStartCol = 8
-                , spanEndLine = 15
+                , spanEndLine = 21
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 15
+                    { spanStartLine = 21
                     , spanStartCol = 8
-                    , spanEndLine = 15
+                    , spanEndLine = 21
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 21
                         , spanStartCol = 8
-                        , spanEndLine = 15
+                        , spanEndLine = 21
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 21
                         , spanStartCol = 11
-                        , spanEndLine = 15
+                        , spanEndLine = 21
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -59,9 +65,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 15
+                    { spanStartLine = 21
                     , spanStartCol = 17
-                    , spanEndLine = 15
+                    , spanEndLine = 21
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -69,25 +75,25 @@ Program
         ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 16
+                { spanStartLine = 22
                 , spanStartCol = 1
-                , spanEndLine = 16
-                , spanEndCol = 67
+                , spanEndLine = 22
+                , spanEndCol = 76
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 16
+                    { spanStartLine = 22
                     , spanStartCol = 8
-                    , spanEndLine = 16
-                    , spanEndCol = 67
+                    , spanEndLine = 22
+                    , spanEndCol = 76
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 16
+                        { spanStartLine = 22
                         , spanStartCol = 8
-                        , spanEndLine = 16
+                        , spanEndLine = 22
                         , spanEndCol = 24
                         }
                     )
@@ -99,14 +105,14 @@ Program
                 )
                 ( ELit
                     ( SrcSpan
-                        { spanStartLine = 16
+                        { spanStartLine = 22
                         , spanStartCol = 24
-                        , spanEndLine = 16
-                        , spanEndCol = 67
+                        , spanEndLine = 22
+                        , spanEndCol = 76
                         }
                     )
                     ( LString "BS=\ DQ=" CR=\xd LF=
-                     TAB=\x9 NUL=\x0 end" )
+                     TAB=\x9 NUL=\x0 NUL7=\x07 end" )
                 )
             ) Nothing Nothing
         ]

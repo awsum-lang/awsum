@@ -8,9 +8,15 @@
    TAB / NUL characters that look unusual in text editors). The NUL
    case in particular verifies that strings are length-prefixed end-to-
    end on every backend — including LLVM and WASM, which moved off
-   C-style null-terminated layout. -}
+   C-style null-terminated layout.
+
+   `\0` is exercised twice: before a space, and immediately before a digit
+   (`\07`). The second pins that a NUL adjacent to a digit stays one NUL byte
+   on every backend — on JS the NUL must use a fixed-length Unicode escape
+   (U+0000), since the short escape before a digit would be a strict-mode
+   octal escape. -}
 
 import IO.Stdout
 
 main : IO Never Unit
-main = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end"
+main = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 NUL7=\07 end"

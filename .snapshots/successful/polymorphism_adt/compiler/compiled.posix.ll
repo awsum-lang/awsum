@@ -216,7 +216,7 @@ case.end.24.14:
 case.default.11:
   unreachable
 case.join.12:
-  %t17 = phi ptr [%t16, %case.end.24.14]
+  %t17 = phi ptr [ %t16, %case.end.24.14 ]
   call void @__free_recursive(ptr %t7)
   %t18 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t17, ptr %t18

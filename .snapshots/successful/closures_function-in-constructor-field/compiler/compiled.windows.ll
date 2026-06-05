@@ -173,7 +173,7 @@ ok:
   store ptr %buf, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %too_long], [%right, %ok]
+  %result = phi ptr [ %left, %too_long ], [ %right, %ok ]
   call void @__free_recursive(ptr %a)
   call void @__free_recursive(ptr %b)
   ret ptr %result
@@ -242,7 +242,7 @@ ok:
   store ptr %box, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %err], [%right, %ok]
+  %result = phi ptr [ %left, %err ], [ %right, %ok ]
   call void @__free_recursive(ptr %pa)
   call void @__free_recursive(ptr %pb)
   ret ptr %result
@@ -476,7 +476,7 @@ case.end.4.72:
 case.default.57:
   unreachable
 case.join.58:
-  %t77 = phi ptr [%t63, %case.end.3.60], [%t76, %case.end.4.72]
+  %t77 = phi ptr [ %t63, %case.end.3.60 ], [ %t76, %case.end.4.72 ]
   call void @__free_recursive(ptr %t53)
   br label %case.end.4.49
 case.end.4.49:
@@ -484,7 +484,7 @@ case.end.4.49:
 case.default.38:
   unreachable
 case.join.39:
-  %t78 = phi ptr [%t44, %case.end.3.41], [%t77, %case.end.4.49]
+  %t78 = phi ptr [ %t44, %case.end.3.41 ], [ %t77, %case.end.4.49 ]
   call void @__free_recursive(ptr %t34)
   br label %case.end.4.23
 case.end.4.23:
@@ -492,7 +492,7 @@ case.end.4.23:
 case.default.12:
   unreachable
 case.join.13:
-  %t79 = phi ptr [%t18, %case.end.3.15], [%t78, %case.end.4.23]
+  %t79 = phi ptr [ %t18, %case.end.3.15 ], [ %t78, %case.end.4.23 ]
   call void @__free_recursive(ptr %t8)
   ret ptr %t79
 }
@@ -557,7 +557,7 @@ case.end.4.23:
 case.default.4:
   unreachable
 case.join.5:
-  %t38 = phi ptr [%t10, %case.end.3.7], [%t26, %case.end.4.23]
+  %t38 = phi ptr [ %t10, %case.end.3.7 ], [ %t26, %case.end.4.23 ]
   call void @__free_recursive(ptr %t0)
   ret ptr %t38
 }

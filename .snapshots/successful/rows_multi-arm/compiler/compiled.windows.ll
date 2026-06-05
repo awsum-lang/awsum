@@ -175,7 +175,7 @@ ok:
   store ptr %buf, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %too_long], [%right, %ok]
+  %result = phi ptr [ %left, %too_long ], [ %right, %ok ]
   call void @__free_recursive(ptr %a)
   call void @__free_recursive(ptr %b)
   ret ptr %result
@@ -500,7 +500,7 @@ case.end.4.125:
 case.default.114:
   unreachable
 case.join.115:
-  %t129 = phi ptr [%t120, %case.end.3.117], [%t128, %case.end.4.125]
+  %t129 = phi ptr [ %t120, %case.end.3.117 ], [ %t128, %case.end.4.125 ]
   call void @__free_recursive(ptr %t110)
   br label %case.end.4.107
 case.end.4.107:
@@ -508,7 +508,7 @@ case.end.4.107:
 case.default.96:
   unreachable
 case.join.97:
-  %t130 = phi ptr [%t102, %case.end.3.99], [%t129, %case.end.4.107]
+  %t130 = phi ptr [ %t102, %case.end.3.99 ], [ %t129, %case.end.4.107 ]
   call void @__free_recursive(ptr %t92)
   br label %case.end.4.89
 case.end.4.89:
@@ -516,7 +516,7 @@ case.end.4.89:
 case.default.78:
   unreachable
 case.join.79:
-  %t131 = phi ptr [%t84, %case.end.3.81], [%t130, %case.end.4.89]
+  %t131 = phi ptr [ %t84, %case.end.3.81 ], [ %t130, %case.end.4.89 ]
   call void @__free_recursive(ptr %t74)
   br label %case.end.4.71
 case.end.4.71:
@@ -524,7 +524,7 @@ case.end.4.71:
 case.default.60:
   unreachable
 case.join.61:
-  %t132 = phi ptr [%t66, %case.end.3.63], [%t131, %case.end.4.71]
+  %t132 = phi ptr [ %t66, %case.end.3.63 ], [ %t131, %case.end.4.71 ]
   call void @__free_recursive(ptr %t56)
   br label %case.end.4.49
 case.end.4.49:
@@ -532,7 +532,7 @@ case.end.4.49:
 case.default.38:
   unreachable
 case.join.39:
-  %t133 = phi ptr [%t44, %case.end.3.41], [%t132, %case.end.4.49]
+  %t133 = phi ptr [ %t44, %case.end.3.41 ], [ %t132, %case.end.4.49 ]
   call void @__free_recursive(ptr %t34)
   br label %case.end.4.23
 case.end.4.23:
@@ -540,7 +540,7 @@ case.end.4.23:
 case.default.12:
   unreachable
 case.join.13:
-  %t134 = phi ptr [%t18, %case.end.3.15], [%t133, %case.end.4.23]
+  %t134 = phi ptr [ %t18, %case.end.3.15 ], [ %t133, %case.end.4.23 ]
   call void @__free_recursive(ptr %t8)
   ret ptr %t134
 }
