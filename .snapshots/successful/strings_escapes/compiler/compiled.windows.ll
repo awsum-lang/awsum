@@ -121,7 +121,7 @@ done:
   ret void
 }
 
-@.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [35 x i8]} { i32 0, i32 0, i32 0, i32 35, i32 35, [35 x i8] c"BS=\5C DQ=\22 CR=\0D LF=\0A TAB=\09 NUL=\00 end" }
+@.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [43 x i8]} { i32 0, i32 0, i32 0, i32 43, i32 43, [43 x i8] c"BS=\5C DQ=\22 CR=\0D LF=\0A TAB=\09 NUL=\00 NUL7=\007 end" }
 
 define internal ptr @__print(ptr %s) {
   %byte_count = load i32, ptr %s

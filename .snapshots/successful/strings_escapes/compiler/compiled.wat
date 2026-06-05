@@ -8,12 +8,12 @@
   (import "wasi_snapshot_preview1" "fd_read" (func $fd_read (param i32 i32 i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 139))
+  (global $heap (mut i32) (i32.const 147))
   (global $__wl_buf (mut i32) (i32.const 0))
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
-  (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\23\00\00\00\23\00\00\00BS=\\ DQ=\22 CR=\0d LF=\0a TAB=\09 NUL=\00 end")
+  (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\2b\00\00\00\2b\00\00\00BS=\\ DQ=\22 CR=\0d LF=\0a TAB=\09 NUL=\00 NUL7=\007 end")
   (table 1 funcref)
   (elem (i32.const 0) $v_runIO)
 

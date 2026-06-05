@@ -337,7 +337,7 @@ vsepHard = concatWith (\a b -> a <> hardline <> b)
 hexLit :: Integer -> Doc ann
 hexLit n = "0x" <> pretty (T.toUpper (toText (showHex n "")))
 
--- | A double-quoted JS string literal; escapes mirror the parser\/formatter.
+-- | A double-quoted JS string literal; the escaped characters mirror the parser's.
 jsString :: Text -> Doc ann
 jsString t = dquotes (pretty (T.concatMap esc t))
   where
@@ -348,5 +348,8 @@ jsString t = dquotes (pretty (T.concatMap esc t))
       '\r' -> "\\r"
       '"' -> "\\\""
       '\\' -> "\\\\"
-      '\0' -> "\\0"
+      -- Fixed-length Unicode escape (U+0000), not \0: under "use strict" a \0 immediately
+      -- followed by a decimal digit is a legacy octal escape (a SyntaxError).
+      -- \u consumes exactly four hex digits, so a following digit stays a separate character.
+      '\0' -> "\\u0000"
       c -> one c

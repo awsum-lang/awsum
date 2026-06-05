@@ -13,6 +13,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 - **WAT output (`awsum asm -t wasm` and the WASM codegen) now indents each function body to reflect `block`/`loop`/`if` nesting** — `end` closes a level, `else` sits at the enclosing one — instead of a flat 4-space listing. WAT whitespace is insignificant, so the assembled `.wasm` and program output are unchanged; this is legibility only.
 - **JS output (`awsum build -t js`) is now built from a typed JS AST rendered with `prettyprinter`, instead of hand-rolled string concatenation, and is consistently indented.** Everything in the emitted file — the runtime helpers, the user/prelude declarations, and the IIFE wrapper — flows through the AST, so the previously dense one-line expression-form `case` dispatches (up to ~8.6 KB on a single line) now read as nested blocks. Program output is unchanged — identical stdout across all five backends is verified on every commit; this is legibility plus codegen coherence (the byte backends already build a typed spec before projecting it).
 
+### Fixed
+
+- **JS backend: a NUL (`\0`) immediately followed by a decimal digit in a string literal no longer emits invalid JavaScript.** The NUL was written as `\0`, so `\0` plus a digit formed a legacy octal escape — a `SyntaxError` under `"use strict"` that made the program fail to run on the JS target while every other backend printed the bytes. NUL is now emitted as a fixed-length Unicode escape (U+0000).
+
 ## [0.0.6] - 2026-06-03
 
 ### Added

@@ -34,7 +34,11 @@
     }
   };
 
-  const main = [7, "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end", [5, [0]]];
+  const main = [
+    7,
+    "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\u0000 NUL7=\u00007 end",
+    [5, [0]]
+  ];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

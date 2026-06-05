@@ -88,7 +88,7 @@
     stelem.ref
     ldloc.0
     ldc.i4.1
-    ldstr "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\NUL end"
+    ldstr "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\NUL NUL7=\NUL7 end"
     stelem.ref
     ldloc.0
     ldc.i4.2
