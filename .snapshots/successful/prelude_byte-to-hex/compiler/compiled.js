@@ -1,37 +1,44 @@
 "use strict";
-(function () {
-function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [19]] : [4, a + b]; }
 
-const v_runIO = (v_io) => {
-  while (true) {
-    {
-      const __s = v_io;
-      switch (__s[0]) {
-        case 5: {
-          const v_u = __s[1];
-          return v_u;
-        }
-        case 7: {
-          const v_s = __s[1];
-          const v_next = __s[2];
-          {
-            const __s = __print(v_s);
-            switch (__s[0]) {
-              case 0: {
-                const __t0 = v_next;
-                v_io = __t0;
-                continue;
+(() => {
+  const __print = (s) => {
+    process.stdout.write(String(s));
+    return [0];
+  };
+
+  const __concat = (a, b) => {
+    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
+  };
+
+  const v_runIO = (v_io) => {
+    while (true) {
+      {
+        const __s = v_io;
+        switch (__s[0]) {
+          case 5: {
+            const v_u = __s[1];
+            return v_u;
+          }
+          case 7: {
+            const v_s = __s[1];
+            const v_next = __s[2];
+            {
+              const __s = __print(v_s);
+              switch (__s[0]) {
+                case 0: {
+                  const __t0 = v_next;
+                  v_io = __t0;
+                  continue;
+                }
               }
             }
           }
         }
       }
     }
-  }
-};
+  };
 
-const v__lift_21 = (v___input) => {
+  const v__lift_21 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -45,9 +52,9 @@ const v__lift_21 = (v___input) => {
         }
       }
     }
-};
+  };
 
-const v__lift_0 = (v___input) => {
+  const v__lift_0 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -61,13 +68,13 @@ const v__lift_0 = (v___input) => {
         }
       }
     }
-};
+  };
 
-const v__lam_22 = (v_b, v_restHex) => {
-    return __concat((v_b).toString(16).padStart(2, "0"), v_restHex);
-};
+  const v__lam_22 = (v_b, v_restHex) => {
+    return __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
+  };
 
-const v__df_bindEither_0 = (v_x, v__df_bindEither_0_cap1_0) => {
+  const v__df_bindEither_0 = (v_x, v__df_bindEither_0_cap1_0) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -77,63 +84,63 @@ const v__df_bindEither_0 = (v_x, v__df_bindEither_0_cap1_0) => {
         }
         case 4: {
           const v_a = __s[1];
-          return (v__lift_0)((v__lam_22)(v__df_bindEither_0_cap1_0, v_a));
+          return v__lift_0(v__lam_22(v__df_bindEither_0_cap1_0, v_a));
         }
       }
     }
-};
+  };
 
-const v__apply_bytesToHexStringNoPrefix = (v__k, v__x) => {
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 15: {
-          return v__x;
-        }
-        case 16: {
-          const v__pk_16 = __s[1];
-          const v_b = __s[2];
-          const __t0 = v__pk_16;
-          const __t1 = (v__df_bindEither_0)((v__lift_21)(v__x), v_b);
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-      }
-    }
-  }
-};
-
-const v__cps_bytesToHexStringNoPrefix = (v_bytes, v__k) => {
-  while (true) {
-    {
-      const __s = v_bytes;
-      switch (__s[0]) {
-        case 13: {
-          return (v__apply_bytesToHexStringNoPrefix)(v__k, [4, ""]);
-        }
-        case 14: {
-          const v_b = __s[1];
-          const v_rest = __s[2];
-          const __t0 = v_rest;
-          const __t1 = (v_bytes[0] = 16, v_bytes[1] = v__k, v_bytes[2] = v_b, v_bytes);
-          v_bytes = __t0;
-          v__k = __t1;
-          continue;
+  const v__apply_bytesToHexStringNoPrefix = (v__k, v__x) => {
+    while (true) {
+      {
+        const __s = v__k;
+        switch (__s[0]) {
+          case 15: {
+            return v__x;
+          }
+          case 16: {
+            const v__pk_16 = __s[1];
+            const v_b = __s[2];
+            const __t0 = v__pk_16;
+            const __t1 = v__df_bindEither_0(v__lift_21(v__x), v_b);
+            v__k = __t0;
+            v__x = __t1;
+            continue;
+          }
         }
       }
     }
-  }
-};
+  };
 
-const v_bytesToHexStringNoPrefix = (v_bytes) => {
-    return (v__cps_bytesToHexStringNoPrefix)(v_bytes, [15]);
-};
+  const v__cps_bytesToHexStringNoPrefix = (v_bytes, v__k) => {
+    while (true) {
+      {
+        const __s = v_bytes;
+        switch (__s[0]) {
+          case 13: {
+            return v__apply_bytesToHexStringNoPrefix(v__k, [4, ""]);
+          }
+          case 14: {
+            const v_b = __s[1];
+            const v_rest = __s[2];
+            const __t0 = v_rest;
+            const __t1 = (v_bytes[0] = 16, v_bytes[1] = v__k, v_bytes[2] = v_b, v_bytes);
+            v_bytes = __t0;
+            v__k = __t1;
+            continue;
+          }
+        }
+      }
+    }
+  };
 
-const v__let_24 = (v_bytes) => {
+  const v_bytesToHexStringNoPrefix = (v_bytes) => {
+    return v__cps_bytesToHexStringNoPrefix(v_bytes, [15]);
+  };
+
+  const v__let_24 = (v_bytes) => {
     {
-      const __s = (v_bytesToHexStringNoPrefix)(v_bytes);
+      const __s = v_bytesToHexStringNoPrefix(v_bytes);
       switch (__s[0]) {
         case 3: {
           const v__e = __s[1];
@@ -145,60 +152,71 @@ const v__let_24 = (v_bytes) => {
         }
       }
     }
-};
+  };
 
-const v__apply__lift_23 = (v__k, v__x) => {
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 17: {
-          return v__x;
-        }
-        case 18: {
-          const v__pk_18 = __s[1];
-          const v___f0 = __s[2];
-          const __t0 = v__pk_18;
-          const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-      }
-    }
-  }
-};
-
-const v__cps__lift_23 = (v___input, v__k) => {
-  while (true) {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 13: {
-          return (v__apply__lift_23)(v__k, [13]);
-        }
-        case 14: {
-          const v___f0 = __s[1];
-          const v___f1 = __s[2];
-          const __t0 = v___f1;
-          const __t1 = (v___input[0] = 18, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-          v___input = __t0;
-          v__k = __t1;
-          continue;
+  const v__apply__lift_23 = (v__k, v__x) => {
+    while (true) {
+      {
+        const __s = v__k;
+        switch (__s[0]) {
+          case 17: {
+            return v__x;
+          }
+          case 18: {
+            const v__pk_18 = __s[1];
+            const v___f0 = __s[2];
+            const __t0 = v__pk_18;
+            const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+            v__k = __t0;
+            v__x = __t1;
+            continue;
+          }
         }
       }
     }
+  };
+
+  const v__cps__lift_23 = (v___input, v__k) => {
+    while (true) {
+      {
+        const __s = v___input;
+        switch (__s[0]) {
+          case 13: {
+            return v__apply__lift_23(v__k, [13]);
+          }
+          case 14: {
+            const v___f0 = __s[1];
+            const v___f1 = __s[2];
+            const __t0 = v___f1;
+            const __t1 = (v___input[0] = 18, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+            v___input = __t0;
+            v__k = __t1;
+            continue;
+          }
+        }
+      }
+    }
+  };
+
+  const v__lift_23 = (v___input) => {
+    return v__cps__lift_23(v___input, [17]);
+  };
+
+  const main = v__let_24(
+    [
+      14,
+      0 & 0xFF,
+      [
+        14,
+        15 & 0xFF,
+        [14, 16 & 0xFF, [14, 171 & 0xFF, [14, 255 & 0xFF, v__lift_23([13])]]]
+      ]
+    ]
+  );
+
+  if (typeof require !== "undefined" && require.main === module) {
+    if (typeof main !== "undefined") {
+      v_runIO(main);
+    }
   }
-};
-
-const v__lift_23 = (v___input) => {
-    return (v__cps__lift_23)(v___input, [17]);
-};
-
-const main = (v__let_24)([14, (0 & 0xFF), [14, (15 & 0xFF), [14, (16 & 0xFF), [14, (171 & 0xFF), [14, (255 & 0xFF), (v__lift_23)([13])]]]]]);
-
-if (typeof require !== 'undefined' && require.main === module) {
-  if (typeof main !== 'undefined') v_runIO(main);
-}
-
 })();

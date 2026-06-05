@@ -53,6 +53,7 @@ library
       Awsum.Codegen.CLR.Assemble
       Awsum.Codegen.CLR.Instr
       Awsum.Codegen.JS
+      Awsum.Codegen.JS.Syntax
       Awsum.Codegen.JVM
       Awsum.Codegen.JVM.Assemble
       Awsum.Codegen.JVM.Instr
@@ -112,6 +113,7 @@ library
     , lsp
     , lsp-types
     , megaparsec
+    , prettyprinter
     , relude
     , template-haskell
     , text
