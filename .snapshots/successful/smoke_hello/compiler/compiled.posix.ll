@@ -189,7 +189,7 @@ ok:
   store ptr %buf, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %too_long], [%right, %ok]
+  %result = phi ptr [ %left, %too_long ], [ %right, %ok ]
   call void @__free_recursive(ptr %a)
   call void @__free_recursive(ptr %b)
   ret ptr %result

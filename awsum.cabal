@@ -58,6 +58,7 @@ library
       Awsum.Codegen.JVM.Assemble
       Awsum.Codegen.JVM.Instr
       Awsum.Codegen.LLVM
+      Awsum.Codegen.LLVM.Syntax
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
       Awsum.Codegen.WASM.Instr

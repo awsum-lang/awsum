@@ -175,7 +175,7 @@ ok:
   store ptr %buf, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %too_long], [%right, %ok]
+  %result = phi ptr [ %left, %too_long ], [ %right, %ok ]
   call void @__free_recursive(ptr %a)
   call void @__free_recursive(ptr %b)
   ret ptr %result
@@ -697,7 +697,7 @@ case.end.4.105:
 case.default.94:
   unreachable
 case.join.95:
-  %t109 = phi ptr [%t100, %case.end.3.97], [%t108, %case.end.4.105]
+  %t109 = phi ptr [ %t100, %case.end.3.97 ], [ %t108, %case.end.4.105 ]
   call void @__free_recursive(ptr %t90)
   call void @__free_recursive(ptr %t89)
   br label %case.end.4.87
@@ -706,7 +706,7 @@ case.end.4.87:
 case.default.76:
   unreachable
 case.join.77:
-  %t110 = phi ptr [%t82, %case.end.3.79], [%t109, %case.end.4.87]
+  %t110 = phi ptr [ %t82, %case.end.3.79 ], [ %t109, %case.end.4.87 ]
   call void @__free_recursive(ptr %t72)
   call void @__free_recursive(ptr %t71)
   br label %case.end.4.69
@@ -715,7 +715,7 @@ case.end.4.69:
 case.default.58:
   unreachable
 case.join.59:
-  %t111 = phi ptr [%t64, %case.end.3.61], [%t110, %case.end.4.69]
+  %t111 = phi ptr [ %t64, %case.end.3.61 ], [ %t110, %case.end.4.69 ]
   call void @__free_recursive(ptr %t54)
   call void @__free_recursive(ptr %t53)
   br label %case.end.4.51
@@ -724,7 +724,7 @@ case.end.4.51:
 case.default.40:
   unreachable
 case.join.41:
-  %t112 = phi ptr [%t46, %case.end.3.43], [%t111, %case.end.4.51]
+  %t112 = phi ptr [ %t46, %case.end.3.43 ], [ %t111, %case.end.4.51 ]
   call void @__free_recursive(ptr %t36)
   call void @__free_recursive(ptr %t35)
   br label %case.end.4.33
@@ -733,7 +733,7 @@ case.end.4.33:
 case.default.22:
   unreachable
 case.join.23:
-  %t113 = phi ptr [%t28, %case.end.3.25], [%t112, %case.end.4.33]
+  %t113 = phi ptr [ %t28, %case.end.3.25 ], [ %t112, %case.end.4.33 ]
   call void @__free_recursive(ptr %t18)
   call void @__free_recursive(ptr %t17)
   br label %case.end.4.15
@@ -742,7 +742,7 @@ case.end.4.15:
 case.default.4:
   unreachable
 case.join.5:
-  %t114 = phi ptr [%t10, %case.end.3.7], [%t113, %case.end.4.15]
+  %t114 = phi ptr [ %t10, %case.end.3.7 ], [ %t113, %case.end.4.15 ]
   call void @__free_recursive(ptr %t0)
   %t115 = call ptr @v__let_23(ptr %t114)
   call void @__free_recursive(ptr %v_noElems)

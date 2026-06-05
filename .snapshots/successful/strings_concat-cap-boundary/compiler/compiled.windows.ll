@@ -174,7 +174,7 @@ ok:
   store ptr %buf, ptr %right_f
   br label %join
 join:
-  %result = phi ptr [%left, %too_long], [%right, %ok]
+  %result = phi ptr [ %left, %too_long ], [ %right, %ok ]
   call void @__free_recursive(ptr %a)
   call void @__free_recursive(ptr %b)
   ret ptr %result
@@ -359,7 +359,7 @@ case.end.4.37:
 case.default.30:
   unreachable
 case.join.31:
-  %t40 = phi ptr [getelementptr inbounds (i8, ptr @.str.3, i64 12), %case.end.3.33], [getelementptr inbounds (i8, ptr @.str.4, i64 12), %case.end.4.37]
+  %t40 = phi ptr [ getelementptr inbounds (i8, ptr @.str.3, i64 12), %case.end.3.33 ], [ getelementptr inbounds (i8, ptr @.str.4, i64 12), %case.end.4.37 ]
   call void @__free_recursive(ptr %t26)
   br label %case.end.1.25
 case.end.1.25:
@@ -371,7 +371,7 @@ case.end.2.42:
 case.default.22:
   unreachable
 case.join.23:
-  %t43 = phi ptr [%t40, %case.end.1.25], [getelementptr inbounds (i8, ptr @.str.5, i64 12), %case.end.2.42]
+  %t43 = phi ptr [ %t40, %case.end.1.25 ], [ getelementptr inbounds (i8, ptr @.str.5, i64 12), %case.end.2.42 ]
   call void @__free_recursive(ptr %t18)
   br label %case.end.4.13
 case.end.4.13:
@@ -379,7 +379,7 @@ case.end.4.13:
 case.default.6:
   unreachable
 case.join.7:
-  %t44 = phi ptr [getelementptr inbounds (i8, ptr @.str.1, i64 12), %case.end.3.9], [%t43, %case.end.4.13]
+  %t44 = phi ptr [ getelementptr inbounds (i8, ptr @.str.1, i64 12), %case.end.3.9 ], [ %t43, %case.end.4.13 ]
   call void @__free_recursive(ptr %t2)
   ret ptr %t44
 }
