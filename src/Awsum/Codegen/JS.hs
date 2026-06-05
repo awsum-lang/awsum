@@ -259,7 +259,11 @@ header ptags builtIns =
     u8OverflowHelper :: Text -> BinOp -> JsStmt
     u8OverflowHelper fn op =
       SConst fn
-        $ EArrow ["a", "b"] [SReturn (ECond (EBin BGt (EBin op (EVar "a") (EVar "b")) (ENum 255)) (leftV (con0 ptOE)) (rightV (u8 (EBin op (EVar "a") (EVar "b")))))]
+        $ EArrow
+          ["a", "b"]
+          [ SConst "r" (EBin op (EVar "a") (EVar "b")),
+            SReturn (ECond (EBin BGt (EVar "r") (ENum 255)) (leftV (con0 ptOE)) (rightV (u8 (EVar "r"))))
+          ]
 
     subUInt8Helper =
       SConst "__subUInt8"

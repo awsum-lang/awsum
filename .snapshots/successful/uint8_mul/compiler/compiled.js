@@ -7,7 +7,8 @@
   };
 
   const __mulUInt8 = (a, b) => {
-    return a * b > 255 ? [3, [18]] : [4, a * b & 0xFF];
+    const r = a * b;
+    return r > 255 ? [3, [18]] : [4, r & 0xFF];
   };
 
   const __concat = (a, b) => {
