@@ -230,6 +230,13 @@ exprBody = \case
   ENull -> "null"
   EArray xs -> commaList lbracket rbracket (map (expr 2) xs)
   EObject kvs -> commaList lbrace rbrace (map kv kvs)
+  -- A bare decimal-integer receiver must be parenthesised: @5.toString@ lexes
+  -- @5.@ as a number, so the member access is a syntax error. (Hex/BigInt
+  -- literals have no decimal point and are safe; negative literals are already
+  -- parenthesised by precedence.) The builder never emits this — every integer
+  -- literal is wrapped in @| 0@ / @& 0xFF@ / @>>> 0@ — but the renderer owns
+  -- correctness for any valid expression, not just the ones in use today.
+  EMember (ENum n) f -> parens (pretty n) <> "." <> pretty f
   EMember e f -> expr 18 e <> "." <> pretty f
   EIndex e i -> expr 18 e <> brackets (expr 0 i)
   ECall f xs -> expr 18 f <> argList xs
@@ -238,7 +245,14 @@ exprBody = \case
   EAssign l r -> expr 18 l <+> "=" <+> expr 2 r
   EUnary UTypeof e -> "typeof" <+> expr 16 e
   EUnary UNot e -> "!" <> expr 16 e
-  EUnary UNeg e -> "-" <> expr 16 e
+  -- A unary minus whose operand itself renders with a leading @-@ (a nested
+  -- negation or a negative literal) would lex as @--@ (prefix decrement), so
+  -- the operand is parenthesised: @-(-x)@, not @--x@. The builder only ever
+  -- negates a bare variable, so this never fires today — but the renderer
+  -- stays correct for any operand.
+  EUnary UNeg e
+    | minusLed e -> "-" <> parens (exprBody e)
+    | otherwise -> "-" <> expr 16 e
   EBin op l r -> let p = binPrec op in expr p l <+> binOp op <+> expr (p + 1) r
   EUpdate UInc e -> expr 18 e <> "++"
   EUpdate UDec e -> expr 18 e <> "--"
@@ -249,6 +263,15 @@ exprBody = \case
 
 argList :: [JsExpr] -> Doc ann
 argList xs = commaList lparen rparen (map (expr 2) xs)
+
+-- | Does this expression render with a leading @-@ — a nested unary minus or a
+--   negative numeric literal? Such an operand under a unary minus must be
+--   parenthesised so the two @-@ don't lex as a single @--@ token.
+minusLed :: JsExpr -> Bool
+minusLed = \case
+  EUnary UNeg _ -> True
+  ENum n -> n < 0
+  _ -> False
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Precedence

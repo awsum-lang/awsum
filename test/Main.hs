@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Awsum.ArbitraryInstances ()
+import Awsum.Codegen.JS.Syntax qualified as JS
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
@@ -47,6 +48,34 @@ main = do
     Awsum.StringLiteralCapSpec.spec
     Awsum.JvmMethodLimitSpec.spec
     Awsum.JvmFarBranchSpec.spec
+    jsSyntaxSpec
+
+-- | Direct tests of the JS pretty-printer's two lexical guards (a nested unary
+--   minus, a decimal-literal member receiver). The codegen builder never emits
+--   either shape — integer literals are always wrapped in @| 0@ / @& 0xFF@ /
+--   @>>> 0@, and unary minus only ever negates a bare variable — so a snapshot
+--   can't reach them; the renderer is exercised on synthetic ASTs instead.
+jsSyntaxSpec :: Spec
+jsSyntaxSpec = describe "Awsum.Codegen.JS.Syntax renderer" $ do
+  let render e = JS.renderProgram [JS.SExpr e]
+  it "parenthesises a nested unary minus (no '--' merge)"
+    $ render (JS.EUnary JS.UNeg (JS.EUnary JS.UNeg (JS.EVar "x")))
+    `shouldBe` "-(-x);\n"
+  it "parenthesises unary minus of a negative literal"
+    $ render (JS.EUnary JS.UNeg (JS.ENum (-5)))
+    `shouldBe` "-(-5);\n"
+  it "leaves a plain unary minus unparenthesised"
+    $ render (JS.EUnary JS.UNeg (JS.EVar "x"))
+    `shouldBe` "-x;\n"
+  it "parenthesises a decimal-literal member receiver (no '5.' merge)"
+    $ render (JS.EMember (JS.ENum 5) "toString")
+    `shouldBe` "(5).toString;\n"
+  it "parenthesises a negative-literal member receiver"
+    $ render (JS.EMember (JS.ENum (-5)) "toString")
+    `shouldBe` "(-5).toString;\n"
+  it "leaves a non-literal member receiver unparenthesised"
+    $ render (JS.EMember (JS.EVar "x") "y")
+    `shouldBe` "x.y;\n"
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do
