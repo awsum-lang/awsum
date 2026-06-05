@@ -1,6 +1,6 @@
 # Awsum
 
-Correctness-first, cross-target functional language.
+Correctness-first, cross-target functional language
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12979/badge)](https://www.bestpractices.dev/projects/12979)
 

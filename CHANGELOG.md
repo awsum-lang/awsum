@@ -8,6 +8,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Changed
+
+- **WAT output (`awsum asm -t wasm` and the WASM codegen) now indents each function body to reflect `block`/`loop`/`if` nesting** — `end` closes a level, `else` sits at the enclosing one — instead of a flat 4-space listing. WAT whitespace is insignificant, so the assembled `.wasm` and program output are unchanged; this is legibility only.
+
 ## [0.0.6] - 2026-06-03
 
 ### Added

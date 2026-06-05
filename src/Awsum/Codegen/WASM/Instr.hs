@@ -213,8 +213,9 @@ renderValType I32 = "i32"
 renderValType I64 = "i64"
 
 -- | Plain (unfolded) WAT text for a function: a @(func $name (param …)(result …)
---   (local …) <body>)@ with the body as a flat instruction listing — one per
---   line, references numeric. Mirrors the byte projection 1:1.
+--   (local …) <body>)@ with the body as an unfolded instruction listing — one
+--   per line, indented to mirror @block@/@loop@/@if@ nesting, references
+--   numeric. Mirrors the byte projection 1:1.
 renderWat :: Map Text Word32 -> WasmFunc -> Text
 renderWat idxMap f =
   T.intercalate "\n" (header : locals <> body) <> ")"
@@ -227,7 +228,31 @@ renderWat idxMap f =
     grp _ [] = ""
     grp kw vts = " (" <> kw <> " " <> unwords (map renderValType vts) <> ")"
     locals = ["    (local " <> renderValType vt <> ")" | vt <- wfLocals f]
-    body = map (("    " <>) . renderInstr idxMap) (wfBody f)
+    body = zipWith (\ind instr -> ind <> renderInstr idxMap instr) (bodyIndents (wfBody f)) (wfBody f)
+
+-- | Per-instruction indentation prefix, tracking structured-control nesting so
+--   the listing reads as a tree: @block@/@loop@/@if@ open a level (their body
+--   indents one step further), @end@ closes one (printed at the reduced level),
+--   @else@ prints at the enclosing level while its arm stays one step in. Base
+--   body indent is 4 spaces; each level adds 2. WAT whitespace is insignificant,
+--   so this is legibility only — the byte projection is unaffected.
+bodyIndents :: [WasmInstr] -> [Text]
+bodyIndents = go 0
+  where
+    go _ [] = []
+    go lvl (i : is) = indentFor (here lvl i) : go (next lvl i) is
+    here lvl = \case
+      End -> lvl - 1
+      Else -> lvl - 1
+      _ -> lvl
+    next lvl = \case
+      Block _ -> lvl + 1
+      Loop _ -> lvl + 1
+      If _ -> lvl + 1
+      End -> lvl - 1
+      Else -> lvl
+      _ -> lvl
+    indentFor n = T.replicate (4 + 2 * max 0 n) " "
 
 renderInstr :: Map Text Word32 -> WasmInstr -> Text
 renderInstr idxMap = \case
