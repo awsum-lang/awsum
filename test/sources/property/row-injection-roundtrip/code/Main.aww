@@ -25,8 +25,7 @@ d2 x = case x of
   (n : Int32) -> showInt32 n
 
 property : Int32 -> Bool
-property a =
-  and (and (eqString (d (intToRow a)) (showInt32 a)) (eqString (d2 (intToRow a)) (showInt32 a))) (eqString (d (strToRow (showInt32 a))) (showInt32 a))
+property a = and (and (eqString (d (intToRow a)) (showInt32 a)) (eqString (d2 (intToRow a)) (showInt32 a))) (eqString (d (strToRow (showInt32 a))) (showInt32 a))
 
 runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
 runMain rawArg =

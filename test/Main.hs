@@ -76,6 +76,27 @@ jsSyntaxSpec = describe "Awsum.Codegen.JS.Syntax renderer" $ do
   it "leaves a non-literal member receiver unparenthesised"
     $ render (JS.EMember (JS.EVar "x") "y")
     `shouldBe` "x.y;\n"
+  it "renders a negative hex literal with a leading minus"
+    $ render (JS.EHex (-255))
+    `shouldBe` "-0xFF;\n"
+  it "parenthesises a negative-hex member receiver (no '-0xFF.' merge)"
+    $ render (JS.EMember (JS.EHex (-255)) "toString")
+    `shouldBe` "(-0xFF).toString;\n"
+  it "escapes NUL as a fixed-length \\u escape (not legacy octal)"
+    $ render (JS.EStr "\0")
+    `shouldBe` "\"\\u0000\";\n"
+  it "escapes U+2028 (line separator) as a fixed-length \\u escape"
+    $ render (JS.EStr "\x2028")
+    `shouldBe` "\"\\u2028\";\n"
+  it "escapes U+2029 (paragraph separator) as a fixed-length \\u escape"
+    $ render (JS.EStr "\x2029")
+    `shouldBe` "\"\\u2029\";\n"
+  it "renders a left-associative '-' chain without parens"
+    $ render (JS.EBin JS.BSub (JS.EBin JS.BSub (JS.EVar "a") (JS.EVar "b")) (JS.EVar "c"))
+    `shouldBe` "a - b - c;\n"
+  it "parenthesises the right operand of a left-associative '-'"
+    $ render (JS.EBin JS.BSub (JS.EVar "a") (JS.EBin JS.BSub (JS.EVar "b") (JS.EVar "c")))
+    `shouldBe` "a - (b - c);\n"
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do

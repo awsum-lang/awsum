@@ -6,6 +6,7 @@
 import IO.Stdout
 
 type E1 = E1
+
 type E2 = E2
 
 act : IO (E1 | E2) Unit

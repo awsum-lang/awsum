@@ -88,7 +88,7 @@ library:
     - lsp # for `awsum lsp` subcommand
     - lsp-types # transitive of lsp, used for protocol records / SMethod singletons
     - megaparsec # for parser
-    - prettyprinter # Doc-based layout for codegen text renderers (Awsum.Codegen.JS.Syntax, …)
+    - prettyprinter # Doc-based layout for the surface formatter (Awsum.Render) and codegen text renderers (Awsum.Codegen.JS.Syntax, Awsum.Codegen.WASM)
     - template-haskell # for compile-time read of VERSION in Awsum.Version
     - text # for Data.Text.Encoding (JVM assembler)
 

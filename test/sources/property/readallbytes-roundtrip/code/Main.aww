@@ -9,8 +9,7 @@ import IO.Stdout
 import IO.Stdin
 
 main : IO Never Unit
-main =
-  IO.Stdin.readAllBytes
-    |> andThenIO (\bytes -> case bytesToHexStringNoPrefix bytes of
-        Left _e -> IO.Stdout.print "TOO_LONG"
-        Right hex -> IO.Stdout.print hex)
+main = IO.Stdin.readAllBytes |> andThenIO (\bytes -> case bytesToHexStringNoPrefix bytes of
+  Left _e -> IO.Stdout.print "TOO_LONG"
+  Right hex -> IO.Stdout.print hex
+)

@@ -14,7 +14,6 @@ handleErr e = case e of
   (_i : InvalidUtf8) -> IO.Stdout.print "INVALID_UTF8"
 
 main : IO Never Unit
-main =
-  IO.Stdin.readAllString
-    |> andThenIO IO.Stdout.print
-    |> handleErrorIO handleErr
+main = IO.Stdin.readAllString
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO handleErr

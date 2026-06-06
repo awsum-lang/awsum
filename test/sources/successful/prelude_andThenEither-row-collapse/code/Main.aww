@@ -73,23 +73,23 @@ seedSecond = Left Second
 
 -- ── Never collapse ────────────────────────────────────────────────────────
 
--- (Never | ErrA) ~ ErrA — Never on the left, both succeed.
+{- (Never | ErrA) ~ ErrA — Never on the left, both succeed. -}
 nevOk : Either ErrA Int32
 nevOk = seedNever |> andThenEither kAOk
 
--- (Never | ErrA) ~ ErrA — Never on the left, continuation fails (e2).
+{- (Never | ErrA) ~ ErrA — Never on the left, continuation fails (e2). -}
 nevFail : Either ErrA Int32
 nevFail = seedNever |> andThenEither kAFail
 
--- (ErrA | Never) ~ ErrA — Never on the right, both succeed.
+{- (ErrA | Never) ~ ErrA — Never on the right, both succeed. -}
 nevRightOk : Either ErrA Int32
 nevRightOk = seedA |> andThenEither kNever
 
--- (ErrA | Never) ~ ErrA — Never on the right, seed fails (e1).
+{- (ErrA | Never) ~ ErrA — Never on the right, seed fails (e1). -}
 nevRightE1 : Either ErrA Int32
 nevRightE1 = seedLeftA |> andThenEither kNever
 
--- (Never | Never) ~ Never — pure Never result.
+{- (Never | Never) ~ Never — pure Never result. -}
 pureNever : Either Never Int32
 pureNever = seedNever |> andThenEither kNever
 
@@ -98,15 +98,15 @@ pureNever = seedNever |> andThenEither kNever
 strOk : Either (String | ErrA) Int32
 strOk = seedS |> andThenEither kAOk
 
--- e1 = String surfaces through (String | ErrA).
+{- e1 = String surfaces through (String | ErrA). -}
 strE1 : Either (String | ErrA) Int32
 strE1 = seedLeftS |> andThenEither kAOk
 
--- e2 = ErrA surfaces through (String | ErrA).
+{- e2 = ErrA surfaces through (String | ErrA). -}
 strE2 : Either (String | ErrA) Int32
 strE2 = seedS |> andThenEither kAFail
 
--- (String | String) ~ String — idempotent collapse of a primitive row.
+{- (String | String) ~ String — idempotent collapse of a primitive row. -}
 strIdem : Either String Int32
 strIdem = seedS |> andThenEither kSFail
 
@@ -134,35 +134,43 @@ twoOk = seedT |> andThenEither kAOk
 
 -- ── Idempotent collapse (e | e) ~ e ───────────────────────────────────────
 
--- (ErrA | ErrA) ~ ErrA — seed fails, takes precedence.
+{- (ErrA | ErrA) ~ ErrA — seed fails, takes precedence. -}
 idemE1 : Either ErrA Int32
 idemE1 = seedLeftA |> andThenEither kAFail
 
--- (ErrA | ErrA) ~ ErrA — continuation fails.
+{- (ErrA | ErrA) ~ ErrA — continuation fails. -}
 idemE2 : Either ErrA Int32
 idemE2 = seedA |> andThenEither kAFail
 
--- (ErrTwo | ErrTwo) ~ ErrTwo — First (seed) survives the collapse.
+{- (ErrTwo | ErrTwo) ~ ErrTwo — First (seed) survives the collapse. -}
 idem2First : Either ErrTwo Int32
 idem2First = seedFirst |> andThenEither kSecond
 
--- (ErrTwo | ErrTwo) ~ ErrTwo — Second (continuation) survives.
+{- (ErrTwo | ErrTwo) ~ ErrTwo — Second (continuation) survives. -}
 idem2Second : Either ErrTwo Int32
 idem2Second = seedT |> andThenEither kSecond
 
 -- ── Three-step chain: (ErrTwo | String | ErrA) ────────────────────────────
 
 wE1 : Either (ErrTwo | String | ErrA) Int32
-wE1 = seedFirst |> andThenEither kSOk |> andThenEither kAOk
+wE1 = seedFirst
+  |> andThenEither kSOk
+  |> andThenEither kAOk
 
 wE2str : Either (ErrTwo | String | ErrA) Int32
-wE2str = seedT |> andThenEither kSFail |> andThenEither kAOk
+wE2str = seedT
+  |> andThenEither kSFail
+  |> andThenEither kAOk
 
 wE3 : Either (ErrTwo | String | ErrA) Int32
-wE3 = seedT |> andThenEither kSOk |> andThenEither kAFail
+wE3 = seedT
+  |> andThenEither kSOk
+  |> andThenEither kAFail
 
 wOk : Either (ErrTwo | String | ErrA) Int32
-wOk = seedT |> andThenEither kSOk |> andThenEither kAOk
+wOk = seedT
+  |> andThenEither kSOk
+  |> andThenEither kAOk
 
 -- ── Renderers (pure String; payloads shown to confirm they survive) ───────
 
@@ -259,7 +267,6 @@ printErr e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
-main =
-  eitherToIO render
-    |> andThenIO IO.Stdout.print
-    |> handleErrorIO printErr
+main = eitherToIO render
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO printErr

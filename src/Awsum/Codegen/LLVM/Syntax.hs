@@ -173,8 +173,12 @@ renderType = \case
   TArr n t -> "[" <> show n <> " x " <> renderType t <> "]"
   TStruct ts -> "{" <> T.intercalate ", " (map renderType ts) <> "}"
 
--- | Size in bytes of a type's in-memory representation (pointers are 64-bit;
---   this backend's LLVM targets are all LP64/LLP64). Used to size heap boxes.
+-- | Size in bytes of a scalar type's in-memory representation (pointers are
+--   64-bit; this backend's LLVM targets are all LP64/LLP64). Used to size heap
+--   boxes, which only ever hold scalars. 'TStruct' is deliberately rejected: an
+--   aggregate's ABI size depends on field alignment/padding (a field-sum would
+--   be wrong), and no struct is ever heap-boxed — so asking is a bug, not a case
+--   to paper over with a guessed size.
 typeBytes :: LType -> Integer
 typeBytes = \case
   I1 -> 1
@@ -184,7 +188,7 @@ typeBytes = \case
   Ptr -> 8
   Void -> 0
   TArr n t -> toInteger n * typeBytes t
-  TStruct ts -> sum (map typeBytes ts)
+  TStruct _ -> error "LLVM.Syntax.typeBytes: aggregate ABI size is not modelled (no struct is heap-boxed)"
 
 renderVal :: LVal -> Text
 renderVal = \case

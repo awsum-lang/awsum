@@ -76,6 +76,7 @@ library
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude
+      Awsum.Pretty
       Awsum.Program
       Awsum.Program.Cli
       Awsum.Render

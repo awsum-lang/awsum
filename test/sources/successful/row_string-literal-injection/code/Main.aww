@@ -8,10 +8,10 @@
 
 import IO.Stdout
 
-sv : (Int32 | String)
+sv : Int32 | String
 sv = "S"
 
-iv : (Int32 | String)
+iv : Int32 | String
 iv = 9
 
 d : (Int32 | String) -> String
@@ -26,13 +26,12 @@ pick b = case b of
 
 fromLet : Bool -> String
 fromLet _b =
-  let lv : (Int32 | String) = "L"
+  let lv : Int32 | String = "L"
    in d lv
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (d sv)
-    |> andThenIO (\_u -> IO.Stdout.print (d iv))
-    |> andThenIO (\_u -> IO.Stdout.print (d (pick True)))
-    |> andThenIO (\_u -> IO.Stdout.print (d (pick False)))
-    |> andThenIO (\_u -> IO.Stdout.print (fromLet True))
+main = IO.Stdout.print (d sv)
+  |> andThenIO (\_u -> IO.Stdout.print (d iv))
+  |> andThenIO (\_u -> IO.Stdout.print (d (pick True)))
+  |> andThenIO (\_u -> IO.Stdout.print (d (pick False)))
+  |> andThenIO (\_u -> IO.Stdout.print (fromLet True))

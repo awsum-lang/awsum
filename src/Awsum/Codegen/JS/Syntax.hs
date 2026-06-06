@@ -21,6 +21,7 @@ module Awsum.Codegen.JS.Syntax
   )
 where
 
+import Awsum.Pretty (vsepHard)
 import Data.Text qualified as T
 import Numeric (showHex)
 import Prettyprinter
@@ -155,12 +156,12 @@ data BinOp
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Render a module (its top-level statements) to text, with a trailing
---   newline for friendlier CLI output. Trailing whitespace is stripped per
---   line so 'SBlank' lines (and any indent a blank line would otherwise
---   inherit from 'nest') come out genuinely empty.
+--   newline for friendlier CLI output. 'SBlank' renders to 'mempty', and
+--   prettyprinter never emits trailing whitespace — an empty line (including a
+--   blank line nested inside the IIFE under 'nest') comes out genuinely empty —
+--   so the text needs no post-pass.
 renderProgram :: [JsStmt] -> Text
-renderProgram ss =
-  unlines (map T.stripEnd (lines (renderStrict (layoutPretty defaultLayoutOptions doc))))
+renderProgram ss = renderStrict (layoutPretty defaultLayoutOptions doc)
   where
     doc :: Doc ()
     doc = vsepHard (map stmt ss) <> hardline
@@ -253,7 +254,11 @@ exprBody = \case
   EUnary UNeg e
     | minusLed e -> "-" <> parens (exprBody e)
     | otherwise -> "-" <> expr 16 e
-  EBin op l r -> let p = binPrec op in expr p l <+> binOp op <+> expr (p + 1) r
+  EBin op l r ->
+    let p = binPrec op
+     in case binAssoc op of
+          AssocLeft -> expr p l <+> binOp op <+> expr (p + 1) r
+          AssocRight -> expr (p + 1) l <+> binOp op <+> expr p r
   EUpdate UInc e -> expr 18 e <> "++"
   EUpdate UDec e -> expr 18 e <> "--"
   ECond c t f -> expr 5 c <+> "?" <+> expr 2 t <+> colon <+> expr 2 f
@@ -271,6 +276,7 @@ minusLed :: JsExpr -> Bool
 minusLed = \case
   EUnary UNeg _ -> True
   ENum n -> n < 0
+  EHex n -> n < 0
   _ -> False
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -283,7 +289,7 @@ prec :: JsExpr -> Int
 prec = \case
   EVar _ -> 20
   ENum n -> if n < 0 then 16 else 20 -- a leading '-' behaves like unary minus
-  EHex _ -> 20
+  EHex n -> if n < 0 then 16 else 20 -- negative hex renders with a leading '-'
   EBigInt _ -> 20
   EStr _ -> 20
   ERegex _ -> 20
@@ -320,6 +326,30 @@ binPrec = \case
   BAnd -> 6
   BOr -> 5
 
+-- | Associativity, consulted by 'EBin' to decide which operand may share the
+--   operator's precedence (the other must bind one level tighter). Every
+--   current 'BinOp' is left-associative; the explicit, wildcard-free table
+--   forces a future right-associative addition (e.g. exponentiation) to state
+--   its associativity rather than silently inherit left-assoc parenthesisation.
+data Assoc = AssocLeft | AssocRight
+
+binAssoc :: BinOp -> Assoc
+binAssoc = \case
+  BAdd -> AssocLeft
+  BSub -> AssocLeft
+  BMul -> AssocLeft
+  BEq -> AssocLeft
+  BNeq -> AssocLeft
+  BLt -> AssocLeft
+  BGt -> AssocLeft
+  BLe -> AssocLeft
+  BGe -> AssocLeft
+  BBitAnd -> AssocLeft
+  BBitOr -> AssocLeft
+  BUShr -> AssocLeft
+  BAnd -> AssocLeft
+  BOr -> AssocLeft
+
 binOp :: BinOp -> Doc ann
 binOp = \case
   BAdd -> "+"
@@ -352,15 +382,17 @@ commaList open close ds =
     commaSep :: [Doc ann] -> Doc ann
     commaSep = concatWith (\a b -> a <> "," <> line <> b)
 
--- | One forced line break between successive items.
-vsepHard :: [Doc ann] -> Doc ann
-vsepHard = concatWith (\a b -> a <> hardline <> b)
-
 -- | Uppercase hexadecimal literal, e.g. @0xFF@.
 hexLit :: Integer -> Doc ann
-hexLit n = "0x" <> pretty (T.toUpper (toText (showHex n "")))
+hexLit n
+  | n < 0 = "-0x" <> hexDigits (negate n)
+  | otherwise = "0x" <> hexDigits n
+  where
+    hexDigits x = pretty (T.toUpper (toText (showHex x "")))
 
--- | A double-quoted JS string literal; the escaped characters mirror the parser's.
+-- | A double-quoted JS string literal. The control escapes mirror the parser's;
+--   NUL and the U+2028 \/ U+2029 separators additionally use fixed-length @\\u@
+--   escapes — JS string-literal hazards the source layer doesn't have.
 jsString :: Text -> Doc ann
 jsString t = dquotes (pretty (T.concatMap esc t))
   where
@@ -375,4 +407,9 @@ jsString t = dquotes (pretty (T.concatMap esc t))
       -- followed by a decimal digit is a legacy octal escape (a SyntaxError).
       -- \u consumes exactly four hex digits, so a following digit stays a separate character.
       '\0' -> "\\u0000"
+      -- U+2028 LINE SEPARATOR / U+2029 PARAGRAPH SEPARATOR terminate a string
+      -- literal on pre-ES2019 engines (the "JSON is not a JS subset" hazard);
+      -- a fixed-length \u escape keeps them inside the literal on every engine.
+      '\x2028' -> "\\u2028"
+      '\x2029' -> "\\u2029"
       c -> one c

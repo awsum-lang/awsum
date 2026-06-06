@@ -74,7 +74,7 @@ import Awsum.Core (PreludeTags (..))
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Type' (..), noSpan)
 import Data.Map.Strict qualified as Map
-import Data.Text qualified as T
+import Prettyprinter (Doc, hardline, nest, pretty)
 import Relude
 
 -- | A WASM value type (the subset Awsum's codegen uses — all values are @i32@
@@ -212,35 +212,44 @@ renderValType :: ValType -> Text
 renderValType I32 = "i32"
 renderValType I64 = "i64"
 
--- | Plain (unfolded) WAT text for a function: a @(func $name (param …)(result …)
+-- | Plain (unfolded) WAT 'Doc' for a function: a @(func $name (param …)(result …)
 --   (local …) <body>)@ with the body as an unfolded instruction listing — one
 --   per line, indented to mirror @block@/@loop@/@if@ nesting, references
---   numeric. Mirrors the byte projection 1:1.
-renderWat :: Map Text Word32 -> WasmFunc -> Text
+--   numeric. Mirrors the byte projection 1:1. Returns a 'Doc' so the whole
+--   module ('Awsum.Codegen.WASM') projects through one @prettyprinter@ pass.
+renderWat :: Map Text Word32 -> WasmFunc -> Doc ann
 renderWat idxMap f =
-  T.intercalate "\n" (header : locals <> body) <> ")"
+  header <> mconcat localLines <> mconcat bodyLines <> ")"
   where
     header =
       "  (func $"
-        <> wfName f
+        <> pretty (wfName f)
         <> grp "param" (wfParams f)
         <> grp "result" (wfResults f)
-    grp _ [] = ""
-    grp kw vts = " (" <> kw <> " " <> unwords (map renderValType vts) <> ")"
-    locals = ["    (local " <> renderValType vt <> ")" | vt <- wfLocals f]
-    body = zipWith (\ind instr -> ind <> renderInstr idxMap instr) (bodyIndents (wfBody f)) (wfBody f)
+    grp _ [] = mempty
+    grp kw vts = " (" <> kw <> " " <> pretty (unwords (map renderValType vts)) <> ")"
+    -- Each local sits at column 4; each instruction at @4 + 2·level@, where the
+    -- level tracks block/loop/if depth ('bodyLevels'). @nest k (hardline …)@
+    -- lands the line at column @k@ — the function renders at the module's
+    -- nesting 0, so the offsets are absolute. The closing @)@ is glued to the
+    -- last instruction, as in the byte listing's source shape.
+    localLines = [nest 4 (hardline <> "(local " <> pretty (renderValType vt) <> ")") | vt <- wfLocals f]
+    bodyLines =
+      [ nest (4 + 2 * max 0 lvl) (hardline <> pretty (renderInstr idxMap instr))
+      | (lvl, instr) <- zip (bodyLevels (wfBody f)) (wfBody f)
+      ]
 
--- | Per-instruction indentation prefix, tracking structured-control nesting so
---   the listing reads as a tree: @block@/@loop@/@if@ open a level (their body
---   indents one step further), @end@ closes one (printed at the reduced level),
---   @else@ prints at the enclosing level while its arm stays one step in. Base
---   body indent is 4 spaces; each level adds 2. WAT whitespace is insignificant,
---   so this is legibility only — the byte projection is unaffected.
-bodyIndents :: [WasmInstr] -> [Text]
-bodyIndents = go 0
+-- | The nesting level at which each instruction prints, tracking
+--   structured-control depth so the listing reads as a tree: @block@/@loop@/@if@
+--   open a level (their body is one deeper), @end@ closes one (printed at the
+--   reduced level), @else@ prints at the enclosing level while its arm stays one
+--   step in. WAT whitespace is insignificant, so this is legibility only — the
+--   byte projection is unaffected.
+bodyLevels :: [WasmInstr] -> [Int]
+bodyLevels = go 0
   where
     go _ [] = []
-    go lvl (i : is) = indentFor (here lvl i) : go (next lvl i) is
+    go lvl (i : is) = here lvl i : go (next lvl i) is
     here lvl = \case
       End -> lvl - 1
       Else -> lvl - 1
@@ -252,7 +261,6 @@ bodyIndents = go 0
       End -> lvl - 1
       Else -> lvl
       _ -> lvl
-    indentFor n = T.replicate (4 + 2 * max 0 n) " "
 
 renderInstr :: Map Text Word32 -> WasmInstr -> Text
 renderInstr idxMap = \case
