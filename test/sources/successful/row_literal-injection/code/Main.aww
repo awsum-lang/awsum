@@ -34,10 +34,9 @@ gU n = case eqInt32 n 0 of
   False -> 13
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (showInt32 (extract (gAsc 0)))
-    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gAsc 1))))
-    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 0))))
-    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 1))))
-    |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 0))))
-    |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 1))))
+main = IO.Stdout.print (showInt32 (extract (gAsc 0)))
+  |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gAsc 1))))
+  |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 0))))
+  |> andThenIO (\_u -> IO.Stdout.print (showInt32 (extract (gBare 1))))
+  |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 0))))
+  |> andThenIO (\_u -> IO.Stdout.print (showUInt32 (extractU (gU 1))))

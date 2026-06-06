@@ -11,13 +11,13 @@ myId x = x
 myFirst : a -> b -> a
 myFirst x _y = x
 
-v : (Int32 | String)
+v : Int32 | String
 v = "poly"
 
-w : (Int32 | String)
+w : Int32 | String
 w = myId v
 
-z : (Int32 | String)
+z : Int32 | String
 z = myFirst v True
 
 d : (Int32 | String) -> String
@@ -26,6 +26,4 @@ d x = case x of
   (s : String) -> s
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (d w)
-    |> andThenIO (\_u -> IO.Stdout.print (d z))
+main = IO.Stdout.print (d w) |> andThenIO (\_u -> IO.Stdout.print (d z))

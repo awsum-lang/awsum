@@ -46,6 +46,7 @@ import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import Numeric (showHex)
 import Relude
 import System.Info qualified as Info
 
@@ -315,13 +316,8 @@ llvmEscapeString = T.concat . map escByte . BS.unpack . encodeUtf8
       | b == 0x0D = "\\0D" -- carriage return
       | b == 0x00 = "\\00" -- nul
       | b >= 0x20 && b <= 0x7E = T.singleton (chr (fromIntegral b))
-      | otherwise =
-          let hi = b `div` 16
-              lo = b `mod` 16
-              hexChar x
-                | x < 10 = chr (fromIntegral (0x30 + x))
-                | otherwise = chr (fromIntegral (0x41 + x - 10))
-           in "\\" <> toText [hexChar hi, hexChar lo]
+      -- @\XX@: two uppercase hex digits, zero-padded (byte 0x0A -> @\0A@).
+      | otherwise = "\\" <> T.toUpper (T.justifyRight 2 '0' (toText (showHex b "")))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Header: external declarations + format strings

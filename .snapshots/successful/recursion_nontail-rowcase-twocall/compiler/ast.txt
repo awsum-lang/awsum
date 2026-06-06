@@ -1162,7 +1162,7 @@ Program
                 { spanStartLine = 35
                 , spanStartCol = 1
                 , spanEndLine = 35
-                , spanEndCol = 69
+                , spanEndCol = 70
                 }
             ) "main" []
             ( EApp
@@ -1170,7 +1170,7 @@ Program
                     { spanStartLine = 35
                     , spanStartCol = 8
                     , spanEndLine = 35
-                    , spanEndCol = 69
+                    , spanEndCol = 70
                     }
                 )
                 ( EVar
@@ -1192,7 +1192,7 @@ Program
                         { spanStartLine = 35
                         , spanStartCol = 24
                         , spanEndLine = 35
-                        , spanEndCol = 69
+                        , spanEndCol = 70
                         }
                     )
                     ( EApp
@@ -1200,7 +1200,7 @@ Program
                             { spanStartLine = 35
                             , spanStartCol = 25
                             , spanEndLine = 35
-                            , spanEndCol = 68
+                            , spanEndCol = 69
                             }
                         )
                         ( EVar
@@ -1218,7 +1218,7 @@ Program
                                 { spanStartLine = 35
                                 , spanStartCol = 35
                                 , spanEndLine = 35
-                                , spanEndCol = 68
+                                , spanEndCol = 69
                                 }
                             )
                             ( EApp
@@ -1226,7 +1226,7 @@ Program
                                     { spanStartLine = 35
                                     , spanStartCol = 36
                                     , spanEndLine = 35
-                                    , spanEndCol = 67
+                                    , spanEndCol = 68
                                     }
                                 )
                                 ( EVar
@@ -1244,7 +1244,7 @@ Program
                                         { spanStartLine = 35
                                         , spanStartCol = 44
                                         , spanEndLine = 35
-                                        , spanEndCol = 67
+                                        , spanEndCol = 68
                                         }
                                     )
                                     ( EApp
@@ -1252,7 +1252,7 @@ Program
                                             { spanStartLine = 35
                                             , spanStartCol = 45
                                             , spanEndLine = 35
-                                            , spanEndCol = 66
+                                            , spanEndCol = 67
                                             }
                                         )
                                         ( EApp
@@ -1260,7 +1260,7 @@ Program
                                                 { spanStartLine = 35
                                                 , spanStartCol = 45
                                                 , spanEndLine = 35
-                                                , spanEndCol = 62
+                                                , spanEndCol = 63
                                                 }
                                             )
                                             ( EVar
@@ -1278,7 +1278,7 @@ Program
                                                     { spanStartLine = 35
                                                     , spanStartCol = 55
                                                     , spanEndLine = 35
-                                                    , spanEndCol = 62
+                                                    , spanEndCol = 63
                                                     }
                                                 )
                                                 ( LInt 200000 )
@@ -1287,9 +1287,9 @@ Program
                                         ( ECon
                                             ( SrcSpan
                                                 { spanStartLine = 35
-                                                , spanStartCol = 62
+                                                , spanStartCol = 63
                                                 , spanEndLine = 35
-                                                , spanEndCol = 66
+                                                , spanEndCol = 67
                                                 }
                                             ) "Leaf"
                                         )

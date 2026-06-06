@@ -12,7 +12,7 @@ Program
             { spanStartLine = 8
             , spanStartCol = 1
             , spanEndLine = 8
-            , spanEndCol = 22
+            , spanEndCol = 20
             }
         ) "mk"
         ( TyOr
@@ -20,24 +20,24 @@ Program
                 { spanStartLine = 8
                 , spanStartCol = 6
                 , spanEndLine = 8
-                , spanEndCol = 22
+                , spanEndCol = 20
                 }
             )
             ( TyCon
                 ( SrcSpan
                     { spanStartLine = 8
-                    , spanStartCol = 7
+                    , spanStartCol = 6
                     , spanEndLine = 8
-                    , spanEndCol = 12
+                    , spanEndCol = 11
                     }
                 ) "Int32"
             )
             ( TyCon
                 ( SrcSpan
                     { spanStartLine = 8
-                    , spanStartCol = 15
+                    , spanStartCol = 14
                     , spanEndLine = 8
-                    , spanEndCol = 21
+                    , spanEndCol = 20
                     }
                 ) "String"
             )

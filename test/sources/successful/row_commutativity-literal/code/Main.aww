@@ -5,7 +5,7 @@
 
 import IO.Stdout
 
-mk : (Int32 | String)
+mk : Int32 | String
 mk = "comm"
 
 d : (String | Int32) -> String

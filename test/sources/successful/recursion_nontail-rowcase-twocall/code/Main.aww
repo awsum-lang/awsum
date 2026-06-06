@@ -32,4 +32,4 @@ sumTree t = case t of
       Right s -> s
 
 main : IO Never Unit
-main = IO.Stdout.print (showInt32 (sumTree (buildLeft 200000 Leaf)))
+main = IO.Stdout.print (showInt32 (sumTree (buildLeft 200_000 Leaf)))

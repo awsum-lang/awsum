@@ -9,6 +9,7 @@
 import IO.Stdout
 
 type EA = EA
+
 type EB = EB
 
 oa : Either EA Int32
@@ -30,6 +31,4 @@ de x = case x of
   Right n -> showInt32 n
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (de c1)
-    |> andThenIO (\_u -> IO.Stdout.print (de c2))
+main = IO.Stdout.print (de c1) |> andThenIO (\_u -> IO.Stdout.print (de c2))
