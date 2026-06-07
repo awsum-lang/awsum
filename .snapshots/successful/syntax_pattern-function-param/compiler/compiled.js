@@ -116,7 +116,7 @@
 
   const v_pair = [15, 100 | 0, 200 | 0];
 
-  const v__let_23 = (v_res) => {
+  const v__let_18 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -132,8 +132,8 @@
     }
   };
 
-  const v__let_25 = (v_n, v_m) => {
-    return v__let_23(
+  const v__let_20 = (v_n, v_m) => {
+    return v__let_18(
       ((s) => {
         switch (s[0]) {
           case 3: {
@@ -149,7 +149,7 @@
     );
   };
 
-  const v__lam_24 = (v__arg_2) => {
+  const v__lam_19 = (v__arg_2) => {
     {
       const __s = v__arg_2;
       switch (__s[0]) {
@@ -163,14 +163,14 @@
   };
 
   const v__df_apply_0 = (v_t) => {
-    return v__lam_24(v_t);
+    return v__lam_19(v_t);
   };
 
-  const v__let_26 = (v_n) => {
-    return v__let_25(v_n, v__df_apply_0(v_pair));
+  const v__let_21 = (v_n) => {
+    return v__let_20(v_n, v__df_apply_0(v_pair));
   };
 
-  const main = v__let_26(v_sumTriple(v_triple));
+  const main = v__let_21(v_sumTriple(v_triple));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

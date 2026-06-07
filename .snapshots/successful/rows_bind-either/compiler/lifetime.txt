@@ -22,12 +22,12 @@ describe:
   row-case        __rw                            count=0
   case-pattern    n                               count=0
 
-$lift$23:
+$lift$18:
   param           __input                         count=1
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$let$24:
+$let$19:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

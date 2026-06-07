@@ -1,0 +1,27 @@
+import IO.Stdout
+import IO.Args
+
+type EX = EX
+
+step : List String -> IO EX Unit
+step _a = failIO EX
+
+-- Regression: io-first `bindIO` of a platform effect (IO.Args.getArgs)
+-- whose continuation fails. The prelude routes this through
+-- `bindIOAfterArgs cont k`, a partial (2-of-3) application of a
+-- row-widening combinator. MonomorphizeRows must specialise it so its
+-- inner `bindIO`'s IOFail coercion tags the continuation's error (EX)
+-- into the result row. Before the fix the saturation check skipped the
+-- partial application, EX reached the handler untagged, and all five
+-- backends crashed.
+combined : IO (StringTooLong | UnpairedUtf16Surrogate | EX) Unit
+combined = bindIO IO.Args.getArgs step
+
+handler : (StringTooLong | UnpairedUtf16Surrogate | EX) -> IO Never Unit
+handler e = case e of
+  (_s : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+  (_x : EX) -> IO.Stdout.print "EX"
+
+main : IO Never Unit
+main = combined |> handleErrorIO handler

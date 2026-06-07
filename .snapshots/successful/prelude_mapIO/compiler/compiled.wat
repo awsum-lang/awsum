@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00before")
   (data (i32.const 110) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00after")
   (table 16 funcref)
-  (elem (i32.const 0) $v_pureIO $v_runIO $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lam_23 $v__bi_IO_Stdout_print $v__df_bindIO_0 $v__cps__df_bindIO_0 $v__apply__df_bindIO_0 $v__df_mapIO_4 $v__cps__df_mapIO_4 $v__apply__df_mapIO_4 $v__scc__apply1__df__lam_10_7__df__lam_8_5__df__lam_9_6__df_bindIOAfterArgs_1__df_bindIOAfterStdinBytes_3__df_bindIOAfterStdinString_2__lift_2__lift_3__lift_4 $v__cps__scc__apply1__df__lam_10_7__df__lam_8_5__df__lam_9_6__df_bindIOAfterArgs_1__df_bindIOAfterStdinBytes_3__df_bindIOAfterStdinString_2__lift_2__lift_3__lift_4 $v__apply1)
+  (elem (i32.const 0) $v_pureIO $v_runIO $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lam_18 $v__bi_IO_Stdout_print $v__df_bindIO_0 $v__cps__df_bindIO_0 $v__apply__df_bindIO_0 $v__df_mapIO_4 $v__cps__df_mapIO_4 $v__apply__df_mapIO_4 $v__scc__apply1__df__lam_10_7__df__lam_8_5__df__lam_9_6__df_bindIOAfterArgs_1__df_bindIOAfterStdinBytes_3__df_bindIOAfterStdinString_2__lift_2__lift_3__lift_4 $v__cps__scc__apply1__df__lam_10_7__df__lam_8_5__df__lam_9_6__df_bindIOAfterArgs_1__df_bindIOAfterStdinBytes_3__df_bindIOAfterStdinString_2__lift_2__lift_3__lift_4 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1812,7 +1812,7 @@
       end
     end)
 
-  (func $v__lam_23 (param i32) (result i32)
+  (func $v__lam_18 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

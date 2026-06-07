@@ -115,7 +115,23 @@
     }
   };
 
-  const v__let_23 = (v_a, v_prefix) => {
+  const v__lift_18 = (v___input) => {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 3: {
+          const v___f0 = __s[1];
+          return [3, [589989748, v___f0]];
+        }
+        case 4: {
+          const v___f0 = __s[1];
+          return [4, v___f0];
+        }
+      }
+    }
+  };
+
+  const v__let_19 = (v_a, v_prefix) => {
     {
       const __s = v_step2(v_a);
       switch (__s[0]) {
@@ -125,7 +141,7 @@
         }
         case 4: {
           const v_b = __s[1];
-          return __concat(v_prefix, String(v_b));
+          return v__lift_18(__concat(v_prefix, String(v_b)));
         }
       }
     }
@@ -141,7 +157,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__let_23(v_a, "answer=");
+          return v__let_19(v_a, "answer=");
         }
       }
     }

@@ -239,16 +239,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$27" )
+                ( CVar "$let$21" )
                 [ CCall
                     ( CVar "tailList" )
-                    [ CCall
-                        ( CVar "$lift$24" )
-                        [ CCon 13 [] ]
-                    ]
+                    [ CCon 13 [] ]
                 ]
             )
-        , CFunDef "$let$23" [ "msg" ]
+        , CFunDef "$let$18" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -275,94 +272,13 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$24" [ "__input" ]
-            ( CCall
-                ( CVar "$cps$$lift$24" )
-                [ CVar "__input"
-                , CCon 17 []
-                ]
-            )
-        , CFunDef "$cps$$lift$24"
-            [ "__input"
-            , "$k"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "__input" )
-                    [
-                        ( 13
-                        , []
-                        , CCall
-                            ( CVar "$apply$$lift$24" )
-                            [ CVar "$k"
-                            , CCon 13 []
-                            ]
-                        )
-                    ,
-                        ( 14
-                        ,
-                            [ "__f0"
-                            , "__f1"
-                            ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CDrop DropFreeUnchecked "__f1"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CVar "__f1"
-                                        , CReuse "__input" 18
-                                            [ CVar "$k"
-                                            , CVar "__f0"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$apply$$lift$24"
-            [ "$k"
-            , "$x"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "$k" )
-                    [
-                        ( 17
-                        , []
-                        , CVar "$x"
-                        )
-                    ,
-                        ( 18
-                        ,
-                            [ "$pk_18"
-                            , "__f0"
-                            ]
-                        , CDrop DropFreeUnchecked "$pk_18"
-                            ( CDrop DropFreeUnchecked "__f0"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_18"
-                                        , CReuse "$k" 14
-                                            [ CVar "__f0"
-                                            , CVar "$x"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$let$25"
+        , CFunDef "$let$19"
             [ "noElems"
             , "single"
             , "multi"
             ]
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CCall
                         ( CVar "show" )
@@ -496,12 +412,12 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$26"
+        , CFunDef "$let$20"
             [ "noElems"
             , "single"
             ]
             ( CCall
-                ( CVar "$let$25" )
+                ( CVar "$let$19" )
                 [ CVar "noElems"
                 , CVar "single"
                 , CCall
@@ -512,26 +428,22 @@ CoreProgram
                             [ CString "b"
                             , CCon 14
                                 [ CString "c"
-                                , CCall
-                                    ( CVar "$lift$24" )
-                                    [ CCon 13 [] ]
+                                , CCon 13 []
                                 ]
                             ]
                         ]
                     ]
                 ]
             )
-        , CFunDef "$let$27" [ "noElems" ]
+        , CFunDef "$let$21" [ "noElems" ]
             ( CCall
-                ( CVar "$let$26" )
+                ( CVar "$let$20" )
                 [ CVar "noElems"
                 , CCall
                     ( CVar "tailList" )
                     [ CCon 14
                         [ CString "a"
-                        , CCall
-                            ( CVar "$lift$24" )
-                            [ CCon 13 [] ]
+                        , CCon 13 []
                         ]
                     ]
                 ]

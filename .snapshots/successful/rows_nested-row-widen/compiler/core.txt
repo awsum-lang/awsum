@@ -1,0 +1,150 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "narrow"
+            ( CRow 995908654
+                ( CCon 12
+                    [ CCon 1 [] ]
+                )
+            )
+        , CValDef "widened"
+            ( CRowCase
+                ( CVar "narrow" )
+                [
+                    ( 995908654
+                    , "$lift$19"
+                    , CRow 1454647603
+                        ( CCall
+                            ( CVar "$lift$18" )
+                            [ CVar "$lift$19" ]
+                        )
+                    )
+                ,
+                    ( 3289118412
+                    , "$lift$20"
+                    , CRow 3289118412
+                        ( CVar "$lift$20" )
+                    )
+                ]
+            )
+        , CFunDef "describe" [ "x" ]
+            ( CRowCase
+                ( CVar "x" )
+                [
+                    ( 1454647603
+                    , "m"
+                    , CDrop DropFreeUnchecked "m"
+                        ( CCase
+                            ( CVar "m" )
+                            [
+                                ( 11
+                                , []
+                                , CString "N"
+                                )
+                            ,
+                                ( 12
+                                , [ "inner" ]
+                                , CDrop DropFreeUnchecked "inner"
+                                    ( CRowCase
+                                        ( CVar "inner" )
+                                        [
+                                            ( 796142685
+                                            , "b"
+                                            , CDrop DropFreeUnchecked "b"
+                                                ( CCase
+                                                    ( CVar "b" )
+                                                    [
+                                                        ( 1
+                                                        , []
+                                                        , CString "T"
+                                                        )
+                                                    ,
+                                                        ( 2
+                                                        , []
+                                                        , CString "F"
+                                                        )
+                                                    ]
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 3289118412
+                    , "_a"
+                    , CDrop DropFreeUnchecked "_a"
+                        ( CString "A" )
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CVar "describe" )
+                    [ CVar "widened" ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lift$18" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 11
+                    , []
+                    , CCon 11 []
+                    )
+                ,
+                    ( 12
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 12
+                            [ CRow 796142685
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }

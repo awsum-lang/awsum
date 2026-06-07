@@ -129,7 +129,7 @@
   {
     .maxstack 1
     call object AwsumMain::v_oa()
-    call object AwsumMain::v__df__rowspec_23_0(object)
+    call object AwsumMain::v__df__rowmono_0_bindEither_0(object)
     ret
   }
 
@@ -236,7 +236,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_24(object) cil managed
+  .method private hidebysig static object v__lift_18(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -304,7 +304,7 @@
   }
 
 
-  .method private hidebysig static object v__df__rowspec_23_0(object) cil managed
+  .method private hidebysig static object v__df__rowmono_0_bindEither_0(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -356,7 +356,7 @@
     stloc.1
     ldloc.1
     call object AwsumMain::v_kk(object)
-    call object AwsumMain::v__lift_24(object)
+    call object AwsumMain::v__lift_18(object)
   IL_c0:
     ret
   }

@@ -27,19 +27,15 @@ summary:
   case-pattern    $do_e_0                         count=1
   case-pattern    s2                              count=1
 
-$lift$23:
+$lift$18:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 
-$lift$24:
+$lift$19:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 
-$lift$25:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-
-$let$26:
+$let$20:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00ErrB")
   (table 14 funcref)
-  (elem (i32.const 0) $v_failIO $v_runIO $v_handler $v__lam_23 $v__let_24 $v__df_mapIOError_0 $v__cps__df_mapIOError_0 $v__apply__df_mapIOError_0 $v__df_handleErrorIO_4 $v__cps__df_handleErrorIO_4 $v__apply__df_handleErrorIO_4 $v__scc__apply1__df__lam_11_1__df__lam_12_2__df__lam_13_3__df__lam_14_5__df__lam_15_6__df__lam_16_7 $v__cps__scc__apply1__df__lam_11_1__df__lam_12_2__df__lam_13_3__df__lam_14_5__df__lam_15_6__df__lam_16_7 $v__apply1)
+  (elem (i32.const 0) $v_failIO $v_runIO $v_handler $v__lam_18 $v__let_19 $v__df_mapIOError_0 $v__cps__df_mapIOError_0 $v__apply__df_mapIOError_0 $v__df_handleErrorIO_4 $v__cps__df_handleErrorIO_4 $v__apply__df_handleErrorIO_4 $v__scc__apply1__df__lam_11_1__df__lam_12_2__df__lam_13_3__df__lam_14_5__df__lam_15_6__df__lam_16_7 $v__cps__scc__apply1__df__lam_11_1__df__lam_12_2__df__lam_13_3__df__lam_14_5__df__lam_15_6__df__lam_16_7 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1466,7 +1466,7 @@
     call 26
     call 25)
 
-  (func $v__lam_23 (param i32) (result i32)
+  (func $v__lam_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1485,7 +1485,7 @@
       local.get 2
     end)
 
-  (func $v__let_24 (param i32) (result i32)
+  (func $v__let_19 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

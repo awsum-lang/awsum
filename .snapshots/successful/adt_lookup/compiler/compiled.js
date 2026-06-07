@@ -53,22 +53,7 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 24: {
-          const v___f0 = __s[1];
-          return [24, v___f0];
-        }
-        case 25: {
-          return [25];
-        }
-      }
-    }
-  };
-
-  const v__let_24 = (v_res) => {
+  const v__let_18 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -84,7 +69,7 @@
     }
   };
 
-  const main = v__let_24(
+  const main = v__let_18(
     ((s) => {
       switch (s[0]) {
         case 3: {
@@ -93,7 +78,7 @@
         }
         case 4: {
           const v_s0 = s[1];
-          return __concat(v_s0, v_unwrap(v__lift_23([25])));
+          return __concat(v_s0, v_unwrap([25]));
         }
       }
     })(__concat(v_unwrap([24, "hello"]), ", "))

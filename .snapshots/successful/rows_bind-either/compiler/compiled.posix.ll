@@ -318,7 +318,7 @@ case.arm.4.16:
   call void @__inc_ref(ptr %t18)
   call void @__inc_ref(ptr %t18)
   %t19 = call ptr @v_opB(ptr %t18)
-  %t20 = call ptr @v__lift_23(ptr %t19)
+  %t20 = call ptr @v__lift_18(ptr %t19)
   call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t18)
   call void @__free_recursive(ptr %v_x)
@@ -403,11 +403,11 @@ define internal ptr @v_main() {
   store i32 5, ptr %t0
   %t1 = call ptr @v_run(ptr %t0)
   %t2 = call ptr @v_describe(ptr %t1)
-  %t3 = call ptr @v__let_24(ptr %t2)
+  %t3 = call ptr @v__let_19(ptr %t2)
   ret ptr %t3
 }
 
-define internal ptr @v__lift_23(ptr %v___input) {
+define internal ptr @v__lift_18(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -450,7 +450,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_24(ptr %v_res) {
+define internal ptr @v__let_19(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

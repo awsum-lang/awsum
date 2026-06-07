@@ -7,24 +7,24 @@ runIO:
 opB:
   param           n                               count=1
 
-$let$23:
+$let$18:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lift$25:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$let$26:
+$let$19:
   param           chained                         count=1
   case-pattern    __pa0                           count=0
   row-case        _a                              count=0
   row-case        _b                              count=0
   case-pattern    n                               count=0
 
-$df$$rowspec$24$0:
+$lift$20:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$df$$rowmono$0$bindEither$0:
   param           x                               count=1
   case-pattern    e                               count=0
   case-pattern    a                               count=0

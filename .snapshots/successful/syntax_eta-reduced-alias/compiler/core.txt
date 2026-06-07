@@ -151,20 +151,20 @@ CoreProgram
             ( CCall
                 ( CVar "$df$handleErrorIO$0" )
                 [ CCall
-                    ( CVar "$df$$rowspec$23$4" )
+                    ( CVar "$df$$rowmono$0$andThenIO$4" )
                     [ CCon 8
                         [ CCon 21 [] ]
                     ]
                 ]
             )
-        , CFunDef "$lift$24" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$24" )
+                ( CVar "$cps$$lift$18" )
                 [ CVar "__input"
-                , CCon 41 []
+                , CCon 35 []
                 ]
             )
-        , CFunDef "$cps$$lift$24"
+        , CFunDef "$cps$$lift$18"
             [ "__input"
             , "$k"
             ]
@@ -176,7 +176,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$24" )
+                                ( CVar "$apply$$lift$18" )
                                 [ CVar "$k"
                                 , CCon 5
                                     [ CVar "__f0" ]
@@ -188,12 +188,10 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$24" )
+                                ( CVar "$apply$$lift$18" )
                                 [ CVar "$k"
                                 , CCon 6
-                                    [ CRow 3801428867
-                                        ( CVar "__f0" )
-                                    ]
+                                    [ CVar "__f0" ]
                                 ]
                             )
                         )
@@ -208,7 +206,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "__f1"
-                                        , CReuse "__input" 42
+                                        , CReuse "__input" 36
                                             [ CVar "$k"
                                             , CVar "__f0"
                                             ]
@@ -222,7 +220,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$24" )
+                                ( CVar "$apply$$lift$18" )
                                 [ CVar "$k"
                                 , CCon 8
                                     [ CCon 22
@@ -236,7 +234,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$24" )
+                                ( CVar "$apply$$lift$18" )
                                 [ CVar "$k"
                                 , CCon 9
                                     [ CCon 23
@@ -250,7 +248,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$24" )
+                                ( CVar "$apply$$lift$18" )
                                 [ CVar "$k"
                                 , CCon 10
                                     [ CCon 24
@@ -262,7 +260,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$24"
+        , CFunDef "$apply$$lift$18"
             [ "$k"
             , "$x"
             ]
@@ -270,159 +268,21 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 41
+                        ( 35
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 42
+                        ( 36
                         ,
-                            [ "$pk_42"
+                            [ "$pk_36"
                             , "__f0"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_42"
+                        , CDrop DropFreeUnchecked "$pk_36"
                             ( CDrop DropFreeUnchecked "__f0"
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
-                                        [ CVar "$pk_42"
-                                        , CReuse "$k" 7
-                                            [ CVar "__f0"
-                                            , CVar "$x"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$lift$28" [ "__input" ]
-            ( CCall
-                ( CVar "$cps$$lift$28" )
-                [ CVar "__input"
-                , CCon 43 []
-                ]
-            )
-        , CFunDef "$cps$$lift$28"
-            [ "__input"
-            , "$k"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "__input" )
-                    [
-                        ( 5
-                        , [ "__f0" ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CCall
-                                ( CVar "$apply$$lift$28" )
-                                [ CVar "$k"
-                                , CCon 5
-                                    [ CVar "__f0" ]
-                                ]
-                            )
-                        )
-                    ,
-                        ( 6
-                        , [ "__f0" ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CCall
-                                ( CVar "$apply$$lift$28" )
-                                [ CVar "$k"
-                                , CCon 6
-                                    [ CVar "__f0" ]
-                                ]
-                            )
-                        )
-                    ,
-                        ( 7
-                        ,
-                            [ "__f0"
-                            , "__f1"
-                            ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CDrop DropFreeUnchecked "__f1"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CVar "__f1"
-                                        , CReuse "__input" 44
-                                            [ CVar "$k"
-                                            , CVar "__f0"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 8
-                        , [ "__f0" ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CCall
-                                ( CVar "$apply$$lift$28" )
-                                [ CVar "$k"
-                                , CCon 8
-                                    [ CCon 25
-                                        [ CVar "__f0" ]
-                                    ]
-                                ]
-                            )
-                        )
-                    ,
-                        ( 9
-                        , [ "__f0" ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CCall
-                                ( CVar "$apply$$lift$28" )
-                                [ CVar "$k"
-                                , CCon 9
-                                    [ CCon 26
-                                        [ CVar "__f0" ]
-                                    ]
-                                ]
-                            )
-                        )
-                    ,
-                        ( 10
-                        , [ "__f0" ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CCall
-                                ( CVar "$apply$$lift$28" )
-                                [ CVar "$k"
-                                , CCon 10
-                                    [ CCon 27
-                                        [ CVar "__f0" ]
-                                    ]
-                                ]
-                            )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$apply$$lift$28"
-            [ "$k"
-            , "$x"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "$k" )
-                    [
-                        ( 43
-                        , []
-                        , CVar "$x"
-                        )
-                    ,
-                        ( 44
-                        ,
-                            [ "$pk_44"
-                            , "__f0"
-                            ]
-                        , CDrop DropFreeUnchecked "$pk_44"
-                            ( CDrop DropFreeUnchecked "__f0"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_44"
+                                        [ CVar "$pk_36"
                                         , CReuse "$k" 7
                                             [ CVar "__f0"
                                             , CVar "$x"
@@ -460,7 +320,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$df$handleErrorIO$0" )
                 [ CVar "io"
-                , CCon 45 []
+                , CCon 37 []
                 ]
             )
         , CFunDef "$cps$$df$handleErrorIO$0"
@@ -506,7 +366,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 46
+                                        , CReuse "io" 38
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -568,21 +428,21 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 45
+                        ( 37
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 46
+                        ( 38
                         ,
-                            [ "$pk_46"
+                            [ "$pk_38"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_46"
+                        , CDrop DropFreeUnchecked "$pk_38"
                             ( CDrop DropFreeUnchecked "s"
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
-                                        [ CVar "$pk_46"
+                                        [ CVar "$pk_38"
                                         , CReuse "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
@@ -595,14 +455,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$df$$rowspec$23$4" [ "io" ]
+        , CFunDef "$df$$rowmono$0$andThenIO$4" [ "io" ]
             ( CCall
-                ( CVar "$cps$$df$$rowspec$23$4" )
+                ( CVar "$cps$$df$$rowmono$0$andThenIO$4" )
                 [ CVar "io"
-                , CCon 47 []
+                , CCon 39 []
                 ]
             )
-        , CFunDef "$cps$$df$$rowspec$23$4"
+        , CFunDef "$cps$$df$$rowmono$0$andThenIO$4"
             [ "io"
             , "$k"
             ]
@@ -614,10 +474,10 @@ CoreProgram
                         , [ "a" ]
                         , CDrop DropFreeUnchecked "a"
                             ( CCall
-                                ( CVar "$apply$$df$$rowspec$23$4" )
+                                ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
                                 [ CVar "$k"
                                 , CCall
-                                    ( CVar "$lift$24" )
+                                    ( CVar "$lift$18" )
                                     [ CCall
                                         ( CVar "sayFirst" )
                                         [ CVar "a" ]
@@ -630,7 +490,7 @@ CoreProgram
                         , [ "e" ]
                         , CDrop DropFreeUnchecked "e"
                             ( CCall
-                                ( CVar "$apply$$df$$rowspec$23$4" )
+                                ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
                                 [ CVar "$k"
                                 , CCon 6
                                     [ CVar "e" ]
@@ -648,7 +508,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 48
+                                        , CReuse "io" 40
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -662,7 +522,7 @@ CoreProgram
                         , [ "cont" ]
                         , CDrop DropFreeUnchecked "cont"
                             ( CCall
-                                ( CVar "$apply$$df$$rowspec$23$4" )
+                                ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
                                 [ CVar "$k"
                                 , CCon 8
                                     [ CCon 18
@@ -676,7 +536,7 @@ CoreProgram
                         , [ "cont" ]
                         , CDrop DropFreeUnchecked "cont"
                             ( CCall
-                                ( CVar "$apply$$df$$rowspec$23$4" )
+                                ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
                                 [ CVar "$k"
                                 , CCon 9
                                     [ CCon 19
@@ -690,7 +550,7 @@ CoreProgram
                         , [ "cont" ]
                         , CDrop DropFreeUnchecked "cont"
                             ( CCall
-                                ( CVar "$apply$$df$$rowspec$23$4" )
+                                ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
                                 [ CVar "$k"
                                 , CCon 10
                                     [ CCon 20
@@ -702,7 +562,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$df$$rowspec$23$4"
+        , CFunDef "$apply$$df$$rowmono$0$andThenIO$4"
             [ "$k"
             , "$x"
             ]
@@ -710,21 +570,21 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 47
+                        ( 39
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 48
+                        ( 40
                         ,
-                            [ "$pk_48"
+                            [ "$pk_40"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_48"
+                        , CDrop DropFreeUnchecked "$pk_40"
                             ( CDrop DropFreeUnchecked "s"
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
-                                        [ CVar "$pk_48"
+                                        [ CVar "$pk_40"
                                         , CReuse "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
@@ -737,14 +597,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31" [ "$args" ]
+        , CFunDef "$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31" )
+                ( CVar "$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21" )
                 [ CVar "$args"
-                , CCon 49 []
+                , CCon 41 []
                 ]
             )
-        , CFunDef "$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31"
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21"
             [ "$args"
             , "$k"
             ]
@@ -752,7 +612,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 28
+                        ( 25
                         ,
                             [ "$cl"
                             , "$arg0"
@@ -767,7 +627,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap15_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 29
+                                                    [ CReuse "$args" 26
                                                         [ CVar "$cap15_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -782,7 +642,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap16_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 30
+                                                    [ CReuse "$args" 27
                                                         [ CVar "$cap16_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -797,7 +657,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap17_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 31
+                                                    [ CReuse "$args" 28
                                                         [ CVar "$cap17_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -812,7 +672,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap18_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 32
+                                                    [ CReuse "$args" 29
                                                         [ CVar "$cap18_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -827,7 +687,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap19_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 33
+                                                    [ CReuse "$args" 30
                                                         [ CVar "$cap19_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -842,7 +702,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap20_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 34
+                                                    [ CReuse "$args" 31
                                                         [ CVar "$cap20_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -855,7 +715,7 @@ CoreProgram
                                         ( 21
                                         , []
                                         , CCall
-                                            ( CVar "$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31" )
+                                            ( CVar "$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21" )
                                             [ CVar "$k"
                                             , CCall
                                                 ( CVar "$io_getargs_cont" )
@@ -868,7 +728,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap22_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 35
+                                                    [ CReuse "$args" 32
                                                         [ CVar "$cap22_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -883,7 +743,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap23_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 36
+                                                    [ CReuse "$args" 33
                                                         [ CVar "$cap23_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -898,7 +758,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "$cap24_0"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CReuse "$args" 37
+                                                    [ CReuse "$args" 34
                                                         [ CVar "$cap24_0"
                                                         , CVar "$arg0"
                                                         ]
@@ -907,52 +767,70 @@ CoreProgram
                                                 )
                                             )
                                         )
-                                    ,
-                                        ( 25
-                                        , [ "$cap25_0" ]
-                                        , CDrop DropFreeUnchecked "$cap25_0"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CContinue
-                                                    [ CReuse "$args" 38
-                                                        [ CVar "$cap25_0"
-                                                        , CVar "$arg0"
-                                                        ]
-                                                    , CVar "$k"
-                                                    ]
-                                                )
-                                            )
-                                        )
-                                    ,
-                                        ( 26
-                                        , [ "$cap26_0" ]
-                                        , CDrop DropFreeUnchecked "$cap26_0"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CContinue
-                                                    [ CReuse "$args" 39
-                                                        [ CVar "$cap26_0"
-                                                        , CVar "$arg0"
-                                                        ]
-                                                    , CVar "$k"
-                                                    ]
-                                                )
-                                            )
-                                        )
-                                    ,
-                                        ( 27
-                                        , [ "$cap27_0" ]
-                                        , CDrop DropFreeUnchecked "$cap27_0"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CContinue
-                                                    [ CReuse "$args" 40
-                                                        [ CVar "$cap27_0"
-                                                        , CVar "$arg0"
-                                                        ]
-                                                    , CVar "$k"
-                                                    ]
-                                                )
-                                            )
-                                        )
                                     ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 26
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 25
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 42
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 27
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 25
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 43
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 28
+                        ,
+                            [ "cont"
+                            , "bytes"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "bytes"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 25
+                                            [ CVar "cont"
+                                            , CVar "bytes"
+                                            ]
+                                        , CCon 44
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
                                 )
                             )
                         )
@@ -966,11 +844,11 @@ CoreProgram
                             ( CDrop DropFreeUnchecked "result"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
+                                        [ CReuse "$args" 25
                                             [ CVar "cont"
                                             , CVar "result"
                                             ]
-                                        , CCon 50
+                                        , CCon 45
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -987,11 +865,11 @@ CoreProgram
                             ( CDrop DropFreeUnchecked "result"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
+                                        [ CReuse "$args" 25
                                             [ CVar "cont"
                                             , CVar "result"
                                             ]
-                                        , CCon 51
+                                        , CCon 46
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -1008,11 +886,11 @@ CoreProgram
                             ( CDrop DropFreeUnchecked "bytes"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
+                                        [ CReuse "$args" 25
                                             [ CVar "cont"
                                             , CVar "bytes"
                                             ]
-                                        , CCon 52
+                                        , CCon 47
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -1022,18 +900,18 @@ CoreProgram
                     ,
                         ( 32
                         ,
-                            [ "cont"
-                            , "result"
+                            [ "__f"
+                            , "__arg"
                             ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "result"
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "cont"
-                                            , CVar "result"
+                                        [ CReuse "$args" 25
+                                            [ CVar "__f"
+                                            , CVar "__arg"
                                             ]
-                                        , CCon 53
+                                        , CCon 48
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -1043,18 +921,18 @@ CoreProgram
                     ,
                         ( 33
                         ,
-                            [ "cont"
-                            , "result"
+                            [ "__f"
+                            , "__arg"
                             ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "result"
+                        , CDrop DropFreeUnchecked "__f"
+                            ( CDrop DropFreeUnchecked "__arg"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "cont"
-                                            , CVar "result"
+                                        [ CReuse "$args" 25
+                                            [ CVar "__f"
+                                            , CVar "__arg"
                                             ]
-                                        , CCon 54
+                                        , CCon 49
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -1064,27 +942,6 @@ CoreProgram
                     ,
                         ( 34
                         ,
-                            [ "cont"
-                            , "bytes"
-                            ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "cont"
-                                            , CVar "bytes"
-                                            ]
-                                        , CCon 55
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 35
-                        ,
                             [ "__f"
                             , "__arg"
                             ]
@@ -1092,116 +949,11 @@ CoreProgram
                             ( CDrop DropFreeUnchecked "__arg"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 28
+                                        [ CReuse "$args" 25
                                             [ CVar "__f"
                                             , CVar "__arg"
                                             ]
-                                        , CCon 56
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 36
-                        ,
-                            [ "__f"
-                            , "__arg"
-                            ]
-                        , CDrop DropFreeUnchecked "__f"
-                            ( CDrop DropFreeUnchecked "__arg"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "__f"
-                                            , CVar "__arg"
-                                            ]
-                                        , CCon 57
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 37
-                        ,
-                            [ "__f"
-                            , "__arg"
-                            ]
-                        , CDrop DropFreeUnchecked "__f"
-                            ( CDrop DropFreeUnchecked "__arg"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "__f"
-                                            , CVar "__arg"
-                                            ]
-                                        , CCon 58
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 38
-                        ,
-                            [ "__f"
-                            , "__arg"
-                            ]
-                        , CDrop DropFreeUnchecked "__f"
-                            ( CDrop DropFreeUnchecked "__arg"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "__f"
-                                            , CVar "__arg"
-                                            ]
-                                        , CCon 59
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 39
-                        ,
-                            [ "__f"
-                            , "__arg"
-                            ]
-                        , CDrop DropFreeUnchecked "__f"
-                            ( CDrop DropFreeUnchecked "__arg"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "__f"
-                                            , CVar "__arg"
-                                            ]
-                                        , CCon 60
-                                            [ CVar "$k" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 40
-                        ,
-                            [ "__f"
-                            , "__arg"
-                            ]
-                        , CDrop DropFreeUnchecked "__f"
-                            ( CDrop DropFreeUnchecked "__arg"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CReuse "$args" 28
-                                            [ CVar "__f"
-                                            , CVar "__arg"
-                                            ]
-                                        , CCon 61
+                                        , CCon 50
                                             [ CVar "$k" ]
                                         ]
                                     )
@@ -1211,7 +963,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31"
+        , CFunDef "$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21"
             [ "$k"
             , "$x"
             ]
@@ -1219,9 +971,137 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 49
+                        ( 41
                         , []
                         , CVar "$x"
+                        )
+                    ,
+                        ( 42
+                        , [ "$pk_42" ]
+                        , CDrop DropFreeUnchecked "$pk_42"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_42"
+                                        , CCall
+                                            ( CVar "$df$handleErrorIO$0" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 43
+                        , [ "$pk_43" ]
+                        , CDrop DropFreeUnchecked "$pk_43"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_43"
+                                        , CCall
+                                            ( CVar "$df$handleErrorIO$0" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 44
+                        , [ "$pk_44" ]
+                        , CDrop DropFreeUnchecked "$pk_44"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_44"
+                                        , CCall
+                                            ( CVar "$df$handleErrorIO$0" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 45
+                        , [ "$pk_45" ]
+                        , CDrop DropFreeUnchecked "$pk_45"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_45"
+                                        , CCall
+                                            ( CVar "$df$$rowmono$0$andThenIO$4" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 46
+                        , [ "$pk_46" ]
+                        , CDrop DropFreeUnchecked "$pk_46"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_46"
+                                        , CCall
+                                            ( CVar "$df$$rowmono$0$andThenIO$4" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 47
+                        , [ "$pk_47" ]
+                        , CDrop DropFreeUnchecked "$pk_47"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_47"
+                                        , CCall
+                                            ( CVar "$df$$rowmono$0$andThenIO$4" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 48
+                        , [ "$pk_48" ]
+                        , CDrop DropFreeUnchecked "$pk_48"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_48"
+                                        , CCall
+                                            ( CVar "$lift$18" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 49
+                        , [ "$pk_49" ]
+                        , CDrop DropFreeUnchecked "$pk_49"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_49"
+                                        , CCall
+                                            ( CVar "$lift$18" )
+                                            [ CVar "$x" ]
+                                        ]
+                                    )
+                                )
+                            )
                         )
                     ,
                         ( 50
@@ -1232,192 +1112,7 @@ CoreProgram
                                     ( CContinue
                                         [ CVar "$pk_50"
                                         , CCall
-                                            ( CVar "$df$handleErrorIO$0" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 51
-                        , [ "$pk_51" ]
-                        , CDrop DropFreeUnchecked "$pk_51"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_51"
-                                        , CCall
-                                            ( CVar "$df$handleErrorIO$0" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 52
-                        , [ "$pk_52" ]
-                        , CDrop DropFreeUnchecked "$pk_52"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_52"
-                                        , CCall
-                                            ( CVar "$df$handleErrorIO$0" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 53
-                        , [ "$pk_53" ]
-                        , CDrop DropFreeUnchecked "$pk_53"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_53"
-                                        , CCall
-                                            ( CVar "$df$$rowspec$23$4" )
-                                            [ CCall
-                                                ( CVar "$lift$28" )
-                                                [ CVar "$x" ]
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 54
-                        , [ "$pk_54" ]
-                        , CDrop DropFreeUnchecked "$pk_54"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_54"
-                                        , CCall
-                                            ( CVar "$df$$rowspec$23$4" )
-                                            [ CCall
-                                                ( CVar "$lift$28" )
-                                                [ CVar "$x" ]
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 55
-                        , [ "$pk_55" ]
-                        , CDrop DropFreeUnchecked "$pk_55"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_55"
-                                        , CCall
-                                            ( CVar "$df$$rowspec$23$4" )
-                                            [ CCall
-                                                ( CVar "$lift$28" )
-                                                [ CVar "$x" ]
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 56
-                        , [ "$pk_56" ]
-                        , CDrop DropFreeUnchecked "$pk_56"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_56"
-                                        , CCall
-                                            ( CVar "$lift$24" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 57
-                        , [ "$pk_57" ]
-                        , CDrop DropFreeUnchecked "$pk_57"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_57"
-                                        , CCall
-                                            ( CVar "$lift$24" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 58
-                        , [ "$pk_58" ]
-                        , CDrop DropFreeUnchecked "$pk_58"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_58"
-                                        , CCall
-                                            ( CVar "$lift$24" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 59
-                        , [ "$pk_59" ]
-                        , CDrop DropFreeUnchecked "$pk_59"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_59"
-                                        , CCall
-                                            ( CVar "$lift$28" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 60
-                        , [ "$pk_60" ]
-                        , CDrop DropFreeUnchecked "$pk_60"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_60"
-                                        , CCall
-                                            ( CVar "$lift$28" )
-                                            [ CVar "$x" ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                        ( 61
-                        , [ "$pk_61" ]
-                        , CDrop DropFreeUnchecked "$pk_61"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_61"
-                                        , CCall
-                                            ( CVar "$lift$28" )
+                                            ( CVar "$lift$18" )
                                             [ CVar "$x" ]
                                         ]
                                     )
@@ -1432,8 +1127,8 @@ CoreProgram
             , "$arg0"
             ]
             ( CCall
-                ( CVar "$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31" )
-                [ CCon 28
+                ( CVar "$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21" )
+                [ CCon 25
                     [ CVar "$cl"
                     , CVar "$arg0"
                     ]

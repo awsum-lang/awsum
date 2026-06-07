@@ -224,30 +224,19 @@
 
   .method private hidebysig static object v_reFailC() cil managed
   {
-    .maxstack 5
-    .locals init (object[] V_0, object V_1)
-    ldc.i4.2
+    .maxstack 3
+    .locals init (object[] V_0)
+    ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4 2286545437
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    ldc.i4.1
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.1
-    ldloc.1
-    ldc.i4.0
     ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.1
-    stelem.ref
     ldloc.0
     call object AwsumMain::v_failIO(object)
+    call object AwsumMain::v__lift_18(object)
     ret
   }
 
@@ -362,60 +351,38 @@
 
   .method private hidebysig static object v_inErrA() cil managed
   {
-    .maxstack 5
-    .locals init (object[] V_0, object V_1)
-    ldc.i4.2
+    .maxstack 3
+    .locals init (object[] V_0)
+    ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4 2252990199
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    ldc.i4.1
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.1
-    ldloc.1
-    ldc.i4.0
     ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.1
-    stelem.ref
     ldloc.0
     call object AwsumMain::v_failIO(object)
+    call object AwsumMain::v__lift_22(object)
     ret
   }
 
 
   .method private hidebysig static object v_inErrB() cil managed
   {
-    .maxstack 5
-    .locals init (object[] V_0, object V_1)
-    ldc.i4.2
+    .maxstack 3
+    .locals init (object[] V_0)
+    ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4 2269767818
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    ldc.i4.1
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.1
-    ldloc.1
-    ldc.i4.0
     ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.1
-    stelem.ref
     ldloc.0
     call object AwsumMain::v_failIO(object)
+    call object AwsumMain::v__lift_26(object)
     ret
   }
 
@@ -687,7 +654,6 @@
     .maxstack 1
     ldarg.0
     call object AwsumMain::v__df_mapIO_36(object)
-    call object AwsumMain::v__lift_24(object)
     call object AwsumMain::v__df_andThenIO_32(object)
     call object AwsumMain::v__df_handleErrorIO_40(object)
     ret
@@ -803,7 +769,7 @@
     .maxstack 1
     ldarg.0
     call object AwsumMain::v__df_mapIO_36(object)
-    call object AwsumMain::v__df__rowspec_28_48(object)
+    call object AwsumMain::v__df__rowmono_0_andThenIO_48(object)
     call object AwsumMain::v__df_handleErrorIO_44(object)
     ret
   }
@@ -850,7 +816,6 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_43(object)
     call object AwsumMain::v__df_andThenIO_60(object)
     ldarg.1
     call object AwsumMain::v__df_andThenIO_56(object, object)
@@ -866,7 +831,6 @@
     call object AwsumMain::v_recover()
     call object AwsumMain::v_observeNever(object)
     call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
     call object AwsumMain::v__df_andThenIO_92(object)
     call object AwsumMain::v__df_andThenIO_88(object)
     call object AwsumMain::v__df_andThenIO_84(object)
@@ -1017,7 +981,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 99
+    ldc.i4.s 100
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1054,7 +1018,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 103
+    ldc.i4.s 109
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1154,25 +1118,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_23(object) cil managed
-  {
-    .maxstack 3
-    .locals init (object[] V_0)
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldc.i4.s 24
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    call object AwsumMain::v_failIO(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lift_24(object) cil managed
+  .method private hidebysig static object v__lift_18(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -1186,12 +1132,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__lift_24(object, object)
+    call object AwsumMain::v__cps__lift_18(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_24(object,object) cil managed
+  .method private hidebysig static object v__cps__lift_18(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1224,7 +1170,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
+    call object AwsumMain::v__apply__lift_18(object, object)
     ret
   IL_c0:
     dup
@@ -1246,10 +1192,22 @@
     stelem.ref
     ldloc.3
     ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4 2286545437
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
     ldloc.1
     stelem.ref
+    ldloc.s 4
+    stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
+    call object AwsumMain::v__apply__lift_18(object, object)
     ret
   IL_c1:
     dup
@@ -1310,7 +1268,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 100
+    ldc.i4.s 99
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1320,7 +1278,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
+    call object AwsumMain::v__apply__lift_18(object, object)
     ret
   IL_c3:
     dup
@@ -1357,7 +1315,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
+    call object AwsumMain::v__apply__lift_18(object, object)
     ret
   IL_c4:
     pop
@@ -1391,12 +1349,12 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
+    call object AwsumMain::v__apply__lift_18(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__apply__lift_24(object,object) cil managed
+  .method private hidebysig static object v__apply__lift_18(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1447,7 +1405,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_29(object) cil managed
+  .method private hidebysig static object v__lift_22(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -1461,12 +1419,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__lift_29(object, object)
+    call object AwsumMain::v__cps__lift_22(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_29(object,object) cil managed
+  .method private hidebysig static object v__cps__lift_22(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1499,7 +1457,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_29(object, object)
+    call object AwsumMain::v__apply__lift_22(object, object)
     ret
   IL_c0:
     dup
@@ -1526,7 +1484,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4 3801428867
+    ldc.i4 2252990199
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1536,7 +1494,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_29(object, object)
+    call object AwsumMain::v__apply__lift_22(object, object)
     ret
   IL_c1:
     dup
@@ -1597,7 +1555,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 104
+    ldc.i4.s 103
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1607,7 +1565,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_29(object, object)
+    call object AwsumMain::v__apply__lift_22(object, object)
     ret
   IL_c3:
     dup
@@ -1634,7 +1592,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 105
+    ldc.i4.s 104
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1644,7 +1602,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_29(object, object)
+    call object AwsumMain::v__apply__lift_22(object, object)
     ret
   IL_c4:
     pop
@@ -1668,7 +1626,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 106
+    ldc.i4.s 105
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -1678,12 +1636,12 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_29(object, object)
+    call object AwsumMain::v__apply__lift_22(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__apply__lift_29(object,object) cil managed
+  .method private hidebysig static object v__apply__lift_22(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1734,7 +1692,312 @@
   }
 
 
-  .method private hidebysig static object v__lam_40(object) cil managed
+  .method private hidebysig static object v__lift_26(object) cil managed
+  {
+    .maxstack 4
+    .locals init (object[] V_0)
+    ldarg.0
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.0
+    ldloc.0
+    ldc.i4.0
+    ldc.i4 208
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.0
+    call object AwsumMain::v__cps__lift_26(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__cps__lift_26(object,object) cil managed
+  {
+    .maxstack 6
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
+  IL_tco_loop:
+    ldarg.0
+    stloc.0
+    ldloc.0
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.5
+    bne.un IL_c0
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.5
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.3
+    call object AwsumMain::v__apply__lift_26(object, object)
+    ret
+  IL_c0:
+    dup
+    ldc.i4.6
+    bne.un IL_c1
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.6
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4 2269767818
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+    call object AwsumMain::v__apply__lift_26(object, object)
+    ret
+  IL_c1:
+    dup
+    ldc.i4.7
+    bne.un IL_c2
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldloc.2
+    ldarg.0
+    castclass object[]
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4 209
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldarg.1
+    stelem.ref
+    ldloc.3
+    ldc.i4.2
+    ldloc.1
+    stelem.ref
+    ldloc.3
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c2:
+    dup
+    ldc.i4.8
+    bne.un IL_c3
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.8
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 106
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+    call object AwsumMain::v__apply__lift_26(object, object)
+    ret
+  IL_c3:
+    dup
+    ldc.i4.s 9
+    bne.un IL_c4
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.s 9
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 107
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+    call object AwsumMain::v__apply__lift_26(object, object)
+    ret
+  IL_c4:
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.s 10
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 108
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+    call object AwsumMain::v__apply__lift_26(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__apply__lift_26(object,object) cil managed
+  {
+    .maxstack 4
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
+  IL_tco_loop:
+    ldarg.0
+    stloc.0
+    ldloc.0
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4 208
+    bne.un IL_c0
+    pop
+    ldarg.1
+    ret
+  IL_c0:
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldloc.1
+    ldarg.0
+    castclass object[]
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.7
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
+    ldloc.3
+    ldc.i4.2
+    ldarg.1
+    stelem.ref
+    ldloc.3
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  }
+
+
+  .method private hidebysig static object v__lam_30(object) cil managed
+  {
+    .maxstack 3
+    .locals init (object[] V_0)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.0
+    ldloc.0
+    ldc.i4.0
+    ldc.i4.s 24
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.0
+    call object AwsumMain::v_failIO(object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_31(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1779,7 +2042,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_41(object,object) cil managed
+  .method private hidebysig static object v__lam_32(object,object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -1787,7 +2050,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_42(object) cil managed
+  .method private hidebysig static object v__lam_33(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1832,7 +2095,93 @@
   }
 
 
-  .method private hidebysig static object v__lift_43(object) cil managed
+  .method private hidebysig static object v__lam_34(object) cil managed
+  {
+    .maxstack 2
+    ldstr "treeNoError"
+    call object AwsumMain::v_treeNoError()
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_35(object) cil managed
+  {
+    .maxstack 2
+    ldstr "treePreserve"
+    call object AwsumMain::v_treePreserve()
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_36(object) cil managed
+  {
+    .maxstack 2
+    ldstr "refailRow"
+    call object AwsumMain::v_refailRow()
+    call object AwsumMain::v_observeBC(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_37(object) cil managed
+  {
+    .maxstack 2
+    ldstr "refailNarrow"
+    call object AwsumMain::v_refailNarrow()
+    call object AwsumMain::v_observeB(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_38(object) cil managed
+  {
+    .maxstack 2
+    ldstr "nested"
+    call object AwsumMain::v_nested()
+    call object AwsumMain::v_observeNever(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_39(object) cil managed
+  {
+    .maxstack 2
+    ldstr "passthrough"
+    call object AwsumMain::v_passthrough()
+    call object AwsumMain::v_observeNever(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_40(object) cil managed
+  {
+    .maxstack 2
+    ldstr "dispatchB"
+    call object AwsumMain::v_dispatchB()
+    call object AwsumMain::v_observeNever(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lam_41(object) cil managed
+  {
+    .maxstack 2
+    ldstr "dispatchA"
+    call object AwsumMain::v_dispatchA()
+    call object AwsumMain::v_observeNever(object)
+    call object AwsumMain::v_line(object, object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__lift_42(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -1846,12 +2195,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__lift_43(object, object)
+    call object AwsumMain::v__cps__lift_42(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_43(object,object) cil managed
+  .method private hidebysig static object v__cps__lift_42(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1884,7 +2233,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_43(object, object)
+    call object AwsumMain::v__apply__lift_42(object, object)
     ret
   IL_c0:
     dup
@@ -1909,7 +2258,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_43(object, object)
+    call object AwsumMain::v__apply__lift_42(object, object)
     ret
   IL_c1:
     dup
@@ -1980,7 +2329,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_43(object, object)
+    call object AwsumMain::v__apply__lift_42(object, object)
     ret
   IL_c3:
     dup
@@ -2017,7 +2366,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_43(object, object)
+    call object AwsumMain::v__apply__lift_42(object, object)
     ret
   IL_c4:
     pop
@@ -2051,12 +2400,12 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_43(object, object)
+    call object AwsumMain::v__apply__lift_42(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__apply__lift_43(object,object) cil managed
+  .method private hidebysig static object v__apply__lift_42(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2104,99 +2453,6 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  }
-
-
-  .method private hidebysig static object v__lam_47(object) cil managed
-  {
-    .maxstack 2
-    ldstr "treeNoError"
-    call object AwsumMain::v_treeNoError()
-    call object AwsumMain::v_line(object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_48(object) cil managed
-  {
-    .maxstack 2
-    ldstr "treePreserve"
-    call object AwsumMain::v_treePreserve()
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_49(object) cil managed
-  {
-    .maxstack 2
-    ldstr "refailRow"
-    call object AwsumMain::v_refailRow()
-    call object AwsumMain::v_observeBC(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_50(object) cil managed
-  {
-    .maxstack 2
-    ldstr "refailNarrow"
-    call object AwsumMain::v_refailNarrow()
-    call object AwsumMain::v_observeB(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_51(object) cil managed
-  {
-    .maxstack 2
-    ldstr "nested"
-    call object AwsumMain::v_nested()
-    call object AwsumMain::v_observeNever(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_52(object) cil managed
-  {
-    .maxstack 2
-    ldstr "passthrough"
-    call object AwsumMain::v_passthrough()
-    call object AwsumMain::v_observeNever(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_53(object) cil managed
-  {
-    .maxstack 2
-    ldstr "dispatchB"
-    call object AwsumMain::v_dispatchB()
-    call object AwsumMain::v_observeNever(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_54(object) cil managed
-  {
-    .maxstack 2
-    ldstr "dispatchA"
-    call object AwsumMain::v_dispatchA()
-    call object AwsumMain::v_observeNever(object)
-    call object AwsumMain::v_line(object, object)
-    call object AwsumMain::v__lift_43(object)
-    ret
   }
 
 
@@ -3878,7 +4134,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_23(object)
+    call object AwsumMain::v__lam_30(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_24(object, object)
     ret
@@ -5436,7 +5692,7 @@
   }
 
 
-  .method private hidebysig static object v__df__rowspec_28_48(object) cil managed
+  .method private hidebysig static object v__df__rowmono_0_andThenIO_48(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -5450,12 +5706,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__cps__df__rowmono_0_andThenIO_48(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__df__rowspec_28_48(object,object) cil managed
+  .method private hidebysig static object v__cps__df__rowmono_0_andThenIO_48(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -5477,8 +5733,8 @@
     ldarg.1
     ldloc.1
     call object AwsumMain::v__bi_IO_Stdout_print(object)
-    call object AwsumMain::v__lift_29(object)
-    call object AwsumMain::v__apply__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__lift_42(object)
+    call object AwsumMain::v__apply__df__rowmono_0_andThenIO_48(object, object)
     ret
   IL_c0:
     dup
@@ -5503,7 +5759,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__apply__df__rowmono_0_andThenIO_48(object, object)
     ret
   IL_c1:
     dup
@@ -5574,7 +5830,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__apply__df__rowmono_0_andThenIO_48(object, object)
     ret
   IL_c3:
     dup
@@ -5611,7 +5867,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__apply__df__rowmono_0_andThenIO_48(object, object)
     ret
   IL_c4:
     pop
@@ -5645,12 +5901,12 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__df__rowspec_28_48(object, object)
+    call object AwsumMain::v__apply__df__rowmono_0_andThenIO_48(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__apply__df__rowspec_28_48(object,object) cil managed
+  .method private hidebysig static object v__apply__df__rowmono_0_andThenIO_48(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -5741,7 +5997,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_40(object)
+    call object AwsumMain::v__lam_31(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_52(object, object)
     ret
@@ -6008,7 +6264,7 @@
     ldarg.2
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_41(object, object)
+    call object AwsumMain::v__lam_32(object, object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_56(object, object)
     ret
@@ -6287,7 +6543,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_42(object)
+    call object AwsumMain::v__lam_33(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_60(object, object)
     ret
@@ -6552,7 +6808,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_47(object)
+    call object AwsumMain::v__lam_34(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_64(object, object)
     ret
@@ -6817,7 +7073,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_48(object)
+    call object AwsumMain::v__lam_35(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_68(object, object)
     ret
@@ -7082,7 +7338,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_49(object)
+    call object AwsumMain::v__lam_36(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_72(object, object)
     ret
@@ -7347,7 +7603,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_50(object)
+    call object AwsumMain::v__lam_37(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_76(object, object)
     ret
@@ -7612,7 +7868,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_51(object)
+    call object AwsumMain::v__lam_38(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_80(object, object)
     ret
@@ -7877,7 +8133,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_52(object)
+    call object AwsumMain::v__lam_39(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_84(object, object)
     ret
@@ -8142,7 +8398,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_53(object)
+    call object AwsumMain::v__lam_40(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_88(object, object)
     ret
@@ -8407,7 +8663,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_54(object)
+    call object AwsumMain::v__lam_41(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_92(object, object)
     ret
@@ -8632,7 +8888,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(object) cil managed
+  .method private hidebysig static object v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -8646,12 +8902,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(object, object)
+    call object AwsumMain::v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(object,object) cil managed
+  .method private hidebysig static object v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7)
@@ -8664,7 +8920,7 @@
     unbox.any [System.Runtime]System.Int32
     dup
     ldc.i4.s 114
-    bne.un IL_c83
+    bne.un IL_c86
     pop
     ldloc.0
     ldc.i4.1
@@ -11105,8 +11361,98 @@
     br IL_tco_loop
   IL_c79:
     dup
-    ldc.i4.s 110
+    ldc.i4.s 107
     bne.un IL_c80
+    pop
+    ldloc.s 4
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 5
+    ldarg.0
+    castclass object[]
+    stloc.s 7
+    ldloc.s 7
+    ldc.i4.0
+    ldc.i4 195
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.1
+    ldloc.s 5
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 7
+    ldarg.1
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c80:
+    dup
+    ldc.i4.s 108
+    bne.un IL_c81
+    pop
+    ldloc.s 4
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 5
+    ldarg.0
+    castclass object[]
+    stloc.s 7
+    ldloc.s 7
+    ldc.i4.0
+    ldc.i4 196
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.1
+    ldloc.s 5
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 7
+    ldarg.1
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c81:
+    dup
+    ldc.i4.s 109
+    bne.un IL_c82
+    pop
+    ldloc.s 4
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 5
+    ldarg.0
+    castclass object[]
+    stloc.s 7
+    ldloc.s 7
+    ldc.i4.0
+    ldc.i4 197
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.1
+    ldloc.s 5
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 7
+    ldarg.1
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c82:
+    dup
+    ldc.i4.s 110
+    bne.un IL_c83
     pop
     ldloc.s 4
     ldc.i4.1
@@ -11133,10 +11479,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c80:
+  IL_c83:
     dup
     ldc.i4.s 111
-    bne.un IL_c81
+    bne.un IL_c84
     pop
     ldloc.s 4
     ldc.i4.1
@@ -11163,10 +11509,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c81:
+  IL_c84:
     dup
     ldc.i4.s 112
-    bne.un IL_c82
+    bne.un IL_c85
     pop
     ldloc.s 4
     ldc.i4.1
@@ -11193,7 +11539,7 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c82:
+  IL_c85:
     pop
     ldloc.s 4
     ldc.i4.1
@@ -11220,10 +11566,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c83:
+  IL_c86:
     dup
     ldc.i4.s 115
-    bne.un IL_c84
+    bne.un IL_c87
     pop
     ldloc.0
     ldc.i4.1
@@ -11266,10 +11612,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c84:
+  IL_c87:
     dup
     ldc.i4.s 116
-    bne.un IL_c85
+    bne.un IL_c88
     pop
     ldloc.0
     ldc.i4.1
@@ -11312,10 +11658,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c85:
+  IL_c88:
     dup
     ldc.i4.s 117
-    bne.un IL_c86
+    bne.un IL_c89
     pop
     ldloc.0
     ldc.i4.1
@@ -11358,10 +11704,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c86:
+  IL_c89:
     dup
     ldc.i4.s 118
-    bne.un IL_c87
+    bne.un IL_c90
     pop
     ldloc.0
     ldc.i4.1
@@ -11404,10 +11750,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c87:
+  IL_c90:
     dup
     ldc.i4.s 119
-    bne.un IL_c88
+    bne.un IL_c91
     pop
     ldloc.0
     ldc.i4.1
@@ -11450,10 +11796,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c88:
+  IL_c91:
     dup
     ldc.i4.s 120
-    bne.un IL_c89
+    bne.un IL_c92
     pop
     ldloc.0
     ldc.i4.1
@@ -11496,10 +11842,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c89:
+  IL_c92:
     dup
     ldc.i4.s 121
-    bne.un IL_c90
+    bne.un IL_c93
     pop
     ldloc.0
     ldc.i4.1
@@ -11542,10 +11888,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c90:
+  IL_c93:
     dup
     ldc.i4.s 122
-    bne.un IL_c91
+    bne.un IL_c94
     pop
     ldloc.0
     ldc.i4.1
@@ -11588,10 +11934,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c91:
+  IL_c94:
     dup
     ldc.i4.s 123
-    bne.un IL_c92
+    bne.un IL_c95
     pop
     ldloc.0
     ldc.i4.1
@@ -11634,10 +11980,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c92:
+  IL_c95:
     dup
     ldc.i4.s 124
-    bne.un IL_c93
+    bne.un IL_c96
     pop
     ldloc.0
     ldc.i4.1
@@ -11680,10 +12026,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c93:
+  IL_c96:
     dup
     ldc.i4.s 125
-    bne.un IL_c94
+    bne.un IL_c97
     pop
     ldloc.0
     ldc.i4.1
@@ -11726,10 +12072,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c94:
+  IL_c97:
     dup
     ldc.i4.s 126
-    bne.un IL_c95
+    bne.un IL_c98
     pop
     ldloc.0
     ldc.i4.1
@@ -11772,10 +12118,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c95:
+  IL_c98:
     dup
     ldc.i4.s 127
-    bne.un IL_c96
+    bne.un IL_c99
     pop
     ldloc.0
     ldc.i4.1
@@ -11818,10 +12164,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c96:
+  IL_c99:
     dup
     ldc.i4 128
-    bne.un IL_c97
+    bne.un IL_c100
     pop
     ldloc.0
     ldc.i4.1
@@ -11864,10 +12210,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c97:
+  IL_c100:
     dup
     ldc.i4 129
-    bne.un IL_c98
+    bne.un IL_c101
     pop
     ldloc.0
     ldc.i4.1
@@ -11910,10 +12256,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c98:
+  IL_c101:
     dup
     ldc.i4 130
-    bne.un IL_c99
+    bne.un IL_c102
     pop
     ldloc.0
     ldc.i4.1
@@ -11956,10 +12302,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c99:
+  IL_c102:
     dup
     ldc.i4 131
-    bne.un IL_c100
+    bne.un IL_c103
     pop
     ldloc.0
     ldc.i4.1
@@ -12002,10 +12348,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c100:
+  IL_c103:
     dup
     ldc.i4 132
-    bne.un IL_c101
+    bne.un IL_c104
     pop
     ldloc.0
     ldc.i4.1
@@ -12048,10 +12394,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c101:
+  IL_c104:
     dup
     ldc.i4 133
-    bne.un IL_c102
+    bne.un IL_c105
     pop
     ldloc.0
     ldc.i4.1
@@ -12094,10 +12440,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c102:
+  IL_c105:
     dup
     ldc.i4 134
-    bne.un IL_c103
+    bne.un IL_c106
     pop
     ldloc.0
     ldc.i4.1
@@ -12140,10 +12486,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c103:
+  IL_c106:
     dup
     ldc.i4 135
-    bne.un IL_c104
+    bne.un IL_c107
     pop
     ldloc.0
     ldc.i4.1
@@ -12186,10 +12532,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c104:
+  IL_c107:
     dup
     ldc.i4 136
-    bne.un IL_c105
+    bne.un IL_c108
     pop
     ldloc.0
     ldc.i4.1
@@ -12232,10 +12578,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c105:
+  IL_c108:
     dup
     ldc.i4 137
-    bne.un IL_c106
+    bne.un IL_c109
     pop
     ldloc.0
     ldc.i4.1
@@ -12278,10 +12624,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c106:
+  IL_c109:
     dup
     ldc.i4 138
-    bne.un IL_c107
+    bne.un IL_c110
     pop
     ldloc.0
     ldc.i4.1
@@ -12324,10 +12670,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c107:
+  IL_c110:
     dup
     ldc.i4 139
-    bne.un IL_c108
+    bne.un IL_c111
     pop
     ldloc.0
     ldc.i4.1
@@ -12370,10 +12716,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c108:
+  IL_c111:
     dup
     ldc.i4 140
-    bne.un IL_c109
+    bne.un IL_c112
     pop
     ldloc.0
     ldc.i4.1
@@ -12416,10 +12762,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c109:
+  IL_c112:
     dup
     ldc.i4 141
-    bne.un IL_c110
+    bne.un IL_c113
     pop
     ldloc.0
     ldc.i4.1
@@ -12462,10 +12808,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c110:
+  IL_c113:
     dup
     ldc.i4 142
-    bne.un IL_c111
+    bne.un IL_c114
     pop
     ldloc.0
     ldc.i4.1
@@ -12508,10 +12854,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c111:
+  IL_c114:
     dup
     ldc.i4 143
-    bne.un IL_c112
+    bne.un IL_c115
     pop
     ldloc.0
     ldc.i4.1
@@ -12554,10 +12900,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c112:
+  IL_c115:
     dup
     ldc.i4 144
-    bne.un IL_c113
+    bne.un IL_c116
     pop
     ldloc.0
     ldc.i4.1
@@ -12600,10 +12946,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c113:
+  IL_c116:
     dup
     ldc.i4 145
-    bne.un IL_c114
+    bne.un IL_c117
     pop
     ldloc.0
     ldc.i4.1
@@ -12646,10 +12992,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c114:
+  IL_c117:
     dup
     ldc.i4 146
-    bne.un IL_c115
+    bne.un IL_c118
     pop
     ldloc.0
     ldc.i4.1
@@ -12692,10 +13038,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c115:
+  IL_c118:
     dup
     ldc.i4 147
-    bne.un IL_c116
+    bne.un IL_c119
     pop
     ldloc.0
     ldc.i4.1
@@ -12738,10 +13084,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c116:
+  IL_c119:
     dup
     ldc.i4 148
-    bne.un IL_c117
+    bne.un IL_c120
     pop
     ldloc.0
     ldc.i4.1
@@ -12784,10 +13130,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c117:
+  IL_c120:
     dup
     ldc.i4 149
-    bne.un IL_c118
+    bne.un IL_c121
     pop
     ldloc.0
     ldc.i4.1
@@ -12838,10 +13184,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c118:
+  IL_c121:
     dup
     ldc.i4 150
-    bne.un IL_c119
+    bne.un IL_c122
     pop
     ldloc.0
     ldc.i4.1
@@ -12884,10 +13230,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c119:
+  IL_c122:
     dup
     ldc.i4 151
-    bne.un IL_c120
+    bne.un IL_c123
     pop
     ldloc.0
     ldc.i4.1
@@ -12930,10 +13276,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c120:
+  IL_c123:
     dup
     ldc.i4 152
-    bne.un IL_c121
+    bne.un IL_c124
     pop
     ldloc.0
     ldc.i4.1
@@ -12976,10 +13322,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c121:
+  IL_c124:
     dup
     ldc.i4 153
-    bne.un IL_c122
+    bne.un IL_c125
     pop
     ldloc.0
     ldc.i4.1
@@ -13022,10 +13368,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c122:
+  IL_c125:
     dup
     ldc.i4 154
-    bne.un IL_c123
+    bne.un IL_c126
     pop
     ldloc.0
     ldc.i4.1
@@ -13068,10 +13414,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c123:
+  IL_c126:
     dup
     ldc.i4 155
-    bne.un IL_c124
+    bne.un IL_c127
     pop
     ldloc.0
     ldc.i4.1
@@ -13114,10 +13460,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c124:
+  IL_c127:
     dup
     ldc.i4 156
-    bne.un IL_c125
+    bne.un IL_c128
     pop
     ldloc.0
     ldc.i4.1
@@ -13160,10 +13506,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c125:
+  IL_c128:
     dup
     ldc.i4 157
-    bne.un IL_c126
+    bne.un IL_c129
     pop
     ldloc.0
     ldc.i4.1
@@ -13206,10 +13552,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c126:
+  IL_c129:
     dup
     ldc.i4 158
-    bne.un IL_c127
+    bne.un IL_c130
     pop
     ldloc.0
     ldc.i4.1
@@ -13252,10 +13598,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c127:
+  IL_c130:
     dup
     ldc.i4 159
-    bne.un IL_c128
+    bne.un IL_c131
     pop
     ldloc.0
     ldc.i4.1
@@ -13298,10 +13644,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c128:
+  IL_c131:
     dup
     ldc.i4 160
-    bne.un IL_c129
+    bne.un IL_c132
     pop
     ldloc.0
     ldc.i4.1
@@ -13344,10 +13690,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c129:
+  IL_c132:
     dup
     ldc.i4 161
-    bne.un IL_c130
+    bne.un IL_c133
     pop
     ldloc.0
     ldc.i4.1
@@ -13390,10 +13736,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c130:
+  IL_c133:
     dup
     ldc.i4 162
-    bne.un IL_c131
+    bne.un IL_c134
     pop
     ldloc.0
     ldc.i4.1
@@ -13444,10 +13790,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c131:
+  IL_c134:
     dup
     ldc.i4 163
-    bne.un IL_c132
+    bne.un IL_c135
     pop
     ldloc.0
     ldc.i4.1
@@ -13490,10 +13836,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c132:
+  IL_c135:
     dup
     ldc.i4 164
-    bne.un IL_c133
+    bne.un IL_c136
     pop
     ldloc.0
     ldc.i4.1
@@ -13536,10 +13882,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c133:
+  IL_c136:
     dup
     ldc.i4 165
-    bne.un IL_c134
+    bne.un IL_c137
     pop
     ldloc.0
     ldc.i4.1
@@ -13582,10 +13928,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c134:
+  IL_c137:
     dup
     ldc.i4 166
-    bne.un IL_c135
+    bne.un IL_c138
     pop
     ldloc.0
     ldc.i4.1
@@ -13628,10 +13974,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c135:
+  IL_c138:
     dup
     ldc.i4 167
-    bne.un IL_c136
+    bne.un IL_c139
     pop
     ldloc.0
     ldc.i4.1
@@ -13674,10 +14020,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c136:
+  IL_c139:
     dup
     ldc.i4 168
-    bne.un IL_c137
+    bne.un IL_c140
     pop
     ldloc.0
     ldc.i4.1
@@ -13720,10 +14066,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c137:
+  IL_c140:
     dup
     ldc.i4 169
-    bne.un IL_c138
+    bne.un IL_c141
     pop
     ldloc.0
     ldc.i4.1
@@ -13766,10 +14112,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c138:
+  IL_c141:
     dup
     ldc.i4 170
-    bne.un IL_c139
+    bne.un IL_c142
     pop
     ldloc.0
     ldc.i4.1
@@ -13812,10 +14158,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c139:
+  IL_c142:
     dup
     ldc.i4 171
-    bne.un IL_c140
+    bne.un IL_c143
     pop
     ldloc.0
     ldc.i4.1
@@ -13858,10 +14204,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c140:
+  IL_c143:
     dup
     ldc.i4 172
-    bne.un IL_c141
+    bne.un IL_c144
     pop
     ldloc.0
     ldc.i4.1
@@ -13904,10 +14250,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c141:
+  IL_c144:
     dup
     ldc.i4 173
-    bne.un IL_c142
+    bne.un IL_c145
     pop
     ldloc.0
     ldc.i4.1
@@ -13950,10 +14296,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c142:
+  IL_c145:
     dup
     ldc.i4 174
-    bne.un IL_c143
+    bne.un IL_c146
     pop
     ldloc.0
     ldc.i4.1
@@ -13996,10 +14342,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c143:
+  IL_c146:
     dup
     ldc.i4 175
-    bne.un IL_c144
+    bne.un IL_c147
     pop
     ldloc.0
     ldc.i4.1
@@ -14050,10 +14396,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c144:
+  IL_c147:
     dup
     ldc.i4 176
-    bne.un IL_c145
+    bne.un IL_c148
     pop
     ldloc.0
     ldc.i4.1
@@ -14096,10 +14442,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c145:
+  IL_c148:
     dup
     ldc.i4 177
-    bne.un IL_c146
+    bne.un IL_c149
     pop
     ldloc.0
     ldc.i4.1
@@ -14142,10 +14488,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c146:
+  IL_c149:
     dup
     ldc.i4 178
-    bne.un IL_c147
+    bne.un IL_c150
     pop
     ldloc.0
     ldc.i4.1
@@ -14188,10 +14534,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c147:
+  IL_c150:
     dup
     ldc.i4 179
-    bne.un IL_c148
+    bne.un IL_c151
     pop
     ldloc.0
     ldc.i4.1
@@ -14234,10 +14580,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c148:
+  IL_c151:
     dup
     ldc.i4 180
-    bne.un IL_c149
+    bne.un IL_c152
     pop
     ldloc.0
     ldc.i4.1
@@ -14280,10 +14626,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c149:
+  IL_c152:
     dup
     ldc.i4 181
-    bne.un IL_c150
+    bne.un IL_c153
     pop
     ldloc.0
     ldc.i4.1
@@ -14326,10 +14672,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c150:
+  IL_c153:
     dup
     ldc.i4 182
-    bne.un IL_c151
+    bne.un IL_c154
     pop
     ldloc.0
     ldc.i4.1
@@ -14372,10 +14718,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c151:
+  IL_c154:
     dup
     ldc.i4 183
-    bne.un IL_c152
+    bne.un IL_c155
     pop
     ldloc.0
     ldc.i4.1
@@ -14418,10 +14764,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c152:
+  IL_c155:
     dup
     ldc.i4 184
-    bne.un IL_c153
+    bne.un IL_c156
     pop
     ldloc.0
     ldc.i4.1
@@ -14464,10 +14810,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c153:
+  IL_c156:
     dup
     ldc.i4 185
-    bne.un IL_c154
+    bne.un IL_c157
     pop
     ldloc.0
     ldc.i4.1
@@ -14510,10 +14856,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c154:
+  IL_c157:
     dup
     ldc.i4 186
-    bne.un IL_c155
+    bne.un IL_c158
     pop
     ldloc.0
     ldc.i4.1
@@ -14556,10 +14902,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c155:
+  IL_c158:
     dup
     ldc.i4 187
-    bne.un IL_c156
+    bne.un IL_c159
     pop
     ldloc.0
     ldc.i4.1
@@ -14602,10 +14948,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c156:
+  IL_c159:
     dup
     ldc.i4 188
-    bne.un IL_c157
+    bne.un IL_c160
     pop
     ldloc.0
     ldc.i4.1
@@ -14648,10 +14994,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c157:
+  IL_c160:
     dup
     ldc.i4 189
-    bne.un IL_c158
+    bne.un IL_c161
     pop
     ldloc.0
     ldc.i4.1
@@ -14694,10 +15040,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c158:
+  IL_c161:
     dup
     ldc.i4 190
-    bne.un IL_c159
+    bne.un IL_c162
     pop
     ldloc.0
     ldc.i4.1
@@ -14740,10 +15086,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c159:
+  IL_c162:
     dup
     ldc.i4 191
-    bne.un IL_c160
+    bne.un IL_c163
     pop
     ldloc.0
     ldc.i4.1
@@ -14786,10 +15132,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c160:
+  IL_c163:
     dup
     ldc.i4 192
-    bne.un IL_c161
+    bne.un IL_c164
     pop
     ldloc.0
     ldc.i4.1
@@ -14832,10 +15178,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c161:
+  IL_c164:
     dup
     ldc.i4 193
-    bne.un IL_c162
+    bne.un IL_c165
     pop
     ldloc.0
     ldc.i4.1
@@ -14878,10 +15224,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c162:
+  IL_c165:
     dup
     ldc.i4 194
-    bne.un IL_c163
+    bne.un IL_c166
     pop
     ldloc.0
     ldc.i4.1
@@ -14924,10 +15270,148 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c163:
+  IL_c166:
+    dup
+    ldc.i4 195
+    bne.un IL_c167
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldarg.0
+    castclass object[]
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 114
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4 341
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldarg.1
+    stelem.ref
+    ldloc.s 4
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c167:
+    dup
+    ldc.i4 196
+    bne.un IL_c168
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldarg.0
+    castclass object[]
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 114
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4 342
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldarg.1
+    stelem.ref
+    ldloc.s 4
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c168:
+    dup
+    ldc.i4 197
+    bne.un IL_c169
+    pop
+    ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldarg.0
+    castclass object[]
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.s 114
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4 343
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldarg.1
+    stelem.ref
+    ldloc.s 4
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_c169:
     dup
     ldc.i4 198
-    bne.un IL_c164
+    bne.un IL_c170
     pop
     ldloc.0
     ldc.i4.1
@@ -14970,10 +15454,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c164:
+  IL_c170:
     dup
     ldc.i4 199
-    bne.un IL_c165
+    bne.un IL_c171
     pop
     ldloc.0
     ldc.i4.1
@@ -15016,10 +15500,10 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c165:
+  IL_c171:
     dup
     ldc.i4 200
-    bne.un IL_c166
+    bne.un IL_c172
     pop
     ldloc.0
     ldc.i4.1
@@ -15062,7 +15546,7 @@
     starg.s 1
     starg.s 0
     br IL_tco_loop
-  IL_c166:
+  IL_c172:
     pop
     ldloc.0
     ldc.i4.1
@@ -15129,7 +15613,7 @@
     ldarg.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(object)
+    call object AwsumMain::v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(object)
     ret
   }
 

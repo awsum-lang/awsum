@@ -34,17 +34,17 @@
     }
   };
 
-  const v__lam_24 = (v_n) => {
+  const v__lam_19 = (v_n) => {
     return v_n;
   };
 
-  const v__lam_23 = (v_x) => {
+  const v__lam_18 = (v_x) => {
     return v_x;
   };
 
-  const v_runMe = v__lam_23(5 | 0);
+  const v_runMe = v__lam_18(5 | 0);
 
-  const v_doubled = v__lam_24(v_runMe);
+  const v_doubled = v__lam_19(v_runMe);
 
   const main = [7, String(v_doubled), [5, [0]]];
 

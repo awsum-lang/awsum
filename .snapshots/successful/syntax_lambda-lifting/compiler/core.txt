@@ -86,8 +86,11 @@ CoreProgram
                             ( 4
                             , [ "b" ]
                             , CCall
-                                ( CVar "pureEither" )
-                                [ CVar "b" ]
+                                ( CVar "$lift$19" )
+                                [ CCall
+                                    ( CVar "pureEither" )
+                                    [ CVar "b" ]
+                                ]
                             )
                         ]
                     )
@@ -152,7 +155,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$24" )
+                ( CVar "$let$20" )
                 [ CCase
                     ( CCall
                         ( CVar "describe" )
@@ -196,9 +199,30 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$23" [ "n" ]
+        , CFunDef "$lam$18" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$24" [ "res" ]
+        , CFunDef "$lift$19" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$20" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -227,7 +251,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "x" ]
             ( CCall
-                ( CVar "$lam$23" )
+                ( CVar "$lam$18" )
                 [ CVar "x" ]
             )
         ]

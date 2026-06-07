@@ -241,7 +241,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$23" [ "_s" ]
+        , CFunDef "$lam$18" [ "_s" ]
             ( CString "after" )
         , CFunDef "$bi$IO.Stdout.print" [ "$x0" ]
             ( CCon 7
@@ -415,7 +415,7 @@ CoreProgram
                                 [ CVar "$k"
                                 , CCon 5
                                     [ CCall
-                                        ( CVar "$lam$23" )
+                                        ( CVar "$lam$18" )
                                         [ CVar "a" ]
                                     ]
                                 ]

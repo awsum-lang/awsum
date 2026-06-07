@@ -159,9 +159,7 @@ CoreProgram
                                             [ CVar "$pk_30"
                                             , CCall
                                                 ( CVar "$df$bindEither$0" )
-                                                [ CCall
-                                                    ( CVar "$lift$21" )
-                                                    [ CVar "$x" ]
+                                                [ CVar "$x"
                                                 , CVar "b"
                                                 ]
                                             ]
@@ -339,28 +337,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$21" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$lam$22"
+        , CFunDef "$lam$17"
             [ "b"
             , "restHex"
             ]
@@ -372,7 +349,7 @@ CoreProgram
                 , CVar "restHex"
                 ]
             )
-        , CFunDef "$lam$23" [ "bytes" ]
+        , CFunDef "$lam$18" [ "bytes" ]
             ( CCase
                 ( CCall
                     ( CVar "bytesToHexStringNoPrefix" )
@@ -427,7 +404,7 @@ CoreProgram
                         ( CCall
                             ( CVar "$lift$0" )
                             [ CCall
-                                ( CVar "$lam$22" )
+                                ( CVar "$lam$17" )
                                 [ CVar "$df$bindEither$0$cap1$0"
                                 , CVar "a"
                                 ]
@@ -460,7 +437,7 @@ CoreProgram
                                 , CCall
                                     ( CVar "$lift$1" )
                                     [ CCall
-                                        ( CVar "$lam$23" )
+                                        ( CVar "$lam$18" )
                                         [ CVar "a" ]
                                     ]
                                 ]

@@ -73,7 +73,7 @@
 
   const v_source = v_pureIO("before");
 
-  const v__lam_23 = (v__s) => {
+  const v__lam_18 = (v__s) => {
     return "after";
   };
 
@@ -411,7 +411,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_mapIO_4(v__k, [5, v__lam_23(v_a)]);
+            return v__apply__df_mapIO_4(v__k, [5, v__lam_18(v_a)]);
           }
           case 6: {
             const v_e = __s[1];

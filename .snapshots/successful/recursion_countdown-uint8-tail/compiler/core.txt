@@ -56,11 +56,14 @@ CoreProgram
                         ( 1
                         , []
                         , CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "acc"
-                            , CCall
-                                ( CBuiltIn "showUInt8" )
-                                [ CVar "n" ]
+                            ( CVar "$lift$18" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "acc"
+                                , CCall
+                                    ( CBuiltIn "showUInt8" )
+                                    [ CVar "n" ]
+                                ]
                             ]
                         )
                     ,
@@ -205,7 +208,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$19" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
@@ -216,7 +219,30 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$23" [ "res" ]
+        , CFunDef "$lift$18" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 589989748
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$19" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -283,12 +283,12 @@ define internal ptr @v_opB(ptr %v_n) {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_opA()
-  %t1 = call ptr @v__df__rowspec_24_0(ptr %t0)
-  %t2 = call ptr @v__let_26(ptr %t1)
+  %t1 = call ptr @v__df__rowmono_0_bindEither_0(ptr %t0)
+  %t2 = call ptr @v__let_19(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_23(ptr %v_msg) {
+define internal ptr @v__let_18(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -348,50 +348,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lift_25(ptr %v___input) {
-  %t0 = getelementptr ptr, ptr %v___input, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.15 ]
-case.arm.3.4:
-  %t5 = getelementptr ptr, ptr %v___input, i32 1
-  %t6 = load ptr, ptr %t5
-  call void @__inc_ref(ptr %t6)
-  %t7 = call ptr @__alloc(i64 16, i32 1)
-  %t8 = inttoptr i64 3 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = call ptr @__alloc(i64 16, i32 1)
-  %t11 = inttoptr i64 2269767818 to ptr
-  %t12 = getelementptr ptr, ptr %t10, i32 0
-  store ptr %t11, ptr %t12
-  call void @__inc_ref(ptr %t6)
-  %t13 = getelementptr ptr, ptr %t10, i32 1
-  store ptr %t6, ptr %t13
-  %t14 = getelementptr ptr, ptr %t7, i32 1
-  store ptr %t10, ptr %t14
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v___input)
-  ret ptr %t7
-case.arm.4.15:
-  %t16 = getelementptr ptr, ptr %v___input, i32 1
-  %t17 = load ptr, ptr %t16
-  call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @__alloc(i64 16, i32 1)
-  %t19 = inttoptr i64 4 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
-  call void @__inc_ref(ptr %t17)
-  %t21 = getelementptr ptr, ptr %t18, i32 1
-  store ptr %t17, ptr %t21
-  call void @__free_recursive(ptr %t17)
-  call void @__free_recursive(ptr %v___input)
-  ret ptr %t18
-case.default.3:
-  unreachable
-}
-
-define internal ptr @v__let_26(ptr %v_chained) {
+define internal ptr @v__let_19(ptr %v_chained) {
   %t0 = getelementptr ptr, ptr %v_chained, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -455,12 +412,55 @@ case.default.3:
   unreachable
 case.join.4:
   %t37 = phi ptr [ %t30, %case.end.3.6 ], [ %t36, %case.end.4.32 ]
-  %t38 = call ptr @v__let_23(ptr %t37)
+  %t38 = call ptr @v__let_18(ptr %t37)
   call void @__free_recursive(ptr %v_chained)
   ret ptr %t38
 }
 
-define internal ptr @v__df__rowspec_24_0(ptr %v_x) {
+define internal ptr @v__lift_20(ptr %v___input) {
+  %t0 = getelementptr ptr, ptr %v___input, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.15 ]
+case.arm.3.4:
+  %t5 = getelementptr ptr, ptr %v___input, i32 1
+  %t6 = load ptr, ptr %t5
+  call void @__inc_ref(ptr %t6)
+  %t7 = call ptr @__alloc(i64 16, i32 1)
+  %t8 = inttoptr i64 3 to ptr
+  %t9 = getelementptr ptr, ptr %t7, i32 0
+  store ptr %t8, ptr %t9
+  %t10 = call ptr @__alloc(i64 16, i32 1)
+  %t11 = inttoptr i64 2269767818 to ptr
+  %t12 = getelementptr ptr, ptr %t10, i32 0
+  store ptr %t11, ptr %t12
+  call void @__inc_ref(ptr %t6)
+  %t13 = getelementptr ptr, ptr %t10, i32 1
+  store ptr %t6, ptr %t13
+  %t14 = getelementptr ptr, ptr %t7, i32 1
+  store ptr %t10, ptr %t14
+  call void @__free_recursive(ptr %t6)
+  call void @__free_recursive(ptr %v___input)
+  ret ptr %t7
+case.arm.4.15:
+  %t16 = getelementptr ptr, ptr %v___input, i32 1
+  %t17 = load ptr, ptr %t16
+  call void @__inc_ref(ptr %t17)
+  %t18 = call ptr @__alloc(i64 16, i32 1)
+  %t19 = inttoptr i64 4 to ptr
+  %t20 = getelementptr ptr, ptr %t18, i32 0
+  store ptr %t19, ptr %t20
+  call void @__inc_ref(ptr %t17)
+  %t21 = getelementptr ptr, ptr %t18, i32 1
+  store ptr %t17, ptr %t21
+  call void @__free_recursive(ptr %t17)
+  call void @__free_recursive(ptr %v___input)
+  ret ptr %t18
+case.default.3:
+  unreachable
+}
+
+define internal ptr @v__df__rowmono_0_bindEither_0(ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_x, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -491,7 +491,7 @@ case.arm.4.15:
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
   %t18 = call ptr @v_opB(ptr %t17)
-  %t19 = call ptr @v__lift_25(ptr %t18)
+  %t19 = call ptr @v__lift_20(ptr %t18)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t19

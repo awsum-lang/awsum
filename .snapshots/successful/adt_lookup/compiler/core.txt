@@ -56,7 +56,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$24" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -82,34 +82,13 @@ CoreProgram
                             [ CVar "s0"
                             , CCall
                                 ( CVar "unwrap" )
-                                [ CCall
-                                    ( CVar "$lift$23" )
-                                    [ CCon 25 [] ]
-                                ]
+                                [ CCon 25 [] ]
                             ]
                         )
                     ]
                 ]
             )
-        , CFunDef "$lift$23" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 24
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 24
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ,
-                    ( 25
-                    , []
-                    , CCon 25 []
-                    )
-                ]
-            )
-        , CFunDef "$let$24" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

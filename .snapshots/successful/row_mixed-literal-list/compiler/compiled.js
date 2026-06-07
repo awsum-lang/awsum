@@ -125,7 +125,7 @@
     return v__cps_sumRow(v_xs, [15]);
   };
 
-  const v__apply__lift_23 = (v__k, v__x) => {
+  const v__apply__lift_18 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -147,13 +147,13 @@
     }
   };
 
-  const v__cps__lift_23 = (v___input, v__k) => {
+  const v__cps__lift_18 = (v___input, v__k) => {
     while (true) {
       {
         const __s = v___input;
         switch (__s[0]) {
           case 13: {
-            return v__apply__lift_23(v__k, [13]);
+            return v__apply__lift_18(v__k, [13]);
           }
           case 14: {
             const v___f0 = __s[1];
@@ -169,8 +169,8 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
-    return v__cps__lift_23(v___input, [17]);
+  const v__lift_18 = (v___input) => {
+    return v__cps__lift_18(v___input, [17]);
   };
 
   const v_mixed = [
@@ -182,7 +182,7 @@
       [
         14,
         [2711245919, 2 | 0],
-        [14, [1615808600, "y"], [14, [2711245919, 3 | 0], v__lift_23([13])]]
+        [14, [1615808600, "y"], [14, [2711245919, 3 | 0], v__lift_18([13])]]
       ]
     ]
   ];

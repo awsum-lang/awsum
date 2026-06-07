@@ -48,46 +48,31 @@ summary:
   case-pattern    $do_e_1                         count=1
   case-pattern    s2                              count=1
 
-$lift$23:
+$lift$18:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+
+$lift$19:
   param           __input                         count=1
 
-$cps$$lift$23:
+$cps$$lift$19:
   param           __input                         count=2
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$23:
+$apply$$lift$19:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_30                          count=0
   case-pattern    __f0                            count=0
 
-$lift$24:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-
-$lift$25:
-  param           __input                         count=1
-
-$cps$$lift$25:
-  param           __input                         count=2
-  param           $k                              count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f1                            count=0
-
-$apply$$lift$25:
-  param           $k                              count=2
-  param           $x                              count=1
-  case-pattern    $pk_32                          count=0
-  case-pattern    __f0                            count=0
-
-$lift$26:
+$lift$20:
   param           __input                         count=1
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$let$27:
+$let$21:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

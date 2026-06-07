@@ -103,7 +103,7 @@
     return v_x;
   };
 
-  const v__lift_24 = (v___input) => {
+  const v__lift_20 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -119,11 +119,11 @@
     }
   };
 
-  const v__lam_26 = (v__n) => {
+  const v__lam_18 = (v__n) => {
     return v_ob;
   };
 
-  const v__df__rowspec_25_1 = (v_x) => {
+  const v__df__rowmono_1_andThenEither_1 = (v_x) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -133,19 +133,22 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_24(v__lam_26(v_a));
+          return v__lift_20(v__lam_18(v_a));
         }
       }
     }
   };
 
-  const v_c2 = v__df__rowspec_25_1(v_oa);
+  const v_c2 = v__df__rowmono_1_andThenEither_1(v_oa);
 
-  const v__lam_27 = (v__u) => {
+  const v__lam_19 = (v__u) => {
     return [7, v_de(v_c2), [5, [0]]];
   };
 
-  const v__df__rowspec_23_0 = (v_x, v__df__rowspec_23_0_cap1_0) => {
+  const v__df__rowmono_0_bindEither_0 = (
+    v_x,
+    v__df__rowmono_0_bindEither_0_cap1_0
+  ) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -155,15 +158,15 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_24(v_const(v__df__rowspec_23_0_cap1_0, v_a));
+          return v__lift_20(v_const(v__df__rowmono_0_bindEither_0_cap1_0, v_a));
         }
       }
     }
   };
 
-  const v_c1 = v__df__rowspec_23_0(v_oa, v_ob);
+  const v_c1 = v__df__rowmono_0_bindEither_0(v_oa, v_ob);
 
-  const v__cps__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_29__lift_3__lift_30__lift_31__lift_4 = (
+  const v__cps__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_3__lift_4 = (
     v__args,
     v__k
   ) => {
@@ -171,7 +174,7 @@
       {
         const __s = v__args;
         switch (__s[0]) {
-          case 34: {
+          case 31: {
             const v__cl = __s[1];
             const v__arg0 = __s[2];
             {
@@ -179,7 +182,7 @@
               switch (__s[0]) {
                 case 25: {
                   const v__cap25_0 = __s[1];
-                  const __t0 = (v__args[0] = 35, v__args[1] = v__cap25_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 32, v__args[1] = v__cap25_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -187,7 +190,7 @@
                 }
                 case 26: {
                   const v__cap26_0 = __s[1];
-                  const __t0 = (v__args[0] = 36, v__args[1] = v__cap26_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 33, v__args[1] = v__cap26_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -195,7 +198,7 @@
                 }
                 case 27: {
                   const v__cap27_0 = __s[1];
-                  const __t0 = (v__args[0] = 37, v__args[1] = v__cap27_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 34, v__args[1] = v__cap27_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -203,7 +206,7 @@
                 }
                 case 28: {
                   const v__cap28_0 = __s[1];
-                  const __t0 = (v__args[0] = 38, v__args[1] = v__cap28_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 35, v__args[1] = v__cap28_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -211,7 +214,7 @@
                 }
                 case 29: {
                   const v__cap29_0 = __s[1];
-                  const __t0 = (v__args[0] = 39, v__args[1] = v__cap29_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 36, v__args[1] = v__cap29_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -219,31 +222,7 @@
                 }
                 case 30: {
                   const v__cap30_0 = __s[1];
-                  const __t0 = (v__args[0] = 40, v__args[1] = v__cap30_0, v__args[2] = v__arg0, v__args);
-                  const __t1 = v__k;
-                  v__args = __t0;
-                  v__k = __t1;
-                  continue;
-                }
-                case 31: {
-                  const v__cap31_0 = __s[1];
-                  const __t0 = (v__args[0] = 41, v__args[1] = v__cap31_0, v__args[2] = v__arg0, v__args);
-                  const __t1 = v__k;
-                  v__args = __t0;
-                  v__k = __t1;
-                  continue;
-                }
-                case 32: {
-                  const v__cap32_0 = __s[1];
-                  const __t0 = (v__args[0] = 42, v__args[1] = v__cap32_0, v__args[2] = v__arg0, v__args);
-                  const __t1 = v__k;
-                  v__args = __t0;
-                  v__k = __t1;
-                  continue;
-                }
-                case 33: {
-                  const v__cap33_0 = __s[1];
-                  const __t0 = (v__args[0] = 43, v__args[1] = v__cap33_0, v__args[2] = v__arg0, v__args);
+                  const __t0 = (v__args[0] = 37, v__args[1] = v__cap30_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -252,83 +231,56 @@
               }
             }
           }
-          case 35: {
+          case 32: {
             const v_cont = __s[1];
             const v_result = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v_cont, v__args[2] = v_result, v__args);
-            const __t1 = [51, v__k];
+            const __t0 = (v__args[0] = 31, v__args[1] = v_cont, v__args[2] = v_result, v__args);
+            const __t1 = [43, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 33: {
+            const v_cont = __s[1];
+            const v_result = __s[2];
+            const __t0 = (v__args[0] = 31, v__args[1] = v_cont, v__args[2] = v_result, v__args);
+            const __t1 = [44, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 34: {
+            const v_cont = __s[1];
+            const v_bytes = __s[2];
+            const __t0 = (v__args[0] = 31, v__args[1] = v_cont, v__args[2] = v_bytes, v__args);
+            const __t1 = [45, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 35: {
+            const v___f = __s[1];
+            const v___arg = __s[2];
+            const __t0 = (v__args[0] = 31, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [46, v__k];
             v__args = __t0;
             v__k = __t1;
             continue;
           }
           case 36: {
-            const v_cont = __s[1];
-            const v_result = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v_cont, v__args[2] = v_result, v__args);
-            const __t1 = [52, v__k];
+            const v___f = __s[1];
+            const v___arg = __s[2];
+            const __t0 = (v__args[0] = 31, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [47, v__k];
             v__args = __t0;
             v__k = __t1;
             continue;
           }
           case 37: {
-            const v_cont = __s[1];
-            const v_bytes = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v_cont, v__args[2] = v_bytes, v__args);
-            const __t1 = [53, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 38: {
             const v___f = __s[1];
             const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [54, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 39: {
-            const v___f = __s[1];
-            const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [55, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 40: {
-            const v___f = __s[1];
-            const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [56, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 41: {
-            const v___f = __s[1];
-            const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [57, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 42: {
-            const v___f = __s[1];
-            const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [58, v__k];
-            v__args = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 43: {
-            const v___f = __s[1];
-            const v___arg = __s[2];
-            const __t0 = (v__args[0] = 34, v__args[1] = v___f, v__args[2] = v___arg, v__args);
-            const __t1 = [59, v__k];
+            const __t0 = (v__args[0] = 31, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [48, v__k];
             v__args = __t0;
             v__k = __t1;
             continue;
@@ -338,18 +290,18 @@
     }
   };
 
-  const v__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_29__lift_3__lift_30__lift_31__lift_4 = (
+  const v__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_3__lift_4 = (
     v__args
   ) => {
-    return v__cps__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_29__lift_3__lift_30__lift_31__lift_4(
+    return v__cps__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_3__lift_4(
       v__args,
-      [50]
+      [42]
     );
   };
 
   const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_29__lift_3__lift_30__lift_31__lift_4(
-      [34, v__cl, v__arg0]
+    return v__scc__apply1__df__lam_5_3__df__lam_6_4__df__lam_7_5__lift_2__lift_3__lift_4(
+      [31, v__cl, v__arg0]
     );
   };
 
@@ -399,83 +351,18 @@
     }
   };
 
-  const v__apply__lift_28 = (v__k, v__x) => {
-    while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 46: {
-            return v__x;
-          }
-          case 47: {
-            const v__pk_47 = __s[1];
-            const v___f0 = __s[2];
-            const __t0 = v__pk_47;
-            const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-            v__k = __t0;
-            v__x = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__cps__lift_28 = (v___input, v__k) => {
-    while (true) {
-      {
-        const __s = v___input;
-        switch (__s[0]) {
-          case 5: {
-            const v___f0 = __s[1];
-            return v__apply__lift_28(v__k, [5, v___f0]);
-          }
-          case 6: {
-            const v___f0 = __s[1];
-            return v__apply__lift_28(v__k, [6, v___f0]);
-          }
-          case 7: {
-            const v___f0 = __s[1];
-            const v___f1 = __s[2];
-            const __t0 = v___f1;
-            const __t1 = (v___input[0] = 47, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-            v___input = __t0;
-            v__k = __t1;
-            continue;
-          }
-          case 8: {
-            const v___f0 = __s[1];
-            return v__apply__lift_28(v__k, [8, [29, v___f0]]);
-          }
-          case 9: {
-            const v___f0 = __s[1];
-            return v__apply__lift_28(v__k, [9, [31, v___f0]]);
-          }
-          case 10: {
-            const v___f0 = __s[1];
-            return v__apply__lift_28(v__k, [10, [32, v___f0]]);
-          }
-        }
-      }
-    }
-  };
-
-  const v__lift_28 = (v___input) => {
-    return v__cps__lift_28(v___input, [46]);
-  };
-
   const v__apply__lift_1 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
         switch (__s[0]) {
-          case 44: {
+          case 38: {
             return v__x;
           }
-          case 45: {
-            const v__pk_45 = __s[1];
+          case 39: {
+            const v__pk_39 = __s[1];
             const v___f0 = __s[2];
-            const __t0 = v__pk_45;
+            const __t0 = v__pk_39;
             const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
             v__k = __t0;
             v__x = __t1;
@@ -503,7 +390,7 @@
             const v___f0 = __s[1];
             const v___f1 = __s[2];
             const __t0 = v___f1;
-            const __t1 = (v___input[0] = 45, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+            const __t1 = (v___input[0] = 39, v___input[1] = v__k, v___input[2] = v___f0, v___input);
             v___input = __t0;
             v__k = __t1;
             continue;
@@ -514,11 +401,11 @@
           }
           case 9: {
             const v___f0 = __s[1];
-            return v__apply__lift_1(v__k, [9, [30, v___f0]]);
+            return v__apply__lift_1(v__k, [9, [29, v___f0]]);
           }
           case 10: {
             const v___f0 = __s[1];
-            return v__apply__lift_1(v__k, [10, [33, v___f0]]);
+            return v__apply__lift_1(v__k, [10, [30, v___f0]]);
           }
         }
       }
@@ -526,7 +413,7 @@
   };
 
   const v__lift_1 = (v___input) => {
-    return v__cps__lift_1(v___input, [44]);
+    return v__cps__lift_1(v___input, [38]);
   };
 
   const v__apply__df_andThenIO_2 = (v__k, v__x) => {
@@ -534,13 +421,13 @@
       {
         const __s = v__k;
         switch (__s[0]) {
-          case 48: {
+          case 40: {
             return v__x;
           }
-          case 49: {
-            const v__pk_49 = __s[1];
+          case 41: {
+            const v__pk_41 = __s[1];
             const v_s = __s[2];
-            const __t0 = v__pk_49;
+            const __t0 = v__pk_41;
             const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
             v__k = __t0;
             v__x = __t1;
@@ -558,7 +445,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_2(v__k, v__lift_1(v__lam_27(v_a)));
+            return v__apply__df_andThenIO_2(v__k, v__lift_1(v__lam_19(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -568,7 +455,7 @@
             const v_s = __s[1];
             const v_next = __s[2];
             const __t0 = v_next;
-            const __t1 = (v_io[0] = 49, v_io[1] = v__k, v_io[2] = v_s, v_io);
+            const __t1 = (v_io[0] = 41, v_io[1] = v__k, v_io[2] = v_s, v_io);
             v_io = __t0;
             v__k = __t1;
             continue;
@@ -591,10 +478,10 @@
   };
 
   const v__df_andThenIO_2 = (v_io) => {
-    return v__cps__df_andThenIO_2(v_io, [48]);
+    return v__cps__df_andThenIO_2(v_io, [40]);
   };
 
-  const main = v__df_andThenIO_2(v__lift_28([7, v_de(v_c1), [5, [0]]]));
+  const main = v__df_andThenIO_2([7, v_de(v_c1), [5, [0]]]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

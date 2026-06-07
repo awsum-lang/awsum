@@ -129,7 +129,7 @@ L_tarm1:
   .limit stack 2
   .limit locals 0
   invokestatic AwsumMain/v_oa()Ljava/lang/Object;
-  invokestatic AwsumMain/v__df__rowspec_23_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df__rowmono_0_bindEither_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -231,7 +231,7 @@ L_join2:
 .end method
 
 
-.method static v__lift_24(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -293,7 +293,7 @@ L_join6:
 .end method
 
 
-.method static v__df__rowspec_23_0(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__df__rowmono_0_bindEither_0(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -341,7 +341,7 @@ L_arm9:
   astore_3
   aload_3
   invokestatic AwsumMain/v_kk(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_24(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
 L_join8:
   areturn
 .end method

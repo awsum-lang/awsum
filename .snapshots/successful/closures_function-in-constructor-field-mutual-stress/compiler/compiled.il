@@ -285,7 +285,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1__lam_23_a_b(object) cil managed
+  .method private hidebysig static object v__scc__apply1__lam_18_a_b(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8)
@@ -564,7 +564,7 @@
     ldarg.0
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__apply1__lam_23_a_b(object)
+    call object AwsumMain::v__scc__apply1__lam_18_a_b(object)
     ret
   }
 

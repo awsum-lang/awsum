@@ -44,7 +44,7 @@
 
   const v_bBox = [24, [25]];
 
-  const v__scc__apply1__lam_23_a_b = (v__args) => {
+  const v__scc__apply1__lam_18_a_b = (v__args) => {
     while (true) {
       {
         const __s = v__args;
@@ -139,7 +139,7 @@
   };
 
   const v_a = (v_n) => {
-    return v__scc__apply1__lam_23_a_b([28, v_n]);
+    return v__scc__apply1__lam_18_a_b([28, v_n]);
   };
 
   const main = ((s) => {

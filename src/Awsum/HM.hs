@@ -5,6 +5,7 @@ module Awsum.HM
   ( -- * Substitutions
     Subst,
     singletonSubst,
+    nullSubst,
     applySubst,
     composeSubst,
 
@@ -21,6 +22,7 @@ module Awsum.HM
     rowSubsume,
     rowTag,
     canonicalLabel,
+    rowRetagNeeded,
 
     -- * Schemes (polymorphic types)
     Scheme (..),
@@ -67,6 +69,11 @@ instance Monoid Subst where
 -- | A single-binding substitution: @v ↦ t@.
 singletonSubst :: Name -> Type' -> Subst
 singletonSubst v t = Subst (M.singleton v t)
+
+-- | Is the substitution empty (binds no variables)? Lets callers skip a
+--   full structural rewrite when there is nothing to substitute.
+nullSubst :: Subst -> Bool
+nullSubst (Subst m) = M.null m
 
 -- | Apply a substitution to a type, replacing every free 'TyVar'
 --   whose name is in the substitution's domain. The replacement
@@ -209,6 +216,22 @@ flattenRow = ordNub . go
     go = \case
       TyOr _ a b -> go a <> go b
       t -> [t]
+
+-- | True when coercing a value from row @src@ into row @tgt@ must
+--   re-tag some label: a concrete label of @src@ has no
+--   canonicalLabel-identical label in @tgt@, so its structure changed
+--   (a nominal-head label whose inner row grew — @Maybe Bool@ becoming
+--   @Maybe (Bool | Unit)@ — takes a different FNV tag). Pure widening,
+--   narrowing, and reordering leave every existing label's tag intact
+--   and need no re-tag.
+rowRetagNeeded :: Type' -> Type' -> Bool
+rowRetagNeeded src tgt =
+  let tgtCanon = map canonicalLabel (flattenRow tgt)
+   in any (\l -> concreteLabel l && canonicalLabel l `notElem` tgtCanon) (flattenRow src)
+  where
+    concreteLabel (TyVar _ _) = False
+    concreteLabel (TyEmpty _ _) = False
+    concreteLabel _ = True
 
 -- | One-way row subsumption: does a value of @actual@ fit where
 --   @expected@ is required?

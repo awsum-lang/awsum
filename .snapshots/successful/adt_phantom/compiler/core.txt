@@ -52,22 +52,9 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "show" )
-                    [ CCall
-                        ( CVar "$lift$23" )
-                        [ CCon 24 [] ]
-                    ]
+                    [ CCon 24 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lift$23" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 24
-                    , []
-                    , CCon 24 []
-                    )
                 ]
             )
         ]

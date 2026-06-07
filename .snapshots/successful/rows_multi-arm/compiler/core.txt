@@ -99,7 +99,7 @@ CoreProgram
                 ( CCall
                     ( CVar "whatsInside" )
                     [ CCall
-                        ( CVar "$lift$23" )
+                        ( CVar "$lift$18" )
                         [ CCon 12
                             [ CCon 1 [] ]
                         ]
@@ -118,7 +118,7 @@ CoreProgram
                         ( CCall
                             ( CVar "whatsInside" )
                             [ CCall
-                                ( CVar "$lift$24" )
+                                ( CVar "$lift$19" )
                                 [ CCon 12
                                     [ CCon 0 [] ]
                                 ]
@@ -136,10 +136,7 @@ CoreProgram
                             , CCase
                                 ( CCall
                                     ( CVar "whatsInside" )
-                                    [ CCall
-                                        ( CVar "$lift$25" )
-                                        [ CCon 11 [] ]
-                                    ]
+                                    [ CCon 11 [] ]
                                 )
                                 [
                                     ( 3
@@ -218,10 +215,10 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$26" )
+                ( CVar "$let$20" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$lift$23" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -241,7 +238,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$24" [ "__input" ]
+        , CFunDef "$lift$19" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -261,25 +258,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$25" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 11
-                    , []
-                    , CCon 11 []
-                    )
-                ,
-                    ( 12
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 12
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$let$26" [ "res" ]
+        , CFunDef "$let$20" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

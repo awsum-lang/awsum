@@ -114,7 +114,7 @@
     }
   };
 
-  const v__let_23 = (v_res) => {
+  const v__let_18 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -130,7 +130,7 @@
     }
   };
 
-  const main = v__let_23(v_show(v_threeAndDouble(5 | 0)));
+  const main = v__let_18(v_show(v_threeAndDouble(5 | 0)));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

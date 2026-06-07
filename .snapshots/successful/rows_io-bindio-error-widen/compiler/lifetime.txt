@@ -1,0 +1,139 @@
+failIO:
+  param           e                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+
+step:
+  param           _a                              count=0
+
+handler:
+  param           e                               count=1
+  row-case        _u                              count=0
+  row-case        _s                              count=0
+  row-case        _x                              count=0
+
+$lift$18:
+  param           __input                         count=1
+
+$cps$$lift$18:
+  param           __input                         count=2
+  param           $k                              count=5
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$apply$$lift$18:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_46                          count=0
+  case-pattern    __f0                            count=0
+
+$io_getargs_cont:
+  param           result                          count=1
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+
+$df$$rowmono$0$bindIO$0:
+  param           io                              count=1
+
+$cps$$df$$rowmono$0$bindIO$0:
+  param           io                              count=2
+  param           $k                              count=5
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$$rowmono$0$bindIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_48                          count=0
+  case-pattern    s                               count=0
+
+$df$handleErrorIO$4:
+  param           io                              count=1
+
+$cps$$df$handleErrorIO$4:
+  param           io                              count=2
+  param           $k                              count=5
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$handleErrorIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_50                          count=0
+  case-pattern    s                               count=0
+
+$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21:
+  param           $args                           count=1
+
+$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21:
+  param           $args                           count=19
+  param           $k                              count=1
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    $cap25_0                        count=0
+  case-pattern    $cap26_0                        count=0
+  case-pattern    $cap27_0                        count=0
+  case-pattern    $cap28_0                        count=0
+  case-pattern    $cap29_0                        count=0
+  case-pattern    $cap30_0                        count=0
+  case-pattern    $cap32_0                        count=0
+  case-pattern    $cap33_0                        count=0
+  case-pattern    $cap34_0                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    bytes                           count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    bytes                           count=0
+  case-pattern    __f                             count=0
+  case-pattern    __arg                           count=0
+  case-pattern    __f                             count=0
+  case-pattern    __arg                           count=0
+  case-pattern    __f                             count=0
+  case-pattern    __arg                           count=0
+
+$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21:
+  param           $k                              count=1
+  param           $x                              count=1
+  case-pattern    $pk_52                          count=0
+  case-pattern    $pk_53                          count=0
+  case-pattern    $pk_54                          count=0
+  case-pattern    $pk_55                          count=0
+  case-pattern    $pk_56                          count=0
+  case-pattern    $pk_57                          count=0
+  case-pattern    $pk_58                          count=0
+  case-pattern    $pk_59                          count=0
+  case-pattern    $pk_60                          count=0
+
+$apply1:
+  param           $cl                             count=1
+  param           $arg0                           count=1
+

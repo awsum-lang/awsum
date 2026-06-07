@@ -186,7 +186,7 @@ CoreProgram
                                 [ CRow 2711245919
                                     ( CIntLit 3 TInt32 )
                                 , CCall
-                                    ( CVar "$lift$23" )
+                                    ( CVar "$lift$18" )
                                     [ CCon 13 [] ]
                                 ]
                             ]
@@ -206,14 +206,14 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$23" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$23" )
+                ( CVar "$cps$$lift$18" )
                 [ CVar "__input"
                 , CCon 17 []
                 ]
             )
-        , CFunDef "$cps$$lift$23"
+        , CFunDef "$cps$$lift$18"
             [ "__input"
             , "$k"
             ]
@@ -224,7 +224,7 @@ CoreProgram
                         ( 13
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$23" )
+                            ( CVar "$apply$$lift$18" )
                             [ CVar "$k"
                             , CCon 13 []
                             ]
@@ -252,7 +252,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$23"
+        , CFunDef "$apply$$lift$18"
             [ "$k"
             , "$x"
             ]

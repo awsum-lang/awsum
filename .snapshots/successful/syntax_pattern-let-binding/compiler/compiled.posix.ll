@@ -478,11 +478,11 @@ define internal ptr @v_main() {
   store i32 5, ptr %t0
   %t1 = call ptr @v_threeAndDouble(ptr %t0)
   %t2 = call ptr @v_show(ptr %t1)
-  %t3 = call ptr @v__let_23(ptr %t2)
+  %t3 = call ptr @v__let_18(ptr %t2)
   ret ptr %t3
 }
 
-define internal ptr @v__let_23(ptr %v_res) {
+define internal ptr @v__let_18(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

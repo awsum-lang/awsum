@@ -7,6 +7,3 @@ runIO:
 show:
   param           p                               count=1
 
-$lift$23:
-  param           __input                         count=1
-

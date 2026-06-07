@@ -11,8 +11,8 @@
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
-  (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_firstZero $v__lift_23)
+  (table 2 funcref)
+  (elem (i32.const 0) $v_runIO $v_firstZero)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -696,7 +696,6 @@
     i32.const 11
     i32.store
     local.get 1
-    call 17
     call 15
     call 9
     i32.store offset=4
@@ -721,63 +720,6 @@
     local.get 1
     i32.store offset=8
     local.get 0)
-
-  (func $v__lift_23 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 2
-    local.get 2
-    i32.load
-    i32.const 11
-    i32.eq
-    if (result i32)
-      block (result i32)
-        i32.const 4
-        i32.const 0
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 11
-        i32.store
-        local.get 1
-        local.set 4
-        local.get 0
-        call 12
-        local.get 4
-      end
-    else
-      local.get 2
-      i32.load offset=4
-      local.set 3
-      local.get 3
-      call 11
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 12
-        i32.store
-        local.get 1
-        local.get 3
-        i32.store offset=4
-        local.get 1
-        i32.load offset=4
-        call 11
-        local.get 1
-        local.set 4
-        local.get 3
-        call 12
-        local.get 0
-        call 12
-        local.get 4
-      end
-    end)
 
   (func $_start
     call 16

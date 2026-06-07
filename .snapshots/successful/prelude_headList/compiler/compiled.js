@@ -69,7 +69,7 @@
     }
   };
 
-  const v__let_23 = (v_msg) => {
+  const v__let_18 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -85,8 +85,8 @@
     }
   };
 
-  const v__let_25 = (v_noElems, v_single, v_multi) => {
-    return v__let_23(
+  const v__let_19 = (v_noElems, v_single, v_multi) => {
+    return v__let_18(
       ((s) => {
         switch (s[0]) {
           case 3: {
@@ -157,67 +157,19 @@
     );
   };
 
-  const v__apply__lift_24 = (v__k, v__x) => {
-    while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 15: {
-            return v__x;
-          }
-          case 16: {
-            const v__pk_16 = __s[1];
-            const v___f0 = __s[2];
-            const __t0 = v__pk_16;
-            const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-            v__k = __t0;
-            v__x = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__cps__lift_24 = (v___input, v__k) => {
-    while (true) {
-      {
-        const __s = v___input;
-        switch (__s[0]) {
-          case 13: {
-            return v__apply__lift_24(v__k, [13]);
-          }
-          case 14: {
-            const v___f0 = __s[1];
-            const v___f1 = __s[2];
-            const __t0 = v___f1;
-            const __t1 = (v___input[0] = 16, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-            v___input = __t0;
-            v__k = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__lift_24 = (v___input) => {
-    return v__cps__lift_24(v___input, [15]);
-  };
-
-  const v__let_26 = (v_noElems, v_single) => {
-    return v__let_25(
+  const v__let_20 = (v_noElems, v_single) => {
+    return v__let_19(
       v_noElems,
       v_single,
-      v_headList([14, "a", [14, "b", [14, "c", v__lift_24([13])]]])
+      v_headList([14, "a", [14, "b", [14, "c", [13]]]])
     );
   };
 
-  const v__let_27 = (v_noElems) => {
-    return v__let_26(v_noElems, v_headList([14, "a", v__lift_24([13])]));
+  const v__let_21 = (v_noElems) => {
+    return v__let_20(v_noElems, v_headList([14, "a", [13]]));
   };
 
-  const main = v__let_27(v_headList(v__lift_24([13])));
+  const main = v__let_21(v_headList([13]));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

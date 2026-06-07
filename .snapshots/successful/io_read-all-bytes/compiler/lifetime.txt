@@ -47,16 +47,11 @@ $apply$$lift$1:
   case-pattern    $pk_32                          count=0
   case-pattern    __f0                            count=0
 
-$lift$21:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lam$22:
+$lam$17:
   param           b                               count=1
   param           restHex                         count=1
 
-$lam$23:
+$lam$18:
   param           bytes                           count=1
   case-pattern    _e                              count=0
   case-pattern    hex                             count=0

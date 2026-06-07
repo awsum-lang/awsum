@@ -1,0 +1,21 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+widened:
+  row-case        $lift$19                        count=1
+  row-case        $lift$20                        count=1
+
+describe:
+  param           x                               count=1
+  row-case        m                               count=0
+  case-pattern    inner                           count=0
+  row-case        b                               count=0
+  row-case        _a                              count=0
+
+$lift$18:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+

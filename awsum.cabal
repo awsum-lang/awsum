@@ -73,6 +73,7 @@ library
       Awsum.Lifetime
       Awsum.LowerClosures
       Awsum.Lsp
+      Awsum.MonomorphizeRows
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude
@@ -87,7 +88,7 @@ library
       Awsum.Symbols
       Awsum.Syntax
       Awsum.Tco
-      Awsum.TypeTrace
+      Awsum.TExpr
       Awsum.Typing
       Awsum.Version
       Common.File

@@ -30,7 +30,12 @@ main:
   case-pattern    out                             count=1
   case-pattern    s                               count=1
 
-$let$23:
+$lift$18:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$let$19:
   param           a                               count=1
   param           prefix                          count=1
   case-pattern    $do_e_0                         count=0

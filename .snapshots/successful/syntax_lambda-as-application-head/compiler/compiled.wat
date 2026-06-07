@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v__lam_23 $v__lam_24)
+  (elem (i32.const 0) $v_runIO $v__lam_18 $v__lam_19)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -664,12 +664,12 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lam_23 (param i32) (result i32)
+  (func $v__lam_18 (param i32) (result i32)
     (local i32)
     (local i32)
     local.get 0)
 
-  (func $v__lam_24 (param i32) (result i32)
+  (func $v__lam_19 (param i32) (result i32)
     (local i32)
     (local i32)
     local.get 0)

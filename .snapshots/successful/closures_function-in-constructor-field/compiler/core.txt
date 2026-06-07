@@ -149,11 +149,14 @@ CoreProgram
                                     ( 4
                                     , [ "ds" ]
                                     , CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "ds"
-                                        , CCall
-                                            ( CBuiltIn "showInt32" )
-                                            [ CVar "t" ]
+                                        ( CVar "$lift$18" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "ds"
+                                            , CCall
+                                                ( CBuiltIn "showInt32" )
+                                                [ CVar "t" ]
+                                            ]
                                         ]
                                     )
                                 ]
@@ -182,6 +185,29 @@ CoreProgram
                         , CCon 5
                             [ CCon 0 [] ]
                         ]
+                    )
+                ]
+            )
+        , CFunDef "$lift$18" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 589989748
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
                     )
                 ]
             )

@@ -283,7 +283,7 @@ define internal ptr @v_main() {
   %t5 = getelementptr ptr, ptr %t0, i32 3
   store ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t5
   %t6 = call ptr @v_showTriple(ptr %t0)
-  %t7 = call ptr @v__let_23(ptr %t6)
+  %t7 = call ptr @v__let_18(ptr %t6)
   ret ptr %t7
 }
 
@@ -397,7 +397,7 @@ case.default.4:
   unreachable
 }
 
-define internal ptr @v__let_23(ptr %v_res) {
+define internal ptr @v__let_18(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

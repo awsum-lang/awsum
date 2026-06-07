@@ -12,11 +12,7 @@ main:
   case-pattern    $do_e_0                         count=1
   case-pattern    s0                              count=1
 
-$lift$23:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-
-$let$24:
+$let$18:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

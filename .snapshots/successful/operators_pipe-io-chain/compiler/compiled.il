@@ -157,7 +157,6 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_24(object)
     call object AwsumMain::v__df_andThenIO_4(object)
     call object AwsumMain::v__df_andThenIO_0(object)
     ret
@@ -174,7 +173,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 36
+    ldc.i4.s 30
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -262,7 +261,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 37
+    ldc.i4.s 31
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -339,7 +338,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 21
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -373,7 +372,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -400,7 +399,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 36
+    ldc.i4.s 30
     bne.un IL_c0
     pop
     ldarg.1
@@ -439,7 +438,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_23(object) cil managed
+  .method private hidebysig static object v__lam_18(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -484,282 +483,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_24(object) cil managed
-  {
-    .maxstack 4
-    .locals init (object[] V_0)
-    ldarg.0
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldc.i4.s 38
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    call object AwsumMain::v__cps__lift_24(object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__cps__lift_24(object,object) cil managed
-  {
-    .maxstack 6
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
-  IL_tco_loop:
-    ldarg.0
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.5
-    bne.un IL_c0
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldarg.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.5
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
-    ret
-  IL_c0:
-    dup
-    ldc.i4.6
-    bne.un IL_c1
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldarg.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.6
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
-    ret
-  IL_c1:
-    dup
-    ldc.i4.7
-    bne.un IL_c2
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 39
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c2:
-    dup
-    ldc.i4.8
-    bne.un IL_c3
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldarg.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.8
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
-    ldc.i4.0
-    ldc.i4.s 18
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 4
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.s 4
-    stelem.ref
-    ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
-    ret
-  IL_c3:
-    dup
-    ldc.i4.s 9
-    bne.un IL_c4
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldarg.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 9
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
-    ldc.i4.0
-    ldc.i4.s 19
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 4
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.s 4
-    stelem.ref
-    ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
-    ret
-  IL_c4:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldarg.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 10
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
-    ldc.i4.0
-    ldc.i4.s 20
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 4
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.s 4
-    stelem.ref
-    ldloc.3
-    call object AwsumMain::v__apply__lift_24(object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__apply__lift_24(object,object) cil managed
-  {
-    .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2, object V_3)
-  IL_tco_loop:
-    ldarg.0
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.s 38
-    bne.un IL_c0
-    pop
-    ldarg.1
-    ret
-  IL_c0:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldloc.1
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.7
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  }
-
-
-  .method private hidebysig static object v__lam_28(object) cil managed
+  .method private hidebysig static object v__lam_19(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2)
@@ -800,7 +524,6 @@
     ldloc.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__lift_24(object)
     ret
   }
 
@@ -815,7 +538,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 40
+    ldc.i4.s 32
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -845,7 +568,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_23(object)
+    call object AwsumMain::v__lam_18(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_0(object, object)
     ret
@@ -893,7 +616,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 41
+    ldc.i4.s 33
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1031,7 +754,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 40
+    ldc.i4.s 32
     bne.un IL_c0
     pop
     ldarg.1
@@ -1080,7 +803,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 42
+    ldc.i4.s 34
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -1110,7 +833,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_28(object)
+    call object AwsumMain::v__lam_19(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_4(object, object)
     ret
@@ -1158,7 +881,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 43
+    ldc.i4.s 35
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1296,7 +1019,7 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 42
+    ldc.i4.s 34
     bne.un IL_c0
     pop
     ldarg.1
@@ -1335,7 +1058,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_25__lift_26__lift_27__lift_3__lift_4(object) cil managed
+  .method private hidebysig static object v__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_3__lift_4(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -1345,16 +1068,16 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 44
+    ldc.i4.s 36
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_25__lift_26__lift_27__lift_3__lift_4(object, object)
+    call object AwsumMain::v__cps__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_3__lift_4(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_25__lift_26__lift_27__lift_3__lift_4(object,object) cil managed
+  .method private hidebysig static object v__cps__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_3__lift_4(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -1366,8 +1089,8 @@
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
-    ldc.i4.s 23
-    bne.un IL_c11
+    ldc.i4.s 20
+    bne.un IL_c8
     pop
     ldloc.0
     ldc.i4.1
@@ -1396,7 +1119,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1426,7 +1149,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1456,7 +1179,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 23
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1486,7 +1209,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 27
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1516,7 +1239,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 28
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1546,7 +1269,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 29
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1576,7 +1299,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 30
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1606,7 +1329,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 31
+    ldc.i4.s 28
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1623,9 +1346,6 @@
     starg.s 0
     br IL_tco_loop
   IL_c7:
-    dup
-    ldc.i4.s 19
-    bne.un IL_c8
     pop
     ldloc.3
     ldc.i4.1
@@ -1636,7 +1356,7 @@
     stloc.s 5
     ldloc.s 5
     ldc.i4.0
-    ldc.i4.s 32
+    ldc.i4.s 29
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 5
@@ -1654,88 +1374,139 @@
     br IL_tco_loop
   IL_c8:
     dup
-    ldc.i4.s 20
+    ldc.i4.s 21
     bne.un IL_c9
     pop
-    ldloc.3
+    ldloc.0
     ldc.i4.1
     ldelem.ref
-    stloc.s 4
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
     ldarg.0
     castclass object[]
-    stloc.s 5
-    ldloc.s 5
+    stloc.3
+    ldloc.3
     ldc.i4.0
-    ldc.i4.s 33
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.1
-    ldloc.s 4
+    ldloc.1
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.2
     ldloc.2
     stelem.ref
-    ldloc.s 5
+    ldloc.3
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.s 37
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
     ldarg.1
+    stelem.ref
+    ldloc.3
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_c9:
     dup
-    ldc.i4.s 21
+    ldc.i4.s 22
     bne.un IL_c10
     pop
-    ldloc.3
+    ldloc.0
     ldc.i4.1
     ldelem.ref
-    stloc.s 4
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
     ldarg.0
     castclass object[]
-    stloc.s 5
-    ldloc.s 5
+    stloc.3
+    ldloc.3
     ldc.i4.0
-    ldc.i4.s 34
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.1
-    ldloc.s 4
+    ldloc.1
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.2
     ldloc.2
     stelem.ref
-    ldloc.s 5
+    ldloc.3
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.s 38
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
     ldarg.1
+    stelem.ref
+    ldloc.3
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_c10:
+    dup
+    ldc.i4.s 23
+    bne.un IL_c11
     pop
-    ldloc.3
+    ldloc.0
     ldc.i4.1
     ldelem.ref
-    stloc.s 4
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
     ldarg.0
     castclass object[]
-    stloc.s 5
-    ldloc.s 5
+    stloc.3
+    ldloc.3
     ldc.i4.0
-    ldc.i4.s 35
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.1
-    ldloc.s 4
+    ldloc.1
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.2
     ldloc.2
     stelem.ref
-    ldloc.s 5
+    ldloc.3
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.s 39
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
+    ldc.i4.1
     ldarg.1
+    stelem.ref
+    ldloc.3
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1757,7 +1528,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1774,7 +1545,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 45
+    ldc.i4.s 40
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1803,7 +1574,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1820,7 +1591,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 46
+    ldc.i4.s 41
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1849,7 +1620,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1866,7 +1637,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 47
+    ldc.i4.s 42
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1895,7 +1666,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1912,7 +1683,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 48
+    ldc.i4.s 43
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1941,7 +1712,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1958,7 +1729,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 49
+    ldc.i4.s 44
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -1970,9 +1741,6 @@
     starg.s 0
     br IL_tco_loop
   IL_c16:
-    dup
-    ldc.i4.s 29
-    bne.un IL_c17
     pop
     ldloc.0
     ldc.i4.1
@@ -1987,7 +1755,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -2004,280 +1772,7 @@
     stloc.3
     ldloc.3
     ldc.i4.0
-    ldc.i4.s 50
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c17:
-    dup
-    ldc.i4.s 30
-    bne.un IL_c18
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 51
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c18:
-    dup
-    ldc.i4.s 31
-    bne.un IL_c19
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 52
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c19:
-    dup
-    ldc.i4.s 32
-    bne.un IL_c20
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 53
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c20:
-    dup
-    ldc.i4.s 33
-    bne.un IL_c21
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 54
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c21:
-    dup
-    ldc.i4.s 34
-    bne.un IL_c22
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 55
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldarg.1
-    stelem.ref
-    ldloc.3
-    starg.s 1
-    starg.s 0
-    br IL_tco_loop
-  IL_c22:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldarg.0
-    castclass object[]
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 23
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.3
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.2
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.s 56
+    ldc.i4.s 45
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
@@ -2300,7 +1795,7 @@
     stloc.0
     ldloc.0
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
@@ -2312,7 +1807,7 @@
     ldarg.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_25__lift_26__lift_27__lift_3__lift_4(object)
+    call object AwsumMain::v__scc__apply1__df__lam_5_1__df__lam_5_5__df__lam_6_2__df__lam_6_6__df__lam_7_3__df__lam_7_7__lift_2__lift_3__lift_4(object)
     ret
   }
 

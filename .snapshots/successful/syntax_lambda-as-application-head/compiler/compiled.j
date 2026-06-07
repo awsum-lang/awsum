@@ -87,7 +87,7 @@ L_tarm1:
   .limit locals 0
   iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -96,7 +96,7 @@ L_tarm1:
   .limit stack 2
   .limit locals 0
   invokestatic AwsumMain/v_runMe()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lam_24(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -141,7 +141,7 @@ L_tarm1:
 .end method
 
 
-.method static v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   aload_0
@@ -149,7 +149,7 @@ L_tarm1:
 .end method
 
 
-.method static v__lam_24(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   aload_0
