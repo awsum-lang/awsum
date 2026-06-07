@@ -60,22 +60,7 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 11: {
-          return [11];
-        }
-        case 12: {
-          const v___f0 = __s[1];
-          return [12, v___f0];
-        }
-      }
-    }
-  };
-
-  const main = [7, String(v_firstZero(v__lift_23([11]))), [5, [0]]];
+  const main = [7, String(v_firstZero([11])), [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

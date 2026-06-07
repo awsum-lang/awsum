@@ -1,0 +1,29 @@
+import IO.Stdout
+
+type A = A
+
+-- Regression: a value bound at a narrow row flows into a wider row where
+-- a shared label is a nominal head whose inner row grew
+-- (Maybe Bool -> Maybe (Bool | Unit)). That label's FNV tag changes, so
+-- the row -> row coercion must re-tag it rather than pass through. Before
+-- the fix the cell kept the narrow "Maybe Bool" tag and the row-case
+-- matched neither arm (LLVM/JVM print "A", JS "undefined").
+narrow : (Maybe Bool | A)
+narrow = Just True
+
+widened : (Maybe (Bool | Unit) | A)
+widened = narrow
+
+describe : (Maybe (Bool | Unit) | A) -> String
+describe x = case x of
+  (_a : A) -> "A"
+  (m : Maybe (Bool | Unit)) -> case m of
+    Nothing -> "N"
+    Just inner -> case inner of
+      (b : Bool) -> case b of
+        True -> "T"
+        False -> "F"
+      (_u : Unit) -> "U"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe widened)

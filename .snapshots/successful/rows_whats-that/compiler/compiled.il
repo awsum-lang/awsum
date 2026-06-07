@@ -212,16 +212,16 @@
     ldloc.2
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__lift_23(object)
+    call object AwsumMain::v__lift_18(object)
     stelem.ref
     ldloc.0
     call object AwsumMain::v_whatsThat(object)
-    call object AwsumMain::v__let_24(object)
+    call object AwsumMain::v__let_19(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lift_23(object) cil managed
+  .method private hidebysig static object v__lift_18(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -281,7 +281,7 @@
   }
 
 
-  .method private hidebysig static object v__let_24(object) cil managed
+  .method private hidebysig static object v__let_19(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

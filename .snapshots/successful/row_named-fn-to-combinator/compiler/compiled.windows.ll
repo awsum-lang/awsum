@@ -231,7 +231,7 @@ define internal ptr @v_kk(ptr %v__n) {
 
 define internal ptr @v_r() {
   %t0 = call ptr @v_oa()
-  %t1 = call ptr @v__df__rowspec_23_0(ptr %t0)
+  %t1 = call ptr @v__df__rowmono_0_bindEither_0(ptr %t0)
   ret ptr %t1
 }
 
@@ -303,7 +303,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lift_24(ptr %v___input) {
+define internal ptr @v__lift_18(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -346,7 +346,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__df__rowspec_23_0(ptr %v_x) {
+define internal ptr @v__df__rowmono_0_bindEither_0(ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_x, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -377,7 +377,7 @@ case.arm.4.15:
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
   %t18 = call ptr @v_kk(ptr %t17)
-  %t19 = call ptr @v__lift_24(ptr %t18)
+  %t19 = call ptr @v__lift_18(ptr %t18)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t19

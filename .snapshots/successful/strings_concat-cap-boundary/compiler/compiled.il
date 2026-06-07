@@ -409,63 +409,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_21(object) cil managed
-  {
-    .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2)
-    ldarg.0
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c1
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.2
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.2
-    br IL_c0
-  IL_c1:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
-    ldc.i4.0
-    ldc.i4.4
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.2
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.2
-  IL_c0:
-    ret
-  }
-
-
-  .method private hidebysig static object v__scc__df_andThenEither_0__lam_23_build(object) cil managed
+  .method private hidebysig static object v__scc__df_andThenEither_0__lam_18_build(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -479,12 +423,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__df_andThenEither_0__lam_23_build(object, object)
+    call object AwsumMain::v__cps__scc__df_andThenEither_0__lam_18_build(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__df_andThenEither_0__lam_23_build(object,object) cil managed
+  .method private hidebysig static object v__cps__scc__df_andThenEither_0__lam_18_build(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -535,7 +479,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.s 5
-    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_23_build(object, object)
+    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_18_build(object, object)
     ret
   IL_c0:
     pop
@@ -649,7 +593,7 @@
     ldloc.2
     stelem.ref
     ldloc.s 5
-    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_23_build(object, object)
+    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_18_build(object, object)
     ret
   IL_c3:
     pop
@@ -670,7 +614,6 @@
     ldloc.2
     ldloc.2
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__lift_21(object)
     stelem.ref
     ldloc.s 5
     ldc.i4.2
@@ -684,7 +627,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__scc__df_andThenEither_0__lam_23_build(object,object) cil managed
+  .method private hidebysig static object v__apply__scc__df_andThenEither_0__lam_18_build(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1)
@@ -737,7 +680,7 @@
     ldarg.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__df_andThenEither_0__lam_23_build(object)
+    call object AwsumMain::v__scc__df_andThenEither_0__lam_18_build(object)
     ret
   }
 

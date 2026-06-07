@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00x")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00y")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v_sumRow $v__cps_sumRow $v__apply_sumRow $v__lift_23 $v__cps__lift_23 $v__apply__lift_23)
+  (elem (i32.const 0) $v_runIO $v_sumRow $v__cps_sumRow $v__apply_sumRow $v__lift_18 $v__cps__lift_18 $v__apply__lift_18)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1151,7 +1151,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lift_23 (param i32) (result i32)
+  (func $v__lift_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1175,7 +1175,7 @@
       local.get 2
     end)
 
-  (func $v__cps__lift_23 (param i32 i32) (result i32)
+  (func $v__cps__lift_18 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1265,7 +1265,7 @@
       end
     end)
 
-  (func $v__apply__lift_23 (param i32 i32) (result i32)
+  (func $v__apply__lift_18 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -66,7 +66,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CCall
                         ( CVar "render" )
@@ -680,7 +680,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$23" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

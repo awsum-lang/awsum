@@ -209,12 +209,12 @@ L_tarm4:
   .limit locals 0
   invokestatic AwsumMain/v_action()Ljava/lang/Object;
   invokestatic AwsumMain/v__df_mapIOError_0(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   iconst_1
@@ -228,7 +228,7 @@ L_tarm4:
 .end method
 
 
-.method static v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 2
   .limit locals 1
   aload_0
@@ -312,7 +312,7 @@ L_tarm6:
   dup
   iconst_1
   aload 4
-  invokestatic AwsumMain/v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   invokestatic AwsumMain/v__apply__df_mapIOError_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null

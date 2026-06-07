@@ -62,7 +62,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$24" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CCall
                         ( CVar "unwrap" )
@@ -82,10 +82,7 @@ CoreProgram
                         , CCase
                             ( CCall
                                 ( CVar "unwrap" )
-                                [ CCall
-                                    ( CVar "$lift$23" )
-                                    [ CCon 11 [] ]
-                                ]
+                                [ CCon 11 [] ]
                             )
                             [
                                 ( 3
@@ -125,25 +122,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$23" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 11
-                    , []
-                    , CCon 11 []
-                    )
-                ,
-                    ( 12
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 12
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$let$24" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

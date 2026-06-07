@@ -14,12 +14,12 @@ bothBody:
   case-pattern    $do_e_0                         count=0
   case-pattern    s0                              count=0
 
-$lam$23:
+$lam$18:
   param           a                               count=1
   param           b                               count=1
   param           _n                              count=0
 
-$let$24:
+$let$19:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

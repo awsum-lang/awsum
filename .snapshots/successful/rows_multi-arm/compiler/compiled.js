@@ -79,22 +79,7 @@
     }
   };
 
-  const v__lift_25 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 11: {
-          return [11];
-        }
-        case 12: {
-          const v___f0 = __s[1];
-          return [12, v___f0];
-        }
-      }
-    }
-  };
-
-  const v__lift_24 = (v___input) => {
+  const v__lift_19 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -109,7 +94,7 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
+  const v__lift_18 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -184,15 +169,15 @@
                     })(__concat(v_a, "; "));
                   }
                 }
-              })(v_whatsInside(v__lift_25([11])));
+              })(v_whatsInside([11]));
             }
           }
-        })(v_whatsInside(v__lift_24([12, [0]])));
+        })(v_whatsInside(v__lift_19([12, [0]])));
       }
     }
-  })(v_whatsInside(v__lift_23([12, [1]])));
+  })(v_whatsInside(v__lift_18([12, [1]])));
 
-  const v__let_26 = (v_res) => {
+  const v__let_20 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -208,7 +193,7 @@
     }
   };
 
-  const main = v__let_26(v_summary);
+  const main = v__let_20(v_summary);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

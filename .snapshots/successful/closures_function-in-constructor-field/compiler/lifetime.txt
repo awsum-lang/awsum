@@ -29,6 +29,11 @@ main:
   case-pattern    _e                              count=0
   case-pattern    s                               count=1
 
+$lift$18:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
 $apply1:
   param           $cl                             count=1
   param           $arg0                           count=2

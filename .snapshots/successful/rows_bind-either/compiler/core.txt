@@ -67,7 +67,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$23" )
+                            ( CVar "$lift$18" )
                             [ CCall
                                 ( CVar "opB" )
                                 [ CVar "a" ]
@@ -135,7 +135,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$24" )
+                ( CVar "$let$19" )
                 [ CCall
                     ( CVar "describe" )
                     [ CCall
@@ -144,7 +144,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$23" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -167,7 +167,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$24" [ "res" ]
+        , CFunDef "$let$19" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

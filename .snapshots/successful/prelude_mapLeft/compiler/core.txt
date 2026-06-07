@@ -48,13 +48,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$27" )
+                ( CVar "$let$22" )
                 [ CCall
                     ( CVar "$df$mapLeft$0" )
                     [ CVar "bad" ]
                 ]
             )
-        , CFunDef "$let$23" [ "msg" ]
+        , CFunDef "$let$18" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,14 +81,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$24" [ "_a" ]
+        , CFunDef "$lam$19" [ "_a" ]
             ( CCon 25 [] )
-        , CFunDef "$let$25"
+        , CFunDef "$let$20"
             [ "renamedBad"
             , "renamedGood"
             ]
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CVar "renamedBad" )
                     [
@@ -146,11 +146,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$26" [ "_a" ]
+        , CFunDef "$lam$21" [ "_a" ]
             ( CCon 25 [] )
-        , CFunDef "$let$27" [ "renamedBad" ]
+        , CFunDef "$let$22" [ "renamedBad" ]
             ( CCall
-                ( CVar "$let$25" )
+                ( CVar "$let$20" )
                 [ CVar "renamedBad"
                 , CCall
                     ( CVar "$df$mapLeft$1" )
@@ -166,7 +166,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "e"
                         ( CCon 3
                             [ CCall
-                                ( CVar "$lam$26" )
+                                ( CVar "$lam$21" )
                                 [ CVar "e" ]
                             ]
                         )
@@ -190,7 +190,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "e"
                         ( CCon 3
                             [ CCall
-                                ( CVar "$lam$24" )
+                                ( CVar "$lam$19" )
                                 [ CVar "e" ]
                             ]
                         )

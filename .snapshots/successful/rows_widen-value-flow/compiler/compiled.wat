@@ -28,8 +28,8 @@
   (data (i32.const 465) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00nestedJustFalse")
   (data (i32.const 500) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00strWiden")
   (data (i32.const 528) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
-  (table 38 funcref)
-  (elem (i32.const 0) $v_pureIO $v_failIO $v_runIO $v_eitherToIO $v_caseUnion $v_nestedUnion $v_showAB $v_showTwoA $v_showStrA $v_tagged $v_appendTagged $v_printErr $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lift_17 $v__cps__lift_17 $v__apply__lift_17 $v__lift_23 $v__lift_24 $v__let_25 $v__lift_26 $v__lift_27 $v__lift_28 $v__lift_29 $v__lift_30 $v__cps__lift_30 $v__apply__lift_30 $v__bi_IO_Stdout_print $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__df_andThenIO_4 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4 $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_18__lift_19__lift_2__lift_20__lift_3__lift_31__lift_32__lift_33__lift_4 $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_18__lift_19__lift_2__lift_20__lift_3__lift_31__lift_32__lift_33__lift_4 $v__apply1)
+  (table 31 funcref)
+  (elem (i32.const 0) $v_pureIO $v_failIO $v_runIO $v_eitherToIO $v_caseUnion $v_nestedUnion $v_showAB $v_showTwoA $v_showStrA $v_tagged $v_appendTagged $v_printErr $v__lift_1 $v__cps__lift_1 $v__apply__lift_1 $v__lift_18 $v__lift_19 $v__let_20 $v__lift_21 $v__lift_22 $v__lift_23 $v__bi_IO_Stdout_print $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__df_andThenIO_4 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4 $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_2__lift_3__lift_4 $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_2__lift_3__lift_4 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1588,7 +1588,7 @@
             call 18
             local.get 6
             call 12
-            call 70
+            call 63
             local.set 4
             local.get 0
             call 19
@@ -1613,7 +1613,7 @@
               call 18
               local.get 6
               call 14
-              call 70
+              call 63
               local.set 4
               local.get 0
               call 19
@@ -1633,7 +1633,7 @@
               call 18
               local.get 6
               call 15
-              call 70
+              call 63
               local.set 4
               local.get 0
               call 19
@@ -1690,7 +1690,6 @@
         call 18
         local.get 4
         call 21
-        call 48
         local.set 3
         local.get 2
         call 19
@@ -1833,19 +1832,19 @@
     (local i32)
     (local i32)
     call 25
-    call 51)
+    call 48)
 
   (func $v_defBodyRight (result i32)
     (local i32)
     (local i32)
     call 27
-    call 51)
+    call 48)
 
   (func $v_letBody (result i32)
     (local i32)
     (local i32)
     call 26
-    call 53)
+    call 50)
 
   (func $v_caseUnion (param i32) (result i32)
     (local i32)
@@ -1860,7 +1859,7 @@
     if (result i32)
       block (result i32)
         call 25
-        call 51
+        call 48
         local.set 2
         local.get 0
         call 19
@@ -1869,7 +1868,7 @@
     else
       block (result i32)
         call 26
-        call 52
+        call 49
         local.set 2
         local.get 0
         call 19
@@ -1891,7 +1890,7 @@
     if (result i32)
       block (result i32)
         call 28
-        call 54
+        call 51
         local.set 3
         local.get 0
         call 19
@@ -1912,7 +1911,7 @@
       if (result i32)
         block (result i32)
           call 25
-          call 55
+          call 52
           local.set 3
           local.get 2
           call 19
@@ -1923,7 +1922,7 @@
       else
         block (result i32)
           call 29
-          call 54
+          call 51
           local.set 3
           local.get 2
           call 19
@@ -1938,7 +1937,7 @@
     (local i32)
     (local i32)
     call 30
-    call 56)
+    call 53)
 
   (func $v_showAB (param i32) (result i32)
     (local i32)
@@ -2688,7 +2687,6 @@
               i32.const 11
               i32.store
               local.get 0
-              call 57
               call 35
               call 38
               call 41
@@ -2919,8 +2917,7 @@
     call 42
     call 24
     call 58
-    call 65
-    call 62)
+    call 55)
 
   (func $v__lift_1 (param i32) (result i32)
     (local i32)
@@ -2936,7 +2933,7 @@
       call 17
       local.set 1
       local.get 1
-      i32.const 59
+      i32.const 47
       i32.store
       local.get 1
       call 46
@@ -3063,404 +3060,7 @@
             i32.load offset=8
             call 19
             local.get 0
-            i32.const 60
-            i32.store
-            local.get 0
-            local.get 1
-            i32.store offset=4
-            local.get 0
-            i32.load offset=4
-            call 18
-            local.get 0
-            local.get 5
-            i32.store offset=8
-            local.get 0
-            i32.load offset=8
-            call 18
-            local.get 0
-            local.set 8
-            local.get 7
-            call 18
-            local.get 1
-            call 19
-            local.get 6
-            call 19
-            local.get 5
-            call 19
-            local.get 7
-            local.set 0
-            local.get 8
-            local.set 1
-            br 3
-          else
-            local.get 4
-            i32.load
-            i32.const 8
-            i32.eq
-            if (result i32)
-              local.get 4
-              i32.load offset=4
-              local.set 5
-              local.get 5
-              call 18
-              block (result i32)
-                local.get 1
-                local.tee 10
-                call 18
-                local.get 10
-                i32.const 8
-                i32.const 1
-                call 17
-                local.set 2
-                local.get 2
-                i32.const 8
-                i32.store
-                local.get 2
-                i32.const 8
-                i32.const 1
-                call 17
-                local.set 3
-                local.get 3
-                i32.const 36
-                i32.store
-                local.get 3
-                local.get 5
-                i32.store offset=4
-                local.get 3
-                i32.load offset=4
-                call 18
-                local.get 3
-                i32.store offset=4
-                local.get 2
-                call 47
-                local.set 9
-                local.get 5
-                call 19
-                local.get 0
-                call 19
-                local.get 1
-                call 19
-                local.get 9
-              end
-            else
-              local.get 4
-              i32.load
-              i32.const 9
-              i32.eq
-              if (result i32)
-                local.get 4
-                i32.load offset=4
-                local.set 5
-                local.get 5
-                call 18
-                block (result i32)
-                  local.get 1
-                  local.tee 10
-                  call 18
-                  local.get 10
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 2
-                  local.get 2
-                  i32.const 9
-                  i32.store
-                  local.get 2
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 3
-                  local.get 3
-                  i32.const 38
-                  i32.store
-                  local.get 3
-                  local.get 5
-                  i32.store offset=4
-                  local.get 3
-                  i32.load offset=4
-                  call 18
-                  local.get 3
-                  i32.store offset=4
-                  local.get 2
-                  call 47
-                  local.set 9
-                  local.get 5
-                  call 19
-                  local.get 0
-                  call 19
-                  local.get 1
-                  call 19
-                  local.get 9
-                end
-              else
-                local.get 4
-                i32.load offset=4
-                local.set 5
-                local.get 5
-                call 18
-                block (result i32)
-                  local.get 1
-                  local.tee 10
-                  call 18
-                  local.get 10
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 2
-                  local.get 2
-                  i32.const 10
-                  i32.store
-                  local.get 2
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 3
-                  local.get 3
-                  i32.const 42
-                  i32.store
-                  local.get 3
-                  local.get 5
-                  i32.store offset=4
-                  local.get 3
-                  i32.load offset=4
-                  call 18
-                  local.get 3
-                  i32.store offset=4
-                  local.get 2
-                  call 47
-                  local.set 9
-                  local.get 5
-                  call 19
-                  local.get 0
-                  call 19
-                  local.get 1
-                  call 19
-                  local.get 9
-                end
-              end
-            end
-          end
-        end
-      end
-    end)
-
-  (func $v__apply__lift_1 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-      local.get 0
-      local.set 2
-      local.get 2
-      i32.load
-      i32.const 59
-      i32.eq
-      if (result i32)
-        block (result i32)
-          local.get 1
-          local.set 7
-          local.get 0
-          call 19
-          local.get 7
-        end
-      else
-        local.get 2
-        i32.load offset=4
-        local.set 3
-        local.get 3
-        call 18
-        local.get 2
-        i32.load offset=8
-        local.set 4
-        local.get 4
-        call 18
-        local.get 3
-        local.set 5
-        local.get 0
-        i32.load offset=4
-        call 19
-        local.get 0
-        i32.load offset=8
-        call 19
-        local.get 0
-        i32.const 7
-        i32.store
-        local.get 0
-        local.get 4
-        i32.store offset=4
-        local.get 0
-        i32.load offset=4
-        call 18
-        local.get 0
-        local.get 1
-        i32.store offset=8
-        local.get 0
-        i32.load offset=8
-        call 18
-        local.get 0
-        local.set 6
-        local.get 5
-        call 18
-        local.get 1
-        call 19
-        local.get 4
-        call 19
-        local.get 3
-        call 19
-        local.get 5
-        local.set 0
-        local.get 6
-        local.set 1
-        br 1
-      end
-    end)
-
-  (func $v__lift_17 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-      local.get 0
-      local.tee 3
-      call 18
-      local.get 3
-      i32.const 4
-      i32.const 0
-      call 17
-      local.set 1
-      local.get 1
-      i32.const 61
-      i32.store
-      local.get 1
-      call 49
-      local.set 2
-      local.get 0
-      call 19
-      local.get 2
-    end)
-
-  (func $v__cps__lift_17 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-      local.get 0
-      local.set 4
-      local.get 4
-      i32.load
-      i32.const 5
-      i32.eq
-      if (result i32)
-        local.get 4
-        i32.load offset=4
-        local.set 5
-        local.get 5
-        call 18
-        block (result i32)
-          local.get 1
-          local.tee 10
-          call 18
-          local.get 10
-          i32.const 8
-          i32.const 1
-          call 17
-          local.set 2
-          local.get 2
-          i32.const 5
-          i32.store
-          local.get 2
-          local.get 5
-          i32.store offset=4
-          local.get 2
-          i32.load offset=4
-          call 18
-          local.get 2
-          call 50
-          local.set 9
-          local.get 5
-          call 19
-          local.get 0
-          call 19
-          local.get 1
-          call 19
-          local.get 9
-        end
-      else
-        local.get 4
-        i32.load
-        i32.const 6
-        i32.eq
-        if (result i32)
-          local.get 4
-          i32.load offset=4
-          local.set 5
-          local.get 5
-          call 18
-          block (result i32)
-            local.get 1
-            local.tee 10
-            call 18
-            local.get 10
-            i32.const 8
-            i32.const 1
-            call 17
-            local.set 2
-            local.get 2
-            i32.const 6
-            i32.store
-            local.get 2
-            local.get 5
-            i32.store offset=4
-            local.get 2
-            i32.load offset=4
-            call 18
-            local.get 2
-            call 50
-            local.set 9
-            local.get 5
-            call 19
-            local.get 0
-            call 19
-            local.get 1
-            call 19
-            local.get 9
-          end
-        else
-          local.get 4
-          i32.load
-          i32.const 7
-          i32.eq
-          if (result i32)
-            local.get 4
-            i32.load offset=4
-            local.set 5
-            local.get 5
-            call 18
-            local.get 4
-            i32.load offset=8
-            local.set 6
-            local.get 6
-            call 18
-            local.get 6
-            local.set 7
-            local.get 0
-            i32.load offset=4
-            call 19
-            local.get 0
-            i32.load offset=8
-            call 19
-            local.get 0
-            i32.const 62
+            i32.const 48
             i32.store
             local.get 0
             local.get 1
@@ -3529,7 +3129,7 @@
                 local.get 3
                 i32.store offset=4
                 local.get 2
-                call 50
+                call 47
                 local.set 9
                 local.get 5
                 call 19
@@ -3579,7 +3179,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 50
+                  call 47
                   local.set 9
                   local.get 5
                   call 19
@@ -3613,7 +3213,7 @@
                   call 17
                   local.set 3
                   local.get 3
-                  i32.const 37
+                  i32.const 36
                   i32.store
                   local.get 3
                   local.get 5
@@ -3624,7 +3224,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 50
+                  call 47
                   local.set 9
                   local.get 5
                   call 19
@@ -3641,7 +3241,7 @@
       end
     end)
 
-  (func $v__apply__lift_17 (param i32 i32) (result i32)
+  (func $v__apply__lift_1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -3654,7 +3254,7 @@
       local.set 2
       local.get 2
       i32.load
-      i32.const 61
+      i32.const 47
       i32.eq
       if (result i32)
         block (result i32)
@@ -3716,7 +3316,7 @@
       end
     end)
 
-  (func $v__lift_23 (param i32) (result i32)
+  (func $v__lift_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -3797,7 +3397,7 @@
       end
     end)
 
-  (func $v__lift_24 (param i32) (result i32)
+  (func $v__lift_19 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -3878,7 +3478,7 @@
       end
     end)
 
-  (func $v__let_25 (param i32) (result i32)
+  (func $v__let_20 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)
@@ -3886,14 +3486,14 @@
       local.tee 2
       call 18
       local.get 2
-      call 52
+      call 49
       local.set 1
       local.get 0
       call 19
       local.get 1
     end)
 
-  (func $v__lift_26 (param i32) (result i32)
+  (func $v__lift_21 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -3974,7 +3574,7 @@
       end
     end)
 
-  (func $v__lift_27 (param i32) (result i32)
+  (func $v__lift_22 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -4055,7 +3655,7 @@
       end
     end)
 
-  (func $v__lift_28 (param i32) (result i32)
+  (func $v__lift_23 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -4136,460 +3736,6 @@
       end
     end)
 
-  (func $v__lift_29 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 2
-    local.get 2
-    i32.load
-    i32.const 11
-    i32.eq
-    if (result i32)
-      block (result i32)
-        i32.const 4
-        i32.const 0
-        call 17
-        local.set 1
-        local.get 1
-        i32.const 11
-        i32.store
-        local.get 1
-        local.set 4
-        local.get 0
-        call 19
-        local.get 4
-      end
-    else
-      local.get 2
-      i32.load offset=4
-      local.set 3
-      local.get 3
-      call 18
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 17
-        local.set 1
-        local.get 1
-        i32.const 12
-        i32.store
-        local.get 1
-        local.get 3
-        i32.store offset=4
-        local.get 1
-        i32.load offset=4
-        call 18
-        local.get 1
-        local.set 4
-        local.get 3
-        call 19
-        local.get 0
-        call 19
-        local.get 4
-      end
-    end)
-
-  (func $v__lift_30 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-      local.get 0
-      local.tee 3
-      call 18
-      local.get 3
-      i32.const 4
-      i32.const 0
-      call 17
-      local.set 1
-      local.get 1
-      i32.const 63
-      i32.store
-      local.get 1
-      call 59
-      local.set 2
-      local.get 0
-      call 19
-      local.get 2
-    end)
-
-  (func $v__cps__lift_30 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-      local.get 0
-      local.set 4
-      local.get 4
-      i32.load
-      i32.const 5
-      i32.eq
-      if (result i32)
-        local.get 4
-        i32.load offset=4
-        local.set 5
-        local.get 5
-        call 18
-        block (result i32)
-          local.get 1
-          local.tee 10
-          call 18
-          local.get 10
-          i32.const 8
-          i32.const 1
-          call 17
-          local.set 2
-          local.get 2
-          i32.const 5
-          i32.store
-          local.get 2
-          local.get 5
-          i32.store offset=4
-          local.get 2
-          i32.load offset=4
-          call 18
-          local.get 2
-          call 60
-          local.set 9
-          local.get 5
-          call 19
-          local.get 0
-          call 19
-          local.get 1
-          call 19
-          local.get 9
-        end
-      else
-        local.get 4
-        i32.load
-        i32.const 6
-        i32.eq
-        if (result i32)
-          local.get 4
-          i32.load offset=4
-          local.set 5
-          local.get 5
-          call 18
-          block (result i32)
-            local.get 1
-            local.tee 10
-            call 18
-            local.get 10
-            i32.const 8
-            i32.const 1
-            call 17
-            local.set 2
-            local.get 2
-            i32.const 6
-            i32.store
-            local.get 2
-            local.get 5
-            i32.store offset=4
-            local.get 2
-            i32.load offset=4
-            call 18
-            local.get 2
-            call 60
-            local.set 9
-            local.get 5
-            call 19
-            local.get 0
-            call 19
-            local.get 1
-            call 19
-            local.get 9
-          end
-        else
-          local.get 4
-          i32.load
-          i32.const 7
-          i32.eq
-          if (result i32)
-            local.get 4
-            i32.load offset=4
-            local.set 5
-            local.get 5
-            call 18
-            local.get 4
-            i32.load offset=8
-            local.set 6
-            local.get 6
-            call 18
-            local.get 6
-            local.set 7
-            local.get 0
-            i32.load offset=4
-            call 19
-            local.get 0
-            i32.load offset=8
-            call 19
-            local.get 0
-            i32.const 64
-            i32.store
-            local.get 0
-            local.get 1
-            i32.store offset=4
-            local.get 0
-            i32.load offset=4
-            call 18
-            local.get 0
-            local.get 5
-            i32.store offset=8
-            local.get 0
-            i32.load offset=8
-            call 18
-            local.get 0
-            local.set 8
-            local.get 7
-            call 18
-            local.get 1
-            call 19
-            local.get 6
-            call 19
-            local.get 5
-            call 19
-            local.get 7
-            local.set 0
-            local.get 8
-            local.set 1
-            br 3
-          else
-            local.get 4
-            i32.load
-            i32.const 8
-            i32.eq
-            if (result i32)
-              local.get 4
-              i32.load offset=4
-              local.set 5
-              local.get 5
-              call 18
-              block (result i32)
-                local.get 1
-                local.tee 10
-                call 18
-                local.get 10
-                i32.const 8
-                i32.const 1
-                call 17
-                local.set 2
-                local.get 2
-                i32.const 8
-                i32.store
-                local.get 2
-                i32.const 8
-                i32.const 1
-                call 17
-                local.set 3
-                local.get 3
-                i32.const 39
-                i32.store
-                local.get 3
-                local.get 5
-                i32.store offset=4
-                local.get 3
-                i32.load offset=4
-                call 18
-                local.get 3
-                i32.store offset=4
-                local.get 2
-                call 60
-                local.set 9
-                local.get 5
-                call 19
-                local.get 0
-                call 19
-                local.get 1
-                call 19
-                local.get 9
-              end
-            else
-              local.get 4
-              i32.load
-              i32.const 9
-              i32.eq
-              if (result i32)
-                local.get 4
-                i32.load offset=4
-                local.set 5
-                local.get 5
-                call 18
-                block (result i32)
-                  local.get 1
-                  local.tee 10
-                  call 18
-                  local.get 10
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 2
-                  local.get 2
-                  i32.const 9
-                  i32.store
-                  local.get 2
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 3
-                  local.get 3
-                  i32.const 40
-                  i32.store
-                  local.get 3
-                  local.get 5
-                  i32.store offset=4
-                  local.get 3
-                  i32.load offset=4
-                  call 18
-                  local.get 3
-                  i32.store offset=4
-                  local.get 2
-                  call 60
-                  local.set 9
-                  local.get 5
-                  call 19
-                  local.get 0
-                  call 19
-                  local.get 1
-                  call 19
-                  local.get 9
-                end
-              else
-                local.get 4
-                i32.load offset=4
-                local.set 5
-                local.get 5
-                call 18
-                block (result i32)
-                  local.get 1
-                  local.tee 10
-                  call 18
-                  local.get 10
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 2
-                  local.get 2
-                  i32.const 10
-                  i32.store
-                  local.get 2
-                  i32.const 8
-                  i32.const 1
-                  call 17
-                  local.set 3
-                  local.get 3
-                  i32.const 41
-                  i32.store
-                  local.get 3
-                  local.get 5
-                  i32.store offset=4
-                  local.get 3
-                  i32.load offset=4
-                  call 18
-                  local.get 3
-                  i32.store offset=4
-                  local.get 2
-                  call 60
-                  local.set 9
-                  local.get 5
-                  call 19
-                  local.get 0
-                  call 19
-                  local.get 1
-                  call 19
-                  local.get 9
-                end
-              end
-            end
-          end
-        end
-      end
-    end)
-
-  (func $v__apply__lift_30 (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    loop (result i32)
-      local.get 0
-      local.set 2
-      local.get 2
-      i32.load
-      i32.const 63
-      i32.eq
-      if (result i32)
-        block (result i32)
-          local.get 1
-          local.set 7
-          local.get 0
-          call 19
-          local.get 7
-        end
-      else
-        local.get 2
-        i32.load offset=4
-        local.set 3
-        local.get 3
-        call 18
-        local.get 2
-        i32.load offset=8
-        local.set 4
-        local.get 4
-        call 18
-        local.get 3
-        local.set 5
-        local.get 0
-        i32.load offset=4
-        call 19
-        local.get 0
-        i32.load offset=8
-        call 19
-        local.get 0
-        i32.const 7
-        i32.store
-        local.get 0
-        local.get 4
-        i32.store offset=4
-        local.get 0
-        i32.load offset=4
-        call 18
-        local.get 0
-        local.get 1
-        i32.store offset=8
-        local.get 0
-        i32.load offset=8
-        call 18
-        local.get 0
-        local.set 6
-        local.get 5
-        call 18
-        local.get 1
-        call 19
-        local.get 4
-        call 19
-        local.get 3
-        call 19
-        local.get 5
-        local.set 0
-        local.get 6
-        local.set 1
-        br 1
-      end
-    end)
-
   (func $v__bi_IO_Stdout_print (param i32) (result i32)
     (local i32)
     (local i32)
@@ -4651,10 +3797,10 @@
       call 17
       local.set 1
       local.get 1
-      i32.const 65
+      i32.const 49
       i32.store
       local.get 1
-      call 63
+      call 56
       local.set 2
       local.get 0
       call 19
@@ -4703,7 +3849,7 @@
           i32.load offset=4
           call 18
           local.get 2
-          call 64
+          call 57
           local.set 9
           local.get 5
           call 19
@@ -4734,7 +3880,7 @@
             call 18
             local.get 10
             call 43
-            call 64
+            call 57
             local.set 9
             local.get 5
             call 19
@@ -4769,7 +3915,7 @@
             i32.load offset=8
             call 19
             local.get 0
-            i32.const 66
+            i32.const 50
             i32.store
             local.get 0
             local.get 1
@@ -4838,7 +3984,7 @@
                 local.get 3
                 i32.store offset=4
                 local.get 2
-                call 64
+                call 57
                 local.set 9
                 local.get 5
                 call 19
@@ -4888,7 +4034,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 64
+                  call 57
                   local.set 9
                   local.get 5
                   call 19
@@ -4933,7 +4079,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 64
+                  call 57
                   local.set 9
                   local.get 5
                   call 19
@@ -4963,7 +4109,7 @@
       local.set 2
       local.get 2
       i32.load
-      i32.const 65
+      i32.const 49
       i32.eq
       if (result i32)
         block (result i32)
@@ -5039,10 +4185,10 @@
       call 17
       local.set 1
       local.get 1
-      i32.const 67
+      i32.const 51
       i32.store
       local.get 1
-      call 66
+      call 59
       local.set 2
       local.get 0
       call 19
@@ -5081,9 +4227,9 @@
           local.tee 10
           call 18
           local.get 10
-          call 61
+          call 54
           call 45
-          call 67
+          call 60
           local.set 9
           local.get 5
           call 19
@@ -5123,7 +4269,7 @@
             i32.load offset=4
             call 18
             local.get 2
-            call 67
+            call 60
             local.set 9
             local.get 5
             call 19
@@ -5158,7 +4304,7 @@
             i32.load offset=8
             call 19
             local.get 0
-            i32.const 68
+            i32.const 52
             i32.store
             local.get 0
             local.get 1
@@ -5227,7 +4373,7 @@
                 local.get 3
                 i32.store offset=4
                 local.get 2
-                call 67
+                call 60
                 local.set 9
                 local.get 5
                 call 19
@@ -5277,7 +4423,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 67
+                  call 60
                   local.set 9
                   local.get 5
                   call 19
@@ -5322,7 +4468,7 @@
                   local.get 3
                   i32.store offset=4
                   local.get 2
-                  call 67
+                  call 60
                   local.set 9
                   local.get 5
                   call 19
@@ -5352,7 +4498,7 @@
       local.set 2
       local.get 2
       i32.load
-      i32.const 67
+      i32.const 51
       i32.eq
       if (result i32)
         block (result i32)
@@ -5414,7 +4560,7 @@
       end
     end)
 
-  (func $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_18__lift_19__lift_2__lift_20__lift_3__lift_31__lift_32__lift_33__lift_4 (param i32) (result i32)
+  (func $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_2__lift_3__lift_4 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -5428,17 +4574,17 @@
       call 17
       local.set 1
       local.get 1
-      i32.const 69
+      i32.const 53
       i32.store
       local.get 1
-      call 69
+      call 62
       local.set 2
       local.get 0
       call 19
       local.get 2
     end)
 
-  (func $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_18__lift_19__lift_2__lift_20__lift_3__lift_31__lift_32__lift_33__lift_4 (param i32 i32) (result i32)
+  (func $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3__df__lam_5_5__df__lam_6_6__df__lam_7_7__lift_2__lift_3__lift_4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -5453,7 +4599,7 @@
       local.set 3
       local.get 3
       i32.load
-      i32.const 43
+      i32.const 37
       i32.eq
       if (result i32)
         local.get 3
@@ -5482,7 +4628,7 @@
           i32.load offset=4
           call 19
           local.get 0
-          i32.const 44
+          i32.const 38
           i32.store
           local.get 0
           local.get 6
@@ -5524,7 +4670,7 @@
             i32.load offset=4
             call 19
             local.get 0
-            i32.const 45
+            i32.const 39
             i32.store
             local.get 0
             local.get 6
@@ -5566,7 +4712,7 @@
               i32.load offset=4
               call 19
               local.get 0
-              i32.const 46
+              i32.const 40
               i32.store
               local.get 0
               local.get 6
@@ -5608,7 +4754,7 @@
                 i32.load offset=4
                 call 19
                 local.get 0
-                i32.const 47
+                i32.const 41
                 i32.store
                 local.get 0
                 local.get 6
@@ -5650,7 +4796,7 @@
                   i32.load offset=4
                   call 19
                   local.get 0
-                  i32.const 48
+                  i32.const 42
                   i32.store
                   local.get 0
                   local.get 6
@@ -5692,7 +4838,7 @@
                     i32.load offset=4
                     call 19
                     local.get 0
-                    i32.const 49
+                    i32.const 43
                     i32.store
                     local.get 0
                     local.get 6
@@ -5734,7 +4880,7 @@
                       i32.load offset=4
                       call 19
                       local.get 0
-                      i32.const 50
+                      i32.const 44
                       i32.store
                       local.get 0
                       local.get 6
@@ -5776,7 +4922,7 @@
                         i32.load offset=4
                         call 19
                         local.get 0
-                        i32.const 51
+                        i32.const 45
                         i32.store
                         local.get 0
                         local.get 6
@@ -5805,299 +4951,41 @@
                         br 9
                       else
                         local.get 3
-                        i32.load
-                        i32.const 36
-                        i32.eq
-                        if (result i32)
-                          local.get 3
-                          i32.load offset=4
-                          local.set 6
-                          local.get 6
-                          call 18
-                          local.get 0
-                          i32.load offset=4
-                          call 19
-                          local.get 0
-                          i32.const 52
-                          i32.store
-                          local.get 0
-                          local.get 6
-                          i32.store offset=4
-                          local.get 0
-                          i32.load offset=4
-                          call 18
-                          local.get 0
-                          local.set 7
-                          local.get 1
-                          local.set 8
-                          local.get 8
-                          call 18
-                          local.get 1
-                          call 19
-                          local.get 6
-                          call 19
-                          local.get 5
-                          call 19
-                          local.get 4
-                          call 19
-                          local.get 7
-                          local.set 0
-                          local.get 8
-                          local.set 1
-                          br 10
-                        else
-                          local.get 3
-                          i32.load
-                          i32.const 37
-                          i32.eq
-                          if (result i32)
-                            local.get 3
-                            i32.load offset=4
-                            local.set 6
-                            local.get 6
-                            call 18
-                            local.get 0
-                            i32.load offset=4
-                            call 19
-                            local.get 0
-                            i32.const 53
-                            i32.store
-                            local.get 0
-                            local.get 6
-                            i32.store offset=4
-                            local.get 0
-                            i32.load offset=4
-                            call 18
-                            local.get 0
-                            local.set 7
-                            local.get 1
-                            local.set 8
-                            local.get 8
-                            call 18
-                            local.get 1
-                            call 19
-                            local.get 6
-                            call 19
-                            local.get 5
-                            call 19
-                            local.get 4
-                            call 19
-                            local.get 7
-                            local.set 0
-                            local.get 8
-                            local.set 1
-                            br 11
-                          else
-                            local.get 3
-                            i32.load
-                            i32.const 38
-                            i32.eq
-                            if (result i32)
-                              local.get 3
-                              i32.load offset=4
-                              local.set 6
-                              local.get 6
-                              call 18
-                              local.get 0
-                              i32.load offset=4
-                              call 19
-                              local.get 0
-                              i32.const 54
-                              i32.store
-                              local.get 0
-                              local.get 6
-                              i32.store offset=4
-                              local.get 0
-                              i32.load offset=4
-                              call 18
-                              local.get 0
-                              local.set 7
-                              local.get 1
-                              local.set 8
-                              local.get 8
-                              call 18
-                              local.get 1
-                              call 19
-                              local.get 6
-                              call 19
-                              local.get 5
-                              call 19
-                              local.get 4
-                              call 19
-                              local.get 7
-                              local.set 0
-                              local.get 8
-                              local.set 1
-                              br 12
-                            else
-                              local.get 3
-                              i32.load
-                              i32.const 39
-                              i32.eq
-                              if (result i32)
-                                local.get 3
-                                i32.load offset=4
-                                local.set 6
-                                local.get 6
-                                call 18
-                                local.get 0
-                                i32.load offset=4
-                                call 19
-                                local.get 0
-                                i32.const 55
-                                i32.store
-                                local.get 0
-                                local.get 6
-                                i32.store offset=4
-                                local.get 0
-                                i32.load offset=4
-                                call 18
-                                local.get 0
-                                local.set 7
-                                local.get 1
-                                local.set 8
-                                local.get 8
-                                call 18
-                                local.get 1
-                                call 19
-                                local.get 6
-                                call 19
-                                local.get 5
-                                call 19
-                                local.get 4
-                                call 19
-                                local.get 7
-                                local.set 0
-                                local.get 8
-                                local.set 1
-                                br 13
-                              else
-                                local.get 3
-                                i32.load
-                                i32.const 40
-                                i32.eq
-                                if (result i32)
-                                  local.get 3
-                                  i32.load offset=4
-                                  local.set 6
-                                  local.get 6
-                                  call 18
-                                  local.get 0
-                                  i32.load offset=4
-                                  call 19
-                                  local.get 0
-                                  i32.const 56
-                                  i32.store
-                                  local.get 0
-                                  local.get 6
-                                  i32.store offset=4
-                                  local.get 0
-                                  i32.load offset=4
-                                  call 18
-                                  local.get 0
-                                  local.set 7
-                                  local.get 1
-                                  local.set 8
-                                  local.get 8
-                                  call 18
-                                  local.get 1
-                                  call 19
-                                  local.get 6
-                                  call 19
-                                  local.get 5
-                                  call 19
-                                  local.get 4
-                                  call 19
-                                  local.get 7
-                                  local.set 0
-                                  local.get 8
-                                  local.set 1
-                                  br 14
-                                else
-                                  local.get 3
-                                  i32.load
-                                  i32.const 41
-                                  i32.eq
-                                  if (result i32)
-                                    local.get 3
-                                    i32.load offset=4
-                                    local.set 6
-                                    local.get 6
-                                    call 18
-                                    local.get 0
-                                    i32.load offset=4
-                                    call 19
-                                    local.get 0
-                                    i32.const 57
-                                    i32.store
-                                    local.get 0
-                                    local.get 6
-                                    i32.store offset=4
-                                    local.get 0
-                                    i32.load offset=4
-                                    call 18
-                                    local.get 0
-                                    local.set 7
-                                    local.get 1
-                                    local.set 8
-                                    local.get 8
-                                    call 18
-                                    local.get 1
-                                    call 19
-                                    local.get 6
-                                    call 19
-                                    local.get 5
-                                    call 19
-                                    local.get 4
-                                    call 19
-                                    local.get 7
-                                    local.set 0
-                                    local.get 8
-                                    local.set 1
-                                    br 15
-                                  else
-                                    local.get 3
-                                    i32.load offset=4
-                                    local.set 6
-                                    local.get 6
-                                    call 18
-                                    local.get 0
-                                    i32.load offset=4
-                                    call 19
-                                    local.get 0
-                                    i32.const 58
-                                    i32.store
-                                    local.get 0
-                                    local.get 6
-                                    i32.store offset=4
-                                    local.get 0
-                                    i32.load offset=4
-                                    call 18
-                                    local.get 0
-                                    local.set 7
-                                    local.get 1
-                                    local.set 8
-                                    local.get 8
-                                    call 18
-                                    local.get 1
-                                    call 19
-                                    local.get 6
-                                    call 19
-                                    local.get 5
-                                    call 19
-                                    local.get 4
-                                    call 19
-                                    local.get 7
-                                    local.set 0
-                                    local.get 8
-                                    local.set 1
-                                    br 15
-                                  end
-                                end
-                              end
-                            end
-                          end
-                        end
+                        i32.load offset=4
+                        local.set 6
+                        local.get 6
+                        call 18
+                        local.get 0
+                        i32.load offset=4
+                        call 19
+                        local.get 0
+                        i32.const 46
+                        i32.store
+                        local.get 0
+                        local.get 6
+                        i32.store offset=4
+                        local.get 0
+                        i32.load offset=4
+                        call 18
+                        local.get 0
+                        local.set 7
+                        local.get 1
+                        local.set 8
+                        local.get 8
+                        call 18
+                        local.get 1
+                        call 19
+                        local.get 6
+                        call 19
+                        local.get 5
+                        call 19
+                        local.get 4
+                        call 19
+                        local.get 7
+                        local.set 0
+                        local.get 8
+                        local.set 1
+                        br 9
                       end
                     end
                   end
@@ -6109,7 +4997,7 @@
       else
         local.get 3
         i32.load
-        i32.const 44
+        i32.const 38
         i32.eq
         if (result i32)
           local.get 3
@@ -6123,7 +5011,7 @@
           local.get 5
           call 18
           local.get 0
-          i32.const 43
+          i32.const 37
           i32.store
           local.get 0
           local.set 7
@@ -6132,7 +5020,7 @@
           call 17
           local.set 2
           local.get 2
-          i32.const 70
+          i32.const 54
           i32.store
           local.get 2
           local.get 1
@@ -6156,7 +5044,7 @@
         else
           local.get 3
           i32.load
-          i32.const 45
+          i32.const 39
           i32.eq
           if (result i32)
             local.get 3
@@ -6170,7 +5058,7 @@
             local.get 5
             call 18
             local.get 0
-            i32.const 43
+            i32.const 37
             i32.store
             local.get 0
             local.set 7
@@ -6179,7 +5067,7 @@
             call 17
             local.set 2
             local.get 2
-            i32.const 71
+            i32.const 55
             i32.store
             local.get 2
             local.get 1
@@ -6203,7 +5091,7 @@
           else
             local.get 3
             i32.load
-            i32.const 46
+            i32.const 40
             i32.eq
             if (result i32)
               local.get 3
@@ -6217,7 +5105,7 @@
               local.get 5
               call 18
               local.get 0
-              i32.const 43
+              i32.const 37
               i32.store
               local.get 0
               local.set 7
@@ -6226,7 +5114,7 @@
               call 17
               local.set 2
               local.get 2
-              i32.const 72
+              i32.const 56
               i32.store
               local.get 2
               local.get 1
@@ -6250,7 +5138,7 @@
             else
               local.get 3
               i32.load
-              i32.const 47
+              i32.const 41
               i32.eq
               if (result i32)
                 local.get 3
@@ -6264,7 +5152,7 @@
                 local.get 5
                 call 18
                 local.get 0
-                i32.const 43
+                i32.const 37
                 i32.store
                 local.get 0
                 local.set 7
@@ -6273,7 +5161,7 @@
                 call 17
                 local.set 2
                 local.get 2
-                i32.const 73
+                i32.const 57
                 i32.store
                 local.get 2
                 local.get 1
@@ -6297,7 +5185,7 @@
               else
                 local.get 3
                 i32.load
-                i32.const 48
+                i32.const 42
                 i32.eq
                 if (result i32)
                   local.get 3
@@ -6311,7 +5199,7 @@
                   local.get 5
                   call 18
                   local.get 0
-                  i32.const 43
+                  i32.const 37
                   i32.store
                   local.get 0
                   local.set 7
@@ -6320,7 +5208,7 @@
                   call 17
                   local.set 2
                   local.get 2
-                  i32.const 74
+                  i32.const 58
                   i32.store
                   local.get 2
                   local.get 1
@@ -6344,7 +5232,7 @@
                 else
                   local.get 3
                   i32.load
-                  i32.const 49
+                  i32.const 43
                   i32.eq
                   if (result i32)
                     local.get 3
@@ -6358,7 +5246,7 @@
                     local.get 5
                     call 18
                     local.get 0
-                    i32.const 43
+                    i32.const 37
                     i32.store
                     local.get 0
                     local.set 7
@@ -6367,7 +5255,7 @@
                     call 17
                     local.set 2
                     local.get 2
-                    i32.const 75
+                    i32.const 59
                     i32.store
                     local.get 2
                     local.get 1
@@ -6391,7 +5279,7 @@
                   else
                     local.get 3
                     i32.load
-                    i32.const 50
+                    i32.const 44
                     i32.eq
                     if (result i32)
                       local.get 3
@@ -6405,7 +5293,7 @@
                       local.get 5
                       call 18
                       local.get 0
-                      i32.const 43
+                      i32.const 37
                       i32.store
                       local.get 0
                       local.set 7
@@ -6414,7 +5302,7 @@
                       call 17
                       local.set 2
                       local.get 2
-                      i32.const 76
+                      i32.const 60
                       i32.store
                       local.get 2
                       local.get 1
@@ -6438,7 +5326,7 @@
                     else
                       local.get 3
                       i32.load
-                      i32.const 51
+                      i32.const 45
                       i32.eq
                       if (result i32)
                         local.get 3
@@ -6452,7 +5340,7 @@
                         local.get 5
                         call 18
                         local.get 0
-                        i32.const 43
+                        i32.const 37
                         i32.store
                         local.get 0
                         local.set 7
@@ -6461,7 +5349,7 @@
                         call 17
                         local.set 2
                         local.get 2
-                        i32.const 77
+                        i32.const 61
                         i32.store
                         local.get 2
                         local.get 1
@@ -6484,334 +5372,46 @@
                         br 9
                       else
                         local.get 3
-                        i32.load
-                        i32.const 52
-                        i32.eq
-                        if (result i32)
-                          local.get 3
-                          i32.load offset=4
-                          local.set 4
-                          local.get 4
-                          call 18
-                          local.get 3
-                          i32.load offset=8
-                          local.set 5
-                          local.get 5
-                          call 18
-                          local.get 0
-                          i32.const 43
-                          i32.store
-                          local.get 0
-                          local.set 7
-                          i32.const 8
-                          i32.const 1
-                          call 17
-                          local.set 2
-                          local.get 2
-                          i32.const 78
-                          i32.store
-                          local.get 2
-                          local.get 1
-                          i32.store offset=4
-                          local.get 2
-                          i32.load offset=4
-                          call 18
-                          local.get 2
-                          local.set 8
-                          local.get 1
-                          call 19
-                          local.get 5
-                          call 19
-                          local.get 4
-                          call 19
-                          local.get 7
-                          local.set 0
-                          local.get 8
-                          local.set 1
-                          br 10
-                        else
-                          local.get 3
-                          i32.load
-                          i32.const 53
-                          i32.eq
-                          if (result i32)
-                            local.get 3
-                            i32.load offset=4
-                            local.set 4
-                            local.get 4
-                            call 18
-                            local.get 3
-                            i32.load offset=8
-                            local.set 5
-                            local.get 5
-                            call 18
-                            local.get 0
-                            i32.const 43
-                            i32.store
-                            local.get 0
-                            local.set 7
-                            i32.const 8
-                            i32.const 1
-                            call 17
-                            local.set 2
-                            local.get 2
-                            i32.const 79
-                            i32.store
-                            local.get 2
-                            local.get 1
-                            i32.store offset=4
-                            local.get 2
-                            i32.load offset=4
-                            call 18
-                            local.get 2
-                            local.set 8
-                            local.get 1
-                            call 19
-                            local.get 5
-                            call 19
-                            local.get 4
-                            call 19
-                            local.get 7
-                            local.set 0
-                            local.get 8
-                            local.set 1
-                            br 11
-                          else
-                            local.get 3
-                            i32.load
-                            i32.const 54
-                            i32.eq
-                            if (result i32)
-                              local.get 3
-                              i32.load offset=4
-                              local.set 4
-                              local.get 4
-                              call 18
-                              local.get 3
-                              i32.load offset=8
-                              local.set 5
-                              local.get 5
-                              call 18
-                              local.get 0
-                              i32.const 43
-                              i32.store
-                              local.get 0
-                              local.set 7
-                              i32.const 8
-                              i32.const 1
-                              call 17
-                              local.set 2
-                              local.get 2
-                              i32.const 80
-                              i32.store
-                              local.get 2
-                              local.get 1
-                              i32.store offset=4
-                              local.get 2
-                              i32.load offset=4
-                              call 18
-                              local.get 2
-                              local.set 8
-                              local.get 1
-                              call 19
-                              local.get 5
-                              call 19
-                              local.get 4
-                              call 19
-                              local.get 7
-                              local.set 0
-                              local.get 8
-                              local.set 1
-                              br 12
-                            else
-                              local.get 3
-                              i32.load
-                              i32.const 55
-                              i32.eq
-                              if (result i32)
-                                local.get 3
-                                i32.load offset=4
-                                local.set 4
-                                local.get 4
-                                call 18
-                                local.get 3
-                                i32.load offset=8
-                                local.set 5
-                                local.get 5
-                                call 18
-                                local.get 0
-                                i32.const 43
-                                i32.store
-                                local.get 0
-                                local.set 7
-                                i32.const 8
-                                i32.const 1
-                                call 17
-                                local.set 2
-                                local.get 2
-                                i32.const 81
-                                i32.store
-                                local.get 2
-                                local.get 1
-                                i32.store offset=4
-                                local.get 2
-                                i32.load offset=4
-                                call 18
-                                local.get 2
-                                local.set 8
-                                local.get 1
-                                call 19
-                                local.get 5
-                                call 19
-                                local.get 4
-                                call 19
-                                local.get 7
-                                local.set 0
-                                local.get 8
-                                local.set 1
-                                br 13
-                              else
-                                local.get 3
-                                i32.load
-                                i32.const 56
-                                i32.eq
-                                if (result i32)
-                                  local.get 3
-                                  i32.load offset=4
-                                  local.set 4
-                                  local.get 4
-                                  call 18
-                                  local.get 3
-                                  i32.load offset=8
-                                  local.set 5
-                                  local.get 5
-                                  call 18
-                                  local.get 0
-                                  i32.const 43
-                                  i32.store
-                                  local.get 0
-                                  local.set 7
-                                  i32.const 8
-                                  i32.const 1
-                                  call 17
-                                  local.set 2
-                                  local.get 2
-                                  i32.const 82
-                                  i32.store
-                                  local.get 2
-                                  local.get 1
-                                  i32.store offset=4
-                                  local.get 2
-                                  i32.load offset=4
-                                  call 18
-                                  local.get 2
-                                  local.set 8
-                                  local.get 1
-                                  call 19
-                                  local.get 5
-                                  call 19
-                                  local.get 4
-                                  call 19
-                                  local.get 7
-                                  local.set 0
-                                  local.get 8
-                                  local.set 1
-                                  br 14
-                                else
-                                  local.get 3
-                                  i32.load
-                                  i32.const 57
-                                  i32.eq
-                                  if (result i32)
-                                    local.get 3
-                                    i32.load offset=4
-                                    local.set 4
-                                    local.get 4
-                                    call 18
-                                    local.get 3
-                                    i32.load offset=8
-                                    local.set 5
-                                    local.get 5
-                                    call 18
-                                    local.get 0
-                                    i32.const 43
-                                    i32.store
-                                    local.get 0
-                                    local.set 7
-                                    i32.const 8
-                                    i32.const 1
-                                    call 17
-                                    local.set 2
-                                    local.get 2
-                                    i32.const 83
-                                    i32.store
-                                    local.get 2
-                                    local.get 1
-                                    i32.store offset=4
-                                    local.get 2
-                                    i32.load offset=4
-                                    call 18
-                                    local.get 2
-                                    local.set 8
-                                    local.get 1
-                                    call 19
-                                    local.get 5
-                                    call 19
-                                    local.get 4
-                                    call 19
-                                    local.get 7
-                                    local.set 0
-                                    local.get 8
-                                    local.set 1
-                                    br 15
-                                  else
-                                    local.get 3
-                                    i32.load offset=4
-                                    local.set 4
-                                    local.get 4
-                                    call 18
-                                    local.get 3
-                                    i32.load offset=8
-                                    local.set 5
-                                    local.get 5
-                                    call 18
-                                    local.get 0
-                                    i32.const 43
-                                    i32.store
-                                    local.get 0
-                                    local.set 7
-                                    i32.const 8
-                                    i32.const 1
-                                    call 17
-                                    local.set 2
-                                    local.get 2
-                                    i32.const 84
-                                    i32.store
-                                    local.get 2
-                                    local.get 1
-                                    i32.store offset=4
-                                    local.get 2
-                                    i32.load offset=4
-                                    call 18
-                                    local.get 2
-                                    local.set 8
-                                    local.get 1
-                                    call 19
-                                    local.get 5
-                                    call 19
-                                    local.get 4
-                                    call 19
-                                    local.get 7
-                                    local.set 0
-                                    local.get 8
-                                    local.set 1
-                                    br 15
-                                  end
-                                end
-                              end
-                            end
-                          end
-                        end
+                        i32.load offset=4
+                        local.set 4
+                        local.get 4
+                        call 18
+                        local.get 3
+                        i32.load offset=8
+                        local.set 5
+                        local.get 5
+                        call 18
+                        local.get 0
+                        i32.const 37
+                        i32.store
+                        local.get 0
+                        local.set 7
+                        i32.const 8
+                        i32.const 1
+                        call 17
+                        local.set 2
+                        local.get 2
+                        i32.const 62
+                        i32.store
+                        local.get 2
+                        local.get 1
+                        i32.store offset=4
+                        local.get 2
+                        i32.load offset=4
+                        call 18
+                        local.get 2
+                        local.set 8
+                        local.get 1
+                        call 19
+                        local.get 5
+                        call 19
+                        local.get 4
+                        call 19
+                        local.get 7
+                        local.set 0
+                        local.get 8
+                        local.set 1
+                        br 9
                       end
                     end
                   end
@@ -6833,7 +5433,7 @@
       call 17
       local.set 2
       local.get 2
-      i32.const 43
+      i32.const 37
       i32.store
       local.get 2
       local.get 0
@@ -6848,7 +5448,7 @@
       i32.load offset=8
       call 18
       local.get 2
-      call 68
+      call 61
       local.set 3
       local.get 0
       call 19

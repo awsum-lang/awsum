@@ -309,7 +309,6 @@ L_tarm8:
   astore 5
   aload 4
   aload_1
-  invokestatic AwsumMain/v__lift_21(Ljava/lang/Object;)Ljava/lang/Object;
   aload 5
   invokestatic AwsumMain/v__df_bindEither_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
@@ -679,59 +678,7 @@ L_tarm18:
 .end method
 
 
-.method static v__lift_21(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
-  .limit locals 4
-  aload_0
-  checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_2
-  iload_2
-  iconst_3
-  if_icmpne L_arm20
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_3
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-  goto L_join19
-L_arm20:
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_4
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-L_join19:
-  areturn
-.end method
-
-
-.method static v__lam_22(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
   .limit locals 2
   aload_0
@@ -748,7 +695,7 @@ L_join19:
 .end method
 
 
-.method static v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -763,7 +710,7 @@ L_join19:
   istore_2
   iload_2
   iconst_3
-  if_icmpne L_arm22
+  if_icmpne L_arm20
   aload_1
   iconst_1
   aaload
@@ -799,8 +746,8 @@ L_join19:
   aastore
   aastore
   aastore
-  goto L_join21
-L_arm22:
+  goto L_join19
+L_arm20:
   aload_1
   iconst_1
   aaload
@@ -836,7 +783,7 @@ L_arm22:
   aastore
   aastore
   aastore
-L_join21:
+L_join19:
   areturn
 .end method
 
@@ -873,7 +820,7 @@ L_join21:
   istore_3
   iload_3
   iconst_3
-  if_icmpne L_arm24
+  if_icmpne L_arm22
   aload_2
   iconst_1
   aaload
@@ -889,17 +836,17 @@ L_join21:
   iconst_1
   aload 4
   aastore
-  goto L_join23
-L_arm24:
+  goto L_join21
+L_arm22:
   aload_2
   iconst_1
   aaload
   astore 4
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_22(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_0(Ljava/lang/Object;)Ljava/lang/Object;
-L_join23:
+L_join21:
   areturn
 .end method
 
@@ -923,7 +870,7 @@ L_join23:
 .method static v__cps__df_andThenIO_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 9
   .limit locals 6
-L_tco25:
+L_tco23:
   aload_0
   checkcast [Ljava/lang/Object;
   astore_2
@@ -935,7 +882,7 @@ L_tco25:
   istore_3
   iload_3
   iconst_5
-  if_icmpne L_tarm26
+  if_icmpne L_tarm24
   aload_2
   iconst_1
   aaload
@@ -944,16 +891,16 @@ L_tco25:
   astore 5
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_23(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_andThenIO_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
-L_tarm26:
+L_tarm24:
   iload_3
   bipush 6
-  if_icmpne L_tarm27
+  if_icmpne L_tarm25
   aload_2
   iconst_1
   aaload
@@ -976,10 +923,10 @@ L_tarm26:
   aconst_null
   astore 4
   areturn
-L_tarm27:
+L_tarm25:
   iload_3
   bipush 7
-  if_icmpne L_tarm28
+  if_icmpne L_tarm26
   aload_2
   iconst_1
   aaload
@@ -1010,11 +957,11 @@ L_tarm27:
   astore 4
   astore_1
   astore_0
-  goto L_tco25
-L_tarm28:
+  goto L_tco23
+L_tarm26:
   iload_3
   bipush 8
-  if_icmpne L_tarm29
+  if_icmpne L_tarm27
   aload_2
   iconst_1
   aaload
@@ -1047,10 +994,10 @@ L_tarm28:
   aconst_null
   astore 4
   areturn
-L_tarm29:
+L_tarm27:
   iload_3
   bipush 9
-  if_icmpne L_tarm30
+  if_icmpne L_tarm28
   aload_2
   iconst_1
   aaload
@@ -1083,7 +1030,7 @@ L_tarm29:
   aconst_null
   astore 4
   areturn
-L_tarm30:
+L_tarm28:
   aload_2
   iconst_1
   aaload
@@ -1122,7 +1069,7 @@ L_tarm30:
 .method static v__apply__df_andThenIO_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 6
-L_tco31:
+L_tco29:
   aload_0
   checkcast [Ljava/lang/Object;
   astore_2
@@ -1134,14 +1081,14 @@ L_tco31:
   istore_3
   iload_3
   bipush 33
-  if_icmpne L_tarm32
+  if_icmpne L_tarm30
   aconst_null
   astore 4
   aconst_null
   astore 5
   aload_1
   areturn
-L_tarm32:
+L_tarm30:
   aload_2
   iconst_1
   aaload
@@ -1172,7 +1119,7 @@ L_tarm32:
   astore 4
   astore_1
   astore_0
-  goto L_tco31
+  goto L_tco29
 .end method
 
 
@@ -1195,7 +1142,7 @@ L_tarm32:
 .method static v__cps__scc__apply1__df__lam_5_2__df__lam_6_3__df__lam_7_4__lift_2__lift_3__lift_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 9
-L_tco33:
+L_tco31:
   aload_0
   checkcast [Ljava/lang/Object;
   astore_2
@@ -1207,7 +1154,7 @@ L_tco33:
   istore_3
   iload_3
   bipush 22
-  if_icmpne L_tarm34
+  if_icmpne L_tarm32
   aload_2
   iconst_1
   aaload
@@ -1227,7 +1174,7 @@ L_tco33:
   istore 7
   iload 7
   bipush 15
-  if_icmpne L_tarm40
+  if_icmpne L_tarm38
   aload 6
   iconst_1
   aaload
@@ -1256,11 +1203,11 @@ L_tco33:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm40:
+  goto L_tco31
+L_tarm38:
   iload 7
   bipush 16
-  if_icmpne L_tarm41
+  if_icmpne L_tarm39
   aload 6
   iconst_1
   aaload
@@ -1289,11 +1236,11 @@ L_tarm40:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm41:
+  goto L_tco31
+L_tarm39:
   iload 7
   bipush 17
-  if_icmpne L_tarm42
+  if_icmpne L_tarm40
   aload 6
   iconst_1
   aaload
@@ -1322,11 +1269,11 @@ L_tarm41:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm42:
+  goto L_tco31
+L_tarm40:
   iload 7
   bipush 18
-  if_icmpne L_tarm43
+  if_icmpne L_tarm41
   aconst_null
   astore 8
   aload_1
@@ -1338,10 +1285,10 @@ L_tarm42:
   aconst_null
   astore 4
   areturn
-L_tarm43:
+L_tarm41:
   iload 7
   bipush 19
-  if_icmpne L_tarm44
+  if_icmpne L_tarm42
   aload 6
   iconst_1
   aaload
@@ -1370,11 +1317,11 @@ L_tarm43:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm44:
+  goto L_tco31
+L_tarm42:
   iload 7
   bipush 20
-  if_icmpne L_tarm45
+  if_icmpne L_tarm43
   aload 6
   iconst_1
   aaload
@@ -1403,8 +1350,8 @@ L_tarm44:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm45:
+  goto L_tco31
+L_tarm43:
   aload 6
   iconst_1
   aaload
@@ -1433,11 +1380,11 @@ L_tarm45:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm34:
+  goto L_tco31
+L_tarm32:
   iload_3
   bipush 23
-  if_icmpne L_tarm35
+  if_icmpne L_tarm33
   aload_2
   iconst_1
   aaload
@@ -1478,11 +1425,11 @@ L_tarm34:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm35:
+  goto L_tco31
+L_tarm33:
   iload_3
   bipush 24
-  if_icmpne L_tarm36
+  if_icmpne L_tarm34
   aload_2
   iconst_1
   aaload
@@ -1523,11 +1470,11 @@ L_tarm35:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm36:
+  goto L_tco31
+L_tarm34:
   iload_3
   bipush 25
-  if_icmpne L_tarm37
+  if_icmpne L_tarm35
   aload_2
   iconst_1
   aaload
@@ -1568,11 +1515,11 @@ L_tarm36:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm37:
+  goto L_tco31
+L_tarm35:
   iload_3
   bipush 26
-  if_icmpne L_tarm38
+  if_icmpne L_tarm36
   aload_2
   iconst_1
   aaload
@@ -1613,11 +1560,11 @@ L_tarm37:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm38:
+  goto L_tco31
+L_tarm36:
   iload_3
   bipush 27
-  if_icmpne L_tarm39
+  if_icmpne L_tarm37
   aload_2
   iconst_1
   aaload
@@ -1658,8 +1605,8 @@ L_tarm38:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
-L_tarm39:
+  goto L_tco31
+L_tarm37:
   aload_2
   iconst_1
   aaload
@@ -1700,14 +1647,14 @@ L_tarm39:
   astore 4
   astore_1
   astore_0
-  goto L_tco33
+  goto L_tco31
 .end method
 
 
 .method static v__apply__scc__apply1__df__lam_5_2__df__lam_6_3__df__lam_7_4__lift_2__lift_3__lift_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
   .limit locals 5
-L_tco46:
+L_tco44:
   aload_0
   checkcast [Ljava/lang/Object;
   astore_2
@@ -1719,14 +1666,46 @@ L_tco46:
   istore_3
   iload_3
   bipush 35
-  if_icmpne L_tarm47
+  if_icmpne L_tarm45
   aconst_null
   astore 4
   aload_1
   areturn
-L_tarm47:
+L_tarm45:
   iload_3
   bipush 36
+  if_icmpne L_tarm46
+  aload_2
+  iconst_1
+  aaload
+  astore 4
+  aload 4
+  aload_1
+  invokestatic AwsumMain/v__df_andThenIO_1(Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore 4
+  astore_1
+  astore_0
+  goto L_tco44
+L_tarm46:
+  iload_3
+  bipush 37
+  if_icmpne L_tarm47
+  aload_2
+  iconst_1
+  aaload
+  astore 4
+  aload 4
+  aload_1
+  invokestatic AwsumMain/v__df_andThenIO_1(Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore 4
+  astore_1
+  astore_0
+  goto L_tco44
+L_tarm47:
+  iload_3
+  bipush 38
   if_icmpne L_tarm48
   aload_2
   iconst_1
@@ -1739,10 +1718,10 @@ L_tarm47:
   astore 4
   astore_1
   astore_0
-  goto L_tco46
+  goto L_tco44
 L_tarm48:
   iload_3
-  bipush 37
+  bipush 39
   if_icmpne L_tarm49
   aload_2
   iconst_1
@@ -1750,15 +1729,15 @@ L_tarm48:
   astore 4
   aload 4
   aload_1
-  invokestatic AwsumMain/v__df_andThenIO_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   astore_1
   astore_0
-  goto L_tco46
+  goto L_tco44
 L_tarm49:
   iload_3
-  bipush 38
+  bipush 40
   if_icmpne L_tarm50
   aload_2
   iconst_1
@@ -1766,16 +1745,13 @@ L_tarm49:
   astore 4
   aload 4
   aload_1
-  invokestatic AwsumMain/v__df_andThenIO_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   astore_1
   astore_0
-  goto L_tco46
+  goto L_tco44
 L_tarm50:
-  iload_3
-  bipush 39
-  if_icmpne L_tarm51
   aload_2
   iconst_1
   aaload
@@ -1787,36 +1763,7 @@ L_tarm50:
   astore 4
   astore_1
   astore_0
-  goto L_tco46
-L_tarm51:
-  iload_3
-  bipush 40
-  if_icmpne L_tarm52
-  aload_2
-  iconst_1
-  aaload
-  astore 4
-  aload 4
-  aload_1
-  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore 4
-  astore_1
-  astore_0
-  goto L_tco46
-L_tarm52:
-  aload_2
-  iconst_1
-  aaload
-  astore 4
-  aload 4
-  aload_1
-  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore 4
-  astore_1
-  astore_0
-  goto L_tco46
+  goto L_tco44
 .end method
 
 

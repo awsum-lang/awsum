@@ -48,7 +48,7 @@ CoreProgram
             )
         , CValDef "r"
             ( CCall
-                ( CVar "$df$$rowspec$23$0" )
+                ( CVar "$df$$rowmono$0$bindEither$0" )
                 [ CVar "oa" ]
             )
         , CFunDef "de" [ "x" ]
@@ -95,7 +95,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$24" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -118,7 +118,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$df$$rowspec$23$0" [ "x" ]
+        , CFunDef "$df$$rowmono$0$bindEither$0" [ "x" ]
             ( CCase
                 ( CVar "x" )
                 [
@@ -136,7 +136,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$24" )
+                            ( CVar "$lift$18" )
                             [ CCall
                                 ( CVar "kk" )
                                 [ CVar "a" ]

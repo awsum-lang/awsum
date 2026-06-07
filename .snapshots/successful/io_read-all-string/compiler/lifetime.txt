@@ -12,10 +12,10 @@ handleErr:
   row-case        _l                              count=0
   row-case        _i                              count=0
 
-$lift$24:
+$lift$18:
   param           __input                         count=1
 
-$cps$$lift$24:
+$cps$$lift$18:
   param           __input                         count=2
   param           $k                              count=5
   case-pattern    __f0                            count=0
@@ -26,30 +26,10 @@ $cps$$lift$24:
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$apply$$lift$24:
+$apply$$lift$18:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_38                          count=0
-  case-pattern    __f0                            count=0
-
-$lift$28:
-  param           __input                         count=1
-
-$cps$$lift$28:
-  param           __input                         count=2
-  param           $k                              count=5
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f1                            count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$apply$$lift$28:
-  param           $k                              count=2
-  param           $x                              count=1
-  case-pattern    $pk_40                          count=0
+  case-pattern    $pk_32                          count=0
   case-pattern    __f0                            count=0
 
 $io_stdinReadAllString_cont:
@@ -77,13 +57,13 @@ $cps$$df$handleErrorIO$0:
 $apply$$df$handleErrorIO$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_42                          count=0
+  case-pattern    $pk_34                          count=0
   case-pattern    s                               count=0
 
-$df$$rowspec$23$4:
+$df$$rowmono$0$andThenIO$4:
   param           io                              count=1
 
-$cps$$df$$rowspec$23$4:
+$cps$$df$$rowmono$0$andThenIO$4:
   param           io                              count=2
   param           $k                              count=5
   case-pattern    a                               count=0
@@ -94,17 +74,17 @@ $cps$$df$$rowspec$23$4:
   case-pattern    cont                            count=0
   case-pattern    cont                            count=0
 
-$apply$$df$$rowspec$23$4:
+$apply$$df$$rowmono$0$andThenIO$4:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_44                          count=0
+  case-pattern    $pk_36                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31:
+$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31:
-  param           $args                           count=25
+$cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21:
+  param           $args                           count=19
   param           $k                              count=1
   case-pattern    $cl                             count=0
   case-pattern    $arg0                           count=0
@@ -117,9 +97,6 @@ $cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$l
   case-pattern    $cap18_0                        count=0
   case-pattern    $cap19_0                        count=0
   case-pattern    $cap20_0                        count=0
-  case-pattern    $cap21_0                        count=0
-  case-pattern    $cap22_0                        count=0
-  case-pattern    $cap23_0                        count=0
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
@@ -132,12 +109,6 @@ $cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$l
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
   case-pattern    bytes                           count=0
-  case-pattern    __f                             count=0
-  case-pattern    __arg                           count=0
-  case-pattern    __f                             count=0
-  case-pattern    __arg                           count=0
-  case-pattern    __f                             count=0
-  case-pattern    __arg                           count=0
   case-pattern    __f                             count=0
   case-pattern    __arg                           count=0
   case-pattern    __f                             count=0
@@ -145,21 +116,18 @@ $cps$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$l
   case-pattern    __f                             count=0
   case-pattern    __arg                           count=0
 
-$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$32$5_$df$$lam$33$6_$df$$lam$34$7_$lift$25_$lift$26_$lift$27_$lift$29_$lift$30_$lift$31:
+$apply$$scc$$apply1_$df$$lam$14$1_$df$$lam$15$2_$df$$lam$16$3_$df$$lam$22$5_$df$$lam$23$6_$df$$lam$24$7_$lift$19_$lift$20_$lift$21:
   param           $k                              count=1
   param           $x                              count=1
+  case-pattern    $pk_38                          count=0
+  case-pattern    $pk_39                          count=0
+  case-pattern    $pk_40                          count=0
+  case-pattern    $pk_41                          count=0
+  case-pattern    $pk_42                          count=0
+  case-pattern    $pk_43                          count=0
+  case-pattern    $pk_44                          count=0
+  case-pattern    $pk_45                          count=0
   case-pattern    $pk_46                          count=0
-  case-pattern    $pk_47                          count=0
-  case-pattern    $pk_48                          count=0
-  case-pattern    $pk_49                          count=0
-  case-pattern    $pk_50                          count=0
-  case-pattern    $pk_51                          count=0
-  case-pattern    $pk_52                          count=0
-  case-pattern    $pk_53                          count=0
-  case-pattern    $pk_54                          count=0
-  case-pattern    $pk_55                          count=0
-  case-pattern    $pk_56                          count=0
-  case-pattern    $pk_57                          count=0
 
 $apply1:
   param           $cl                             count=1

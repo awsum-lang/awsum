@@ -29,10 +29,15 @@ main:
   case-pattern    $do_e_2                         count=1
   case-pattern    s0                              count=1
 
-$lam$23:
+$lam$18:
   param           n                               count=1
 
-$let$24:
+$lift$19:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$let$20:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

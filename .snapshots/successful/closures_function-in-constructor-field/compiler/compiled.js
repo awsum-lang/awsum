@@ -69,6 +69,22 @@
     return __addInt32(v_n, v_n);
   };
 
+  const v__lift_18 = (v___input) => {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 3: {
+          const v___f0 = __s[1];
+          return [3, [589989748, v___f0]];
+        }
+        case 4: {
+          const v___f0 = __s[1];
+          return [4, v___f0];
+        }
+      }
+    }
+  };
+
   const v__apply1 = (v__cl, v__arg0) => {
     {
       const __s = v__cl;
@@ -119,7 +135,7 @@
                   }
                   case 4: {
                     const v_ds = s[1];
-                    return __concat(v_ds, String(v_t));
+                    return v__lift_18(__concat(v_ds, String(v_t)));
                   }
                 }
               })(__concat(String(v_d), " "));

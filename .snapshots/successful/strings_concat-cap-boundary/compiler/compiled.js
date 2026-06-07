@@ -54,22 +54,6 @@
 
   const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-  const v__lift_21 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, v___f0];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
-        }
-      }
-    }
-  };
-
   const v__lift_0 = (v___input) => {
     {
       const __s = v___input;
@@ -86,7 +70,7 @@
     }
   };
 
-  const v__apply__scc__df_andThenEither_0__lam_23_build = (v__k, v__x) => {
+  const v__apply__scc__df_andThenEither_0__lam_18_build = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -107,7 +91,7 @@
     }
   };
 
-  const v__cps__scc__df_andThenEither_0__lam_23_build = (v__args, v__k) => {
+  const v__cps__scc__df_andThenEither_0__lam_18_build = (v__args, v__k) => {
     while (true) {
       {
         const __s = v__args;
@@ -120,7 +104,7 @@
               switch (__s[0]) {
                 case 3: {
                   const v_e = __s[1];
-                  return v__apply__scc__df_andThenEither_0__lam_23_build(
+                  return v__apply__scc__df_andThenEither_0__lam_18_build(
                     v__k,
                     [3, v_e]
                   );
@@ -153,15 +137,16 @@
               switch (__s[0]) {
                 case 3: {
                   const v___w0 = __s[1];
-                  return v__apply__scc__df_andThenEither_0__lam_23_build(
+                  return v__apply__scc__df_andThenEither_0__lam_18_build(
                     v__k,
                     [4, v_acc]
                   );
                 }
                 case 4: {
                   const v_m = __s[1];
-                  const __t0 = (v__args[0] = 8, v__args[1] = v__lift_21(
-                    __concat(v_acc, v_acc)
+                  const __t0 = (v__args[0] = 8, v__args[1] = __concat(
+                    v_acc,
+                    v_acc
                   ), v__args[2] = v_m, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
@@ -176,12 +161,12 @@
     }
   };
 
-  const v__scc__df_andThenEither_0__lam_23_build = (v__args) => {
-    return v__cps__scc__df_andThenEither_0__lam_23_build(v__args, [11]);
+  const v__scc__df_andThenEither_0__lam_18_build = (v__args) => {
+    return v__cps__scc__df_andThenEither_0__lam_18_build(v__args, [11]);
   };
 
   const v_build = (v_n, v_acc) => {
-    return v__scc__df_andThenEither_0__lam_23_build([10, v_n, v_acc]);
+    return v__scc__df_andThenEither_0__lam_18_build([10, v_n, v_acc]);
   };
 
   const v_runTest = ((s) => {

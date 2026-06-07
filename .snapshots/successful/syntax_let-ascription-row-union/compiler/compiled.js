@@ -42,7 +42,23 @@
 
   const v_opA = [4, 1 | 0];
 
-  const v__let_23 = (v_res) => {
+  const v__lift_18 = (v___input) => {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 3: {
+          const v___f0 = __s[1];
+          return [3, v___f0];
+        }
+        case 4: {
+          const v___f0 = __s[1];
+          return [4, v___f0];
+        }
+      }
+    }
+  };
+
+  const v__let_19 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -84,7 +100,7 @@
     }
   };
 
-  const main = v__let_23(
+  const main = v__let_19(
     ((s) => {
       switch (s[0]) {
         case 3: {
@@ -101,7 +117,7 @@
               }
               case 4: {
                 const v_b = s[1];
-                return v_pureEither(v_b);
+                return v__lift_18(v_pureEither(v_b));
               }
             }
           })(v_opB);

@@ -506,7 +506,7 @@ define internal ptr @v_mixed() {
   %t44 = inttoptr i64 13 to ptr
   %t45 = getelementptr ptr, ptr %t43, i32 0
   store ptr %t44, ptr %t45
-  %t46 = call ptr @v__lift_23(ptr %t43)
+  %t46 = call ptr @v__lift_18(ptr %t43)
   %t47 = getelementptr ptr, ptr %t34, i32 2
   store ptr %t46, ptr %t47
   %t48 = getelementptr ptr, ptr %t26, i32 2
@@ -545,18 +545,18 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lift_23(ptr %v___input) {
+define internal ptr @v__lift_18(ptr %v___input) {
   call void @__inc_ref(ptr %v___input)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 17 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__lift_23(ptr %v___input, ptr %t0)
+  %t3 = call ptr @v__cps__lift_18(ptr %v___input, ptr %t0)
   call void @__free_recursive(ptr %v___input)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__lift_23(ptr %v___input, ptr %v__k) {
+define internal ptr @v__cps__lift_18(ptr %v___input, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v___input, ptr %t3
@@ -577,7 +577,7 @@ tco.case.arm.13.11:
   %t13 = inttoptr i64 13 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__apply__lift_23(ptr %t6, ptr %t12)
+  %t15 = call ptr @v__apply__lift_18(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t15, ptr %t2
@@ -633,7 +633,7 @@ tco.exit.1:
   ret ptr %t39
 }
 
-define internal ptr @v__apply__lift_23(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__lift_18(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3

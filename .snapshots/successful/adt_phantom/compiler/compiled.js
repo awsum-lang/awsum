@@ -45,18 +45,7 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 24: {
-          return [24];
-        }
-      }
-    }
-  };
-
-  const main = [7, v_show(v__lift_23([24])), [5, [0]]];
+  const main = [7, v_show([24]), [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

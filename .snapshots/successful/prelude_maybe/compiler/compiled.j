@@ -183,7 +183,7 @@ L_join2:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 6
   .limit locals 11
   iconst_2
   anewarray java/lang/Object
@@ -236,7 +236,6 @@ L_arm5:
   bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_23(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 4
@@ -313,58 +312,12 @@ L_join6:
 L_join4:
   astore_0
   aload_0
-  invokestatic AwsumMain/v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_23(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
-  .limit locals 4
-  aload_0
-  checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_2
-  iload_2
-  bipush 11
-  if_icmpne L_arm11
-  aconst_null
-  astore_3
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 11
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  goto L_join10
-L_arm11:
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 12
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-L_join10:
-  areturn
-.end method
-
-
-.method static v__let_24(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -378,7 +331,7 @@ L_join10:
   istore_2
   iload_2
   iconst_3
-  if_icmpne L_arm13
+  if_icmpne L_arm11
   aload_1
   iconst_1
   aaload
@@ -414,8 +367,8 @@ L_join10:
   aastore
   aastore
   aastore
-  goto L_join12
-L_arm13:
+  goto L_join10
+L_arm11:
   aload_1
   iconst_1
   aaload
@@ -451,7 +404,7 @@ L_arm13:
   aastore
   aastore
   aastore
-L_join12:
+L_join10:
   areturn
 .end method
 

@@ -16,8 +16,8 @@
   (data (i32.const 139) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 174) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00left: ")
   (data (i32.const 200) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00right: ")
-  (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_countDown $v_showResult $v__let_23)
+  (table 6 funcref)
+  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_countDown $v_showResult $v__lift_18 $v__let_19)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -844,6 +844,7 @@
           local.get 11
           call 10
           call 7
+          call 22
           local.set 10
           local.get 0
           call 15
@@ -1198,9 +1199,90 @@
     i32.const 76
     call 19
     call 20
-    call 22)
+    call 23)
 
-  (func $v__let_23 (param i32) (result i32)
+  (func $v__lift_18 (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    local.set 3
+    local.get 3
+    i32.load
+    i32.const 3
+    i32.eq
+    if (result i32)
+      local.get 3
+      i32.load offset=4
+      local.set 4
+      local.get 4
+      call 14
+      block (result i32)
+        i32.const 8
+        i32.const 1
+        call 13
+        local.set 1
+        local.get 1
+        i32.const 3
+        i32.store
+        local.get 1
+        i32.const 8
+        i32.const 1
+        call 13
+        local.set 2
+        local.get 2
+        i32.const 589989748
+        i32.store
+        local.get 2
+        local.get 4
+        i32.store offset=4
+        local.get 2
+        i32.load offset=4
+        call 14
+        local.get 2
+        i32.store offset=4
+        local.get 1
+        local.set 5
+        local.get 4
+        call 15
+        local.get 0
+        call 15
+        local.get 5
+      end
+    else
+      local.get 3
+      i32.load offset=4
+      local.set 4
+      local.get 4
+      call 14
+      block (result i32)
+        i32.const 8
+        i32.const 1
+        call 13
+        local.set 1
+        local.get 1
+        i32.const 4
+        i32.store
+        local.get 1
+        local.get 4
+        i32.store offset=4
+        local.get 1
+        i32.load offset=4
+        call 14
+        local.get 1
+        local.set 5
+        local.get 4
+        call 15
+        local.get 0
+        call 15
+        local.get 5
+      end
+    end)
+
+  (func $v__let_19 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -13,10 +13,10 @@ runIO:
 handler:
   param           _b                              count=0
 
-$lam$23:
+$lam$18:
   param           _a                              count=0
 
-$let$24:
+$let$19:
   param           renamed                         count=1
 
 $df$mapIOError$0:

@@ -118,16 +118,6 @@
     return [6, v_e];
   };
 
-  const v_inErrA = v_failIO([2252990199, [24]]);
-
-  const v_inErrB = v_failIO([2269767818, [25]]);
-
-  const v_reFailC = v_failIO([2286545437, [26]]);
-
-  const v_refailRowH = (v__e) => {
-    return v_reFailC;
-  };
-
   const v_refailNarrowH = (v__e) => {
     return v_failIO([25]);
   };
@@ -148,23 +138,23 @@
     }
   };
 
-  const v__lam_42 = (v__u) => {
+  const v__lam_33 = (v__u) => {
     return [7, "=", [5, [0]]];
   };
 
-  const v__lam_41 = (v_act, v__u) => {
+  const v__lam_32 = (v_act, v__u) => {
     return v_act;
   };
 
-  const v__lam_40 = (v__u) => {
+  const v__lam_31 = (v__u) => {
     return [7, "\n", [5, [0]]];
   };
 
-  const v__lam_23 = (v__u) => {
+  const v__lam_30 = (v__u) => {
     return v_failIO([24]);
   };
 
-  const v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46 = (
+  const v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45 = (
     v__args,
     v__k
   ) => {
@@ -816,6 +806,30 @@
                 case 106: {
                   const v__cap106_0 = __s[1];
                   const __t0 = (v__args[0] = 194, v__args[1] = v__cap106_0, v__args[2] = v__arg0, v__args);
+                  const __t1 = v__k;
+                  v__args = __t0;
+                  v__k = __t1;
+                  continue;
+                }
+                case 107: {
+                  const v__cap107_0 = __s[1];
+                  const __t0 = (v__args[0] = 195, v__args[1] = v__cap107_0, v__args[2] = v__arg0, v__args);
+                  const __t1 = v__k;
+                  v__args = __t0;
+                  v__k = __t1;
+                  continue;
+                }
+                case 108: {
+                  const v__cap108_0 = __s[1];
+                  const __t0 = (v__args[0] = 196, v__args[1] = v__cap108_0, v__args[2] = v__arg0, v__args);
+                  const __t1 = v__k;
+                  v__args = __t0;
+                  v__k = __t1;
+                  continue;
+                }
+                case 109: {
+                  const v__cap109_0 = __s[1];
+                  const __t0 = (v__args[0] = 197, v__args[1] = v__cap109_0, v__args[2] = v__arg0, v__args);
                   const __t1 = v__k;
                   v__args = __t0;
                   v__k = __t1;
@@ -1579,6 +1593,33 @@
             v__k = __t1;
             continue;
           }
+          case 195: {
+            const v___f = __s[1];
+            const v___arg = __s[2];
+            const __t0 = (v__args[0] = 114, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [341, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 196: {
+            const v___f = __s[1];
+            const v___arg = __s[2];
+            const __t0 = (v__args[0] = 114, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [342, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 197: {
+            const v___f = __s[1];
+            const v___arg = __s[2];
+            const __t0 = (v__args[0] = 114, v__args[1] = v___f, v__args[2] = v___arg, v__args);
+            const __t1 = [343, v__k];
+            v__args = __t0;
+            v__k = __t1;
+            continue;
+          }
           case 198: {
             const v___f = __s[1];
             const v___arg = __s[2];
@@ -1620,10 +1661,10 @@
     }
   };
 
-  const v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46 = (
+  const v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45 = (
     v__args
   ) => {
-    return v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(
+    return v__cps__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(
       v__args,
       [260]
     );
@@ -1638,7 +1679,7 @@
   };
 
   const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_37_49__df__lam_38_50__df__lam_39_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_2__lift_25__lift_26__lift_27__lift_3__lift_30__lift_31__lift_32__lift_34__lift_35__lift_36__lift_4__lift_44__lift_45__lift_46(
+    return v__scc__apply1__df__lam_10_39__df__lam_14_1__df__lam_14_13__df__lam_14_17__df__lam_14_21__df__lam_14_29__df__lam_14_41__df__lam_14_45__df__lam_14_5__df__lam_14_9__df__lam_15_10__df__lam_15_14__df__lam_15_18__df__lam_15_2__df__lam_15_22__df__lam_15_30__df__lam_15_42__df__lam_15_46__df__lam_15_6__df__lam_16_11__df__lam_16_15__df__lam_16_19__df__lam_16_23__df__lam_16_3__df__lam_16_31__df__lam_16_43__df__lam_16_47__df__lam_16_7__df__lam_46_49__df__lam_47_50__df__lam_48_51__df__lam_5_25__df__lam_5_33__df__lam_5_53__df__lam_5_57__df__lam_5_61__df__lam_5_65__df__lam_5_69__df__lam_5_73__df__lam_5_77__df__lam_5_81__df__lam_5_85__df__lam_5_89__df__lam_5_93__df__lam_6_26__df__lam_6_34__df__lam_6_54__df__lam_6_58__df__lam_6_62__df__lam_6_66__df__lam_6_70__df__lam_6_74__df__lam_6_78__df__lam_6_82__df__lam_6_86__df__lam_6_90__df__lam_6_94__df__lam_7_27__df__lam_7_35__df__lam_7_55__df__lam_7_59__df__lam_7_63__df__lam_7_67__df__lam_7_71__df__lam_7_75__df__lam_7_79__df__lam_7_83__df__lam_7_87__df__lam_7_91__df__lam_7_95__df__lam_8_37__df__lam_9_38__lift_19__lift_2__lift_20__lift_21__lift_23__lift_24__lift_25__lift_27__lift_28__lift_29__lift_3__lift_4__lift_43__lift_44__lift_45(
       [114, v__cl, v__arg0]
     );
   };
@@ -1689,7 +1730,7 @@
     }
   };
 
-  const v__apply__lift_43 = (v__k, v__x) => {
+  const v__apply__lift_42 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -1711,18 +1752,18 @@
     }
   };
 
-  const v__cps__lift_43 = (v___input, v__k) => {
+  const v__cps__lift_42 = (v___input, v__k) => {
     while (true) {
       {
         const __s = v___input;
         switch (__s[0]) {
           case 5: {
             const v___f0 = __s[1];
-            return v__apply__lift_43(v__k, [5, v___f0]);
+            return v__apply__lift_42(v__k, [5, v___f0]);
           }
           case 6: {
             const v___f0 = __s[1];
-            return v__apply__lift_43(v__k, [6, v___f0]);
+            return v__apply__lift_42(v__k, [6, v___f0]);
           }
           case 7: {
             const v___f0 = __s[1];
@@ -1735,26 +1776,93 @@
           }
           case 8: {
             const v___f0 = __s[1];
-            return v__apply__lift_43(v__k, [8, [111, v___f0]]);
+            return v__apply__lift_42(v__k, [8, [111, v___f0]]);
           }
           case 9: {
             const v___f0 = __s[1];
-            return v__apply__lift_43(v__k, [9, [112, v___f0]]);
+            return v__apply__lift_42(v__k, [9, [112, v___f0]]);
           }
           case 10: {
             const v___f0 = __s[1];
-            return v__apply__lift_43(v__k, [10, [113, v___f0]]);
+            return v__apply__lift_42(v__k, [10, [113, v___f0]]);
           }
         }
       }
     }
   };
 
-  const v__lift_43 = (v___input) => {
-    return v__cps__lift_43(v___input, [210]);
+  const v__lift_42 = (v___input) => {
+    return v__cps__lift_42(v___input, [210]);
   };
 
-  const v__apply__lift_29 = (v__k, v__x) => {
+  const v__apply__lift_26 = (v__k, v__x) => {
+    while (true) {
+      {
+        const __s = v__k;
+        switch (__s[0]) {
+          case 208: {
+            return v__x;
+          }
+          case 209: {
+            const v__pk_209 = __s[1];
+            const v___f0 = __s[2];
+            const __t0 = v__pk_209;
+            const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+            v__k = __t0;
+            v__x = __t1;
+            continue;
+          }
+        }
+      }
+    }
+  };
+
+  const v__cps__lift_26 = (v___input, v__k) => {
+    while (true) {
+      {
+        const __s = v___input;
+        switch (__s[0]) {
+          case 5: {
+            const v___f0 = __s[1];
+            return v__apply__lift_26(v__k, [5, v___f0]);
+          }
+          case 6: {
+            const v___f0 = __s[1];
+            return v__apply__lift_26(v__k, [6, [2269767818, v___f0]]);
+          }
+          case 7: {
+            const v___f0 = __s[1];
+            const v___f1 = __s[2];
+            const __t0 = v___f1;
+            const __t1 = (v___input[0] = 209, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+            v___input = __t0;
+            v__k = __t1;
+            continue;
+          }
+          case 8: {
+            const v___f0 = __s[1];
+            return v__apply__lift_26(v__k, [8, [106, v___f0]]);
+          }
+          case 9: {
+            const v___f0 = __s[1];
+            return v__apply__lift_26(v__k, [9, [107, v___f0]]);
+          }
+          case 10: {
+            const v___f0 = __s[1];
+            return v__apply__lift_26(v__k, [10, [108, v___f0]]);
+          }
+        }
+      }
+    }
+  };
+
+  const v__lift_26 = (v___input) => {
+    return v__cps__lift_26(v___input, [208]);
+  };
+
+  const v_inErrB = v__lift_26(v_failIO([25]));
+
+  const v__apply__lift_22 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -1776,18 +1884,18 @@
     }
   };
 
-  const v__cps__lift_29 = (v___input, v__k) => {
+  const v__cps__lift_22 = (v___input, v__k) => {
     while (true) {
       {
         const __s = v___input;
         switch (__s[0]) {
           case 5: {
             const v___f0 = __s[1];
-            return v__apply__lift_29(v__k, [5, v___f0]);
+            return v__apply__lift_22(v__k, [5, v___f0]);
           }
           case 6: {
             const v___f0 = __s[1];
-            return v__apply__lift_29(v__k, [6, [3801428867, v___f0]]);
+            return v__apply__lift_22(v__k, [6, [2252990199, v___f0]]);
           }
           case 7: {
             const v___f0 = __s[1];
@@ -1800,26 +1908,28 @@
           }
           case 8: {
             const v___f0 = __s[1];
-            return v__apply__lift_29(v__k, [8, [104, v___f0]]);
+            return v__apply__lift_22(v__k, [8, [103, v___f0]]);
           }
           case 9: {
             const v___f0 = __s[1];
-            return v__apply__lift_29(v__k, [9, [105, v___f0]]);
+            return v__apply__lift_22(v__k, [9, [104, v___f0]]);
           }
           case 10: {
             const v___f0 = __s[1];
-            return v__apply__lift_29(v__k, [10, [106, v___f0]]);
+            return v__apply__lift_22(v__k, [10, [105, v___f0]]);
           }
         }
       }
     }
   };
 
-  const v__lift_29 = (v___input) => {
-    return v__cps__lift_29(v___input, [206]);
+  const v__lift_22 = (v___input) => {
+    return v__cps__lift_22(v___input, [206]);
   };
 
-  const v__apply__lift_24 = (v__k, v__x) => {
+  const v_inErrA = v__lift_22(v_failIO([24]));
+
+  const v__apply__lift_18 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -1841,18 +1951,18 @@
     }
   };
 
-  const v__cps__lift_24 = (v___input, v__k) => {
+  const v__cps__lift_18 = (v___input, v__k) => {
     while (true) {
       {
         const __s = v___input;
         switch (__s[0]) {
           case 5: {
             const v___f0 = __s[1];
-            return v__apply__lift_24(v__k, [5, v___f0]);
+            return v__apply__lift_18(v__k, [5, v___f0]);
           }
           case 6: {
             const v___f0 = __s[1];
-            return v__apply__lift_24(v__k, [6, v___f0]);
+            return v__apply__lift_18(v__k, [6, [2286545437, v___f0]]);
           }
           case 7: {
             const v___f0 = __s[1];
@@ -1865,23 +1975,29 @@
           }
           case 8: {
             const v___f0 = __s[1];
-            return v__apply__lift_24(v__k, [8, [100, v___f0]]);
+            return v__apply__lift_18(v__k, [8, [99, v___f0]]);
           }
           case 9: {
             const v___f0 = __s[1];
-            return v__apply__lift_24(v__k, [9, [101, v___f0]]);
+            return v__apply__lift_18(v__k, [9, [101, v___f0]]);
           }
           case 10: {
             const v___f0 = __s[1];
-            return v__apply__lift_24(v__k, [10, [102, v___f0]]);
+            return v__apply__lift_18(v__k, [10, [102, v___f0]]);
           }
         }
       }
     }
   };
 
-  const v__lift_24 = (v___input) => {
-    return v__cps__lift_24(v___input, [204]);
+  const v__lift_18 = (v___input) => {
+    return v__cps__lift_18(v___input, [204]);
+  };
+
+  const v_reFailC = v__lift_18(v_failIO([26]));
+
+  const v_refailRowH = (v__e) => {
+    return v_reFailC;
   };
 
   const v__apply__lift_1 = (v__k, v__x) => {
@@ -1930,11 +2046,11 @@
           }
           case 8: {
             const v___f0 = __s[1];
-            return v__apply__lift_1(v__k, [8, [99, v___f0]]);
+            return v__apply__lift_1(v__k, [8, [100, v___f0]]);
           }
           case 9: {
             const v___f0 = __s[1];
-            return v__apply__lift_1(v__k, [9, [103, v___f0]]);
+            return v__apply__lift_1(v__k, [9, [109, v___f0]]);
           }
           case 10: {
             const v___f0 = __s[1];
@@ -2822,7 +2938,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_60(v__k, v__lift_1(v__lam_42(v_a)));
+            return v__apply__df_andThenIO_60(v__k, v__lift_1(v__lam_33(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -2889,7 +3005,7 @@
             const v_a = __s[1];
             return v__apply__df_andThenIO_56(
               v__k,
-              v__lift_1(v__lam_41(v__df_andThenIO_56_cap0_0, v_a))
+              v__lift_1(v__lam_32(v__df_andThenIO_56_cap0_0, v_a))
             );
           }
           case 6: {
@@ -2966,7 +3082,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_52(v__k, v__lift_1(v__lam_40(v_a)));
+            return v__apply__df_andThenIO_52(v__k, v__lift_1(v__lam_31(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3004,14 +3120,11 @@
 
   const v_line = (v_label, v_act) => {
     return v__df_andThenIO_52(
-      v__df_andThenIO_56(
-        v__df_andThenIO_60(v__lift_43([7, v_label, [5, [0]]])),
-        v_act
-      )
+      v__df_andThenIO_56(v__df_andThenIO_60([7, v_label, [5, [0]]]), v_act)
     );
   };
 
-  const v__lam_47 = (v__u) => {
+  const v__lam_34 = (v__u) => {
     return v_line("treeNoError", v_treeNoError);
   };
 
@@ -3022,7 +3135,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_64(v__k, v__lift_1(v__lam_47(v_a)));
+            return v__apply__df_andThenIO_64(v__k, v__lift_1(v__lam_34(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3127,13 +3240,11 @@
   };
 
   const v_observeB = (v_io) => {
-    return v__df_handleErrorIO_40(
-      v__df_andThenIO_32(v__lift_24(v__df_mapIO_36(v_io)))
-    );
+    return v__df_handleErrorIO_40(v__df_andThenIO_32(v__df_mapIO_36(v_io)));
   };
 
-  const v__lam_50 = (v__u) => {
-    return v__lift_43(v_line("refailNarrow", v_observeB(v_refailNarrow)));
+  const v__lam_37 = (v__u) => {
+    return v_line("refailNarrow", v_observeB(v_refailNarrow));
   };
 
   const v__cps__df_andThenIO_76 = (v_io, v__k) => {
@@ -3143,7 +3254,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_76(v__k, v__lift_1(v__lam_50(v_a)));
+            return v__apply__df_andThenIO_76(v__k, v__lift_1(v__lam_37(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3183,8 +3294,8 @@
     return v__df_andThenIO_32(v__df_mapIO_36(v_io));
   };
 
-  const v__lam_51 = (v__u) => {
-    return v__lift_43(v_line("nested", v_observeNever(v_nested)));
+  const v__lam_38 = (v__u) => {
+    return v_line("nested", v_observeNever(v_nested));
   };
 
   const v__cps__df_andThenIO_80 = (v_io, v__k) => {
@@ -3194,7 +3305,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_80(v__k, v__lift_1(v__lam_51(v_a)));
+            return v__apply__df_andThenIO_80(v__k, v__lift_1(v__lam_38(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3230,8 +3341,8 @@
     return v__cps__df_andThenIO_80(v_io, [252]);
   };
 
-  const v__lam_52 = (v__u) => {
-    return v__lift_43(v_line("passthrough", v_observeNever(v_passthrough)));
+  const v__lam_39 = (v__u) => {
+    return v_line("passthrough", v_observeNever(v_passthrough));
   };
 
   const v__cps__df_andThenIO_84 = (v_io, v__k) => {
@@ -3241,7 +3352,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_84(v__k, v__lift_1(v__lam_52(v_a)));
+            return v__apply__df_andThenIO_84(v__k, v__lift_1(v__lam_39(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3277,8 +3388,8 @@
     return v__cps__df_andThenIO_84(v_io, [254]);
   };
 
-  const v__lam_53 = (v__u) => {
-    return v__lift_43(v_line("dispatchB", v_observeNever(v_dispatchB)));
+  const v__lam_40 = (v__u) => {
+    return v_line("dispatchB", v_observeNever(v_dispatchB));
   };
 
   const v__cps__df_andThenIO_88 = (v_io, v__k) => {
@@ -3288,7 +3399,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_88(v__k, v__lift_1(v__lam_53(v_a)));
+            return v__apply__df_andThenIO_88(v__k, v__lift_1(v__lam_40(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3324,8 +3435,8 @@
     return v__cps__df_andThenIO_88(v_io, [256]);
   };
 
-  const v__lam_54 = (v__u) => {
-    return v__lift_43(v_line("dispatchA", v_observeNever(v_dispatchA)));
+  const v__lam_41 = (v__u) => {
+    return v_line("dispatchA", v_observeNever(v_dispatchA));
   };
 
   const v__cps__df_andThenIO_92 = (v_io, v__k) => {
@@ -3335,7 +3446,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_92(v__k, v__lift_1(v__lam_54(v_a)));
+            return v__apply__df_andThenIO_92(v__k, v__lift_1(v__lam_41(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3400,7 +3511,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_24(v__k, v__lift_1(v__lam_23(v_a)));
+            return v__apply__df_andThenIO_24(v__k, v__lift_1(v__lam_30(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3440,8 +3551,8 @@
     v__df_andThenIO_24([7, "[X]", [5, [0]]])
   );
 
-  const v__lam_48 = (v__u) => {
-    return v__lift_43(v_line("treePreserve", v_treePreserve));
+  const v__lam_35 = (v__u) => {
+    return v_line("treePreserve", v_treePreserve);
   };
 
   const v__cps__df_andThenIO_68 = (v_io, v__k) => {
@@ -3451,7 +3562,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_68(v__k, v__lift_1(v__lam_48(v_a)));
+            return v__apply__df_andThenIO_68(v__k, v__lift_1(v__lam_35(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3487,7 +3598,7 @@
     return v__cps__df_andThenIO_68(v_io, [246]);
   };
 
-  const v__apply__df__rowspec_28_48 = (v__k, v__x) => {
+  const v__apply__df__rowmono_0_andThenIO_48 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
@@ -3509,21 +3620,21 @@
     }
   };
 
-  const v__cps__df__rowspec_28_48 = (v_io, v__k) => {
+  const v__cps__df__rowmono_0_andThenIO_48 = (v_io, v__k) => {
     while (true) {
       {
         const __s = v_io;
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df__rowspec_28_48(
+            return v__apply__df__rowmono_0_andThenIO_48(
               v__k,
-              v__lift_29(v__bi_IO_Stdout_print(v_a))
+              v__lift_42(v__bi_IO_Stdout_print(v_a))
             );
           }
           case 6: {
             const v_e = __s[1];
-            return v__apply__df__rowspec_28_48(v__k, [6, v_e]);
+            return v__apply__df__rowmono_0_andThenIO_48(v__k, [6, v_e]);
           }
           case 7: {
             const v_s = __s[1];
@@ -3536,31 +3647,42 @@
           }
           case 8: {
             const v_cont = __s[1];
-            return v__apply__df__rowspec_28_48(v__k, [8, [55, v_cont]]);
+            return v__apply__df__rowmono_0_andThenIO_48(
+              v__k,
+              [8, [55, v_cont]]
+            );
           }
           case 9: {
             const v_cont = __s[1];
-            return v__apply__df__rowspec_28_48(v__k, [9, [56, v_cont]]);
+            return v__apply__df__rowmono_0_andThenIO_48(
+              v__k,
+              [9, [56, v_cont]]
+            );
           }
           case 10: {
             const v_cont = __s[1];
-            return v__apply__df__rowspec_28_48(v__k, [10, [57, v_cont]]);
+            return v__apply__df__rowmono_0_andThenIO_48(
+              v__k,
+              [10, [57, v_cont]]
+            );
           }
         }
       }
     }
   };
 
-  const v__df__rowspec_28_48 = (v_io) => {
-    return v__cps__df__rowspec_28_48(v_io, [236]);
+  const v__df__rowmono_0_andThenIO_48 = (v_io) => {
+    return v__cps__df__rowmono_0_andThenIO_48(v_io, [236]);
   };
 
   const v_observeBC = (v_io) => {
-    return v__df_handleErrorIO_44(v__df__rowspec_28_48(v__df_mapIO_36(v_io)));
+    return v__df_handleErrorIO_44(
+      v__df__rowmono_0_andThenIO_48(v__df_mapIO_36(v_io))
+    );
   };
 
-  const v__lam_49 = (v__u) => {
-    return v__lift_43(v_line("refailRow", v_observeBC(v_refailRow)));
+  const v__lam_36 = (v__u) => {
+    return v_line("refailRow", v_observeBC(v_refailRow));
   };
 
   const v__cps__df_andThenIO_72 = (v_io, v__k) => {
@@ -3570,7 +3692,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_72(v__k, v__lift_1(v__lam_49(v_a)));
+            return v__apply__df_andThenIO_72(v__k, v__lift_1(v__lam_36(v_a)));
           }
           case 6: {
             const v_e = __s[1];
@@ -3613,9 +3735,7 @@
           v__df_andThenIO_80(
             v__df_andThenIO_84(
               v__df_andThenIO_88(
-                v__df_andThenIO_92(
-                  v__lift_43(v_line("recover", v_observeNever(v_recover)))
-                )
+                v__df_andThenIO_92(v_line("recover", v_observeNever(v_recover)))
               )
             )
           )

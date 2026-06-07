@@ -731,11 +731,11 @@ define internal ptr @v_handler(ptr %v__b) {
 define internal ptr @v_main() {
   %t0 = call ptr @v_action()
   %t1 = call ptr @v__df_mapIOError_0(ptr %t0)
-  %t2 = call ptr @v__let_24(ptr %t1)
+  %t2 = call ptr @v__let_19(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__lam_23(ptr %v__a) {
+define internal ptr @v__lam_18(ptr %v__a) {
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 25 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -744,7 +744,7 @@ define internal ptr @v__lam_23(ptr %v__a) {
   ret ptr %t0
 }
 
-define internal ptr @v__let_24(ptr %v_renamed) {
+define internal ptr @v__let_19(ptr %v_renamed) {
   call void @__inc_ref(ptr %v_renamed)
   %t0 = call ptr @v__df_handleErrorIO_4(ptr %v_renamed)
   call void @__free_recursive(ptr %v_renamed)
@@ -805,7 +805,7 @@ tco.case.arm.6.19:
   %t24 = getelementptr ptr, ptr %t22, i32 0
   store ptr %t23, ptr %t24
   call void @__inc_ref(ptr %t21)
-  %t25 = call ptr @v__lam_23(ptr %t21)
+  %t25 = call ptr @v__lam_18(ptr %t21)
   %t26 = getelementptr ptr, ptr %t22, i32 1
   store ptr %t25, ptr %t26
   %t27 = call ptr @v__apply__df_mapIOError_0(ptr %t6, ptr %t22)

@@ -48,13 +48,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$26" )
+                ( CVar "$let$19" )
                 [ CCall
-                    ( CVar "$df$$rowspec$24$0" )
+                    ( CVar "$df$$rowmono$0$bindEither$0" )
                     [ CVar "opA" ]
                 ]
             )
-        , CFunDef "$let$23" [ "msg" ]
+        , CFunDef "$let$18" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,32 +81,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$25" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CRow 2269767818
-                                ( CVar "__f0" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$let$26" [ "chained" ]
+        , CFunDef "$let$19" [ "chained" ]
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CVar "chained" )
                     [
@@ -150,7 +127,30 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$df$$rowspec$24$0" [ "x" ]
+        , CFunDef "$lift$20" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CRow 2269767818
+                                ( CVar "__f0" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$$rowmono$0$bindEither$0" [ "x" ]
             ( CCase
                 ( CVar "x" )
                 [
@@ -168,7 +168,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$25" )
+                            ( CVar "$lift$20" )
                             [ CCall
                                 ( CVar "opB" )
                                 [ CVar "a" ]

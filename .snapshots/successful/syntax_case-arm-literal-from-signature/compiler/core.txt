@@ -74,31 +74,10 @@ CoreProgram
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "firstZero" )
-                        [ CCall
-                            ( CVar "$lift$23" )
-                            [ CCon 11 [] ]
-                        ]
+                        [ CCon 11 [] ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lift$23" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 11
-                    , []
-                    , CCon 11 []
-                    )
-                ,
-                    ( 12
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 12
-                            [ CVar "__f0" ]
-                        )
-                    )
                 ]
             )
         ]

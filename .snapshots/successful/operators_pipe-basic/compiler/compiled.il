@@ -161,7 +161,7 @@
   {
     .maxstack 1
     call object AwsumMain::v_n()
-    call object AwsumMain::v__lam_23(object)
+    call object AwsumMain::v__lam_18(object)
     ret
   }
 
@@ -400,7 +400,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_23(object) cil managed
+  .method private hidebysig static object v__lam_18(object) cil managed
   {
     .maxstack 1
     ldarg.0

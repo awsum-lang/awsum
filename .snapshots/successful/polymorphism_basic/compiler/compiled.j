@@ -193,7 +193,7 @@ L_arm3:
 L_join2:
   astore_0
   aload_0
-  invokestatic AwsumMain/v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -226,7 +226,7 @@ L_join2:
 .end method
 
 
-.method static v__let_23(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

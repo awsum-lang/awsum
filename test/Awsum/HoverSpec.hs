@@ -8,7 +8,7 @@
 --   top-level reference in body, monomorphic local binding.
 module Awsum.HoverSpec (spec) where
 
-import Awsum.Lsp (compileToTrace, hoverForPosition)
+import Awsum.Lsp (compileToTypedProgram, hoverForPosition)
 import Awsum.Parser (parseProgram)
 import Data.Text qualified as T
 import Language.LSP.Protocol.Types
@@ -32,8 +32,7 @@ hoverAt src position = do
   prog <- case parseProgram src of
     Left _ -> Nothing
     Right p -> Just p
-  let traceMap = compileToTrace src
-  Hover (InL (MarkupContent _ md)) _ <- hoverForPosition traceMap prog position
+  Hover (InL (MarkupContent _ md)) _ <- hoverForPosition (compileToTypedProgram src) prog position
   pure md
 
 spec :: Spec
@@ -119,6 +118,44 @@ spec = describe "Awsum.Lsp.hoverForPosition" $ do
         md `shouldSatisfy` T.isInfixOf "ErrA"
       Nothing -> expectationFailure "expected hover on bindEither"
 
+  it "shows the type on an underscore-prefixed parameter" $ do
+    -- '_n' is intentionally-unused (can't be referenced), but hover is
+    -- read-only: a reader still wants the type the author chose to ignore.
+    let src =
+          unlines
+            [ "import IO.Stdout",
+              "",
+              "greet : Int32 -> String",
+              "greet _n = \"hi\"",
+              "",
+              "main : IO Never Unit",
+              "main = IO.Stdout.print (greet 1)"
+            ]
+    -- Cursor on '_n' in 'greet _n = …'.
+    case hoverAt src (pos 4 7) of
+      Just md -> md `shouldSatisfy` T.isInfixOf "Int32"
+      Nothing -> expectationFailure "expected hover on underscore-prefixed parameter"
+
+  it "shows the matched type on a bare wildcard in a pattern" $ do
+    -- '_' binds nothing, but it still has a type — the field a 'Just _'
+    -- arm discards. Hover surfaces it.
+    let src =
+          unlines
+            [ "import IO.Stdout",
+              "",
+              "describe : Maybe Int32 -> String",
+              "describe m = case m of",
+              "  Just _ -> \"j\"",
+              "  Nothing -> \"n\"",
+              "",
+              "main : IO Never Unit",
+              "main = IO.Stdout.print (describe Nothing)"
+            ]
+    -- Cursor on the '_' wildcard in 'Just _'.
+    case hoverAt src (pos 5 8) of
+      Just md -> md `shouldSatisfy` T.isInfixOf "Int32"
+      Nothing -> expectationFailure "expected hover on wildcard"
+
   it "returns Nothing when the cursor is on a literal" $ do
     let src =
           unlines
@@ -131,5 +168,5 @@ spec = describe "Awsum.Lsp.hoverForPosition" $ do
               "main = IO.Stdout.print \"42\""
             ]
     -- Cursor on the @4@ of the integer literal — literals don't get
-    -- hover (no trace record, no AST-walk match).
+    -- hover (no 'TExpr' record, no AST-walk match).
     hoverAt src (pos 4 10) `shouldBe` Nothing

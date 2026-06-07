@@ -45,12 +45,6 @@ mirrorN:
   case-pattern    $do_e_6                         count=0
   case-pattern    m                               count=0
 
-$lift$23:
-  param           __input                         count=1
-
-$lift$24:
-  param           __input                         count=1
-
 $scc$deepestLeftA_deepestLeftB_deepestLeftC:
   param           $args                           count=4
   case-pattern    lastV                           count=0
@@ -91,45 +85,5 @@ $scc$$apply$mirror_$cps$mirror:
 
 $cps$mirror:
   param           t                               count=1
-  param           $k                              count=1
-
-$scc$$apply$$lift$24_$cps$$lift$24:
-  param           $args                           count=5
-  case-pattern    $k                              count=0
-  case-pattern    $x                              count=0
-  case-pattern    $pk_37                          count=0
-  case-pattern    $rcv_0                          count=0
-  case-pattern    __f1                            count=0
-  case-pattern    $pk_36                          count=0
-  case-pattern    __f1                            count=0
-  case-pattern    __f2                            count=0
-  case-pattern    __input                         count=0
-  case-pattern    $k                              count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f1                            count=0
-  case-pattern    __f2                            count=0
-
-$cps$$lift$24:
-  param           __input                         count=1
-  param           $k                              count=1
-
-$scc$$apply$$lift$23_$cps$$lift$23:
-  param           $args                           count=5
-  case-pattern    $k                              count=0
-  case-pattern    $x                              count=0
-  case-pattern    $pk_34                          count=0
-  case-pattern    $rcv_0                          count=0
-  case-pattern    __f1                            count=0
-  case-pattern    $pk_33                          count=0
-  case-pattern    __f1                            count=0
-  case-pattern    __f2                            count=0
-  case-pattern    __input                         count=0
-  case-pattern    $k                              count=0
-  case-pattern    __f0                            count=0
-  case-pattern    __f1                            count=0
-  case-pattern    __f2                            count=0
-
-$cps$$lift$23:
-  param           __input                         count=1
   param           $k                              count=1
 

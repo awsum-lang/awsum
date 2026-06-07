@@ -205,12 +205,12 @@
     .maxstack 1
     call object AwsumMain::v_action()
     call object AwsumMain::v__df_mapIOError_0(object)
-    call object AwsumMain::v__let_24(object)
+    call object AwsumMain::v__let_19(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_23(object) cil managed
+  .method private hidebysig static object v__lam_18(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0)
@@ -227,7 +227,7 @@
   }
 
 
-  .method private hidebysig static object v__let_24(object) cil managed
+  .method private hidebysig static object v__let_19(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -311,7 +311,7 @@
     ldloc.3
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lam_23(object)
+    call object AwsumMain::v__lam_18(object)
     stelem.ref
     ldloc.3
     call object AwsumMain::v__apply__df_mapIOError_0(object, object)

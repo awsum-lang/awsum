@@ -95,7 +95,9 @@
 
   const v_defaultJust = [12, [1]];
 
-  const v__lift_24 = (v___input) => {
+  const v_defaultBools = [26, [1], [26, [2], [25]]];
+
+  const v__lift_18 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -110,7 +112,7 @@
     }
   };
 
-  const v__lift_26 = (v___input) => {
+  const v__lift_20 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -120,13 +122,13 @@
         }
         case 4: {
           const v___f0 = __s[1];
-          return [4, v__lift_24(v___f0)];
+          return [4, v__lift_18(v___f0)];
         }
       }
     }
   };
 
-  const v__let_27 = (v_res) => {
+  const v__let_21 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -206,18 +208,18 @@
     return v__cps_describeLst(v_xs, [27]);
   };
 
-  const v__apply__lift_25 = (v__k, v__x) => {
+  const v__apply__lift_19 = (v__k, v__x) => {
     while (true) {
       {
         const __s = v__k;
         switch (__s[0]) {
-          case 31: {
+          case 29: {
             return v__x;
           }
-          case 32: {
-            const v__pk_32 = __s[1];
+          case 30: {
+            const v__pk_30 = __s[1];
             const v___f0 = __s[2];
-            const __t0 = v__pk_32;
+            const __t0 = v__pk_30;
             const __t1 = (v__k[0] = 26, v__k[1] = [
               796142685,
               v___f0
@@ -231,61 +233,13 @@
     }
   };
 
-  const v__cps__lift_25 = (v___input, v__k) => {
+  const v__cps__lift_19 = (v___input, v__k) => {
     while (true) {
       {
         const __s = v___input;
         switch (__s[0]) {
           case 25: {
-            return v__apply__lift_25(v__k, [25]);
-          }
-          case 26: {
-            const v___f0 = __s[1];
-            const v___f1 = __s[2];
-            const __t0 = v___f1;
-            const __t1 = (v___input[0] = 32, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-            v___input = __t0;
-            v__k = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__lift_25 = (v___input) => {
-    return v__cps__lift_25(v___input, [31]);
-  };
-
-  const v__apply__lift_23 = (v__k, v__x) => {
-    while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 29: {
-            return v__x;
-          }
-          case 30: {
-            const v__pk_30 = __s[1];
-            const v___f0 = __s[2];
-            const __t0 = v__pk_30;
-            const __t1 = (v__k[0] = 26, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-            v__k = __t0;
-            v__x = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__cps__lift_23 = (v___input, v__k) => {
-    while (true) {
-      {
-        const __s = v___input;
-        switch (__s[0]) {
-          case 25: {
-            return v__apply__lift_23(v__k, [25]);
+            return v__apply__lift_19(v__k, [25]);
           }
           case 26: {
             const v___f0 = __s[1];
@@ -301,11 +255,9 @@
     }
   };
 
-  const v__lift_23 = (v___input) => {
-    return v__cps__lift_23(v___input, [29]);
+  const v__lift_19 = (v___input) => {
+    return v__cps__lift_19(v___input, [29]);
   };
-
-  const v_defaultBools = [26, [1], [26, [2], v__lift_23([25])]];
 
   const v_summary = ((s) => {
     switch (s[0]) {
@@ -367,15 +319,15 @@
                     })(__concat(v_a, " / "));
                   }
                 }
-              })(v_describeEither(v__lift_26(v_defaultRight)));
+              })(v_describeEither(v__lift_20(v_defaultRight)));
             }
           }
-        })(v_describeLst(v__lift_25(v_defaultBools)));
+        })(v_describeLst(v__lift_19(v_defaultBools)));
       }
     }
-  })(v_describeMaybe(v__lift_24(v_defaultJust)));
+  })(v_describeMaybe(v__lift_18(v_defaultJust)));
 
-  const main = v__let_27(v_summary);
+  const main = v__let_21(v_summary);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

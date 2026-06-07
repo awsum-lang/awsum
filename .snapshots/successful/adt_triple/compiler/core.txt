@@ -65,7 +65,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$23" )
+                ( CVar "$let$18" )
                 [ CCall
                     ( CVar "showTriple" )
                     [ CCon 24
@@ -153,7 +153,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$23" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -71,22 +71,6 @@
     return list;
   };
 
-  const v__lift_21 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, v___f0];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
-        }
-      }
-    }
-  };
-
   const v__lift_0 = (v___input) => {
     {
       const __s = v___input;
@@ -103,7 +87,7 @@
     }
   };
 
-  const v__lam_22 = (v_b, v_restHex) => {
+  const v__lam_17 = (v_b, v_restHex) => {
     return __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
   };
 
@@ -121,7 +105,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_0(v__lam_22(v__df_bindEither_0_cap1_0, v_a));
+          return v__lift_0(v__lam_17(v__df_bindEither_0_cap1_0, v_a));
         }
       }
     }
@@ -139,7 +123,7 @@
             const v__pk_30 = __s[1];
             const v_b = __s[2];
             const __t0 = v__pk_30;
-            const __t1 = v__df_bindEither_0(v__lift_21(v__x), v_b);
+            const __t1 = v__df_bindEither_0(v__x, v_b);
             v__k = __t0;
             v__x = __t1;
             continue;
@@ -175,7 +159,7 @@
     return v__cps_bytesToHexStringNoPrefix(v_bytes, [29]);
   };
 
-  const v__lam_23 = (v_bytes) => {
+  const v__lam_18 = (v_bytes) => {
     {
       const __s = v_bytesToHexStringNoPrefix(v_bytes);
       switch (__s[0]) {
@@ -285,7 +269,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df_andThenIO_1(v__k, v__lift_1(v__lam_23(v_a)));
+            return v__apply__df_andThenIO_1(v__k, v__lift_1(v__lam_18(v_a)));
           }
           case 6: {
             const v_e = __s[1];

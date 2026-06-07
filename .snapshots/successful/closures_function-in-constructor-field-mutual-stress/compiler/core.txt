@@ -70,7 +70,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$scc$$apply1_$lam$23_a_b" [ "$args" ]
+        , CFunDef "$scc$$apply1_$lam$18_a_b" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
@@ -222,7 +222,7 @@ CoreProgram
             )
         , CFunDef "a" [ "n" ]
             ( CCall
-                ( CVar "$scc$$apply1_$lam$23_a_b" )
+                ( CVar "$scc$$apply1_$lam$18_a_b" )
                 [ CCon 28
                     [ CVar "n" ]
                 ]

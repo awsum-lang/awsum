@@ -55,6 +55,22 @@
 
   const v_sum = __addInt32(v_big, v_negativeBig);
 
+  const v__lift_18 = (v___input) => {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 3: {
+          const v___f0 = __s[1];
+          return [3, [589989748, v___f0]];
+        }
+        case 4: {
+          const v___f0 = __s[1];
+          return [4, v___f0];
+        }
+      }
+    }
+  };
+
   const v_line = ((s) => {
     switch (s[0]) {
       case 3: {
@@ -63,7 +79,7 @@
       }
       case 4: {
         const v_s = s[1];
-        return __concat("sum=", String(v_s));
+        return v__lift_18(__concat("sum=", String(v_s)));
       }
     }
   })(v_sum);
