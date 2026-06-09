@@ -16,6 +16,7 @@ import Relude
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 import Test.Hspec
+import TestSources (discoverTestDirs)
 
 spec :: Spec
 spec = describe "Program snapshots" $ parallel $ do
@@ -24,16 +25,11 @@ spec = describe "Program snapshots" $ parallel $ do
   -- program tests parallelisable too. Each 'beforeAll' block scopes
   -- its own 'compileOnce', so parallel programs don't fight over a
   -- shared MVar.
-  testNames <- runIO discoverTests
+  testNames <- runIO (discoverTestDirs sourcesDir)
   traverse_ testProgram testNames
 
 sourcesDir :: FilePath
 sourcesDir = "test/sources/successful"
-
-discoverTests :: IO [FilePath]
-discoverTests = do
-  entries <- listDirectory sourcesDir
-  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
 
 -- | Snapshot tests need everything: ast / core / per-backend text for
 -- golden comparison, plus the runnable artifacts to actually exercise

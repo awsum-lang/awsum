@@ -10,22 +10,17 @@ import Awsum.Typing (requireMain)
 import Common.File
 import Matchers
 import Relude
-import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 import Test.Hspec
+import TestSources (discoverTestDirs)
 
 spec :: Spec
 spec = describe "Error snapshots" $ do
-  testNames <- runIO discoverTests
+  testNames <- runIO (discoverTestDirs sourcesDir)
   traverse_ testError testNames
 
 sourcesDir :: FilePath
 sourcesDir = "test/sources/errors"
-
-discoverTests :: IO [FilePath]
-discoverTests = do
-  entries <- listDirectory sourcesDir
-  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
 
 -- | Snapshots here model what @awsum build@ reports: the full
 --   elaborate+lower pipeline (so stack-safety violations caught by
