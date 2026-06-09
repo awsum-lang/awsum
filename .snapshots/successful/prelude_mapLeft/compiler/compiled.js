@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -42,7 +41,7 @@
 
   const v_bad = [3, [24]];
 
-  const v__let_13 = (v_msg) => {
+  const v__let_13 = v_msg => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -58,20 +57,20 @@
     }
   };
 
-  const v__let_15 = (v_renamedBad, v_renamedGood) => {
-    return v__let_13(
-      ((s) => {
+  const v__let_15 = (v_renamedBad, v_renamedGood) =>
+    v__let_13(
+      (s => {
         switch (s[0]) {
           case 3: {
             const v___p0 = s[1];
-            return ((s) => {
+            return (s => {
               switch (s[0]) {
                 case 25: {
-                  return ((s) => {
+                  return (s => {
                     switch (s[0]) {
                       case 3: {
                         const v___p0 = s[1];
-                        return ((s) => {
+                        return (s => {
                           switch (s[0]) {
                             case 25: {
                               return [4, "bad-Left bad-Left"];
@@ -96,17 +95,12 @@
         }
       })(v_renamedBad)
     );
-  };
 
-  const v__lam_16 = (v__a) => {
-    return [25];
-  };
+  const v__lam_16 = v__a => [25];
 
-  const v__lam_14 = (v__a) => {
-    return [25];
-  };
+  const v__lam_14 = v__a => [25];
 
-  const v__df_mapLeft_1 = (v_x) => {
+  const v__df_mapLeft_1 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -122,11 +116,10 @@
     }
   };
 
-  const v__let_17 = (v_renamedBad) => {
-    return v__let_15(v_renamedBad, v__df_mapLeft_1(v_good));
-  };
+  const v__let_17 = v_renamedBad =>
+    v__let_15(v_renamedBad, v__df_mapLeft_1(v_good));
 
-  const v__df_mapLeft_0 = (v_x) => {
+  const v__df_mapLeft_0 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {

@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __entryArgEither = (arg) => {
+  const __entryArgEither = arg => {
     if (arg.length > 134217728) {
       return [3, [589989748, [19]]];
     }
@@ -43,11 +43,9 @@
     return [4, list];
   };
 
-  const v_printInput = (v_s) => {
-    return [7, v_s, [5, [0]]];
-  };
+  const v_printInput = v_s => [7, v_s, [5, [0]]];
 
-  const v_headList = (v_xs) => {
+  const v_headList = v_xs => {
     {
       const __s = v_xs;
       switch (__s[0]) {
@@ -63,7 +61,7 @@
     }
   };
 
-  const v_printFirstArg = (v_args) => {
+  const v_printFirstArg = v_args => {
     {
       const __s = v_headList(v_args);
       switch (__s[0]) {
@@ -78,11 +76,9 @@
     }
   };
 
-  const v_handleInputError = (v__e) => {
-    return [7, "INPUT_ERROR", [5, [0]]];
-  };
+  const v_handleInputError = v__e => [7, "INPUT_ERROR", [5, [0]]];
 
-  const v__io_getargs_cont = (v_result) => {
+  const v__io_getargs_cont = v_result => {
     {
       const __s = v_result;
       switch (__s[0]) {
@@ -151,9 +147,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [21]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [21]);
 
   const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -211,9 +205,8 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_4 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_4(v_io, [23]);
-  };
+  const v__df__rowmono_0_andThenIO_4 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_4(v_io, [23]);
 
   const v__apply__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__k, v__x) => {
     while (true) {
@@ -303,15 +296,13 @@
     }
   };
 
-  const v__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__args) => {
-    return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(v__args, [25]);
-  };
+  const v__scc__apply1__df__lam_14_5__df__lam_9_1 = v__args =>
+    v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(v__args, [25]);
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_14_5__df__lam_9_1([18, v__cl, v__arg0]);
-  };
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__df__lam_14_5__df__lam_9_1([18, v__cl, v__arg0]);
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

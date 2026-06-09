@@ -1,20 +1,17 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -42,15 +39,13 @@
     }
   };
 
-  const v_identity = (v_x) => {
-    return v_x;
-  };
+  const v_identity = v_x => v_x;
 
   const v_throughHof = String(v_identity(10 | 0));
 
   const v_direct = String(42 | 0);
 
-  const v_ascribedCall = ((s) => {
+  const v_ascribedCall = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];
@@ -63,7 +58,7 @@
     }
   })(__predInt32(5 | 0));
 
-  const v_joined = ((s) => {
+  const v_joined = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_2 = s[1];
@@ -71,7 +66,7 @@
       }
       case 4: {
         const v_ab = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_1 = s[1];
@@ -79,7 +74,7 @@
             }
             case 4: {
               const v_abc = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_0 = s[1];
@@ -98,7 +93,7 @@
     }
   })(__concat(v_direct, " "));
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];

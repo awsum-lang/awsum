@@ -1,20 +1,16 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -42,9 +38,7 @@
     }
   };
 
-  const v_identity = (v_n) => {
-    return v_n;
-  };
+  const v_identity = v_n => v_n;
 
   const v__apply1 = (v__cl, v__arg0) => {
     {
@@ -140,11 +134,9 @@
     }
   };
 
-  const v_countWithBox = (v_b, v_n) => {
-    return v__cps_countWithBox(v_b, v_n, [26]);
-  };
+  const v_countWithBox = (v_b, v_n) => v__cps_countWithBox(v_b, v_n, [26]);
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v__e = s[1];

@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const __parseUInt8 = (s) => {
+  const __parseUInt8 = s => {
     if (!/^[0-9]+$/.test(s)) {
       return [3, [22]];
     }
@@ -21,7 +20,7 @@
     return [4, n & 0xFF];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -49,7 +48,7 @@
     }
   };
 
-  const v_render = (v_r) => {
+  const v_render = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -65,7 +64,7 @@
     }
   };
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -82,7 +81,7 @@
   };
 
   const main = v__let_13(
-    ((s) => {
+    (s => {
       switch (s[0]) {
         case 3: {
           const v__do_e_20 = s[1];
@@ -90,7 +89,7 @@
         }
         case 4: {
           const v_a = s[1];
-          return ((s) => {
+          return (s => {
             switch (s[0]) {
               case 3: {
                 const v__do_e_19 = s[1];
@@ -98,7 +97,7 @@
               }
               case 4: {
                 const v_b = s[1];
-                return ((s) => {
+                return (s => {
                   switch (s[0]) {
                     case 3: {
                       const v__do_e_18 = s[1];
@@ -106,7 +105,7 @@
                     }
                     case 4: {
                       const v_c = s[1];
-                      return ((s) => {
+                      return (s => {
                         switch (s[0]) {
                           case 3: {
                             const v__do_e_17 = s[1];
@@ -114,7 +113,7 @@
                           }
                           case 4: {
                             const v_d = s[1];
-                            return ((s) => {
+                            return (s => {
                               switch (s[0]) {
                                 case 3: {
                                   const v__do_e_16 = s[1];
@@ -122,7 +121,7 @@
                                 }
                                 case 4: {
                                   const v_e = s[1];
-                                  return ((s) => {
+                                  return (s => {
                                     switch (s[0]) {
                                       case 3: {
                                         const v__do_e_15 = s[1];
@@ -130,7 +129,7 @@
                                       }
                                       case 4: {
                                         const v_f = s[1];
-                                        return ((s) => {
+                                        return (s => {
                                           switch (s[0]) {
                                             case 3: {
                                               const v__do_e_14 = s[1];
@@ -138,7 +137,7 @@
                                             }
                                             case 4: {
                                               const v_g = s[1];
-                                              return ((s) => {
+                                              return (s => {
                                                 switch (s[0]) {
                                                   case 3: {
                                                     const v__do_e_13 = s[1];
@@ -146,7 +145,7 @@
                                                   }
                                                   case 4: {
                                                     const v_h = s[1];
-                                                    return ((s) => {
+                                                    return (s => {
                                                       switch (s[0]) {
                                                         case 3: {
                                                           const v__do_e_12 = s[1];
@@ -157,7 +156,7 @@
                                                         }
                                                         case 4: {
                                                           const v_r0 = s[1];
-                                                          return ((s) => {
+                                                          return (s => {
                                                             switch (s[0]) {
                                                               case 3: {
                                                                 const v__do_e_11 = s[1];
@@ -168,7 +167,7 @@
                                                               }
                                                               case 4: {
                                                                 const v_r1 = s[1];
-                                                                return ((s) => {
+                                                                return (s => {
                                                                   switch (s[0]) {
                                                                     case 3: {
                                                                       const v__do_e_10 = s[1];
@@ -179,9 +178,7 @@
                                                                     }
                                                                     case 4: {
                                                                       const v_r2 = s[1];
-                                                                      return ((
-                                                                        s
-                                                                      ) => {
+                                                                      return (s => {
                                                                         switch (s[0]) {
                                                                           case 3: {
                                                                             const v__do_e_9 = s[1];
@@ -192,9 +189,7 @@
                                                                           }
                                                                           case 4: {
                                                                             const v_r3 = s[1];
-                                                                            return ((
-                                                                              s
-                                                                            ) => {
+                                                                            return (s => {
                                                                               switch (s[0]) {
                                                                                 case 3: {
                                                                                   const v__do_e_8 = s[1];
@@ -205,9 +200,7 @@
                                                                                 }
                                                                                 case 4: {
                                                                                   const v_r4 = s[1];
-                                                                                  return ((
-                                                                                    s
-                                                                                  ) => {
+                                                                                  return (s => {
                                                                                     switch (s[0]) {
                                                                                       case 3: {
                                                                                         const v__do_e_7 = s[1];
@@ -218,9 +211,7 @@
                                                                                       }
                                                                                       case 4: {
                                                                                         const v_r5 = s[1];
-                                                                                        return ((
-                                                                                          s
-                                                                                        ) => {
+                                                                                        return (s => {
                                                                                           switch (s[0]) {
                                                                                             case 3: {
                                                                                               const v__do_e_6 = s[1];
@@ -231,9 +222,7 @@
                                                                                             }
                                                                                             case 4: {
                                                                                               const v_r6 = s[1];
-                                                                                              return ((
-                                                                                                s
-                                                                                              ) => {
+                                                                                              return (s => {
                                                                                                 switch (s[0]) {
                                                                                                   case 3: {
                                                                                                     const v__do_e_5 = s[1];
@@ -244,9 +233,7 @@
                                                                                                   }
                                                                                                   case 4: {
                                                                                                     const v_r7 = s[1];
-                                                                                                    return ((
-                                                                                                      s
-                                                                                                    ) => {
+                                                                                                    return (s => {
                                                                                                       switch (s[0]) {
                                                                                                         case 3: {
                                                                                                           const v__do_e_4 = s[1];
@@ -257,9 +244,7 @@
                                                                                                         }
                                                                                                         case 4: {
                                                                                                           const v_r8 = s[1];
-                                                                                                          return ((
-                                                                                                            s
-                                                                                                          ) => {
+                                                                                                          return (s => {
                                                                                                             switch (s[0]) {
                                                                                                               case 3: {
                                                                                                                 const v__do_e_3 = s[1];
@@ -270,9 +255,7 @@
                                                                                                               }
                                                                                                               case 4: {
                                                                                                                 const v_r9 = s[1];
-                                                                                                                return ((
-                                                                                                                  s
-                                                                                                                ) => {
+                                                                                                                return (s => {
                                                                                                                   switch (s[0]) {
                                                                                                                     case 3: {
                                                                                                                       const v__do_e_2 = s[1];
@@ -283,9 +266,7 @@
                                                                                                                     }
                                                                                                                     case 4: {
                                                                                                                       const v_r10 = s[1];
-                                                                                                                      return ((
-                                                                                                                        s
-                                                                                                                      ) => {
+                                                                                                                      return (s => {
                                                                                                                         switch (s[0]) {
                                                                                                                           case 3: {
                                                                                                                             const v__do_e_1 = s[1];
@@ -296,9 +277,7 @@
                                                                                                                           }
                                                                                                                           case 4: {
                                                                                                                             const v_r11 = s[1];
-                                                                                                                            return ((
-                                                                                                                              s
-                                                                                                                            ) => {
+                                                                                                                            return (s => {
                                                                                                                               switch (s[0]) {
                                                                                                                                 case 3: {
                                                                                                                                   const v__do_e_0 = s[1];

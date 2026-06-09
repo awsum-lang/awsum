@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __entryArgEither = (arg) => {
+  const __entryArgEither = arg => {
     if (arg.length > 134217728) {
       return [3, [589989748, [19]]];
     }
@@ -43,7 +43,7 @@
     return [4, list];
   };
 
-  const v_handler = (v_e) => {
+  const v_handler = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -63,15 +63,11 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v__lam_13 = (v__args) => {
-    return v_failIO([718021640, [24]]);
-  };
+  const v__lam_13 = v__args => v_failIO([718021640, [24]]);
 
-  const v__io_getargs_cont = (v_result) => {
+  const v__io_getargs_cont = v_result => {
     {
       const __s = v_result;
       switch (__s[0]) {
@@ -140,9 +136,7 @@
     }
   };
 
-  const v__df_handleErrorIO_4 = (v_io) => {
-    return v__cps__df_handleErrorIO_4(v_io, [33]);
-  };
+  const v__df_handleErrorIO_4 = v_io => v__cps__df_handleErrorIO_4(v_io, [33]);
 
   const v__apply__df__rowmono_0_bindIO_0 = (v__k, v__x) => {
     while (true) {
@@ -197,9 +191,8 @@
     }
   };
 
-  const v__df__rowmono_0_bindIO_0 = (v_io) => {
-    return v__cps__df__rowmono_0_bindIO_0(v_io, [31]);
-  };
+  const v__df__rowmono_0_bindIO_0 = v_io =>
+    v__cps__df__rowmono_0_bindIO_0(v_io, [31]);
 
   const v__apply__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1 = (
     v__k,
@@ -295,22 +288,18 @@
     }
   };
 
-  const v__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1 = (
-    v__args
-  ) => {
-    return v__cps__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
+  const v__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1 = v__args =>
+    v__cps__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
       v__args,
       [35]
     );
-  };
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
       [28, v__cl, v__arg0]
     );
-  };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

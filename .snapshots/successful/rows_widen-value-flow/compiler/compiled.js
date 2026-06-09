@@ -1,14 +1,13 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
   const v_vStr = [3, "strErr"];
 
@@ -50,7 +49,7 @@
     }
   };
 
-  const v_showTwoA = (v_e) => {
+  const v_showTwoA = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -88,7 +87,7 @@
     }
   };
 
-  const v_showStrA = (v_e) => {
+  const v_showStrA = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -116,7 +115,7 @@
     }
   };
 
-  const v_showAB = (v_e) => {
+  const v_showAB = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -144,7 +143,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -172,11 +171,9 @@
     }
   };
 
-  const v_pureIO = (v_x) => {
-    return [5, v_x];
-  };
+  const v_pureIO = v_x => [5, v_x];
 
-  const v_printErr = (v_e) => {
+  const v_printErr = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -187,11 +184,9 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v_eitherToIO = (v_x) => {
+  const v_eitherToIO = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -223,7 +218,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_18 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -241,7 +236,7 @@
 
   const v_strWiden = v__lift_18(v_vStr);
 
-  const v__lift_17 = (v___input) => {
+  const v__lift_17 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -257,7 +252,7 @@
     }
   };
 
-  const v__lift_16 = (v___input) => {
+  const v__lift_16 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -273,7 +268,7 @@
     }
   };
 
-  const v_nestedUnion = (v_m) => {
+  const v_nestedUnion = v_m => {
     {
       const __s = v_m;
       switch (__s[0]) {
@@ -298,7 +293,7 @@
     }
   };
 
-  const v__lift_14 = (v___input) => {
+  const v__lift_14 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -314,7 +309,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -330,7 +325,7 @@
     }
   };
 
-  const v_caseUnion = (v_flag) => {
+  const v_caseUnion = v_flag => {
     {
       const __s = v_flag;
       switch (__s[0]) {
@@ -348,13 +343,11 @@
 
   const v_defBodyRight = v__lift_13(v_vOkA);
 
-  const v__let_15 = (v_x) => {
-    return v__lift_14(v_x);
-  };
+  const v__let_15 = v_x => v__lift_14(v_x);
 
   const v_letBody = v__let_15(v_vErrB);
 
-  const v_render = ((s) => {
+  const v_render = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_10 = s[1];
@@ -362,7 +355,7 @@
       }
       case 4: {
         const v_r01 = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_9 = s[1];
@@ -370,7 +363,7 @@
             }
             case 4: {
               const v_r02 = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_8 = s[1];
@@ -378,7 +371,7 @@
                   }
                   case 4: {
                     const v_r03 = s[1];
-                    return ((s) => {
+                    return (s => {
                       switch (s[0]) {
                         case 3: {
                           const v__do_e_7 = s[1];
@@ -386,7 +379,7 @@
                         }
                         case 4: {
                           const v_r04 = s[1];
-                          return ((s) => {
+                          return (s => {
                             switch (s[0]) {
                               case 3: {
                                 const v__do_e_6 = s[1];
@@ -394,7 +387,7 @@
                               }
                               case 4: {
                                 const v_r05 = s[1];
-                                return ((s) => {
+                                return (s => {
                                   switch (s[0]) {
                                     case 3: {
                                       const v__do_e_5 = s[1];
@@ -402,7 +395,7 @@
                                     }
                                     case 4: {
                                       const v_r06 = s[1];
-                                      return ((s) => {
+                                      return (s => {
                                         switch (s[0]) {
                                           case 3: {
                                             const v__do_e_4 = s[1];
@@ -410,7 +403,7 @@
                                           }
                                           case 4: {
                                             const v_r07 = s[1];
-                                            return ((s) => {
+                                            return (s => {
                                               switch (s[0]) {
                                                 case 3: {
                                                   const v__do_e_3 = s[1];
@@ -480,9 +473,7 @@
     }
   })(v_tagged("defBodyLeft", v_showAB(v_defBodyLeft)));
 
-  const v__bi_IO_Stdout_print = (v__x0) => {
-    return [7, v__x0, [5, [0]]];
-  };
+  const v__bi_IO_Stdout_print = v__x0 => [7, v__x0, [5, [0]]];
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -533,9 +524,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [28]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [28]);
 
   const v__apply__df_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -586,9 +575,7 @@
     }
   };
 
-  const v__df_andThenIO_4 = (v_io) => {
-    return v__cps__df_andThenIO_4(v_io, [30]);
-  };
+  const v__df_andThenIO_4 = v_io => v__cps__df_andThenIO_4(v_io, [30]);
 
   const main = v__df_handleErrorIO_0(v__df_andThenIO_4(v_eitherToIO(v_render)));
 

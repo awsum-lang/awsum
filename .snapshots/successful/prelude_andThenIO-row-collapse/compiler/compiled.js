@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,9 +34,7 @@
     }
   };
 
-  const v_pureIO = (v_x) => {
-    return [5, v_x];
-  };
+  const v_pureIO = v_x => [5, v_x];
 
   const v_seedAIO = v_pureIO(2 | 0);
 
@@ -46,19 +44,13 @@
 
   const v_seedTIO = v_pureIO(4 | 0);
 
-  const v_kSOkIO = (v_n) => {
-    return v_pureIO(v_n);
-  };
+  const v_kSOkIO = v_n => v_pureIO(v_n);
 
-  const v_kNeverIO = (v_n) => {
-    return v_pureIO(v_n);
-  };
+  const v_kNeverIO = v_n => v_pureIO(v_n);
 
-  const v_kAOkIO = (v_n) => {
-    return v_pureIO(v_n);
-  };
+  const v_kAOkIO = v_n => v_pureIO(v_n);
 
-  const v_handlerTwoA = (v_e) => {
+  const v_handlerTwoA = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -84,7 +76,7 @@
     }
   };
 
-  const v_handlerTwo = (v_e) => {
+  const v_handlerTwo = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -98,7 +90,7 @@
     }
   };
 
-  const v_handlerThree = (v_e) => {
+  const v_handlerThree = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -128,7 +120,7 @@
     }
   };
 
-  const v_handlerStrA = (v_e) => {
+  const v_handlerStrA = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -144,11 +136,9 @@
     }
   };
 
-  const v_handlerStr = (v_e) => {
-    return [7, v_e, [5, [0]]];
-  };
+  const v_handlerStr = v_e => [7, v_e, [5, [0]]];
 
-  const v_handlerAB = (v_e) => {
+  const v_handlerAB = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -164,7 +154,7 @@
     }
   };
 
-  const v_handlerA = (v_e) => {
+  const v_handlerA = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -175,25 +165,15 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v_kAFailIO = (v__n) => {
-    return v_failIO([24]);
-  };
+  const v_kAFailIO = v__n => v_failIO([24]);
 
-  const v_kBFailIO = (v__n) => {
-    return v_failIO([25]);
-  };
+  const v_kBFailIO = v__n => v_failIO([25]);
 
-  const v_kSFailIO = (v__n) => {
-    return v_failIO("kS");
-  };
+  const v_kSFailIO = v__n => v_failIO("kS");
 
-  const v_kSecondIO = (v__n) => {
-    return v_failIO([27]);
-  };
+  const v_kSecondIO = v__n => v_failIO([27]);
 
   const v_seedFirstIO = v_failIO([26]);
 
@@ -203,25 +183,15 @@
 
   const v_seedSecondIO = v_failIO([27]);
 
-  const v__lam_15 = (v__u) => {
-    return [7, "=", [5, [0]]];
-  };
+  const v__lam_15 = v__u => [7, "=", [5, [0]]];
 
-  const v__lam_14 = (v_act, v__u) => {
-    return v_act;
-  };
+  const v__lam_14 = (v_act, v__u) => v_act;
 
-  const v__lam_13 = (v__u) => {
-    return [7, "\n", [5, [0]]];
-  };
+  const v__lam_13 = v__u => [7, "\n", [5, [0]]];
 
-  const v__bi_showInt32 = (v__x0) => {
-    return String(v__x0);
-  };
+  const v__bi_showInt32 = v__x0 => String(v__x0);
 
-  const v__bi_IO_Stdout_print = (v__x0) => {
-    return [7, v__x0, [5, [0]]];
-  };
+  const v__bi_IO_Stdout_print = v__x0 => [7, v__x0, [5, [0]]];
 
   const v__apply__lift_66 = (v__k, v__x) => {
     while (true) {
@@ -272,9 +242,7 @@
     }
   };
 
-  const v__lift_66 = (v___input) => {
-    return v__cps__lift_66(v___input, [36]);
-  };
+  const v__lift_66 = v___input => v__cps__lift_66(v___input, [36]);
 
   const v__apply__lift_59 = (v__k, v__x) => {
     while (true) {
@@ -325,9 +293,7 @@
     }
   };
 
-  const v__lift_59 = (v___input) => {
-    return v__cps__lift_59(v___input, [34]);
-  };
+  const v__lift_59 = v___input => v__cps__lift_59(v___input, [34]);
 
   const v__apply__lift_52 = (v__k, v__x) => {
     while (true) {
@@ -378,9 +344,7 @@
     }
   };
 
-  const v__lift_52 = (v___input) => {
-    return v__cps__lift_52(v___input, [32]);
-  };
+  const v__lift_52 = v___input => v__cps__lift_52(v___input, [32]);
 
   const v__apply__lift_45 = (v__k, v__x) => {
     while (true) {
@@ -431,9 +395,7 @@
     }
   };
 
-  const v__lift_45 = (v___input) => {
-    return v__cps__lift_45(v___input, [30]);
-  };
+  const v__lift_45 = v___input => v__cps__lift_45(v___input, [30]);
 
   const v__apply__lift_38 = (v__k, v__x) => {
     while (true) {
@@ -484,9 +446,7 @@
     }
   };
 
-  const v__lift_38 = (v___input) => {
-    return v__cps__lift_38(v___input, [28]);
-  };
+  const v__lift_38 = v___input => v__cps__lift_38(v___input, [28]);
 
   const v__apply__df_mapIO_64 = (v__k, v__x) => {
     while (true) {
@@ -537,9 +497,7 @@
     }
   };
 
-  const v__df_mapIO_64 = (v_io) => {
-    return v__cps__df_mapIO_64(v_io, [70]);
-  };
+  const v__df_mapIO_64 = v_io => v__cps__df_mapIO_64(v_io, [70]);
 
   const v__apply__df_handleErrorIO_92 = (v__k, v__x) => {
     while (true) {
@@ -590,9 +548,8 @@
     }
   };
 
-  const v__df_handleErrorIO_92 = (v_io) => {
-    return v__cps__df_handleErrorIO_92(v_io, [84]);
-  };
+  const v__df_handleErrorIO_92 = v_io =>
+    v__cps__df_handleErrorIO_92(v_io, [84]);
 
   const v__apply__df_handleErrorIO_84 = (v__k, v__x) => {
     while (true) {
@@ -643,9 +600,8 @@
     }
   };
 
-  const v__df_handleErrorIO_84 = (v_io) => {
-    return v__cps__df_handleErrorIO_84(v_io, [80]);
-  };
+  const v__df_handleErrorIO_84 = v_io =>
+    v__cps__df_handleErrorIO_84(v_io, [80]);
 
   const v__apply__df_handleErrorIO_76 = (v__k, v__x) => {
     while (true) {
@@ -696,9 +652,8 @@
     }
   };
 
-  const v__df_handleErrorIO_76 = (v_io) => {
-    return v__cps__df_handleErrorIO_76(v_io, [76]);
-  };
+  const v__df_handleErrorIO_76 = v_io =>
+    v__cps__df_handleErrorIO_76(v_io, [76]);
 
   const v__apply__df_handleErrorIO_72 = (v__k, v__x) => {
     while (true) {
@@ -749,9 +704,8 @@
     }
   };
 
-  const v__df_handleErrorIO_72 = (v_io) => {
-    return v__cps__df_handleErrorIO_72(v_io, [74]);
-  };
+  const v__df_handleErrorIO_72 = v_io =>
+    v__cps__df_handleErrorIO_72(v_io, [74]);
 
   const v__apply__df_handleErrorIO_68 = (v__k, v__x) => {
     while (true) {
@@ -802,9 +756,8 @@
     }
   };
 
-  const v__df_handleErrorIO_68 = (v_io) => {
-    return v__cps__df_handleErrorIO_68(v_io, [72]);
-  };
+  const v__df_handleErrorIO_68 = v_io =>
+    v__cps__df_handleErrorIO_68(v_io, [72]);
 
   const v__apply__df_handleErrorIO_56 = (v__k, v__x) => {
     while (true) {
@@ -855,9 +808,8 @@
     }
   };
 
-  const v__df_handleErrorIO_56 = (v_io) => {
-    return v__cps__df_handleErrorIO_56(v_io, [66]);
-  };
+  const v__df_handleErrorIO_56 = v_io =>
+    v__cps__df_handleErrorIO_56(v_io, [66]);
 
   const v__apply__df_handleErrorIO_100 = (v__k, v__x) => {
     while (true) {
@@ -908,9 +860,8 @@
     }
   };
 
-  const v__df_handleErrorIO_100 = (v_io) => {
-    return v__cps__df_handleErrorIO_100(v_io, [88]);
-  };
+  const v__df_handleErrorIO_100 = v_io =>
+    v__cps__df_handleErrorIO_100(v_io, [88]);
 
   const v__apply__df_andThenIO_8 = (v__k, v__x) => {
     while (true) {
@@ -961,9 +912,7 @@
     }
   };
 
-  const v__df_andThenIO_8 = (v_io) => {
-    return v__cps__df_andThenIO_8(v_io, [42]);
-  };
+  const v__df_andThenIO_8 = v_io => v__cps__df_andThenIO_8(v_io, [42]);
 
   const v_nevRightE1 = v__df_andThenIO_8(v_seedLeftAIO);
 
@@ -1020,25 +969,18 @@
     }
   };
 
-  const v__df_andThenIO_60 = (v_io) => {
-    return v__cps__df_andThenIO_60(v_io, [68]);
-  };
+  const v__df_andThenIO_60 = v_io => v__cps__df_andThenIO_60(v_io, [68]);
 
-  const v_observeA = (v_io) => {
-    return v__df_handleErrorIO_56(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
-  };
+  const v_observeA = v_io =>
+    v__df_handleErrorIO_56(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
 
-  const v_observeNever = (v_io) => {
-    return v__df_andThenIO_60(v__df_mapIO_64(v_io));
-  };
+  const v_observeNever = v_io => v__df_andThenIO_60(v__df_mapIO_64(v_io));
 
-  const v_observeStr = (v_io) => {
-    return v__df_handleErrorIO_72(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
-  };
+  const v_observeStr = v_io =>
+    v__df_handleErrorIO_72(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
 
-  const v_observeTwo = (v_io) => {
-    return v__df_handleErrorIO_68(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
-  };
+  const v_observeTwo = v_io =>
+    v__df_handleErrorIO_68(v__df_andThenIO_60(v__df_mapIO_64(v_io)));
 
   const v__apply__df_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -1089,9 +1031,7 @@
     }
   };
 
-  const v__df_andThenIO_4 = (v_io) => {
-    return v__cps__df_andThenIO_4(v_io, [40]);
-  };
+  const v__df_andThenIO_4 = v_io => v__cps__df_andThenIO_4(v_io, [40]);
 
   const v_idemE1 = v__df_andThenIO_4(v_seedLeftAIO);
 
@@ -1148,9 +1088,7 @@
     }
   };
 
-  const v__df_andThenIO_36 = (v_io) => {
-    return v__cps__df_andThenIO_36(v_io, [56]);
-  };
+  const v__df_andThenIO_36 = v_io => v__cps__df_andThenIO_36(v_io, [56]);
 
   const v_idem2First = v__df_andThenIO_36(v_seedFirstIO);
 
@@ -1249,9 +1187,7 @@
     }
   };
 
-  const v__df_andThenIO_20 = (v_io) => {
-    return v__cps__df_andThenIO_20(v_io, [48]);
-  };
+  const v__df_andThenIO_20 = v_io => v__cps__df_andThenIO_20(v_io, [48]);
 
   const v_strIdem = v__df_andThenIO_20(v_seedSIO);
 
@@ -1744,9 +1680,7 @@
     }
   };
 
-  const v__df_andThenIO_116 = (v_io) => {
-    return v__cps__df_andThenIO_116(v_io, [96]);
-  };
+  const v__df_andThenIO_116 = v_io => v__cps__df_andThenIO_116(v_io, [96]);
 
   const v__apply__df_andThenIO_112 = (v__k, v__x) => {
     while (true) {
@@ -1802,9 +1736,8 @@
     }
   };
 
-  const v__df_andThenIO_112 = (v_io, v__df_andThenIO_112_cap0_0) => {
-    return v__cps__df_andThenIO_112(v_io, v__df_andThenIO_112_cap0_0, [94]);
-  };
+  const v__df_andThenIO_112 = (v_io, v__df_andThenIO_112_cap0_0) =>
+    v__cps__df_andThenIO_112(v_io, v__df_andThenIO_112_cap0_0, [94]);
 
   const v__apply__df_andThenIO_108 = (v__k, v__x) => {
     while (true) {
@@ -1855,19 +1788,14 @@
     }
   };
 
-  const v__df_andThenIO_108 = (v_io) => {
-    return v__cps__df_andThenIO_108(v_io, [92]);
-  };
+  const v__df_andThenIO_108 = v_io => v__cps__df_andThenIO_108(v_io, [92]);
 
-  const v_line = (v_label, v_act) => {
-    return v__df_andThenIO_108(
+  const v_line = (v_label, v_act) =>
+    v__df_andThenIO_108(
       v__df_andThenIO_112(v__df_andThenIO_116([7, v_label, [5, [0]]]), v_act)
     );
-  };
 
-  const v__lam_20 = (v__u) => {
-    return v_line("idem2Second", v_observeTwo(v_idem2Second));
-  };
+  const v__lam_20 = v__u => v_line("idem2Second", v_observeTwo(v_idem2Second));
 
   const v__cps__df_andThenIO_136 = (v_io, v__k) => {
     while (true) {
@@ -1896,13 +1824,9 @@
     }
   };
 
-  const v__df_andThenIO_136 = (v_io) => {
-    return v__cps__df_andThenIO_136(v_io, [106]);
-  };
+  const v__df_andThenIO_136 = v_io => v__cps__df_andThenIO_136(v_io, [106]);
 
-  const v__lam_21 = (v__u) => {
-    return v_line("idem2First", v_observeTwo(v_idem2First));
-  };
+  const v__lam_21 = v__u => v_line("idem2First", v_observeTwo(v_idem2First));
 
   const v__cps__df_andThenIO_140 = (v_io, v__k) => {
     while (true) {
@@ -1931,13 +1855,9 @@
     }
   };
 
-  const v__df_andThenIO_140 = (v_io) => {
-    return v__cps__df_andThenIO_140(v_io, [108]);
-  };
+  const v__df_andThenIO_140 = v_io => v__cps__df_andThenIO_140(v_io, [108]);
 
-  const v__lam_22 = (v__u) => {
-    return v_line("idemE2", v_observeA(v_idemE2));
-  };
+  const v__lam_22 = v__u => v_line("idemE2", v_observeA(v_idemE2));
 
   const v__cps__df_andThenIO_144 = (v_io, v__k) => {
     while (true) {
@@ -1966,13 +1886,9 @@
     }
   };
 
-  const v__df_andThenIO_144 = (v_io) => {
-    return v__cps__df_andThenIO_144(v_io, [110]);
-  };
+  const v__df_andThenIO_144 = v_io => v__cps__df_andThenIO_144(v_io, [110]);
 
-  const v__lam_23 = (v__u) => {
-    return v_line("idemE1", v_observeA(v_idemE1));
-  };
+  const v__lam_23 = v__u => v_line("idemE1", v_observeA(v_idemE1));
 
   const v__cps__df_andThenIO_148 = (v_io, v__k) => {
     while (true) {
@@ -2001,13 +1917,9 @@
     }
   };
 
-  const v__df_andThenIO_148 = (v_io) => {
-    return v__cps__df_andThenIO_148(v_io, [112]);
-  };
+  const v__df_andThenIO_148 = v_io => v__cps__df_andThenIO_148(v_io, [112]);
 
-  const v__lam_30 = (v__u) => {
-    return v_line("strIdem", v_observeStr(v_strIdem));
-  };
+  const v__lam_30 = v__u => v_line("strIdem", v_observeStr(v_strIdem));
 
   const v__cps__df_andThenIO_176 = (v_io, v__k) => {
     while (true) {
@@ -2036,13 +1948,9 @@
     }
   };
 
-  const v__df_andThenIO_176 = (v_io) => {
-    return v__cps__df_andThenIO_176(v_io, [126]);
-  };
+  const v__df_andThenIO_176 = v_io => v__cps__df_andThenIO_176(v_io, [126]);
 
-  const v__lam_34 = (v__u) => {
-    return v_line("pureNever", v_observeNever(v_pureNever));
-  };
+  const v__lam_34 = v__u => v_line("pureNever", v_observeNever(v_pureNever));
 
   const v__cps__df_andThenIO_192 = (v_io, v__k) => {
     while (true) {
@@ -2071,13 +1979,9 @@
     }
   };
 
-  const v__df_andThenIO_192 = (v_io) => {
-    return v__cps__df_andThenIO_192(v_io, [134]);
-  };
+  const v__df_andThenIO_192 = v_io => v__cps__df_andThenIO_192(v_io, [134]);
 
-  const v__lam_35 = (v__u) => {
-    return v_line("nevRightE1", v_observeA(v_nevRightE1));
-  };
+  const v__lam_35 = v__u => v_line("nevRightE1", v_observeA(v_nevRightE1));
 
   const v__cps__df_andThenIO_196 = (v_io, v__k) => {
     while (true) {
@@ -2106,13 +2010,9 @@
     }
   };
 
-  const v__df_andThenIO_196 = (v_io) => {
-    return v__cps__df_andThenIO_196(v_io, [136]);
-  };
+  const v__df_andThenIO_196 = v_io => v__cps__df_andThenIO_196(v_io, [136]);
 
-  const v__lam_36 = (v__u) => {
-    return v_line("nevRightOk", v_observeA(v_nevRightOk));
-  };
+  const v__lam_36 = v__u => v_line("nevRightOk", v_observeA(v_nevRightOk));
 
   const v__cps__df_andThenIO_200 = (v_io, v__k) => {
     while (true) {
@@ -2141,13 +2041,9 @@
     }
   };
 
-  const v__df_andThenIO_200 = (v_io) => {
-    return v__cps__df_andThenIO_200(v_io, [138]);
-  };
+  const v__df_andThenIO_200 = v_io => v__cps__df_andThenIO_200(v_io, [138]);
 
-  const v__lam_37 = (v__u) => {
-    return v_line("nevFail", v_observeA(v_nevFail));
-  };
+  const v__lam_37 = v__u => v_line("nevFail", v_observeA(v_nevFail));
 
   const v__cps__df_andThenIO_204 = (v_io, v__k) => {
     while (true) {
@@ -2176,9 +2072,7 @@
     }
   };
 
-  const v__df_andThenIO_204 = (v_io) => {
-    return v__cps__df_andThenIO_204(v_io, [140]);
-  };
+  const v__df_andThenIO_204 = v_io => v__cps__df_andThenIO_204(v_io, [140]);
 
   const v__apply__df_andThenIO_0 = (v__k, v__x) => {
     while (true) {
@@ -2229,9 +2123,7 @@
     }
   };
 
-  const v__df_andThenIO_0 = (v_io) => {
-    return v__cps__df_andThenIO_0(v_io, [38]);
-  };
+  const v__df_andThenIO_0 = v_io => v__cps__df_andThenIO_0(v_io, [38]);
 
   const v_nevOk = v__df_andThenIO_0(v_seedNeverIO);
 
@@ -2287,15 +2179,13 @@
     }
   };
 
-  const v__df__rowmono_8_andThenIO_104 = (v_io) => {
-    return v__cps__df__rowmono_8_andThenIO_104(v_io, [90]);
-  };
+  const v__df__rowmono_8_andThenIO_104 = v_io =>
+    v__cps__df__rowmono_8_andThenIO_104(v_io, [90]);
 
-  const v_observeThree = (v_io) => {
-    return v__df_handleErrorIO_100(
+  const v_observeThree = v_io =>
+    v__df_handleErrorIO_100(
       v__df__rowmono_8_andThenIO_104(v__df_mapIO_64(v_io))
     );
-  };
 
   const v__apply__df__rowmono_7_andThenIO_96 = (v__k, v__x) => {
     while (true) {
@@ -2349,15 +2239,11 @@
     }
   };
 
-  const v__df__rowmono_7_andThenIO_96 = (v_io) => {
-    return v__cps__df__rowmono_7_andThenIO_96(v_io, [86]);
-  };
+  const v__df__rowmono_7_andThenIO_96 = v_io =>
+    v__cps__df__rowmono_7_andThenIO_96(v_io, [86]);
 
-  const v_observeTwoA = (v_io) => {
-    return v__df_handleErrorIO_92(
-      v__df__rowmono_7_andThenIO_96(v__df_mapIO_64(v_io))
-    );
-  };
+  const v_observeTwoA = v_io =>
+    v__df_handleErrorIO_92(v__df__rowmono_7_andThenIO_96(v__df_mapIO_64(v_io)));
 
   const v__apply__df__rowmono_6_andThenIO_88 = (v__k, v__x) => {
     while (true) {
@@ -2411,15 +2297,11 @@
     }
   };
 
-  const v__df__rowmono_6_andThenIO_88 = (v_io) => {
-    return v__cps__df__rowmono_6_andThenIO_88(v_io, [82]);
-  };
+  const v__df__rowmono_6_andThenIO_88 = v_io =>
+    v__cps__df__rowmono_6_andThenIO_88(v_io, [82]);
 
-  const v_observeAB = (v_io) => {
-    return v__df_handleErrorIO_84(
-      v__df__rowmono_6_andThenIO_88(v__df_mapIO_64(v_io))
-    );
-  };
+  const v_observeAB = v_io =>
+    v__df_handleErrorIO_84(v__df__rowmono_6_andThenIO_88(v__df_mapIO_64(v_io)));
 
   const v__apply__df__rowmono_5_andThenIO_80 = (v__k, v__x) => {
     while (true) {
@@ -2473,15 +2355,11 @@
     }
   };
 
-  const v__df__rowmono_5_andThenIO_80 = (v_io) => {
-    return v__cps__df__rowmono_5_andThenIO_80(v_io, [78]);
-  };
+  const v__df__rowmono_5_andThenIO_80 = v_io =>
+    v__cps__df__rowmono_5_andThenIO_80(v_io, [78]);
 
-  const v_observeStrA = (v_io) => {
-    return v__df_handleErrorIO_76(
-      v__df__rowmono_5_andThenIO_80(v__df_mapIO_64(v_io))
-    );
-  };
+  const v_observeStrA = v_io =>
+    v__df_handleErrorIO_76(v__df__rowmono_5_andThenIO_80(v__df_mapIO_64(v_io)));
 
   const v__apply__df__rowmono_4_andThenIO_48 = (v__k, v__x) => {
     while (true) {
@@ -2538,9 +2416,8 @@
     }
   };
 
-  const v__df__rowmono_4_andThenIO_48 = (v_io) => {
-    return v__cps__df__rowmono_4_andThenIO_48(v_io, [62]);
-  };
+  const v__df__rowmono_4_andThenIO_48 = v_io =>
+    v__cps__df__rowmono_4_andThenIO_48(v_io, [62]);
 
   const v__apply__df__rowmono_4_andThenIO_44 = (v__k, v__x) => {
     while (true) {
@@ -2597,9 +2474,8 @@
     }
   };
 
-  const v__df__rowmono_4_andThenIO_44 = (v_io) => {
-    return v__cps__df__rowmono_4_andThenIO_44(v_io, [60]);
-  };
+  const v__df__rowmono_4_andThenIO_44 = v_io =>
+    v__cps__df__rowmono_4_andThenIO_44(v_io, [60]);
 
   const v__apply__df__rowmono_3_andThenIO_52 = (v__k, v__x) => {
     while (true) {
@@ -2653,17 +2529,14 @@
     }
   };
 
-  const v__df__rowmono_3_andThenIO_52 = (v_io) => {
-    return v__cps__df__rowmono_3_andThenIO_52(v_io, [64]);
-  };
+  const v__df__rowmono_3_andThenIO_52 = v_io =>
+    v__cps__df__rowmono_3_andThenIO_52(v_io, [64]);
 
   const v_wE3 = v__df__rowmono_3_andThenIO_52(
     v__df__rowmono_4_andThenIO_44(v_seedTIO)
   );
 
-  const v__lam_17 = (v__u) => {
-    return v_line("wE3", v_observeThree(v_wE3));
-  };
+  const v__lam_17 = v__u => v_line("wE3", v_observeThree(v_wE3));
 
   const v__cps__df_andThenIO_124 = (v_io, v__k) => {
     while (true) {
@@ -2692,9 +2565,7 @@
     }
   };
 
-  const v__df_andThenIO_124 = (v_io) => {
-    return v__cps__df_andThenIO_124(v_io, [100]);
-  };
+  const v__df_andThenIO_124 = v_io => v__cps__df_andThenIO_124(v_io, [100]);
 
   const v__apply__df__rowmono_3_andThenIO_40 = (v__k, v__x) => {
     while (true) {
@@ -2748,17 +2619,14 @@
     }
   };
 
-  const v__df__rowmono_3_andThenIO_40 = (v_io) => {
-    return v__cps__df__rowmono_3_andThenIO_40(v_io, [58]);
-  };
+  const v__df__rowmono_3_andThenIO_40 = v_io =>
+    v__cps__df__rowmono_3_andThenIO_40(v_io, [58]);
 
   const v_wE1 = v__df__rowmono_3_andThenIO_40(
     v__df__rowmono_4_andThenIO_44(v_seedFirstIO)
   );
 
-  const v__lam_19 = (v__u) => {
-    return v_line("wE1", v_observeThree(v_wE1));
-  };
+  const v__lam_19 = v__u => v_line("wE1", v_observeThree(v_wE1));
 
   const v__cps__df_andThenIO_132 = (v_io, v__k) => {
     while (true) {
@@ -2787,17 +2655,13 @@
     }
   };
 
-  const v__df_andThenIO_132 = (v_io) => {
-    return v__cps__df_andThenIO_132(v_io, [104]);
-  };
+  const v__df_andThenIO_132 = v_io => v__cps__df_andThenIO_132(v_io, [104]);
 
   const v_wE2str = v__df__rowmono_3_andThenIO_40(
     v__df__rowmono_4_andThenIO_48(v_seedTIO)
   );
 
-  const v__lam_18 = (v__u) => {
-    return v_line("wE2str", v_observeThree(v_wE2str));
-  };
+  const v__lam_18 = v__u => v_line("wE2str", v_observeThree(v_wE2str));
 
   const v__cps__df_andThenIO_128 = (v_io, v__k) => {
     while (true) {
@@ -2826,17 +2690,13 @@
     }
   };
 
-  const v__df_andThenIO_128 = (v_io) => {
-    return v__cps__df_andThenIO_128(v_io, [102]);
-  };
+  const v__df_andThenIO_128 = v_io => v__cps__df_andThenIO_128(v_io, [102]);
 
   const v_wOk = v__df__rowmono_3_andThenIO_40(
     v__df__rowmono_4_andThenIO_44(v_seedTIO)
   );
 
-  const v__lam_16 = (v__u) => {
-    return v_line("wOk", v_observeThree(v_wOk));
-  };
+  const v__lam_16 = v__u => v_line("wOk", v_observeThree(v_wOk));
 
   const v__cps__df_andThenIO_120 = (v_io, v__k) => {
     while (true) {
@@ -2865,9 +2725,7 @@
     }
   };
 
-  const v__df_andThenIO_120 = (v_io) => {
-    return v__cps__df_andThenIO_120(v_io, [98]);
-  };
+  const v__df_andThenIO_120 = v_io => v__cps__df_andThenIO_120(v_io, [98]);
 
   const v__apply__df__rowmono_2_andThenIO_32 = (v__k, v__x) => {
     while (true) {
@@ -2924,15 +2782,12 @@
     }
   };
 
-  const v__df__rowmono_2_andThenIO_32 = (v_io) => {
-    return v__cps__df__rowmono_2_andThenIO_32(v_io, [54]);
-  };
+  const v__df__rowmono_2_andThenIO_32 = v_io =>
+    v__cps__df__rowmono_2_andThenIO_32(v_io, [54]);
 
   const v_twoE2 = v__df__rowmono_2_andThenIO_32(v_seedTIO);
 
-  const v__lam_25 = (v__u) => {
-    return v_line("twoE2", v_observeTwoA(v_twoE2));
-  };
+  const v__lam_25 = v__u => v_line("twoE2", v_observeTwoA(v_twoE2));
 
   const v__cps__df_andThenIO_156 = (v_io, v__k) => {
     while (true) {
@@ -2961,9 +2816,7 @@
     }
   };
 
-  const v__df_andThenIO_156 = (v_io) => {
-    return v__cps__df_andThenIO_156(v_io, [116]);
-  };
+  const v__df_andThenIO_156 = v_io => v__cps__df_andThenIO_156(v_io, [116]);
 
   const v__apply__df__rowmono_2_andThenIO_28 = (v__k, v__x) => {
     while (true) {
@@ -3020,15 +2873,12 @@
     }
   };
 
-  const v__df__rowmono_2_andThenIO_28 = (v_io) => {
-    return v__cps__df__rowmono_2_andThenIO_28(v_io, [52]);
-  };
+  const v__df__rowmono_2_andThenIO_28 = v_io =>
+    v__cps__df__rowmono_2_andThenIO_28(v_io, [52]);
 
   const v_twoFirst = v__df__rowmono_2_andThenIO_28(v_seedFirstIO);
 
-  const v__lam_27 = (v__u) => {
-    return v_line("twoFirst", v_observeTwoA(v_twoFirst));
-  };
+  const v__lam_27 = v__u => v_line("twoFirst", v_observeTwoA(v_twoFirst));
 
   const v__cps__df_andThenIO_164 = (v_io, v__k) => {
     while (true) {
@@ -3057,15 +2907,11 @@
     }
   };
 
-  const v__df_andThenIO_164 = (v_io) => {
-    return v__cps__df_andThenIO_164(v_io, [120]);
-  };
+  const v__df_andThenIO_164 = v_io => v__cps__df_andThenIO_164(v_io, [120]);
 
   const v_twoOk = v__df__rowmono_2_andThenIO_28(v_seedTIO);
 
-  const v__lam_24 = (v__u) => {
-    return v_line("twoOk", v_observeTwoA(v_twoOk));
-  };
+  const v__lam_24 = v__u => v_line("twoOk", v_observeTwoA(v_twoOk));
 
   const v__cps__df_andThenIO_152 = (v_io, v__k) => {
     while (true) {
@@ -3094,15 +2940,11 @@
     }
   };
 
-  const v__df_andThenIO_152 = (v_io) => {
-    return v__cps__df_andThenIO_152(v_io, [114]);
-  };
+  const v__df_andThenIO_152 = v_io => v__cps__df_andThenIO_152(v_io, [114]);
 
   const v_twoSecond = v__df__rowmono_2_andThenIO_28(v_seedSecondIO);
 
-  const v__lam_26 = (v__u) => {
-    return v_line("twoSecond", v_observeTwoA(v_twoSecond));
-  };
+  const v__lam_26 = v__u => v_line("twoSecond", v_observeTwoA(v_twoSecond));
 
   const v__cps__df_andThenIO_160 = (v_io, v__k) => {
     while (true) {
@@ -3131,9 +2973,7 @@
     }
   };
 
-  const v__df_andThenIO_160 = (v_io) => {
-    return v__cps__df_andThenIO_160(v_io, [118]);
-  };
+  const v__df_andThenIO_160 = v_io => v__cps__df_andThenIO_160(v_io, [118]);
 
   const v__apply__df__rowmono_1_andThenIO_24 = (v__k, v__x) => {
     while (true) {
@@ -3190,15 +3030,12 @@
     }
   };
 
-  const v__df__rowmono_1_andThenIO_24 = (v_io) => {
-    return v__cps__df__rowmono_1_andThenIO_24(v_io, [50]);
-  };
+  const v__df__rowmono_1_andThenIO_24 = v_io =>
+    v__cps__df__rowmono_1_andThenIO_24(v_io, [50]);
 
   const v_abE1 = v__df__rowmono_1_andThenIO_24(v_seedLeftAIO);
 
-  const v__lam_29 = (v__u) => {
-    return v_line("abE1", v_observeAB(v_abE1));
-  };
+  const v__lam_29 = v__u => v_line("abE1", v_observeAB(v_abE1));
 
   const v__cps__df_andThenIO_172 = (v_io, v__k) => {
     while (true) {
@@ -3227,15 +3064,11 @@
     }
   };
 
-  const v__df_andThenIO_172 = (v_io) => {
-    return v__cps__df_andThenIO_172(v_io, [124]);
-  };
+  const v__df_andThenIO_172 = v_io => v__cps__df_andThenIO_172(v_io, [124]);
 
   const v_abE2 = v__df__rowmono_1_andThenIO_24(v_seedAIO);
 
-  const v__lam_28 = (v__u) => {
-    return v_line("abE2", v_observeAB(v_abE2));
-  };
+  const v__lam_28 = v__u => v_line("abE2", v_observeAB(v_abE2));
 
   const v__cps__df_andThenIO_168 = (v_io, v__k) => {
     while (true) {
@@ -3264,9 +3097,7 @@
     }
   };
 
-  const v__df_andThenIO_168 = (v_io) => {
-    return v__cps__df_andThenIO_168(v_io, [122]);
-  };
+  const v__df_andThenIO_168 = v_io => v__cps__df_andThenIO_168(v_io, [122]);
 
   const v__apply__df__rowmono_0_andThenIO_16 = (v__k, v__x) => {
     while (true) {
@@ -3323,15 +3154,12 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_16 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_16(v_io, [46]);
-  };
+  const v__df__rowmono_0_andThenIO_16 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_16(v_io, [46]);
 
   const v_strE2 = v__df__rowmono_0_andThenIO_16(v_seedSIO);
 
-  const v__lam_31 = (v__u) => {
-    return v_line("strE2", v_observeStrA(v_strE2));
-  };
+  const v__lam_31 = v__u => v_line("strE2", v_observeStrA(v_strE2));
 
   const v__cps__df_andThenIO_180 = (v_io, v__k) => {
     while (true) {
@@ -3360,9 +3188,7 @@
     }
   };
 
-  const v__df_andThenIO_180 = (v_io) => {
-    return v__cps__df_andThenIO_180(v_io, [128]);
-  };
+  const v__df_andThenIO_180 = v_io => v__cps__df_andThenIO_180(v_io, [128]);
 
   const v__apply__df__rowmono_0_andThenIO_12 = (v__k, v__x) => {
     while (true) {
@@ -3419,15 +3245,12 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_12 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_12(v_io, [44]);
-  };
+  const v__df__rowmono_0_andThenIO_12 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_12(v_io, [44]);
 
   const v_strE1 = v__df__rowmono_0_andThenIO_12(v_seedLeftSIO);
 
-  const v__lam_32 = (v__u) => {
-    return v_line("strE1", v_observeStrA(v_strE1));
-  };
+  const v__lam_32 = v__u => v_line("strE1", v_observeStrA(v_strE1));
 
   const v__cps__df_andThenIO_184 = (v_io, v__k) => {
     while (true) {
@@ -3456,15 +3279,11 @@
     }
   };
 
-  const v__df_andThenIO_184 = (v_io) => {
-    return v__cps__df_andThenIO_184(v_io, [130]);
-  };
+  const v__df_andThenIO_184 = v_io => v__cps__df_andThenIO_184(v_io, [130]);
 
   const v_strOk = v__df__rowmono_0_andThenIO_12(v_seedSIO);
 
-  const v__lam_33 = (v__u) => {
-    return v_line("strOk", v_observeStrA(v_strOk));
-  };
+  const v__lam_33 = v__u => v_line("strOk", v_observeStrA(v_strOk));
 
   const v__cps__df_andThenIO_188 = (v_io, v__k) => {
     while (true) {
@@ -3493,9 +3312,7 @@
     }
   };
 
-  const v__df_andThenIO_188 = (v_io) => {
-    return v__cps__df_andThenIO_188(v_io, [132]);
-  };
+  const v__df_andThenIO_188 = v_io => v__cps__df_andThenIO_188(v_io, [132]);
 
   const main = v__df_andThenIO_120(
     v__df_andThenIO_124(

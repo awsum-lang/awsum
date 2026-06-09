@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,9 +37,8 @@
     }
   };
 
-  const v__lam_12 = (v_b, v_restHex) => {
-    return __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
-  };
+  const v__lam_12 = (v_b, v_restHex) =>
+    __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
 
   const v__df_bindEither_0 = (v_x, v__df_bindEither_0_cap1_0) => {
     {
@@ -102,11 +100,10 @@
     }
   };
 
-  const v_bytesToHexStringNoPrefix = (v_bytes) => {
-    return v__cps_bytesToHexStringNoPrefix(v_bytes, [15]);
-  };
+  const v_bytesToHexStringNoPrefix = v_bytes =>
+    v__cps_bytesToHexStringNoPrefix(v_bytes, [15]);
 
-  const v__let_13 = (v_bytes) => {
+  const v__let_13 = v_bytes => {
     {
       const __s = v_bytesToHexStringNoPrefix(v_bytes);
       switch (__s[0]) {

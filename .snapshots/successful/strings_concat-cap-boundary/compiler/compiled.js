@@ -1,28 +1,21 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const __predUInt32 = (x) => {
-    return x === 0 ? [3, [17]] : [4, x - 1 >>> 0];
-  };
+  const __predUInt32 = x => x === 0 ? [3, [17]] : [4, x - 1 >>> 0];
 
-  const __eqUInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqUInt32 = (a, b) => a === b ? [1] : [2];
 
-  const __lengthUtf16CodeUnits = (s) => {
-    return s.length >>> 0;
-  };
+  const __lengthUtf16CodeUnits = s => s.length >>> 0;
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -54,7 +47,7 @@
 
   const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-  const v__scc__df_andThenEither_0__lam_13_build = (v__args) => {
+  const v__scc__df_andThenEither_0__lam_13_build = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -112,11 +105,10 @@
     }
   };
 
-  const v_build = (v_n, v_acc) => {
-    return v__scc__df_andThenEither_0__lam_13_build([10, v_n, v_acc]);
-  };
+  const v_build = (v_n, v_acc) =>
+    v__scc__df_andThenEither_0__lam_13_build([10, v_n, v_acc]);
 
-  const v_runTest = ((s) => {
+  const v_runTest = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];
@@ -124,10 +116,10 @@
       }
       case 4: {
         const v_capStr = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 1: {
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v___w0 = s[1];

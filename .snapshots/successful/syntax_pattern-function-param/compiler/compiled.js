@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,13 +17,12 @@
     return [4, r | 0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
   const v_triple = [16, 10 | 0, 20 | 0, 30 | 0];
 
-  const v_sumTriple = (v__arg_0) => {
+  const v_sumTriple = v__arg_0 => {
     {
       const __s = v__arg_0;
       switch (__s[0]) {
@@ -61,7 +60,7 @@
     }
   };
 
-  const v_sumPair = (v__arg_1) => {
+  const v_sumPair = v__arg_1 => {
     {
       const __s = v__arg_1;
       switch (__s[0]) {
@@ -86,7 +85,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -116,7 +115,7 @@
 
   const v_pair = [15, 100 | 0, 200 | 0];
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -132,9 +131,9 @@
     }
   };
 
-  const v__let_15 = (v_n, v_m) => {
-    return v__let_13(
-      ((s) => {
+  const v__let_15 = (v_n, v_m) =>
+    v__let_13(
+      (s => {
         switch (s[0]) {
           case 3: {
             const v__do_e_3 = s[1];
@@ -147,9 +146,8 @@
         }
       })(__concat(String(v_n), " / "))
     );
-  };
 
-  const v__lam_14 = (v__arg_2) => {
+  const v__lam_14 = v__arg_2 => {
     {
       const __s = v__arg_2;
       switch (__s[0]) {
@@ -162,13 +160,9 @@
     }
   };
 
-  const v__df_apply_0 = (v_t) => {
-    return v__lam_14(v_t);
-  };
+  const v__df_apply_0 = v_t => v__lam_14(v_t);
 
-  const v__let_16 = (v_n) => {
-    return v__let_15(v_n, v__df_apply_0(v_pair));
-  };
+  const v__let_16 = v_n => v__let_15(v_n, v__df_apply_0(v_pair));
 
   const main = v__let_16(v_sumTriple(v_triple));
 

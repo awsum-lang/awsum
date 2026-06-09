@@ -1,24 +1,19 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -90,11 +85,11 @@
     }
   };
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v_e = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 589989748: {
               const v__t = s[1];

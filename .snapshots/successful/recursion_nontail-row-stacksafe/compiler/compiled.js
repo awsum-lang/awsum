@@ -1,18 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
   const __addInt32 = (a, b) => {
     const r = a + b;
@@ -25,7 +21,7 @@
     return [4, r | 0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -53,7 +49,7 @@
     }
   };
 
-  const v_extract = (v_x) => {
+  const v_extract = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -133,13 +129,9 @@
     }
   };
 
-  const v__lam_16 = (v__u) => {
-    return [7, " ", [5, [0]]];
-  };
+  const v__lam_16 = v__u => [7, " ", [5, [0]]];
 
-  const v__lam_14 = (v__u) => {
-    return [7, " ", [5, [0]]];
-  };
+  const v__lam_14 = v__u => [7, " ", [5, [0]]];
 
   const v__apply_sumRow = (v__k, v__x) => {
     while (true) {
@@ -217,13 +209,10 @@
     }
   };
 
-  const v_sumRow = (v_xs) => {
-    return v__cps_sumRow(v_xs, [15]);
-  };
+  const v_sumRow = v_xs => v__cps_sumRow(v_xs, [15]);
 
-  const v__lam_15 = (v__u) => {
-    return [7, String(v_sumRow(v_buildMixed(3 | 0, [13]))), [5, [0]]];
-  };
+  const v__lam_15 = v__u =>
+    [7, String(v_sumRow(v_buildMixed(3 | 0, [13]))), [5, [0]]];
 
   const v__apply_countRow = (v__k, v__x) => {
     while (true) {
@@ -278,13 +267,10 @@
     }
   };
 
-  const v_countRow = (v_n) => {
-    return v__cps_countRow(v_n, [17]);
-  };
+  const v_countRow = v_n => v__cps_countRow(v_n, [17]);
 
-  const v__lam_13 = (v__u) => {
-    return [7, String(v_extract(v_countRow(1000000 | 0))), [5, [0]]];
-  };
+  const v__lam_13 = v__u =>
+    [7, String(v_extract(v_countRow(1000000 | 0))), [5, [0]]];
 
   const v__apply__df_andThenIO_8 = (v__k, v__x) => {
     while (true) {
@@ -331,9 +317,7 @@
     }
   };
 
-  const v__df_andThenIO_8 = (v_io) => {
-    return v__cps__df_andThenIO_8(v_io, [23]);
-  };
+  const v__df_andThenIO_8 = v_io => v__cps__df_andThenIO_8(v_io, [23]);
 
   const v__apply__df_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -380,9 +364,7 @@
     }
   };
 
-  const v__df_andThenIO_4 = (v_io) => {
-    return v__cps__df_andThenIO_4(v_io, [21]);
-  };
+  const v__df_andThenIO_4 = v_io => v__cps__df_andThenIO_4(v_io, [21]);
 
   const v__apply__df_andThenIO_12 = (v__k, v__x) => {
     while (true) {
@@ -429,9 +411,7 @@
     }
   };
 
-  const v__df_andThenIO_12 = (v_io) => {
-    return v__cps__df_andThenIO_12(v_io, [25]);
-  };
+  const v__df_andThenIO_12 = v_io => v__cps__df_andThenIO_12(v_io, [25]);
 
   const v__apply__df_andThenIO_0 = (v__k, v__x) => {
     while (true) {
@@ -478,9 +458,7 @@
     }
   };
 
-  const v__df_andThenIO_0 = (v_io) => {
-    return v__cps__df_andThenIO_0(v_io, [19]);
-  };
+  const v__df_andThenIO_0 = v_io => v__cps__df_andThenIO_0(v_io, [19]);
 
   const main = v__df_andThenIO_0(
     v__df_andThenIO_4(

@@ -1,20 +1,16 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_treePreserveH = (v__e) => {
-    return [7, "[R]", [5, [0]]];
-  };
+  const v_treePreserveH = v__e => [7, "[R]", [5, [0]]];
 
-  const v_treeNoErrorH = (v__e) => {
-    return [7, "[!]", [5, [0]]];
-  };
+  const v_treeNoErrorH = v__e => [7, "[!]", [5, [0]]];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -42,19 +38,13 @@
     }
   };
 
-  const v_pureIO = (v_x) => {
-    return [5, v_x];
-  };
+  const v_pureIO = v_x => [5, v_x];
 
-  const v_recoverH = (v__e) => {
-    return v_pureIO(11 | 0);
-  };
+  const v_recoverH = v__e => v_pureIO(11 | 0);
 
-  const v_nestedRecoverH = (v__e) => {
-    return v_pureIO(55 | 0);
-  };
+  const v_nestedRecoverH = v__e => v_pureIO(55 | 0);
 
-  const v_handlerBC = (v_e) => {
+  const v_handlerBC = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -70,7 +60,7 @@
     }
   };
 
-  const v_handlerB = (v_e) => {
+  const v_handlerB = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -81,9 +71,7 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
   const v_inErrA = v_failIO([2252990199, [24]]);
 
@@ -91,15 +79,11 @@
 
   const v_reFailC = v_failIO([2286545437, [26]]);
 
-  const v_refailRowH = (v__e) => {
-    return v_reFailC;
-  };
+  const v_refailRowH = v__e => v_reFailC;
 
-  const v_refailNarrowH = (v__e) => {
-    return v_failIO([25]);
-  };
+  const v_refailNarrowH = v__e => v_failIO([25]);
 
-  const v_dispatchH = (v_e) => {
+  const v_dispatchH = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -115,29 +99,17 @@
     }
   };
 
-  const v__lam_16 = (v__u) => {
-    return [7, "=", [5, [0]]];
-  };
+  const v__lam_16 = v__u => [7, "=", [5, [0]]];
 
-  const v__lam_15 = (v_act, v__u) => {
-    return v_act;
-  };
+  const v__lam_15 = (v_act, v__u) => v_act;
 
-  const v__lam_14 = (v__u) => {
-    return [7, "\n", [5, [0]]];
-  };
+  const v__lam_14 = v__u => [7, "\n", [5, [0]]];
 
-  const v__lam_13 = (v__u) => {
-    return v_failIO([24]);
-  };
+  const v__lam_13 = v__u => v_failIO([24]);
 
-  const v__bi_showInt32 = (v__x0) => {
-    return String(v__x0);
-  };
+  const v__bi_showInt32 = v__x0 => String(v__x0);
 
-  const v__bi_IO_Stdout_print = (v__x0) => {
-    return [7, v__x0, [5, [0]]];
-  };
+  const v__bi_IO_Stdout_print = v__x0 => [7, v__x0, [5, [0]]];
 
   const v__apply__df_mapIO_36 = (v__k, v__x) => {
     while (true) {
@@ -188,9 +160,7 @@
     }
   };
 
-  const v__df_mapIO_36 = (v_io) => {
-    return v__cps__df_mapIO_36(v_io, [45]);
-  };
+  const v__df_mapIO_36 = v_io => v__cps__df_mapIO_36(v_io, [45]);
 
   const v__apply__df_handleErrorIO_8 = (v__k, v__x) => {
     while (true) {
@@ -241,9 +211,7 @@
     }
   };
 
-  const v__df_handleErrorIO_8 = (v_io) => {
-    return v__cps__df_handleErrorIO_8(v_io, [31]);
-  };
+  const v__df_handleErrorIO_8 = v_io => v__cps__df_handleErrorIO_8(v_io, [31]);
 
   const v__apply__df_handleErrorIO_44 = (v__k, v__x) => {
     while (true) {
@@ -294,9 +262,8 @@
     }
   };
 
-  const v__df_handleErrorIO_44 = (v_io) => {
-    return v__cps__df_handleErrorIO_44(v_io, [49]);
-  };
+  const v__df_handleErrorIO_44 = v_io =>
+    v__cps__df_handleErrorIO_44(v_io, [49]);
 
   const v__apply__df_handleErrorIO_40 = (v__k, v__x) => {
     while (true) {
@@ -347,9 +314,8 @@
     }
   };
 
-  const v__df_handleErrorIO_40 = (v_io) => {
-    return v__cps__df_handleErrorIO_40(v_io, [47]);
-  };
+  const v__df_handleErrorIO_40 = v_io =>
+    v__cps__df_handleErrorIO_40(v_io, [47]);
 
   const v__apply__df_handleErrorIO_4 = (v__k, v__x) => {
     while (true) {
@@ -400,9 +366,7 @@
     }
   };
 
-  const v__df_handleErrorIO_4 = (v_io) => {
-    return v__cps__df_handleErrorIO_4(v_io, [29]);
-  };
+  const v__df_handleErrorIO_4 = v_io => v__cps__df_handleErrorIO_4(v_io, [29]);
 
   const v_dispatchA = v__df_handleErrorIO_4(v_inErrA);
 
@@ -457,9 +421,8 @@
     }
   };
 
-  const v__df_handleErrorIO_28 = (v_io) => {
-    return v__cps__df_handleErrorIO_28(v_io, [41]);
-  };
+  const v__df_handleErrorIO_28 = v_io =>
+    v__cps__df_handleErrorIO_28(v_io, [41]);
 
   const v_treeNoError = v__df_handleErrorIO_28([7, "[Y]", [5, [0]]]);
 
@@ -512,9 +475,8 @@
     }
   };
 
-  const v__df_handleErrorIO_20 = (v_io) => {
-    return v__cps__df_handleErrorIO_20(v_io, [37]);
-  };
+  const v__df_handleErrorIO_20 = v_io =>
+    v__cps__df_handleErrorIO_20(v_io, [37]);
 
   const v__apply__df_handleErrorIO_16 = (v__k, v__x) => {
     while (true) {
@@ -565,9 +527,8 @@
     }
   };
 
-  const v__df_handleErrorIO_16 = (v_io) => {
-    return v__cps__df_handleErrorIO_16(v_io, [35]);
-  };
+  const v__df_handleErrorIO_16 = v_io =>
+    v__cps__df_handleErrorIO_16(v_io, [35]);
 
   const v_refailRow = v__df_handleErrorIO_16(v_failIO([24]));
 
@@ -620,9 +581,8 @@
     }
   };
 
-  const v__df_handleErrorIO_12 = (v_io) => {
-    return v__cps__df_handleErrorIO_12(v_io, [33]);
-  };
+  const v__df_handleErrorIO_12 = v_io =>
+    v__cps__df_handleErrorIO_12(v_io, [33]);
 
   const v_nested = v__df_handleErrorIO_8(
     v__df_handleErrorIO_12(v_failIO([24]))
@@ -679,9 +639,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [27]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [27]);
 
   const v_passthrough = v__df_handleErrorIO_0(v_pureIO(33 | 0));
 
@@ -912,9 +870,7 @@
     }
   };
 
-  const v__df_andThenIO_60 = (v_io) => {
-    return v__cps__df_andThenIO_60(v_io, [57]);
-  };
+  const v__df_andThenIO_60 = v_io => v__cps__df_andThenIO_60(v_io, [57]);
 
   const v__apply__df_andThenIO_56 = (v__k, v__x) => {
     while (true) {
@@ -970,9 +926,8 @@
     }
   };
 
-  const v__df_andThenIO_56 = (v_io, v__df_andThenIO_56_cap0_0) => {
-    return v__cps__df_andThenIO_56(v_io, v__df_andThenIO_56_cap0_0, [55]);
-  };
+  const v__df_andThenIO_56 = (v_io, v__df_andThenIO_56_cap0_0) =>
+    v__cps__df_andThenIO_56(v_io, v__df_andThenIO_56_cap0_0, [55]);
 
   const v__apply__df_andThenIO_52 = (v__k, v__x) => {
     while (true) {
@@ -1023,19 +978,14 @@
     }
   };
 
-  const v__df_andThenIO_52 = (v_io) => {
-    return v__cps__df_andThenIO_52(v_io, [53]);
-  };
+  const v__df_andThenIO_52 = v_io => v__cps__df_andThenIO_52(v_io, [53]);
 
-  const v_line = (v_label, v_act) => {
-    return v__df_andThenIO_52(
+  const v_line = (v_label, v_act) =>
+    v__df_andThenIO_52(
       v__df_andThenIO_56(v__df_andThenIO_60([7, v_label, [5, [0]]]), v_act)
     );
-  };
 
-  const v__lam_17 = (v__u) => {
-    return v_line("treeNoError", v_treeNoError);
-  };
+  const v__lam_17 = v__u => v_line("treeNoError", v_treeNoError);
 
   const v__cps__df_andThenIO_64 = (v_io, v__k) => {
     while (true) {
@@ -1064,9 +1014,7 @@
     }
   };
 
-  const v__df_andThenIO_64 = (v_io) => {
-    return v__cps__df_andThenIO_64(v_io, [59]);
-  };
+  const v__df_andThenIO_64 = v_io => v__cps__df_andThenIO_64(v_io, [59]);
 
   const v__apply__df_andThenIO_32 = (v__k, v__x) => {
     while (true) {
@@ -1117,17 +1065,12 @@
     }
   };
 
-  const v__df_andThenIO_32 = (v_io) => {
-    return v__cps__df_andThenIO_32(v_io, [43]);
-  };
+  const v__df_andThenIO_32 = v_io => v__cps__df_andThenIO_32(v_io, [43]);
 
-  const v_observeB = (v_io) => {
-    return v__df_handleErrorIO_40(v__df_andThenIO_32(v__df_mapIO_36(v_io)));
-  };
+  const v_observeB = v_io =>
+    v__df_handleErrorIO_40(v__df_andThenIO_32(v__df_mapIO_36(v_io)));
 
-  const v__lam_20 = (v__u) => {
-    return v_line("refailNarrow", v_observeB(v_refailNarrow));
-  };
+  const v__lam_20 = v__u => v_line("refailNarrow", v_observeB(v_refailNarrow));
 
   const v__cps__df_andThenIO_76 = (v_io, v__k) => {
     while (true) {
@@ -1156,17 +1099,11 @@
     }
   };
 
-  const v__df_andThenIO_76 = (v_io) => {
-    return v__cps__df_andThenIO_76(v_io, [65]);
-  };
+  const v__df_andThenIO_76 = v_io => v__cps__df_andThenIO_76(v_io, [65]);
 
-  const v_observeNever = (v_io) => {
-    return v__df_andThenIO_32(v__df_mapIO_36(v_io));
-  };
+  const v_observeNever = v_io => v__df_andThenIO_32(v__df_mapIO_36(v_io));
 
-  const v__lam_21 = (v__u) => {
-    return v_line("nested", v_observeNever(v_nested));
-  };
+  const v__lam_21 = v__u => v_line("nested", v_observeNever(v_nested));
 
   const v__cps__df_andThenIO_80 = (v_io, v__k) => {
     while (true) {
@@ -1195,13 +1132,10 @@
     }
   };
 
-  const v__df_andThenIO_80 = (v_io) => {
-    return v__cps__df_andThenIO_80(v_io, [67]);
-  };
+  const v__df_andThenIO_80 = v_io => v__cps__df_andThenIO_80(v_io, [67]);
 
-  const v__lam_22 = (v__u) => {
-    return v_line("passthrough", v_observeNever(v_passthrough));
-  };
+  const v__lam_22 = v__u =>
+    v_line("passthrough", v_observeNever(v_passthrough));
 
   const v__cps__df_andThenIO_84 = (v_io, v__k) => {
     while (true) {
@@ -1230,13 +1164,9 @@
     }
   };
 
-  const v__df_andThenIO_84 = (v_io) => {
-    return v__cps__df_andThenIO_84(v_io, [69]);
-  };
+  const v__df_andThenIO_84 = v_io => v__cps__df_andThenIO_84(v_io, [69]);
 
-  const v__lam_23 = (v__u) => {
-    return v_line("dispatchB", v_observeNever(v_dispatchB));
-  };
+  const v__lam_23 = v__u => v_line("dispatchB", v_observeNever(v_dispatchB));
 
   const v__cps__df_andThenIO_88 = (v_io, v__k) => {
     while (true) {
@@ -1265,13 +1195,9 @@
     }
   };
 
-  const v__df_andThenIO_88 = (v_io) => {
-    return v__cps__df_andThenIO_88(v_io, [71]);
-  };
+  const v__df_andThenIO_88 = v_io => v__cps__df_andThenIO_88(v_io, [71]);
 
-  const v__lam_24 = (v__u) => {
-    return v_line("dispatchA", v_observeNever(v_dispatchA));
-  };
+  const v__lam_24 = v__u => v_line("dispatchA", v_observeNever(v_dispatchA));
 
   const v__cps__df_andThenIO_92 = (v_io, v__k) => {
     while (true) {
@@ -1300,9 +1226,7 @@
     }
   };
 
-  const v__df_andThenIO_92 = (v_io) => {
-    return v__cps__df_andThenIO_92(v_io, [73]);
-  };
+  const v__df_andThenIO_92 = v_io => v__cps__df_andThenIO_92(v_io, [73]);
 
   const v__apply__df_andThenIO_24 = (v__k, v__x) => {
     while (true) {
@@ -1353,17 +1277,13 @@
     }
   };
 
-  const v__df_andThenIO_24 = (v_io) => {
-    return v__cps__df_andThenIO_24(v_io, [39]);
-  };
+  const v__df_andThenIO_24 = v_io => v__cps__df_andThenIO_24(v_io, [39]);
 
   const v_treePreserve = v__df_handleErrorIO_20(
     v__df_andThenIO_24([7, "[X]", [5, [0]]])
   );
 
-  const v__lam_18 = (v__u) => {
-    return v_line("treePreserve", v_treePreserve);
-  };
+  const v__lam_18 = v__u => v_line("treePreserve", v_treePreserve);
 
   const v__cps__df_andThenIO_68 = (v_io, v__k) => {
     while (true) {
@@ -1392,9 +1312,7 @@
     }
   };
 
-  const v__df_andThenIO_68 = (v_io) => {
-    return v__cps__df_andThenIO_68(v_io, [61]);
-  };
+  const v__df_andThenIO_68 = v_io => v__cps__df_andThenIO_68(v_io, [61]);
 
   const v__apply__df__rowmono_0_andThenIO_48 = (v__k, v__x) => {
     while (true) {
@@ -1448,19 +1366,13 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_48 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_48(v_io, [51]);
-  };
+  const v__df__rowmono_0_andThenIO_48 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_48(v_io, [51]);
 
-  const v_observeBC = (v_io) => {
-    return v__df_handleErrorIO_44(
-      v__df__rowmono_0_andThenIO_48(v__df_mapIO_36(v_io))
-    );
-  };
+  const v_observeBC = v_io =>
+    v__df_handleErrorIO_44(v__df__rowmono_0_andThenIO_48(v__df_mapIO_36(v_io)));
 
-  const v__lam_19 = (v__u) => {
-    return v_line("refailRow", v_observeBC(v_refailRow));
-  };
+  const v__lam_19 = v__u => v_line("refailRow", v_observeBC(v_refailRow));
 
   const v__cps__df_andThenIO_72 = (v_io, v__k) => {
     while (true) {
@@ -1489,9 +1401,7 @@
     }
   };
 
-  const v__df_andThenIO_72 = (v_io) => {
-    return v__cps__df_andThenIO_72(v_io, [63]);
-  };
+  const v__df_andThenIO_72 = v_io => v__cps__df_andThenIO_72(v_io, [63]);
 
   const main = v__df_andThenIO_64(
     v__df_andThenIO_68(

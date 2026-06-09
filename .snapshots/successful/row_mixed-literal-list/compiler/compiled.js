@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,7 +17,7 @@
     return [4, r | 0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -135,9 +135,7 @@
     }
   };
 
-  const v_sumRow = (v_xs) => {
-    return v__cps_sumRow(v_xs, [15]);
-  };
+  const v_sumRow = v_xs => v__cps_sumRow(v_xs, [15]);
 
   const main = [7, String(v_sumRow(v_mixed)), [5, [0]]];
 

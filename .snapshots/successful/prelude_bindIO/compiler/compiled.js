@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,13 +34,9 @@
     }
   };
 
-  const v_emit = (v_s) => {
-    return [7, v_s, [5, [0]]];
-  };
+  const v_emit = v_s => [7, v_s, [5, [0]]];
 
-  const v__lam_13 = (v__v) => {
-    return v_emit("c");
-  };
+  const v__lam_13 = v__v => v_emit("c");
 
   const v__apply__df_bindIO_4 = (v__k, v__x) => {
     while (true) {
@@ -87,13 +83,9 @@
     }
   };
 
-  const v__df_bindIO_4 = (v_io) => {
-    return v__cps__df_bindIO_4(v_io, [10]);
-  };
+  const v__df_bindIO_4 = v_io => v__cps__df_bindIO_4(v_io, [10]);
 
-  const v__lam_14 = (v__u) => {
-    return v__df_bindIO_4(v_emit("b"));
-  };
+  const v__lam_14 = v__u => v__df_bindIO_4(v_emit("b"));
 
   const v__apply__df_bindIO_0 = (v__k, v__x) => {
     while (true) {
@@ -140,9 +132,7 @@
     }
   };
 
-  const v__df_bindIO_0 = (v_io) => {
-    return v__cps__df_bindIO_0(v_io, [8]);
-  };
+  const v__df_bindIO_0 = v_io => v__cps__df_bindIO_0(v_io, [8]);
 
   const main = v__df_bindIO_0(v_emit("a"));
 

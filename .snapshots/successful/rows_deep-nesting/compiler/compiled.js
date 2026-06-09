@@ -1,14 +1,13 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
   const v_tagged = (v_label, v_val) => {
     {
@@ -38,7 +37,7 @@
     }
   };
 
-  const v_showDeep = (v_b) => {
+  const v_showDeep = v_b => {
     {
       const __s = v_b;
       switch (__s[0]) {
@@ -95,7 +94,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -123,11 +122,9 @@
     }
   };
 
-  const v_pureIO = (v_x) => {
-    return [5, v_x];
-  };
+  const v_pureIO = v_x => [5, v_x];
 
-  const v_printErr = (v_e) => {
+  const v_printErr = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -140,11 +137,9 @@
 
   const v_narrowDeep = [25, [12, [4, [1]]]];
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v_eitherToIO = (v_x) => {
+  const v_eitherToIO = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -180,7 +175,7 @@
     }
   };
 
-  const v__lift_15 = (v___input) => {
+  const v__lift_15 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -196,7 +191,7 @@
     }
   };
 
-  const v__lift_14 = (v___input) => {
+  const v__lift_14 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -211,7 +206,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -225,7 +220,7 @@
 
   const v_widenedDeep = v__lift_13(v_narrowDeep);
 
-  const v_render = ((s) => {
+  const v_render = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_4 = s[1];
@@ -233,7 +228,7 @@
       }
       case 4: {
         const v_r01 = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_3 = s[1];
@@ -253,9 +248,7 @@
     }
   })(v_tagged("directDeepT", v_showDeep(v_directDeepT)));
 
-  const v__bi_IO_Stdout_print = (v__x0) => {
-    return [7, v__x0, [5, [0]]];
-  };
+  const v__bi_IO_Stdout_print = v__x0 => [7, v__x0, [5, [0]]];
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -306,9 +299,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [26]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [26]);
 
   const v__apply__df_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -359,9 +350,7 @@
     }
   };
 
-  const v__df_andThenIO_4 = (v_io) => {
-    return v__cps__df_andThenIO_4(v_io, [28]);
-  };
+  const v__df_andThenIO_4 = v_io => v__cps__df_andThenIO_4(v_io, [28]);
 
   const main = v__df_handleErrorIO_0(v__df_andThenIO_4(v_eitherToIO(v_render)));
 

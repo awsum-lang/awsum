@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -28,11 +28,10 @@
     return [4, r | 0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_step2 = (v_n) => {
+  const v_step2 = v_n => {
     {
       const __s = __mulInt32(v_n, 2 | 0);
       switch (__s[0]) {
@@ -48,7 +47,7 @@
     }
   };
 
-  const v_step1 = (v_n) => {
+  const v_step1 = v_n => {
     {
       const __s = __addInt32(v_n, 10 | 0);
       switch (__s[0]) {
@@ -64,7 +63,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -92,7 +91,7 @@
     }
   };
 
-  const v_renderErr = (v_e) => {
+  const v_renderErr = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -115,7 +114,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -147,7 +146,7 @@
     }
   };
 
-  const v_run = (v_start) => {
+  const v_run = v_start => {
     {
       const __s = v_step1(v_start);
       switch (__s[0]) {
@@ -163,11 +162,11 @@
     }
   };
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v_e = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v___w0 = s[1];

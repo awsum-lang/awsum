@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -36,7 +36,7 @@
 
   const v_oa = [4, 2 | 0];
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -64,11 +64,9 @@
     }
   };
 
-  const v_cont = (v__n) => {
-    return [3, [25]];
-  };
+  const v_cont = v__n => [3, [25]];
 
-  const v__lift_14 = (v___input) => {
+  const v__lift_14 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -84,7 +82,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -100,7 +98,7 @@
     }
   };
 
-  const v__df__rowmono_0_bindEither_1 = (v_x) => {
+  const v__df__rowmono_0_bindEither_1 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -116,9 +114,8 @@
     }
   };
 
-  const v__df_partialB_0 = () => {
-    return v__df__rowmono_0_bindEither_1(v__lift_13(v_oa));
-  };
+  const v__df_partialB_0 = () =>
+    v__df__rowmono_0_bindEither_1(v__lift_13(v_oa));
 
   const main = [7, v_describe(v__df_partialB_0()), [5, [0]]];
 

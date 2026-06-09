@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showTri = (v_t) => {
+  const v_showTri = v_t => {
     {
       const __s = v_t;
       switch (__s[0]) {
@@ -21,7 +20,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -49,7 +48,7 @@
     }
   };
 
-  const v__let_15 = (v_res) => {
+  const v__let_15 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -65,9 +64,7 @@
     }
   };
 
-  const v__lam_13 = (v_x) => {
-    return v_x;
-  };
+  const v__lam_13 = v_x => v_x;
 
   const v__df__let_14_0 = (v_b, v_n, v_s) => {
     {
@@ -109,9 +106,7 @@
     }
   };
 
-  const v_threeTypes = (v_n, v_s, v_b) => {
-    return v__df__let_14_0(v_b, v_n, v_s);
-  };
+  const v_threeTypes = (v_n, v_s, v_b) => v__df__let_14_0(v_b, v_n, v_s);
 
   const main = v__let_15(v_threeTypes(42 | 0, "hello", [24]));
 

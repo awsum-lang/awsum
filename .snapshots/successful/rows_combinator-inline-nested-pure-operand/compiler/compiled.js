@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,13 +34,11 @@
     }
   };
 
-  const v_pureEither = (v_x) => {
-    return [4, v_x];
-  };
+  const v_pureEither = v_x => [4, v_x];
 
   const v_ob = [4, 5 | 0];
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -68,11 +66,9 @@
     }
   };
 
-  const v__lam_13 = (v__m) => {
-    return [3, [365691641, [26]]];
-  };
+  const v__lam_13 = v__m => [3, [365691641, [26]]];
 
-  const v__df__rowmono_1_bindEither_1 = (v_x) => {
+  const v__df__rowmono_1_bindEither_1 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -88,11 +84,9 @@
     }
   };
 
-  const v__lam_14 = (v__n) => {
-    return v__df__rowmono_1_bindEither_1(v_ob);
-  };
+  const v__lam_14 = v__n => v__df__rowmono_1_bindEither_1(v_ob);
 
-  const v__df__rowmono_0_bindEither_0 = (v_x) => {
+  const v__df__rowmono_0_bindEither_0 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -108,9 +102,7 @@
     }
   };
 
-  const v_cPure = (v_n) => {
-    return v__df__rowmono_0_bindEither_0(v_pureEither(v_n));
-  };
+  const v_cPure = v_n => v__df__rowmono_0_bindEither_0(v_pureEither(v_n));
 
   const main = [7, v_describe(v_cPure(7 | 0)), [5, [0]]];
 

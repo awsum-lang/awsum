@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,19 +34,13 @@
     }
   };
 
-  const v_handler = (v__b) => {
-    return [7, "ErrB", [5, [0]]];
-  };
+  const v_handler = v__b => [7, "ErrB", [5, [0]]];
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
   const v_action = v_failIO([24]);
 
-  const v__lam_13 = (v__a) => {
-    return [25];
-  };
+  const v__lam_13 = v__a => [25];
 
   const v__apply__df_mapIOError_0 = (v__k, v__x) => {
     while (true) {
@@ -97,9 +91,7 @@
     }
   };
 
-  const v__df_mapIOError_0 = (v_io) => {
-    return v__cps__df_mapIOError_0(v_io, [26]);
-  };
+  const v__df_mapIOError_0 = v_io => v__cps__df_mapIOError_0(v_io, [26]);
 
   const v__apply__df_handleErrorIO_4 = (v__k, v__x) => {
     while (true) {
@@ -150,13 +142,9 @@
     }
   };
 
-  const v__df_handleErrorIO_4 = (v_io) => {
-    return v__cps__df_handleErrorIO_4(v_io, [28]);
-  };
+  const v__df_handleErrorIO_4 = v_io => v__cps__df_handleErrorIO_4(v_io, [28]);
 
-  const v__let_14 = (v_renamed) => {
-    return v__df_handleErrorIO_4(v_renamed);
-  };
+  const v__let_14 = v_renamed => v__df_handleErrorIO_4(v_renamed);
 
   const main = v__let_14(v__df_mapIOError_0(v_action));
 

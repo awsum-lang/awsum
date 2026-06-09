@@ -1,18 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
   const v_spineLast = (v_t, v_lastV) => {
     while (true) {
@@ -37,7 +33,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -97,7 +93,7 @@
     }
   };
 
-  const v__scc__apply_mirror__cps_mirror = (v__args) => {
+  const v__scc__apply_mirror__cps_mirror = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -174,15 +170,12 @@
     }
   };
 
-  const v__cps_mirror = (v_t, v__k) => {
-    return v__scc__apply_mirror__cps_mirror([30, v_t, v__k]);
-  };
+  const v__cps_mirror = (v_t, v__k) =>
+    v__scc__apply_mirror__cps_mirror([30, v_t, v__k]);
 
-  const v_mirror = (v_t) => {
-    return v__cps_mirror(v_t, [26]);
-  };
+  const v_mirror = v_t => v__cps_mirror(v_t, [26]);
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v__e = s[1];

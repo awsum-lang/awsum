@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,7 +34,7 @@
     }
   };
 
-  const v__scc_parseBinary_parseExpr = (v__args) => {
+  const v__scc_parseBinary_parseExpr = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -77,9 +77,7 @@
     }
   };
 
-  const v_parseExpr = (v_tok) => {
-    return v__scc_parseBinary_parseExpr([27, v_tok]);
-  };
+  const v_parseExpr = v_tok => v__scc_parseBinary_parseExpr([27, v_tok]);
 
   const main = [7, String(v_parseExpr([25])), [5, [0]]];
 

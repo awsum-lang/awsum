@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const __entryArgEither = (arg) => {
+  const __entryArgEither = arg => {
     if (arg.length > 134217728) {
       return [3, [589989748, [19]]];
     }
@@ -47,11 +46,9 @@
     return [4, list];
   };
 
-  const v_pureIO = (v_x) => {
-    return [5, v_x];
-  };
+  const v_pureIO = v_x => [5, v_x];
 
-  const v_printError = (v_e) => {
+  const v_printError = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -107,7 +104,7 @@
     }
   };
 
-  const v_headList = (v_xs) => {
+  const v_headList = v_xs => {
     {
       const __s = v_xs;
       switch (__s[0]) {
@@ -123,11 +120,9 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v_eitherToIO = (v_x) => {
+  const v_eitherToIO = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -143,7 +138,7 @@
     }
   };
 
-  const v__lift_14 = (v___input) => {
+  const v__lift_14 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -159,7 +154,7 @@
     }
   };
 
-  const v_greet = (v_args) => {
+  const v_greet = v_args => {
     {
       const __s = v_nothingAsLeft([24], v_headList(v_args));
       switch (__s[0]) {
@@ -187,11 +182,9 @@
     }
   };
 
-  const v__lam_13 = (v_args) => {
-    return v_eitherToIO(v_greet(v_args));
-  };
+  const v__lam_13 = v_args => v_eitherToIO(v_greet(v_args));
 
-  const v__io_getargs_cont = (v_result) => {
+  const v__io_getargs_cont = v_result => {
     {
       const __s = v_result;
       switch (__s[0]) {
@@ -207,9 +200,7 @@
     }
   };
 
-  const v__bi_IO_Stdout_print = (v__x0) => {
-    return [7, v__x0, [5, [0]]];
-  };
+  const v__bi_IO_Stdout_print = v__x0 => [7, v__x0, [5, [0]]];
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -264,9 +255,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [33]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [33]);
 
   const v__apply__df__rowmono_1_andThenIO_8 = (v__k, v__x) => {
     while (true) {
@@ -321,9 +310,8 @@
     }
   };
 
-  const v__df__rowmono_1_andThenIO_8 = (v_io) => {
-    return v__cps__df__rowmono_1_andThenIO_8(v_io, [37]);
-  };
+  const v__df__rowmono_1_andThenIO_8 = v_io =>
+    v__cps__df__rowmono_1_andThenIO_8(v_io, [37]);
 
   const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -381,9 +369,8 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_4 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_4(v_io, [35]);
-  };
+  const v__df__rowmono_0_andThenIO_4 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_4(v_io, [35]);
 
   const v__apply__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1 = (
     v__k,
@@ -504,20 +491,15 @@
     }
   };
 
-  const v__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1 = (v__args) => {
-    return v__cps__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(
-      v__args,
-      [39]
-    );
-  };
+  const v__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1 = v__args =>
+    v__cps__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(v__args, [39]);
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(
       [29, v__cl, v__arg0]
     );
-  };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

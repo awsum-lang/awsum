@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,7 +17,7 @@
     return [4, r | 0];
   };
 
-  const __entryArgEither = (arg) => {
+  const __entryArgEither = arg => {
     if (arg.length > 134217728) {
       return [3, [589989748, [19]]];
     }
@@ -54,15 +54,11 @@
     return [4, list];
   };
 
-  const v_pureEither = (v_x) => {
-    return [4, v_x];
-  };
+  const v_pureEither = v_x => [4, v_x];
 
-  const v_opTuple = (v__wild0) => {
-    return [4, [16, 1 | 0, 2 | 0, 3 | 0]];
-  };
+  const v_opTuple = v__wild0 => [4, [16, 1 | 0, 2 | 0, 3 | 0]];
 
-  const v_headList = (v_xs) => {
+  const v_headList = v_xs => {
     {
       const __s = v_xs;
       switch (__s[0]) {
@@ -78,7 +74,7 @@
     }
   };
 
-  const v_handleInputErr = (v_e) => {
+  const v_handleInputErr = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -94,7 +90,7 @@
     }
   };
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -110,9 +106,9 @@
     }
   };
 
-  const v_processInput = (v_raw) => {
-    return v__let_13(
-      ((s) => {
+  const v_processInput = v_raw =>
+    v__let_13(
+      (s => {
         switch (s[0]) {
           case 3: {
             const v__do_e_0 = s[1];
@@ -120,14 +116,14 @@
           }
           case 4: {
             const v___p0 = s[1];
-            return ((s) => {
+            return (s => {
               switch (s[0]) {
                 case 16: {
                   const v_a = s[1];
                   const v_b = s[2];
                   const v_c = s[3];
                   return v_pureEither(
-                    ((s) => {
+                    (s => {
                       switch (s[0]) {
                         case 3: {
                           const v___w0 = s[1];
@@ -135,7 +131,7 @@
                         }
                         case 4: {
                           const v_ab = s[1];
-                          return ((s) => {
+                          return (s => {
                             switch (s[0]) {
                               case 3: {
                                 const v___w0 = s[1];
@@ -158,9 +154,8 @@
         }
       })(v_opTuple(v_raw))
     );
-  };
 
-  const v_processArgs = (v_args) => {
+  const v_processArgs = v_args => {
     {
       const __s = v_headList(v_args);
       switch (__s[0]) {
@@ -175,7 +170,7 @@
     }
   };
 
-  const v__io_getargs_cont = (v_result) => {
+  const v__io_getargs_cont = v_result => {
     {
       const __s = v_result;
       switch (__s[0]) {
@@ -244,9 +239,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [23]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [23]);
 
   const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -304,9 +297,8 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_4 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_4(v_io, [25]);
-  };
+  const v__df__rowmono_0_andThenIO_4 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_4(v_io, [25]);
 
   const v__apply__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__k, v__x) => {
     while (true) {
@@ -396,15 +388,13 @@
     }
   };
 
-  const v__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__args) => {
-    return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(v__args, [27]);
-  };
+  const v__scc__apply1__df__lam_14_5__df__lam_9_1 = v__args =>
+    v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(v__args, [27]);
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_14_5__df__lam_9_1([20, v__cl, v__arg0]);
-  };
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__df__lam_14_5__df__lam_9_1([20, v__cl, v__arg0]);
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

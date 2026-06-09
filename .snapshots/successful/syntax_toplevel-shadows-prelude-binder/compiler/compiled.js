@@ -1,24 +1,18 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __succInt32 = (x) => {
-    return x === 2147483647 ? [3, [18]] : [4, x + 1 | 0];
-  };
+  const __succInt32 = x => x === 2147483647 ? [3, [18]] : [4, x + 1 | 0];
 
-  const v_x = (v_n) => {
-    return __predInt32(v_n);
-  };
+  const v_x = v_n => __predInt32(v_n);
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -46,15 +40,11 @@
     }
   };
 
-  const v_pureIO = (v_x_u0) => {
-    return [5, v_x_u0];
-  };
+  const v_pureIO = v_x_u0 => [5, v_x_u0];
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
-  const v_eitherToIO = (v_x_u1) => {
+  const v_eitherToIO = v_x_u1 => {
     {
       const __s = v_x_u1;
       switch (__s[0]) {
@@ -70,21 +60,13 @@
     }
   };
 
-  const v_a = (v_n) => {
-    return __succInt32(v_n);
-  };
+  const v_a = v_n => __succInt32(v_n);
 
-  const v__lam_15 = (v_v) => {
-    return v_eitherToIO(v_a(v_v));
-  };
+  const v__lam_15 = v_v => v_eitherToIO(v_a(v_v));
 
-  const v__lam_14 = (v_w) => {
-    return [7, String(v_w), [5, [0]]];
-  };
+  const v__lam_14 = v_w => [7, String(v_w), [5, [0]]];
 
-  const v__lam_13 = (v__e) => {
-    return [7, "err", [5, [0]]];
-  };
+  const v__lam_13 = v__e => [7, "err", [5, [0]]];
 
   const v__apply__lift_19 = (v__k, v__x) => {
     while (true) {
@@ -135,9 +117,7 @@
     }
   };
 
-  const v__lift_19 = (v___input) => {
-    return v__cps__lift_19(v___input, [8]);
-  };
+  const v__lift_19 = v___input => v__cps__lift_19(v___input, [8]);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -188,9 +168,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [10]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [10]);
 
   const v__apply__df__rowmono_1_andThenIO_8 = (v__k, v__x) => {
     while (true) {
@@ -247,9 +225,8 @@
     }
   };
 
-  const v__df__rowmono_1_andThenIO_8 = (v_io) => {
-    return v__cps__df__rowmono_1_andThenIO_8(v_io, [14]);
-  };
+  const v__df__rowmono_1_andThenIO_8 = v_io =>
+    v__cps__df__rowmono_1_andThenIO_8(v_io, [14]);
 
   const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
     while (true) {
@@ -300,9 +277,8 @@
     }
   };
 
-  const v__df__rowmono_0_andThenIO_4 = (v_io) => {
-    return v__cps__df__rowmono_0_andThenIO_4(v_io, [12]);
-  };
+  const v__df__rowmono_0_andThenIO_4 = v_io =>
+    v__cps__df__rowmono_0_andThenIO_4(v_io, [12]);
 
   const main = v__df_handleErrorIO_0(
     v__df__rowmono_0_andThenIO_4(

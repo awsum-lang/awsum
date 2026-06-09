@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -36,17 +36,12 @@
 
   const v_answer = 42 | 0;
 
-  const v__lam_13 = (v_k, v__n) => {
-    return v_k;
-  };
+  const v__lam_13 = (v_k, v__n) => v_k;
 
-  const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0) => {
-    return v__lam_13(v__df_apply_0_cap0_0, v_x);
-  };
+  const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0) =>
+    v__lam_13(v__df_apply_0_cap0_0, v_x);
 
-  const v_captureFn = (v_k) => {
-    return v__df_apply_0(v_answer, v_k);
-  };
+  const v_captureFn = v_k => v__df_apply_0(v_answer, v_k);
 
   const main = [7, String(v_captureFn(7 | 0)), [5, [0]]];
 

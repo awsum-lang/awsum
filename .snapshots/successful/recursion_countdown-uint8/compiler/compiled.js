@@ -1,28 +1,21 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predUInt8 = (x) => {
-    return x === 0 ? [3, [17]] : [4, x - 1 & 0xFF];
-  };
+  const __predUInt8 = x => x === 0 ? [3, [17]] : [4, x - 1 & 0xFF];
 
-  const __eqUInt8 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqUInt8 = (a, b) => a === b ? [1] : [2];
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showUnderflowError = (v__wild0) => {
-    return "UnderflowError";
-  };
+  const v_showUnderflowError = v__wild0 => "UnderflowError";
 
-  const v_showResult = (v_r) => {
+  const v_showResult = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -57,7 +50,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -85,7 +78,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -101,7 +94,7 @@
     }
   };
 
-  const v__let_14 = (v_res) => {
+  const v__let_14 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -206,9 +199,7 @@
     }
   };
 
-  const v_countDown = (v_n) => {
-    return v__cps_countDown(v_n, [20]);
-  };
+  const v_countDown = v_n => v__cps_countDown(v_n, [20]);
 
   const main = v__let_14(v_showResult(v_countDown(255 & 0xFF)));
 

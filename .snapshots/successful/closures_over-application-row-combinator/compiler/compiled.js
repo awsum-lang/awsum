@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_showResult = (v_r) => {
+  const v_showResult = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -34,7 +34,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -64,11 +64,9 @@
 
   const v_oa = [4, 10 | 0];
 
-  const v_cont = (v_n) => {
-    return [4, v_n];
-  };
+  const v_cont = v_n => [4, v_n];
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -84,9 +82,8 @@
     }
   };
 
-  const v__df_identity_0 = (v__df_identity_0_cap0_0) => {
-    return [8, v__df_identity_0_cap0_0];
-  };
+  const v__df_identity_0 = v__df_identity_0_cap0_0 =>
+    [8, v__df_identity_0_cap0_0];
 
   const v__apply__scc__apply1__rowmono_0_bindEither = (v__k, v__x) => {
     while (true) {
@@ -166,13 +163,11 @@
     }
   };
 
-  const v__scc__apply1__rowmono_0_bindEither = (v__args) => {
-    return v__cps__scc__apply1__rowmono_0_bindEither(v__args, [12]);
-  };
+  const v__scc__apply1__rowmono_0_bindEither = v__args =>
+    v__cps__scc__apply1__rowmono_0_bindEither(v__args, [12]);
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__rowmono_0_bindEither([10, v__cl, v__arg0]);
-  };
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__rowmono_0_bindEither([10, v__cl, v__arg0]);
 
   const v_result = v__apply1(v__df_identity_0(v_oa), [9]);
 

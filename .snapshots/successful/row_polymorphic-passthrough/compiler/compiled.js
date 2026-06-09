@@ -1,14 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
   const v_v = [1615808600, "poly"];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -36,19 +36,15 @@
     }
   };
 
-  const v_myId = (v_x) => {
-    return v_x;
-  };
+  const v_myId = v_x => v_x;
 
   const v_w = v_myId(v_v);
 
-  const v_myFirst = (v_x, v__y) => {
-    return v_x;
-  };
+  const v_myFirst = (v_x, v__y) => v_x;
 
   const v_z = v_myFirst(v_v, [1]);
 
-  const v_d = (v_x) => {
+  const v_d = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -60,9 +56,7 @@
     }
   };
 
-  const v__lam_13 = (v__u) => {
-    return [7, v_d(v_z), [5, [0]]];
-  };
+  const v__lam_13 = v__u => [7, v_d(v_z), [5, [0]]];
 
   const v__apply__df_andThenIO_0 = (v__k, v__x) => {
     while (true) {
@@ -109,9 +103,7 @@
     }
   };
 
-  const v__df_andThenIO_0 = (v_io) => {
-    return v__cps__df_andThenIO_0(v_io, [8]);
-  };
+  const v__df_andThenIO_0 = v_io => v__cps__df_andThenIO_0(v_io, [8]);
 
   const main = v__df_andThenIO_0([7, v_d(v_w), [5, [0]]]);
 

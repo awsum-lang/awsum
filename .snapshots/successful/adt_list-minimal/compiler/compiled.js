@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,7 +37,7 @@
     }
   };
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -143,13 +142,10 @@
     }
   };
 
-  const v__scc_show_showCons = (v__args) => {
-    return v__cps__scc_show_showCons(v__args, [17]);
-  };
+  const v__scc_show_showCons = v__args =>
+    v__cps__scc_show_showCons(v__args, [17]);
 
-  const v_show = (v_xs) => {
-    return v__scc_show_showCons([15, v_xs]);
-  };
+  const v_show = v_xs => v__scc_show_showCons([15, v_xs]);
 
   const main = v__let_13(v_show([14, "a", [14, "b", [14, "c", [13]]]]));
 

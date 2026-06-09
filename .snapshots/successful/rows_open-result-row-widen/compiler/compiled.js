@@ -1,16 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_zeroOr = (v__n) => {
-    return [3, [751576878, [26]]];
-  };
+  const v_zeroOr = v__n => [3, [751576878, [26]]];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,7 +36,7 @@
     }
   };
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {

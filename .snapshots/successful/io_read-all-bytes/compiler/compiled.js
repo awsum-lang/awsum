@@ -1,14 +1,13 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
   const __stdinReadAllBytes = () => {
     const buf = require("fs").readFileSync(0);
@@ -19,13 +18,10 @@
     return list;
   };
 
-  const v__lam_12 = (v_b, v_restHex) => {
-    return __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
-  };
+  const v__lam_12 = (v_b, v_restHex) =>
+    __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
 
-  const v__io_stdinReadAllBytes_cont = (v_bytes) => {
-    return [5, v_bytes];
-  };
+  const v__io_stdinReadAllBytes_cont = v_bytes => [5, v_bytes];
 
   const v__df_bindEither_0 = (v_x, v__df_bindEither_0_cap1_0) => {
     {
@@ -87,11 +83,10 @@
     }
   };
 
-  const v_bytesToHexStringNoPrefix = (v_bytes) => {
-    return v__cps_bytesToHexStringNoPrefix(v_bytes, [19]);
-  };
+  const v_bytesToHexStringNoPrefix = v_bytes =>
+    v__cps_bytesToHexStringNoPrefix(v_bytes, [19]);
 
-  const v__lam_13 = (v_bytes) => {
+  const v__lam_13 = v_bytes => {
     {
       const __s = v_bytesToHexStringNoPrefix(v_bytes);
       switch (__s[0]) {
@@ -156,9 +151,7 @@
     }
   };
 
-  const v__df_andThenIO_1 = (v_io) => {
-    return v__cps__df_andThenIO_1(v_io, [21]);
-  };
+  const v__df_andThenIO_1 = v_io => v__cps__df_andThenIO_1(v_io, [21]);
 
   const v__apply__scc__apply1__df__lam_2_4 = (v__k, v__x) => {
     while (true) {
@@ -223,15 +216,13 @@
     }
   };
 
-  const v__scc__apply1__df__lam_2_4 = (v__args) => {
-    return v__cps__scc__apply1__df__lam_2_4(v__args, [23]);
-  };
+  const v__scc__apply1__df__lam_2_4 = v__args =>
+    v__cps__scc__apply1__df__lam_2_4(v__args, [23]);
 
-  const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_2_4([17, v__cl, v__arg0]);
-  };
+  const v__apply1 = (v__cl, v__arg0) =>
+    v__scc__apply1__df__lam_2_4([17, v__cl, v__arg0]);
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

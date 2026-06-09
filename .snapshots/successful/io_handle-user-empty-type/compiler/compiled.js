@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,7 +34,7 @@
     }
   };
 
-  const v_handleE1 = (v_e) => {
+  const v_handleE1 = v_e => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -45,9 +45,7 @@
     }
   };
 
-  const v_failIO = (v_e) => {
-    return [6, v_e];
-  };
+  const v_failIO = v_e => [6, v_e];
 
   const v_failingComputation = v_failIO([24]);
 
@@ -100,9 +98,7 @@
     }
   };
 
-  const v__df_handleErrorIO_0 = (v_io) => {
-    return v__cps__df_handleErrorIO_0(v_io, [25]);
-  };
+  const v__df_handleErrorIO_0 = v_io => v__cps__df_handleErrorIO_0(v_io, [25]);
 
   const main = v__df_handleErrorIO_0(v_failingComputation);
 

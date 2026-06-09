@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,11 +17,10 @@
     return [4, r | 0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_threeAndDouble = (v_n) => {
+  const v_threeAndDouble = v_n => {
     {
       const __s = __mulInt32(v_n, 2 | 0);
       switch (__s[0]) {
@@ -37,7 +36,7 @@
     }
   };
 
-  const v_show = (v_pair) => {
+  const v_show = v_pair => {
     {
       const __s = v_pair;
       switch (__s[0]) {
@@ -86,7 +85,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -114,7 +113,7 @@
     }
   };
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {

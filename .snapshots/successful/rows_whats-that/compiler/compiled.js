@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_whatsThat = (v_x) => {
+  const v_whatsThat = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -47,7 +47,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -75,7 +75,7 @@
     }
   };
 
-  const v__lift_13 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -90,7 +90,7 @@
     }
   };
 
-  const v__let_14 = (v_res) => {
+  const v__let_14 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {

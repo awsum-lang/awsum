@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,9 +37,7 @@
     }
   };
 
-  const v_pureEither = (v_x) => {
-    return [4, v_x];
-  };
+  const v_pureEither = v_x => [4, v_x];
 
   const v_op3 = [4, 3 | 0];
 
@@ -48,7 +45,7 @@
 
   const v_op1 = [4, 1 | 0];
 
-  const v_f = ((s) => {
+  const v_f = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_2 = s[1];
@@ -56,7 +53,7 @@
       }
       case 4: {
         const v_a = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_1 = s[1];
@@ -64,7 +61,7 @@
             }
             case 4: {
               const v_b = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_0 = s[1];
@@ -83,7 +80,7 @@
     }
   })(v_op1);
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -136,7 +133,7 @@
     }
   };
 
-  const v__let_13 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
