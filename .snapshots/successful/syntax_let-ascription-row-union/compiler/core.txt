@@ -52,7 +52,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$18" )
                 [ CCase
                     ( CVar "opA" )
                     [
@@ -80,39 +80,15 @@ CoreProgram
                                 ( 4
                                 , [ "b" ]
                                 , CCall
-                                    ( CVar "$lift$18" )
-                                    [ CCall
-                                        ( CVar "pureEither" )
-                                        [ CVar "b" ]
-                                    ]
+                                    ( CVar "pureEither" )
+                                    [ CVar "b" ]
                                 )
                             ]
                         )
                     ]
                 ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$let$19" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

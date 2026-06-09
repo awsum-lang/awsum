@@ -1,0 +1,42 @@
+{- A row combinator (`bindEither`) whose operand and inline `do`-continuation
+   produce a COMMON error label. The continuation's result row is solved from
+   the signature before it is elaborated; that bound must include every label
+   of the signature row — not the labels the operand does not already supply.
+
+   Here `oa` produces `EA` and the continuation produces `(EA | EB)` (via
+   `oaInner : Either EA` and `ob : Either EB`). Subtracting the shared `EA`
+   from the continuation's bound would check it against `Either EB` and reject
+   its `Left EA` arm. Pinning the continuation's row to the full signature
+   row `(EA | EB)` keeps every injection tagged. `oaInner` succeeds and `ob`
+   short-circuits to `EB`, so every backend prints `B`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+oaInner : Either EA Int32
+oaInner = Right 1
+
+oa : Either EA Int32
+oa = Right 2
+
+ob : Either EB Int32
+ob = Left EB
+
+cShared : Either (EA | EB) Int32
+cShared = bindEither oa (\_n -> do
+  x <- oaInner
+  y <- ob
+  pureEither y
+)
+
+describe : Either (EA | EB) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (describe cShared)

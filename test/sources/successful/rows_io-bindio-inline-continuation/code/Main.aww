@@ -1,0 +1,31 @@
+{- The inline-continuation counterpart of `rows_io-bindio-error-widen`:
+   io-first `bindIO` of a platform effect (`IO.Args.getArgs`) whose
+   continuation is written inline as a lambda rather than a named
+   top-level. The lambda's IO result row is the combinator's `e2` — a
+   variable until the signature pins it. Checked against an abstract
+   `e2`, the lambda's `failIO EX` would record no coercion and reach
+   lowering untagged, so EX would hit the handler mis-tagged and the
+   backends would disagree.
+
+   The fix pins `e2` from the signature row before the lambda is
+   elaborated (the `getArgs` operand pins the platform error labels
+   first, then `e2` is solved from the rest), so the inline `failIO EX`
+   injects EX with its tag. `getArgs` succeeds with no arguments, the
+   continuation runs `failIO EX`, and every backend prints `EX`. -}
+
+import IO.Stdout
+import IO.Args
+
+type EX = EX
+
+combined : IO (StringTooLong | UnpairedUtf16Surrogate | EX) Unit
+combined = bindIO IO.Args.getArgs (\_args -> failIO EX)
+
+handler : (StringTooLong | UnpairedUtf16Surrogate | EX) -> IO Never Unit
+handler e = case e of
+  (_s : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+  (_x : EX) -> IO.Stdout.print "EX"
+
+main : IO Never Unit
+main = combined |> handleErrorIO handler

@@ -66,12 +66,6 @@ CoreProgram
                                 , CDrop DropFreeUnchecked "_a"
                                     ( CString "A" )
                                 )
-                            ,
-                                ( 348914022
-                                , "_b"
-                                , CDrop DropFreeUnchecked "_b"
-                                    ( CString "B" )
-                                )
                             ]
                         )
                     )
@@ -100,29 +94,6 @@ CoreProgram
                 ( CVar "pureEither" )
                 [ CIntLit 7 TInt32 ]
             )
-        , CFunDef "$lift$19" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CRow 348914022
-                                ( CVar "__f0" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
         , CFunDef "$df$$rowmono$0$bindEither$0" [ "x" ]
             ( CCase
                 ( CVar "x" )
@@ -141,11 +112,8 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$19" )
-                            [ CCall
-                                ( CVar "$lam$18" )
-                                [ CVar "a" ]
-                            ]
+                            ( CVar "$lam$18" )
+                            [ CVar "a" ]
                         )
                     )
                 ]

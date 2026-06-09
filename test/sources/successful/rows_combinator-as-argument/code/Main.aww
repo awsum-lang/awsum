@@ -1,0 +1,39 @@
+{- A row combinator applied to an inline continuation, where the whole
+   `bindEither` call sits in a *non-deferred argument* position (the argument
+   of `identity`).
+
+   Synthesising the outer application leaves the inner continuation's
+   `Left EB` injection untagged — the `bindEither` call is not itself a
+   direct inline-continuation argument, so the check did not re-run it
+   bidirectionally against the concrete row, and the continuation's tag
+   reached the consuming `case` wrong (out-of-bounds / `undefined`).
+
+   The checker now redoes any application whose synthesised result still has
+   a variable the signature pins, routing this through the bidirectional
+   spine so the nested continuation is checked against the concrete row and
+   its `Left EB` is tagged. `oa = Right 1`, the continuation returns
+   `Left EB`, so every backend prints `B`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+oa : Either EA Int32
+oa = Right 1
+
+identity : a -> a
+identity x = x
+
+res : Either (EA | EB) Int32
+res = identity (bindEither oa (\_n -> Left EB))
+
+describe : Either (EA | EB) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right v -> showInt32 v
+
+main : IO Never Unit
+main = IO.Stdout.print (describe res)

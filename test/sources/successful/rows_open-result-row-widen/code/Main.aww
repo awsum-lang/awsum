@@ -1,0 +1,38 @@
+{- A function whose result row is partially concrete with an open tail —
+   `Either (EZ | e) Int32` — used where the row is widened by TWO further
+   labels (`Either (EA | EB | EZ) Int32`).
+
+   The tail variable `e` occurs only in the result, never in a parameter, so
+   it is a genuinely-polymorphic output tail, not a widening combinator's
+   union variable. The bidirectional spine must NOT pin it: doing so makes the
+   call head's instantiated row `(EZ | EA | EB | EZ)`, which is not a
+   substitution instance of the declared `(EZ | e)` (one declared row variable
+   cannot absorb two labels), so row-monomorphisation's `unify declared inst`
+   aborts the compiler. Keeping `e` free leaves the call unspecialised; the
+   body injects the concrete label `EZ`, already tagged, so every backend
+   prints `Z`. One extra label (`Either (EA | EZ)`) always worked — the break
+   needed two. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+type EZ = EZ
+
+zeroOr : Int32 -> Either (EZ | e) Int32
+zeroOr _n = Left EZ
+
+called : Either (EA | EB | EZ) Int32
+called = zeroOr 9
+
+describe : Either (EA | EB | EZ) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Left (_z : EZ) -> "Z"
+  Right v -> showInt32 v
+
+main : IO Never Unit
+main = IO.Stdout.print (describe called)

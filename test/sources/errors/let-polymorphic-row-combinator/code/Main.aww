@@ -1,0 +1,32 @@
+{- A row combinator partially applied and bound to an UNANNOTATED let. `pb`
+   is polymorphic in the continuation's error row `e2` (it could be used at
+   several rows), and Awsum monomorphises rows per call-site with no runtime
+   row evidence — so a single shared closure over a partially-applied
+   `bindEither` cannot be specialised. The binding is rejected; the fix is to
+   annotate `pb` (pinning the row), or inline the combinator at each use. The
+   annotated form `let pb : (Int32 -> Either EB Int32) -> Either (EA | EB)
+   Int32 = bindEither oa` compiles. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+oa : Either EA Int32
+oa = Right 1
+
+cont : Int32 -> Either EB Int32
+cont _n = Left EB
+
+res : Either (EA | EB) Int32
+res = let pb = bindEither oa in pb cont
+
+describe : Either (EA | EB) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right v -> showInt32 v
+
+main : IO Never Unit
+main = IO.Stdout.print (describe res)

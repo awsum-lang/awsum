@@ -50,13 +50,14 @@ module Awsum.Typing
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
-import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, rowRetagNeeded, rowSubsume, stripSyntheticTyvarSuffix, unify)
+import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, nullSubst, rowRetagNeeded, rowSubsume, singletonSubst, stripSyntheticTyvarSuffix, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), substTExpr, tAltBody, tRowAltBody, texprType)
 import Control.Monad (foldM, foldM_)
 import Data.Char qualified as Char
 import Data.Graph qualified as G
+import Data.List (partition)
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
 import Data.Text qualified as T
@@ -172,6 +173,22 @@ data TypeError
     --   pushed top-down through the bindings once an annotation
     --   names the expected type.
     MissingLetAnnotation SrcSpan Name TypeError
+  | -- | A 'let'-binding whose right-hand side has a type the row
+    --   monomorphiser cannot specialise: a free variable that is both a
+    --   structural-sum alternative (so it would need a runtime row tag) and
+    --   a parameter (so it is a combinator's input-side row variable). The
+    --   canonical case is a partially-applied row combinator bound
+    --   polymorphically — @let pb = bindEither oa@: @pb@'s result row
+    --   @(EA | e2)@ has @e2@ as an alternative, and @e2@ also sits in the
+    --   continuation parameter @Int32 -> Either e2 b@. Awsum resolves rows
+    --   per call-site, not per let-bound value, so one shared closure used
+    --   at several error rows cannot be compiled. Fields: binder span,
+    --   binder name. Fix: annotate the binding so the row is pinned
+    --   (@let pb : T = …@), or inline the combinator at each use. A
+    --   genuinely-polymorphic output tail (@let f = zeroOr@, the variable
+    --   only in the result) and a non-row polymorphic value
+    --   (@let id = \\x -> x@) are not affected.
+    PolymorphicRowLet SrcSpan Name
   | -- | A 'let'-binding with both a destructuring pattern on the
     --   LHS and a type ascription, e.g. @let (Tuple3 a b c) : T = e@.
     --   The ascription belongs on the right-hand side (or as the
@@ -357,6 +374,7 @@ typeErrorSpan = \case
   AmbiguousIntLiteral sp -> Just sp
   StringLiteralTooLong sp _ -> Just sp
   MissingLetAnnotation sp _ _ -> Just sp
+  PolymorphicRowLet sp _ -> Just sp
   PatternLetAscription sp -> Just sp
   Shadowing sp _ -> Just sp
   ReferencingIgnored sp _ -> Just sp
@@ -448,6 +466,16 @@ prettyPrintTypeError = \case
       <> "'. Add an explicit type annotation: `let "
       <> n
       <> " : <type> = …`."
+  PolymorphicRowLet _ n ->
+    "Cannot monomorphise let-binding '"
+      <> n
+      <> "': its type has a row variable in a parameter position — a "
+      <> "partially-applied row combinator (like `bindEither`) bound "
+      <> "polymorphically. Awsum resolves rows per call-site, not per "
+      <> "let-bound value. Add an explicit type annotation to pin the row "
+      <> "(`let "
+      <> n
+      <> " : <type> = …`), or inline the combinator at each use."
   PatternLetAscription _ ->
     "Type ascription on a destructuring let-binding is not supported. Drop the ascription and rely on the right-hand side's type, or use a single-name binder (`let n : T = e`) and destructure inside the body."
   Shadowing _ n -> "Shadowing is not allowed: '" <> n <> "' is already bound in an enclosing scope"
@@ -1294,51 +1322,129 @@ checkExpr conEnv tcm crossExempt env expected = \case
           Left _ -> do
             eE <- typeOfExpr conEnv tcm env e
             acceptInto expected eE e
-  -- Non-constructor application: prefer the existing synth-and-
-  -- subsume path; on failure, fall back to a bidirectional spine-
-  -- based check that pushes @expected@ into the argument positions.
-  -- The fallback is what lets a bare integer literal flow through a
-  -- polymorphic call site like @apply (\n -> n) 42 : Int32@ — the
-  -- forward unify from the result type pins @apply@'s @a@ tyvar to
-  -- @Int32@, which the bare literal would otherwise be checked
-  -- against an unresolved tyvar and rejected. Cases the forward
-  -- path already accepts (most polymorphic uses with named arguments)
-  -- continue to take that branch unchanged.
+  -- Non-constructor application. The bidirectional spine check
+  -- synthesises the head, then threads a substitution through the
+  -- arguments left-to-right, pushing @expected@ into each position. Two
+  -- jobs ride on that thread:
+  --
+  --   • a bare integer literal flows through a polymorphic call site like
+  --     @apply (\n -> n) 42 : Int32@ — the forward unify from the result
+  --     type pins @apply@'s @a@ tyvar to @Int32@ before the literal (which
+  --     has no synthesised type) is checked;
+  --   • a row combinator's still-free result-row variable is pinned from
+  --     @expected@ before an inline lambda / @do@ continuation is checked,
+  --     so the continuation is elaborated against a /concrete/ result row
+  --     and its own @Left@ injections record their coercions. Without this
+  --     the continuation is checked against an abstract row, no coercion is
+  --     emitted (a label does not coerce into a bare variable), and the
+  --     injected payload reaches lowering untagged — a cross-target row
+  --     dispatch break.
+  --
+  -- Synthesis is tried first and kept for the common case; it is redone via
+  -- the spine only when it left a row variable that @expected@ pins while an
+  -- argument is an inline lambda / @do@ (the deferred-coercion case), or on
+  -- synth failure.
   e@(EApp {}) ->
-    -- Try synth first; on failure, fall through to spine. The synth
-    -- path emits a complete trace via 'typeOfExpr'; on
-    -- spine-fallback that trace is discarded by 'catchTE' and the
-    -- spine path emits its own.
-    let synth = do
-          eE <- typeOfExpr conEnv tcm env e
-          acceptInto expected eE e
-     in synth `catchTE` \_ -> do
-          let (appHead, spineArgs) = appSpine e
+    let (appHead, spineArgs) = appSpine e
+        spine = do
           headE <- typeOfExpr conEnv tcm env appHead
           case zipParamsToArrow (texprType headE) (length spineArgs) of
             Just (argTys, resultTy) -> do
-              s0 <- unifyOrSubsume expected resultTy e
-              -- Thread the running substitution left-to-right, collecting
-              -- each argument's elaborated 'TExpr'. (Inlines the former
-              -- 'checkArgStep'.)
-              (argEsRev, sFinal) <-
-                foldM
-                  ( \(acc, subst) (argTy, arg) -> do
-                      let argTy' = applySubst subst argTy
-                      (argE, sArg) <- checkArgSubst conEnv tcm env argTy' arg
-                      pure (argE : acc, sArg <> subst)
-                  )
-                  ([], s0)
-                  (zip argTys spineArgs)
+              -- Validate the result shape, but do /not/ keep unify's
+              -- positional pairing of the combinator's result row. For a
+              -- two-variable result row like @Either (e1 | e2) b@,
+              -- 'unifyRows' matches @(e1 | e2)@ against @expected@'s labels
+              -- left-to-right (greedy first-fit), pinning the input-side
+              -- @e1@ to whichever label is written first instead of letting
+              -- the operand pin it — an order-dependent mis-binding. The fold
+              -- is seeded from 'solveRowVars' instead (below): it pins the
+              -- non-row result variables (e.g. @b ↦ Int32@) and /defers/ a
+              -- row that still has more than one free variable, so the
+              -- operand pins @e1@ and the per-step solve pins @e2@.
+              _ <- unifyOrSubsume expected resultTy e
+              -- Process arguments in two groups so a row variable is pinned
+              -- by the argument that feeds it before any inline continuation
+              -- is checked: first the synthesising arguments (they pin the
+              -- combinator's input-side variables, e.g. @e1@ from @oa@), then
+              -- the deferred ones (lambda / do / bare literal). Each step
+              -- first pins, via 'solveRowVars', the result-row variable(s)
+              -- @expected@ resolves — so by the time a continuation is
+              -- checked, its result row is concrete and its own injections
+              -- record their coercions. Original positions are restored at
+              -- the end.
+              -- A row variable that occurs only in the result, never in a
+              -- consumed parameter, is passed to 'solveRowVars' as a /tail/
+              -- variable: it must not be row-absorbed — bound, as the single
+              -- free variable of a row, to the expected row's whole label set.
+              -- For a genuinely-polymorphic output tail (the @e@ of
+              -- @zeroOr : Int32 -> Either (EZ | e) Int32@) that absorb would
+              -- make the head's @inst@ un-expressible as a substitution
+              -- instance of @declared@ (one declared row variable cannot
+              -- absorb two-or-more labels in 'Awsum.HM.unifyRows'), crashing
+              -- row-monomorphisation's @unify declared inst@. Plain-variable
+              -- pinning is /not/ suppressed, so a partial combinator's
+              -- residual row variable is still pinned structurally by a
+              -- concrete expected type (@let pb : (Int32 -> Either EB Int32)
+              -- -> … = bindEither oa@ matches @e2@ against @EB@ in the
+              -- parameter), which only the row-absorb would otherwise break.
+              let resultOnlyVars =
+                    collectTypeVars resultTy `S.difference` foldMap collectTypeVars argTys
+              let s0 = solveRowVars False (collectTypeVars expected) resultOnlyVars resultTy expected
+                  indexed = zip3 [0 :: Int ..] argTys spineArgs
+                  (synthArgs, deferredArgs) =
+                    partition (\(_, _, arg) -> not (isDeferredArg arg)) indexed
+                  step pinAllFree (acc, subst) (i, argTy, arg) = do
+                    let subst' =
+                          subst
+                            <> solveRowVars pinAllFree (collectTypeVars expected) resultOnlyVars (applySubst subst resultTy) expected
+                        argTy' = applySubst subst' argTy
+                    (argE, sArg) <- checkArgSubst conEnv tcm env argTy' arg
+                    pure ((i, argE) : acc, sArg <> subst')
+              -- Synth args stay conservative — each operand pins its own
+              -- input-side row variable. The deferred phase ('step True')
+              -- then pins every still-free result-row variable from
+              -- @expected@, so an inline continuation after a @pure@-like
+              -- operand is checked against a concrete row.
+              (synthEs, sAfterSynth) <- foldM (step False) ([], s0) synthArgs
+              (allEs, sBeforeFinal) <- foldM (step True) (synthEs, sAfterSynth) deferredArgs
+              -- Final pin: a result-row variable still free after every
+              -- argument was checked — e.g. the input-side @e1@ of
+              -- @bindEither (pureEither n) namedCont@, contributed by a
+              -- @pure@-like operand and fed by no deferred argument — is
+              -- pinned from @expected@ as an upper bound, so the call head's
+              -- instantiated type is concrete for row-monomorphisation. The
+              -- pin composes on the /left/ so an operand's own free row
+              -- variable, which @sBeforeFinal@ aliased the call's variable to,
+              -- resolves transitively through to the concrete labels.
+              let sFinal =
+                    solveRowVars True (collectTypeVars expected) resultOnlyVars (applySubst sBeforeFinal resultTy) expected
+                      <> sBeforeFinal
               -- Substitute the call head with the fully-threaded
               -- substitution. Without this the head keeps its abstract
               -- instantiated type, so 'monomorphizeRows' sees no row
               -- widening and leaves a row-combinator's injected payload
-              -- untagged (the synth path mirrors this via 'substTExpr').
-              pure (TApp (exprSpan e) expected (substTExpr sFinal headE) (reverse argEsRev))
+              -- untagged.
+              let argEs = map snd (sortWith fst allEs)
+              pure (TApp (exprSpan e) expected (substTExpr sFinal headE) argEs)
             Nothing -> do
               eE <- typeOfExpr conEnv tcm env e
               acceptInto expected eE e
+     in -- Synthesis runs once; 'Check' is a pure 'Either', so branch on its
+        -- result instead of calling 'spine' inside a 'catchTE' that would
+        -- re-run it on a 'spine' failure. When @expected@ pins a variable the
+        -- synth elaboration left open — a result row that a nested
+        -- continuation's injection must be tagged against, or a row still free
+        -- after a @pure@-like operand — redo bidirectionally via 'spine' so
+        -- those injections are tagged and the call head specialises. Otherwise
+        -- accept the synth result. Each branch keeps the other as its fallback,
+        -- so a shape one path cannot type still checks via the other, and
+        -- 'spine' runs at most once.
+        case runCheck (typeOfExpr conEnv tcm env e) of
+          Right eE
+            | nullSubst (solveRowVars True (collectTypeVars expected) S.empty (texprType eE) expected) ->
+                acceptInto expected eE e `catchTE` const spine
+            | otherwise -> spine `catchTE` const (acceptInto expected eE e)
+          Left _ -> spine
   -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' check
   -- gives the bidirectional spine logic above for free, so a pipe call
   -- against a polymorphic head (@x |> apply g@) gets the same
@@ -1378,6 +1484,21 @@ checkExpr conEnv tcm crossExempt env expected = \case
         go acc (EApp _ f x) = go (x : acc) f
         go acc (EParens _ inner) = go acc inner
         go acc h = (h, acc)
+
+    -- An argument with no synthesised type of its own: an inline lambda /
+    -- @do@ continuation (defers its row coercions against an abstract result
+    -- row) or a bare integer literal (no defaulting). The spine processes
+    -- these /after/ the synthesising arguments, so the latter pin the
+    -- combinator's input-side row variables first and 'solveRowVars' can
+    -- then resolve the one the continuation feeds from @expected@. Ordering
+    -- the literal last is also what keeps @apply (\n -> n) 42@ working — the
+    -- lambda pins @a@ before the literal is checked against it.
+    isDeferredArg :: Expr -> Bool
+    isDeferredArg = \case
+      ELam {} -> True
+      ELit _ (LInt _) -> True
+      EParens _ inner -> isDeferredArg inner
+      _ -> False
 
     unifyOrSubsume :: Type' -> Type' -> Expr -> Check Subst
     unifyOrSubsume expectedTy actualTy origExpr =
@@ -1440,6 +1561,121 @@ argSubstT expected = \case
       Nothing -> mempty
   e -> fromRight mempty (unify expected (texprType e))
 
+-- | Solve the free instantiation variables of an application's @inferred@
+--   result type against the @target@ type the surrounding context requires,
+--   returning a substitution. Used by the 'EApp' spine check to pin a row
+--   combinator's still-free result-row variable from the enclosing expected
+--   type /before/ an inline lambda / @do@ continuation is elaborated.
+--
+--   Why this exists. A row-polymorphic combinator used as a @do@-block
+--   continuation (@bindEither oa (\\_n -> do …)@) leaves its error-row
+--   variable @e2@ free: the @do@-block desugars to a nested @case@ whose
+--   node type is the still-abstract expected type, so the lambda's result
+--   row never gets pinned by plain unification ('argSubstT' unifies @e2@
+--   with itself). Checked against an abstract row, the continuation's own
+--   @Left@ injections record no 'TCoerce' (a label does not coerce into a
+--   bare variable), so they reach lowering untagged and cross-target row
+--   dispatch breaks. Pinning @e2@ from @target@ first means the
+--   continuation is checked against a concrete result row and its
+--   injections get their coercions through the normal path.
+--
+--   We walk @(inferred, target)@ in parallel and bind:
+--
+--     * a /row variable/ — only when it is the /single/ free variable of
+--       its row — to /every/ concrete label of the target row (its upper
+--       bound). Not the set difference against labels already concrete on
+--       the inferred side: the continuation is not yet checked, so a label
+--       it shares with the operand must stay in the bound or its injection
+--       is rejected; per-label tags make the wider bound harmless. With two
+--       or more free variables the split is ambiguous and left alone — the
+--       other variables are pinned by their own arguments (e.g. @e1@ by
+--       @oa@) and a later step solves the one that remains.
+--     * a /plain instantiation variable/ to the sub-type @target@ has there
+--       (the continuation's success @b@ ↦ @Int32@).
+--
+--   Variables that are /rigid/ in the enclosing context — those of
+--   @target@, like the @e@ / @b@ of @mapRight : Either e a -> (a -> b) ->
+--   Either e b@ — are never bound, so a genuinely polymorphic call site
+--   stays polymorphic.
+--
+--   @tailVars@ are variables that must not be /row-absorbed/ — bound, as a
+--   free variable of a row, to the target row's whole label set. They are
+--   the spine's result-only variables. A genuinely-polymorphic output tail
+--   (@zeroOr@'s @e@ in @Either (EZ | e) Int32@) absorbed that way would make
+--   the call head's @inst@ un-expressible as a substitution instance of
+--   @declared@ (one declared row variable cannot absorb two-or-more labels),
+--   crashing row-monomorphisation's @unify declared inst@. Plain-variable
+--   pinning of a @tailVar@ is /not/ suppressed: a partial combinator's
+--   residual @e2@ pinned structurally against a concrete @target@ (the
+--   @Either EB@ inside @(Int32 -> Either EB Int32) -> …@) stays correct —
+--   only the row-absorb is unsafe.
+solveRowVars :: Bool -> S.Set Name -> S.Set Name -> Type' -> Type' -> Subst
+solveRowVars pinAllFree rigid tailVars = go
+  where
+    go inferred target = case (inferred, target) of
+      -- Row on the inferred side: when exactly one of its variables is free,
+      -- bind it to the target row's full concrete-label set (see below).
+      (TyOr {}, _) ->
+        let infVars = [v | TyVar _ v <- flattenRow inferred, not (S.member v rigid)]
+            -- Bind the single free row variable to /every/ concrete label of
+            -- the target, not the set difference against labels already
+            -- present on the inferred side. The continuation has not been
+            -- checked yet, so which of those labels it /also/ produces is
+            -- unknown; subtracting a shared label would check the
+            -- continuation against too narrow a row and reject its injection
+            -- of that label. Per-label tags make a wider-than-needed bound
+            -- harmless (a label keeps its tag in any row), and an upper bound
+            -- is always sound.
+            targetConcrete = [l | l <- flattenRow target, isConcreteAlt l]
+         in case infVars of
+              -- Single free row variable: bind it to the target's concrete
+              -- labels. Guard on a non-empty set so a still-abstract target
+              -- (no concrete label at this position) never binds the variable
+              -- to @Never@ — the @rowFromLabels [] = Never@ trap that would
+              -- reject a valid injection. Same guard as the multi-variable arm
+              -- below; an empty set falls through to @mempty@. A @tailVar@ is
+              -- never row-absorbed (see the haddock): the guard fails and the
+              -- variable is left free for the generic body / plain-var pin.
+              [v]
+                | not (null targetConcrete), not (S.member v tailVars) ->
+                    singletonSubst v (rowFromLabels targetConcrete)
+              -- Two or more free variables: their split is ambiguous, so the
+              -- conservative (synth) phase defers — the operand pins one, a
+              -- later step solves the other. Once every synthesising operand
+              -- has been checked (the @pinAllFree@ deferred phase), a row
+              -- variable still free was contributed by a non-failing,
+              -- @pure@-like operand: it injects nothing, so binding it /and/
+              -- the continuation's variable to the target's full
+              -- concrete-label set is a sound upper bound. Same non-empty
+              -- guard against the @Never@ trap.
+              _
+                | pinAllFree && not (null targetConcrete) ->
+                    mconcat [singletonSubst v (rowFromLabels targetConcrete) | v <- infVars, not (S.member v tailVars)]
+                | otherwise -> mempty
+      -- Plain instantiation variable on the inferred side: the target pins
+      -- it. Skip rigid context variables and the no-op self-bind.
+      (TyVar _ v, _)
+        | S.member v rigid -> mempty
+        | TyVar _ w <- target, w == v -> mempty
+        | otherwise -> singletonSubst v target
+      (TyApp _ inf inx, TyApp _ sf sx) -> go inf sf <> go inx sx
+      (TyArrow _ ia ib, TyArrow _ sa sb) -> go ia sa <> go ib sb
+      _ -> mempty
+
+    isConcreteAlt = \case
+      TyVar _ _ -> False
+      TyEmpty _ _ -> False
+      _ -> True
+
+    -- A row from a label list: empty → the row identity (an @empty@-shaped
+    -- type, vacuously subsuming everywhere) when the continuation cannot
+    -- fail; one → that label; many → a 'TyOr' (nesting / order irrelevant,
+    -- rows are set-semantic). 'noSpan' throughout — these labels come from
+    -- the target, which already carries its own diagnostic spans.
+    rowFromLabels = \case
+      [] -> TyEmpty noSpan "Never"
+      (t : ts) -> foldr (TyOr noSpan) t ts
+
 -- | Accept a synthesised value of type @actual@ into a position
 --   requiring @expected@, recording an explicit 'TCoerce' iff the
 --   acceptance is a genuine row widening — i.e. the two do /not/ unify
@@ -1485,6 +1721,36 @@ needsRowCoerce expected actual = case (expected, actual) of
 --   expected type) and 'typeOfExpr' (body synthesised) — differ only in
 --   the shadowing-exempt set and how the body is elaborated, passed in as
 --   @checkBody@, which returns the elaborated body and the @let@'s type.
+-- | True when a let-bound value's type cannot be row-monomorphised: it has a
+--   free variable that is BOTH a structural-sum alternative (so it would
+--   carry a runtime row tag) AND in a parameter position (so it is a
+--   combinator's input-side row variable, resolved per call-site rather than
+--   per let value). @let pb = bindEither oa@ binds such a @pb@ — @e2@ is an
+--   alternative of the result row @(EA | e2)@ and also sits in the
+--   continuation parameter @Int32 -> Either e2 b@. Left alone: a
+--   genuinely-polymorphic output tail (@let f = zeroOr@ — the variable only
+--   in the result), a single-variable error row (@let m = mapLeft oa@ — @e2@
+--   is an 'Either' argument, not a sum alternative), and a non-row
+--   polymorphic value (@let id = \\x -> x@).
+unmonomorphizableRowLet :: Type' -> Bool
+unmonomorphizableRowLet te =
+  not (S.null (S.intersection (rowAltVars te) (paramVars te)))
+  where
+    -- Variables occurring as an alternative of some structural sum.
+    rowAltVars :: Type' -> S.Set Name
+    rowAltVars t = case t of
+      TyOr {} ->
+        let alts = flattenRow t
+         in S.fromList [v | TyVar _ v <- alts] <> foldMap rowAltVars alts
+      TyApp _ a b -> rowAltVars a <> rowAltVars b
+      TyArrow _ a b -> rowAltVars a <> rowAltVars b
+      _ -> mempty
+    -- Variables occurring anywhere left of an arrow (in a parameter).
+    paramVars :: Type' -> S.Set Name
+    paramVars t = case t of
+      TyArrow _ a b -> collectTypeVars a <> paramVars b
+      _ -> mempty
+
 elabLet :: ConEnv -> TypeConsMap -> S.Set Name -> Env -> SrcSpan -> Pattern -> Maybe Type' -> Expr -> (Env -> Check (TExpr, Type')) -> Check TExpr
 elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
   when (notPVarPat pat && isJust mAnnot)
@@ -1493,13 +1759,20 @@ elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
     Just t -> do
       eE <- checkExpr conEnv tcm exempt env t e
       pure (eE, t)
-    Nothing ->
-      ( do
-          eE <- typeOfExpr conEnv tcm env e
-          pure (eE, texprType eE)
-      )
-        `catchTE` \err ->
-          throwTE (MissingLetAnnotation lsp (patternBinderName pat) err)
+    Nothing -> do
+      eE <-
+        typeOfExpr conEnv tcm env e
+          `catchTE` \err ->
+            throwTE (MissingLetAnnotation lsp (patternBinderName pat) err)
+      let te = texprType eE
+      -- Reject a polymorphic let-bound row combinator before it reaches
+      -- lowering: row-monomorphisation is per call-site, so a shared closure
+      -- carrying a free union-row variable in a parameter position cannot be
+      -- specialised, and its injection would reach the consuming case
+      -- untagged. The annotated form pins the row and compiles.
+      when (unmonomorphizableRowLet te)
+        $ throwTE (PolymorphicRowLet lsp (patternBinderName pat))
+      pure (eE, te)
   liftEither (checkNoShadow env exempt (collectPatternVars [pat]))
   let bindings = patternBindings conEnv [pat] [te]
       envNext = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env

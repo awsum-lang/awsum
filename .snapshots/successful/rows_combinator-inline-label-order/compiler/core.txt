@@ -1,0 +1,122 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "pureEither" [ "x" ]
+            ( CCon 4
+                [ CVar "x" ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "ob"
+            ( CCon 3
+                [ CCon 25 [] ]
+            )
+        , CValDef "cOrder"
+            ( CCall
+                ( CVar "$df$$rowmono$0$bindEither$0" )
+                [ CVar "ob" ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 348914022
+                                , "_b"
+                                , CDrop DropFreeUnchecked "_b"
+                                    ( CString "B" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CDrop DropFreeUnchecked "n"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        )
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CVar "describe" )
+                    [ CVar "cOrder" ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lam$18" [ "n" ]
+            ( CCall
+                ( CVar "pureEither" )
+                [ CVar "n" ]
+            )
+        , CFunDef "$df$$rowmono$0$bindEither$0" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CRow 348914022
+                                ( CVar "e" )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lam$18" )
+                            [ CVar "a" ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }

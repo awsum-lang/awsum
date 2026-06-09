@@ -1,0 +1,23 @@
+{- A higher-order function `poly` captures its own function-typed parameter
+   `k` inside a nested lambda (`\n -> k n`) and passes that closure to
+   another HOF (`applyOnce`).
+
+   Defunctionalising `poly` at a call site removes its `k` parameter and
+   binds it to the incoming closure. The captured `k` inside `\n -> k n` is
+   a *value* (not a callee), so it must be resolved to that closure's
+   representation; otherwise it survives as a dangling free variable and the
+   per-arity `$apply` dispatcher is left with no case, so every backend
+   crashes or reads undefined.
+
+   `poly (\m -> m)` applies the identity to 5, so every backend prints `5`. -}
+
+import IO.Stdout
+
+applyOnce : (Int32 -> Int32) -> Int32 -> Int32
+applyOnce f x = f x
+
+poly : (Int32 -> Int32) -> Int32
+poly k = applyOnce (\n -> k n) 5
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (poly (\m -> m)))

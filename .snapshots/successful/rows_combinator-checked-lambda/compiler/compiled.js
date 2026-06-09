@@ -53,32 +53,12 @@
                 const v__a = __s[1];
                 return "A";
               }
-              case 348914022: {
-                const v__b = __s[1];
-                return "B";
-              }
             }
           }
         }
         case 4: {
           const v_n = __s[1];
           return String(v_n);
-        }
-      }
-    }
-  };
-
-  const v__lift_19 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, [348914022, v___f0]];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
         }
       }
     }
@@ -98,7 +78,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_19(v__lam_18(v_a));
+          return v__lam_18(v_a);
         }
       }
     }

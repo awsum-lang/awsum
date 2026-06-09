@@ -1,0 +1,97 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$df$poly$1" ) []
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lam$18"
+            [ "k"
+            , "n"
+            ]
+            ( CCall
+                ( CVar "$apply1" )
+                [ CVar "k"
+                , CVar "n"
+                ]
+            )
+        , CFunDef "$lam$19" [ "m" ]
+            ( CVar "m" )
+        , CFunDef "$df$applyOnce$0"
+            [ "x"
+            , "$df$applyOnce$0$cap0$0"
+            ]
+            ( CCall
+                ( CVar "$lam$18" )
+                [ CVar "$df$applyOnce$0$cap0$0"
+                , CVar "x"
+                ]
+            )
+        , CFunDef "$df$poly$1" []
+            ( CCall
+                ( CVar "$df$applyOnce$0" )
+                [ CIntLit 5 TInt32
+                , CCon 8 []
+                ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" )
+                [
+                    ( 8
+                    , []
+                    , CCall
+                        ( CVar "$lam$19" )
+                        [ CVar "$arg0" ]
+                    )
+                ]
+            )
+        ]
+    }

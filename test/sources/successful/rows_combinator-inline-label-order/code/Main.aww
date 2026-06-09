@@ -1,0 +1,33 @@
+{- A row combinator (`bindEither`) applied to an inline continuation, where
+   the operand's error label is NOT the first alternative of the declared
+   result row. Row equivalence is order-insensitive — `(EA | EB) ~ (EB | EA)`
+   — so acceptance must not depend on which label is written first.
+
+   The spine validates the result shape but must not let unification
+   positionally pair the combinator's result row `(e1 | e2)` against the
+   declared row: greedy first-fit would pin the input-side `e1` to `EA` (the
+   first label) before `ob` pins it to `EB`, then reject `ob`. Instead `e1`
+   is pinned by the operand and `e2` is solved from the signature. `ob`
+   short-circuits to `EB`, so every backend prints `B` regardless of the
+   label order in the signature. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+ob : Either EB Int32
+ob = Left EB
+
+cOrder : Either (EA | EB) Int32
+cOrder = bindEither ob (\n -> pureEither n)
+
+describe : Either (EA | EB) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (describe cOrder)
