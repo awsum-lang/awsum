@@ -30,8 +30,8 @@
 --   head, not a best-effort re-synthesis of argument types.
 module Awsum.MonomorphizeRows (monomorphizeRows) where
 
-import Awsum.HM (canonicalLabel, flattenRow, unify)
-import Awsum.Syntax (Name, QName (..), Type' (..))
+import Awsum.HM (applySubst, canonicalLabel, flattenRow, unify)
+import Awsum.Syntax (Decl (..), Name, QName (..), Type' (..))
 import Awsum.TExpr
 import Data.Map.Strict qualified as M
 import Relude
@@ -48,14 +48,24 @@ data MonoState = MonoState
 monomorphizeRows :: TypedProgram -> TypedProgram
 monomorphizeRows tp =
   let defMap = M.fromList [(tdeclName d, d) | d <- tpDefs tp]
+      -- Declared signatures, used as the checking-mode expected type when
+      -- walking a definition's body. A partial application of a row
+      -- combinator (@partialB = bindEither oa@) leaves the continuation's
+      -- result-row variable abstract on the call head — the concrete row
+      -- lives only in the definition's signature, so the walk threads it
+      -- down to recover it.
+      sigMap = M.fromList [(n, t) | Sig _ n t _ _ <- tpProgramDecls tp]
       (rewritten, final) =
-        runState (traverse (goDecl defMap) (tpDefs tp)) (MonoState 0 M.empty [])
+        runState (traverse (goDecl defMap sigMap) (tpDefs tp)) (MonoState 0 M.empty [])
    in tp {tpDefs = rewritten <> reverse (msSpecs final)}
 
-goDecl :: Map Name TDecl -> TDecl -> State MonoState TDecl
-goDecl defMap = \case
-  TFunDef n ps body -> TFunDef n ps <$> goExpr defMap body
-  TValDef n body -> TValDef n <$> goExpr defMap body
+goDecl :: Map Name TDecl -> Map Name Type' -> TDecl -> State MonoState TDecl
+goDecl defMap sigMap = \case
+  TFunDef n ps body ->
+    -- The body is checked against the signature's result after the
+    -- definition's own parameters.
+    TFunDef n ps <$> goExpr defMap (M.lookup n sigMap >>= stripArrows (length ps)) body
+  TValDef n body -> TValDef n <$> goExpr defMap (M.lookup n sigMap) body
 
 -- | Rewrite an expression, specialising every fully-applied call to a
 --   top-level row-polymorphic function whose instantiation widens an
@@ -63,10 +73,10 @@ goDecl defMap = \case
 --   flat 'TApp' (head + all args) on the way through — both the binary
 --   nodes 'typeOfExpr' builds and the flat nodes the spine-fallback
 --   builds collapse to the same shape, which is all lowering needs.
-goExpr :: Map Name TDecl -> TExpr -> State MonoState TExpr
+goExpr :: Map Name TDecl -> Maybe Type' -> TExpr -> State MonoState TExpr
 goExpr defMap = go
   where
-    go e = case e of
+    go expected e = case e of
       TApp sp ty _ _ ->
         let (headE, args) = collectTApp e
          in case headE of
@@ -88,32 +98,39 @@ goExpr defMap = go
                   -- @bindIO io k = case io of IOGetArgs cont -> IOGetArgs
                   -- (bindIOAfterArgs cont k)@ applies @bindIOAfterArgs@ to
                   -- 2 of its 3 params (the third, the decode result, is
-                  -- supplied later by the runtime). The head's instantiated
-                  -- type already shows the concrete row regardless of
-                  -- arity, so specialise and re-point the partial call; the
-                  -- remaining argument applies to the specialised copy.
+                  -- supplied later by the runtime).
                   length args <= length params,
-                  rowWidenedToConcrete declared inst -> do
-                    specName <- getOrCreateSpec defMap name declared inst params
-                    args' <- traverse go args
+                  -- Refine the head's recorded inst with the expected result
+                  -- type. A partial application can leave the continuation's
+                  -- result row abstract on the head — the concrete row then
+                  -- lives only in the enclosing signature (@partialB =
+                  -- bindEither oa@), which the walk threads down as
+                  -- @expected@; 'refineInst' recovers it so the call
+                  -- specialises and the continuation's payload is re-tagged.
+                  let inst' = refineInst (length args) inst expected,
+                  rowWidenedToConcrete declared inst' -> do
+                    specName <- getOrCreateSpec defMap name declared inst' params
+                    args' <- traverse (go Nothing) args
                     -- The specialised callee is monomorphic, so its
-                    -- declared and instantiated types coincide at @inst@.
-                    pure (TApp sp ty (TVar hsp inst inst (QName [] specName)) args')
+                    -- declared and instantiated types coincide at @inst'@.
+                    pure (TApp sp ty (TVar hsp inst' inst' (QName [] specName)) args')
               _ -> do
-                headE' <- go headE
-                args' <- traverse go args
+                headE' <- go Nothing headE
+                args' <- traverse (go Nothing) args
                 pure (TApp sp ty headE' args')
-      TLam sp ty params b -> TLam sp ty params <$> go b
-      TLet sp ty pat rhs b -> TLet sp ty pat <$> go rhs <*> go b
-      TCase sp ty scrut alts -> TCase sp ty <$> go scrut <*> traverse goAlt alts
-      TRowCase sp ty scrut alts -> TRowCase sp ty <$> go scrut <*> traverse goRowAlt alts
-      TCoerce sp s t inner -> TCoerce sp s t <$> go inner
+      -- Checking-mode positions thread @expected@ down; everything else
+      -- synthesises (@Nothing@).
+      TLam sp ty params b -> TLam sp ty params <$> go (expected >>= stripArrows (length params)) b
+      TLet sp ty pat rhs b -> TLet sp ty pat <$> go Nothing rhs <*> go expected b
+      TCase sp ty scrut alts -> TCase sp ty <$> go Nothing scrut <*> traverse (goAlt expected) alts
+      TRowCase sp ty scrut alts -> TRowCase sp ty <$> go Nothing scrut <*> traverse (goRowAlt expected) alts
+      TCoerce sp s t inner -> TCoerce sp s t <$> go (Just s) inner
       TVar {} -> pure e
       TLit {} -> pure e
       TBuiltIn {} -> pure e
       TConRef {} -> pure e
-    goAlt (TAlt pat b) = TAlt pat <$> go b
-    goRowAlt (TRowAlt lbl pat b) = TRowAlt lbl pat <$> go b
+    goAlt expected (TAlt pat b) = TAlt pat <$> go expected b
+    goRowAlt expected (TRowAlt lbl pat b) = TRowAlt lbl pat <$> go expected b
 
 -- | Return (creating and memoising on first request) the name of the
 --   specialisation of @fname@ at the instantiated type @inst@. The
@@ -150,7 +167,10 @@ getOrCreateSpec defMap fname declared inst params = do
                         <> " — compiler invariant violated."
                     )
               params' = map (substTParam subst) params
-          body' <- goExpr defMap (substTExpr subst body)
+          -- The spec body is fully substituted (concrete), so any inner
+          -- combinator call already carries a concrete recorded inst — no
+          -- expected type needs threading.
+          body' <- goExpr defMap Nothing (substTExpr subst body)
           modify (\s -> s {msSpecs = TFunDef specName params' body' : msSpecs s})
           pure specName
         -- Only 'TFunDef' callees reach here (the caller checked
@@ -165,6 +185,31 @@ collectTApp = go []
   where
     go acc (TApp _ _ h args) = go (args <> acc) h
     go acc h = (h, acc)
+
+-- | Refine a head's recorded instantiated type using the checking-mode
+--   expected type of the @nArgs@-argument application. The head applied to
+--   its arguments must have the expected type, so unifying the recorded
+--   inst's result-after-@nArgs@ against @expected@ recovers any row the
+--   synth path left abstract — the continuation's result row on a partial
+--   application, which lives only in the enclosing definition's signature.
+--   Falls back to the recorded inst when there is no expected type or the
+--   shapes disagree (a richer @expected@ only ever pins more, never less).
+refineInst :: Int -> Type' -> Maybe Type' -> Type'
+refineInst nArgs inst = \case
+  Nothing -> inst
+  Just expected -> case stripArrows nArgs inst of
+    Just resultTy -> case unify resultTy expected of
+      Right s -> applySubst s inst
+      Left _ -> inst
+    Nothing -> inst
+
+-- | Drop @n@ leading arrows from a type, returning the residual result
+--   type — the type of the value after @n@ curried applications. @Nothing@
+--   if the type has fewer than @n@ arrows.
+stripArrows :: Int -> Type' -> Maybe Type'
+stripArrows 0 t = Just t
+stripArrows n (TyArrow _ _ b) = stripArrows (n - 1) b
+stripArrows _ _ = Nothing
 
 -- | True when @gen@ has, in some structural position, a row containing a
 --   type variable while @con@ has — in the same position — a fully

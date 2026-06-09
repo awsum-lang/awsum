@@ -1,0 +1,40 @@
+{- Three nested `bindEither`s, each with an inline-lambda continuation. Every
+   level must pin its own input-side row variable from its own operand; a
+   label from an outer level's result row must not leak into an inner
+   operand's expected type.
+
+   The deepest operand `oc` fails with `EC`; that error must propagate out
+   through both enclosing widenings (`EC` ⊆ `(EB | EC)` ⊆ `(EA | EB | EC)`)
+   with its tag intact, so every backend prints `C`. Before the input-side
+   variables were pinned per-operand, the outermost `EC` leaked into the
+   middle operand and the program was rejected. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+type EC = EC
+
+oa : Either EA Int32
+oa = Right 10
+
+ob : Either EB Int32
+ob = Right 20
+
+oc : Either EC Int32
+oc = Left EC
+
+cNested : Either (EA | EB | EC) Int32
+cNested = bindEither oa (\_a -> bindEither ob (\_b -> bindEither oc (\c -> pureEither c)))
+
+describe : Either (EA | EB | EC) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Left (_c : EC) -> "C"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (describe cNested)

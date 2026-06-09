@@ -1,0 +1,42 @@
+{- A nested row combinator whose OUTER operand cannot pin its own error-row
+   variable to a concrete label, because the operand is `pureEither n` —
+   row-polymorphic in its error (`Either e Int32`).
+
+   The combinator's result row `(e1 | e2)` then keeps two free variables after
+   the operand is checked (`e1` bound to the operand's own free `e`, `e2` the
+   continuation's), so a per-argument solve that only resolves a single free
+   variable cannot pin `e2`. The inline continuation is then checked against an
+   abstract `e2`; on the inner level its target row position is a bare variable,
+   and an empty concrete-label set would bind the inner row variable to `Never`,
+   rejecting the inline `Left EC` injection.
+
+   The fix pins `e2` (and the unconstrained operand variable) to the full
+   signature row once every operand has been checked — a sound upper bound,
+   since `pureEither n` injects no error and per-label tags make the widening
+   harmless. The inner `bindEither` then sees a concrete expected row and tags
+   `EC`. The inline `Left EC` short-circuits the chain, so every backend
+   prints `C`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+type EC = EC
+
+ob : Either EB Int32
+ob = Right 5
+
+cPure : Int32 -> Either (EA | EB | EC) Int32
+cPure n = bindEither (pureEither n) (\_n -> bindEither ob (\_m -> Left EC))
+
+describe : Either (EA | EB | EC) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Left (_c : EC) -> "C"
+  Right v -> showInt32 v
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (cPure 7))

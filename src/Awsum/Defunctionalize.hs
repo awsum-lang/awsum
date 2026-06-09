@@ -142,6 +142,19 @@ asClosure env arities = \case
         Just (Closure n args ar)
   _ -> Nothing
 
+-- | The runtime value of a statically-known closure, for positions where the
+--   function value is /used as data/ — captured into another closure, stored,
+--   or passed where the specialiser did not rewrite it — rather than called.
+--   A zero-capture closure is a bare top-level reference; an N-capture one is
+--   the partial application that builds it. 'Awsum.LowerClosures' then encodes
+--   whichever shape this is as a tagged 'CCon' and routes calls to it through
+--   an @$applyN@ dispatcher. Without this, a function-typed parameter that a
+--   specialisation removed but that a nested closure captured would survive as
+--   a dangling free variable, and its closure would never reach a dispatcher.
+closureValueExpr :: Closure -> CExpr
+closureValueExpr (Closure helper [] _) = CVar helper
+closureValueExpr (Closure helper caps _) = CCall (CVar helper) caps
+
 -- | Top-level entry point. Returns a Core program in which every
 --   call site has been specialised for its statically-known closure;
 --   no first-class function value remains in any reachable position.
@@ -176,7 +189,13 @@ transformExpr :: SpecEnv -> CExpr -> SpecM CExpr
 transformExpr env = go
   where
     go = \case
-      e@(CVar _) -> pure e
+      e@(CVar n) -> case M.lookup n env of
+        -- A function-typed parameter the enclosing specialisation removed,
+        -- appearing here as a value (not a callee) — replace it with its
+        -- closure's value expression so nothing dangles. Callee occurrences
+        -- (@CCall (CVar n) …@) go through 'transformCall' instead.
+        Just clos -> pure (closureValueExpr clos)
+        Nothing -> pure e
       e@(CString _) -> pure e
       e@(CIntLit _ _) -> pure e
       e@(CBuiltIn _) -> pure e

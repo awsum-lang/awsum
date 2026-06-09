@@ -32,12 +32,7 @@ main:
 $lam$18:
   param           n                               count=1
 
-$lift$19:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$let$20:
+$let$19:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

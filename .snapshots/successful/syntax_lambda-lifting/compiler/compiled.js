@@ -48,6 +48,30 @@
 
   const v_op1 = [4, 1 | 0];
 
+  const v_g = ((s) => {
+    switch (s[0]) {
+      case 3: {
+        const v__do_e_1 = s[1];
+        return [3, [2252990199, v__do_e_1]];
+      }
+      case 4: {
+        const v_a = s[1];
+        return ((s) => {
+          switch (s[0]) {
+            case 3: {
+              const v__do_e_0 = s[1];
+              return [3, [2269767818, v__do_e_0]];
+            }
+            case 4: {
+              const v_b = s[1];
+              return v_pureEither(v_b);
+            }
+          }
+        })(v_op2WithA(v_a));
+      }
+    }
+  })(v_op1);
+
   const v_describe = (v_r) => {
     {
       const __s = v_r;
@@ -90,47 +114,7 @@
     }
   };
 
-  const v__lift_19 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, v___f0];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
-        }
-      }
-    }
-  };
-
-  const v_g = ((s) => {
-    switch (s[0]) {
-      case 3: {
-        const v__do_e_1 = s[1];
-        return [3, [2252990199, v__do_e_1]];
-      }
-      case 4: {
-        const v_a = s[1];
-        return ((s) => {
-          switch (s[0]) {
-            case 3: {
-              const v__do_e_0 = s[1];
-              return [3, [2269767818, v__do_e_0]];
-            }
-            case 4: {
-              const v_b = s[1];
-              return v__lift_19(v_pureEither(v_b));
-            }
-          }
-        })(v_op2WithA(v_a));
-      }
-    }
-  })(v_op1);
-
-  const v__let_20 = (v_res) => {
+  const v__let_19 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -156,7 +140,7 @@
 
   const v_inc42 = v__df_apply_0(42 | 0);
 
-  const main = v__let_20(
+  const main = v__let_19(
     ((s) => {
       switch (s[0]) {
         case 3: {

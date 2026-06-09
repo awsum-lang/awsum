@@ -1,0 +1,41 @@
+{- A row combinator nested inside another combinator's inline continuation,
+   where the *inner* combinator uses a NAMED continuation (`inner`) and a
+   pure-like operand (`pureEither n`).
+
+   The inner call has no deferred argument to pin its result row, and its
+   pure operand leaves the input-side row variable free, so synthesis left
+   the inner `bindEither` abstract and its `Left EC` reached lowering
+   untagged (out-of-bounds / `undefined`).
+
+   The spine now applies a final upper-bound pin from the surrounding
+   signature after every argument is checked, concretising the inner call's
+   result row so it row-monomorphises and tags `EC`. `oa = Right 3` runs the
+   outer continuation; `inner` short-circuits to `Left EC`, so every backend
+   prints `C`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+type EC = EC
+
+oa : Either EA Int32
+oa = Right 3
+
+inner : Int32 -> Either EC Int32
+inner _z = Left EC
+
+res : Either (EA | EB | EC) Int32
+res = bindEither oa (\n -> bindEither (pureEither n) inner)
+
+describe : Either (EA | EB | EC) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Left (_c : EC) -> "C"
+  Right v -> showInt32 v
+
+main : IO Never Unit
+main = IO.Stdout.print (describe res)

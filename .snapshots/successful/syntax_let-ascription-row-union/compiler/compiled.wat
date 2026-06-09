@@ -13,8 +13,8 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_A")
   (data (i32.const 109) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_B")
-  (table 4 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v__lift_18 $v__let_19)
+  (table 3 funcref)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v__let_18)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -770,82 +770,11 @@
         call 11
         local.get 6
         call 14
-        call 19
       end
     end
-    call 20)
+    call 19)
 
-  (func $v__lift_18 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 2
-    local.get 2
-    i32.load
-    i32.const 3
-    i32.eq
-    if (result i32)
-      local.get 2
-      i32.load offset=4
-      local.set 3
-      local.get 3
-      call 11
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 3
-        i32.store
-        local.get 1
-        local.get 3
-        i32.store offset=4
-        local.get 1
-        i32.load offset=4
-        call 11
-        local.get 1
-        local.set 4
-        local.get 3
-        call 12
-        local.get 0
-        call 12
-        local.get 4
-      end
-    else
-      local.get 2
-      i32.load offset=4
-      local.set 3
-      local.get 3
-      call 11
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 4
-        i32.store
-        local.get 1
-        local.get 3
-        i32.store offset=4
-        local.get 1
-        i32.load offset=4
-        call 11
-        local.get 1
-        local.set 4
-        local.get 3
-        call 12
-        local.get 0
-        call 12
-        local.get 4
-      end
-    end)
-
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_18 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -6,15 +6,14 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
   (import "wasi_snapshot_preview1" "fd_read" (func $fd_read (param i32 i32 i32 i32) (result i32)))
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 126))
+  (global $heap (mut i32) (i32.const 105))
   (global $__wl_buf (mut i32) (i32.const 0))
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00A")
-  (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00B")
-  (table 6 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v_describe $v__lam_18 $v__lift_19 $v__df__rowmono_0_bindEither_0)
+  (table 5 funcref)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v_describe $v__lam_18 $v__df__rowmono_0_bindEither_0)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -667,7 +666,7 @@
     (local i32)
     (local i32)
     call 16
-    call 22)
+    call 21)
 
   (func $v_describe (param i32) (result i32)
     (local i32)
@@ -690,43 +689,20 @@
       local.get 2
       local.set 1
       local.get 1
-      i32.load
-      i32.const 332136403
-      i32.eq
-      if (result i32)
-        local.get 1
-        i32.load offset=4
-        local.set 3
+      i32.load offset=4
+      local.set 3
+      local.get 3
+      call 11
+      block (result i32)
+        i32.const 96
+        local.set 4
         local.get 3
-        call 11
-        block (result i32)
-          i32.const 96
-          local.set 4
-          local.get 3
-          call 12
-          local.get 2
-          call 12
-          local.get 0
-          call 12
-          local.get 4
-        end
-      else
-        local.get 1
-        i32.load offset=4
-        local.set 3
-        local.get 3
-        call 11
-        block (result i32)
-          i32.const 117
-          local.set 4
-          local.get 3
-          call 12
-          local.get 2
-          call 12
-          local.get 0
-          call 12
-          local.get 4
-        end
+        call 12
+        local.get 2
+        call 12
+        local.get 0
+        call 12
+        local.get 4
       end
     else
       local.get 1
@@ -801,87 +777,6 @@
       local.get 1
     end)
 
-  (func $v__lift_19 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 3
-    local.get 3
-    i32.load
-    i32.const 3
-    i32.eq
-    if (result i32)
-      local.get 3
-      i32.load offset=4
-      local.set 4
-      local.get 4
-      call 11
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 3
-        i32.store
-        local.get 1
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 2
-        local.get 2
-        i32.const 348914022
-        i32.store
-        local.get 2
-        local.get 4
-        i32.store offset=4
-        local.get 2
-        i32.load offset=4
-        call 11
-        local.get 2
-        i32.store offset=4
-        local.get 1
-        local.set 5
-        local.get 4
-        call 12
-        local.get 0
-        call 12
-        local.get 5
-      end
-    else
-      local.get 3
-      i32.load offset=4
-      local.set 4
-      local.get 4
-      call 11
-      block (result i32)
-        i32.const 8
-        i32.const 1
-        call 10
-        local.set 1
-        local.get 1
-        i32.const 4
-        i32.store
-        local.get 1
-        local.get 4
-        i32.store offset=4
-        local.get 1
-        i32.load offset=4
-        call 11
-        local.get 1
-        local.set 5
-        local.get 4
-        call 12
-        local.get 0
-        call 12
-        local.get 5
-      end
-    end)
-
   (func $v__df__rowmono_0_bindEither_0 (param i32) (result i32)
     (local i32)
     (local i32)
@@ -945,7 +840,6 @@
         call 11
         local.get 6
         call 20
-        call 21
         local.set 5
         local.get 4
         call 12

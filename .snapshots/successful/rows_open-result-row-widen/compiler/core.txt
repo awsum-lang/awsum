@@ -1,0 +1,91 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "zeroOr" [ "_n" ]
+            ( CCon 3
+                [ CRow 751576878
+                    ( CCon 26 [] )
+                ]
+            )
+        , CValDef "called"
+            ( CCall
+                ( CVar "zeroOr" )
+                [ CIntLit 9 TInt32 ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 3
+                    , [ "__pa0" ]
+                    , CDrop DropFreeUnchecked "__pa0"
+                        ( CRowCase
+                            ( CVar "__pa0" )
+                            [
+                                ( 751576878
+                                , "_z"
+                                , CDrop DropFreeUnchecked "_z"
+                                    ( CString "Z" )
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "v" ]
+                    , CDrop DropFreeUnchecked "v"
+                        ( CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        )
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CVar "describe" )
+                    [ CVar "called" ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

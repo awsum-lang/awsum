@@ -1,0 +1,46 @@
+{- The same class as `rows_combinator-do-continuation`, but with the
+   continuation as the /first/ argument: `andThenEither` takes the
+   function before the operand (`oa |> andThenEither cont` desugars to
+   this shape). The combinator's input-side variable `e1` is then pinned
+   by an argument checked /after/ the continuation, so a purely
+   left-to-right pass cannot resolve the continuation's result row.
+
+   The check resolves it by processing the synthesising argument (`oa`,
+   which pins `e1`) before the deferred continuation, regardless of
+   position, then solving `e2` from the signature row. Without that, the
+   continuation's `Left EB` / `Left EC` reach lowering untagged and the
+   backends disagree. `oc = Left EC`, so every backend prints `C`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+type EC = EC
+
+oa : Either EA Int32
+oa = Right 1
+
+ob : Either EB Int32
+ob = Right 5
+
+oc : Either EC Int32
+oc = Left EC
+
+cAt : Either (EA | EB | EC) Int32
+cAt = oa |> andThenEither (\_n -> do
+  b <- ob
+  c <- oc
+  pureEither c
+)
+
+describe : Either (EA | EB | EC) Int32 -> String
+describe r = case r of
+  Left (_a : EA) -> "A"
+  Left (_b : EB) -> "B"
+  Left (_c : EC) -> "C"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (describe cAt)

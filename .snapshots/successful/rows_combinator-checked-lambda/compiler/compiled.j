@@ -161,22 +161,11 @@ L_tarm1:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   istore 5
-  iload 5
-  ldc 332136403
-  if_icmpne L_arm5
   aload 4
   iconst_1
   aaload
   astore 6
   ldc "A"
-  goto L_join4
-L_arm5:
-  aload 4
-  iconst_1
-  aaload
-  astore 6
-  ldc "B"
-L_join4:
   goto L_join2
 L_arm3:
   aload_1
@@ -240,68 +229,6 @@ L_join2:
 .end method
 
 
-.method static v__lift_19(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 4
-  aload_0
-  checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_2
-  iload_2
-  iconst_3
-  if_icmpne L_arm7
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_3
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  ldc 348914022
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-  aastore
-  goto L_join6
-L_arm7:
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_4
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-L_join6:
-  areturn
-.end method
-
-
 .method static v__df__rowmono_0_bindEither_0(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
@@ -316,7 +243,7 @@ L_join6:
   istore_2
   iload_2
   iconst_3
-  if_icmpne L_arm9
+  if_icmpne L_arm5
   aload_1
   iconst_1
   aaload
@@ -342,16 +269,15 @@ L_join6:
   aload_3
   aastore
   aastore
-  goto L_join8
-L_arm9:
+  goto L_join4
+L_arm5:
   aload_1
   iconst_1
   aaload
   astore_3
   aload_3
   invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_19(Ljava/lang/Object;)Ljava/lang/Object;
-L_join8:
+L_join4:
   areturn
 .end method
 

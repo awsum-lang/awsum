@@ -150,8 +150,8 @@ data UnifyError
 --   @unify b a@ either both succeed (with substitutions equivalent up
 --   to renaming) or both fail with the same kind of error.
 --
---   Compared to the one-way 'Awsum.Typing.match' (which only binds
---   variables on its first argument and returns 'Maybe'), 'unify':
+--   Compared to a one-way match (one that binds variables on only one
+--   side and reports failure as 'Nothing'), 'unify':
 --
 --   * binds variables on /either/ side, so two unrelated
 --     unification variables can be merged;

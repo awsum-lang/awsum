@@ -1,0 +1,37 @@
+pureEither:
+  param           x                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+inner:
+  param           _z                              count=0
+
+describe:
+  param           r                               count=1
+  case-pattern    __pa0                           count=0
+  row-case        _a                              count=0
+  row-case        _c                              count=0
+  case-pattern    v                               count=0
+
+$lam$18:
+  param           n                               count=1
+
+$lift$19:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$df$$rowmono$0$bindEither$0:
+  param           x                               count=1
+  case-pattern    e                               count=0
+  case-pattern    a                               count=0
+
+$df$$rowmono$1$bindEither$1:
+  param           x                               count=1
+  case-pattern    e                               count=0
+  case-pattern    a                               count=0
+

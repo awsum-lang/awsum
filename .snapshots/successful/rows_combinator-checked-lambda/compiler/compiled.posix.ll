@@ -124,7 +124,6 @@ done:
 }
 
 @.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [1 x i8]} { i32 0, i32 0, i32 0, i32 1, i32 1, [1 x i8] c"A" }
-@.str.1 = private unnamed_addr constant {i32, i32, i32, i32, i32, [1 x i8]} { i32 0, i32 0, i32 0, i32 1, i32 1, [1 x i8] c"B" }
 
 define internal ptr @__print(ptr %s) {
   %byte_count = load i32, ptr %s
@@ -238,7 +237,7 @@ define internal ptr @v_describe(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.17 ]
+  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.14 ]
 case.arm.3.4:
   %t5 = getelementptr ptr, ptr %v_r, i32 1
   %t6 = load ptr, ptr %t5
@@ -246,7 +245,7 @@ case.arm.3.4:
   %t7 = getelementptr ptr, ptr %t6, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %case.default.10 [ i64 332136403, label %case.arm.332136403.11 i64 348914022, label %case.arm.348914022.14 ]
+  switch i64 %t9, label %case.default.10 [ i64 332136403, label %case.arm.332136403.11 ]
 case.arm.332136403.11:
   %t12 = getelementptr ptr, ptr %t6, i32 1
   %t13 = load ptr, ptr %t12
@@ -255,25 +254,17 @@ case.arm.332136403.11:
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %v_r)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
-case.arm.348914022.14:
-  %t15 = getelementptr ptr, ptr %t6, i32 1
-  %t16 = load ptr, ptr %t15
-  call void @__inc_ref(ptr %t16)
-  call void @__free_recursive(ptr %t16)
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v_r)
-  ret ptr getelementptr inbounds (i8, ptr @.str.1, i64 12)
 case.default.10:
   unreachable
-case.arm.4.17:
-  %t18 = getelementptr ptr, ptr %v_r, i32 1
-  %t19 = load ptr, ptr %t18
-  call void @__inc_ref(ptr %t19)
-  call void @__inc_ref(ptr %t19)
-  %t20 = call ptr @__showInt32(ptr %t19)
-  call void @__free_recursive(ptr %t19)
+case.arm.4.14:
+  %t15 = getelementptr ptr, ptr %v_r, i32 1
+  %t16 = load ptr, ptr %t15
+  call void @__inc_ref(ptr %t16)
+  call void @__inc_ref(ptr %t16)
+  %t17 = call ptr @__showInt32(ptr %t16)
+  call void @__free_recursive(ptr %t16)
   call void @__free_recursive(ptr %v_r)
-  ret ptr %t20
+  ret ptr %t17
 case.default.3:
   unreachable
 }
@@ -310,49 +301,6 @@ define internal ptr @v__lam_18(ptr %v__n) {
   ret ptr %t1
 }
 
-define internal ptr @v__lift_19(ptr %v___input) {
-  %t0 = getelementptr ptr, ptr %v___input, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.15 ]
-case.arm.3.4:
-  %t5 = getelementptr ptr, ptr %v___input, i32 1
-  %t6 = load ptr, ptr %t5
-  call void @__inc_ref(ptr %t6)
-  %t7 = call ptr @__alloc(i64 16, i32 1)
-  %t8 = inttoptr i64 3 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = call ptr @__alloc(i64 16, i32 1)
-  %t11 = inttoptr i64 348914022 to ptr
-  %t12 = getelementptr ptr, ptr %t10, i32 0
-  store ptr %t11, ptr %t12
-  call void @__inc_ref(ptr %t6)
-  %t13 = getelementptr ptr, ptr %t10, i32 1
-  store ptr %t6, ptr %t13
-  %t14 = getelementptr ptr, ptr %t7, i32 1
-  store ptr %t10, ptr %t14
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v___input)
-  ret ptr %t7
-case.arm.4.15:
-  %t16 = getelementptr ptr, ptr %v___input, i32 1
-  %t17 = load ptr, ptr %t16
-  call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @__alloc(i64 16, i32 1)
-  %t19 = inttoptr i64 4 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
-  call void @__inc_ref(ptr %t17)
-  %t21 = getelementptr ptr, ptr %t18, i32 1
-  store ptr %t17, ptr %t21
-  call void @__free_recursive(ptr %t17)
-  call void @__free_recursive(ptr %v___input)
-  ret ptr %t18
-case.default.3:
-  unreachable
-}
-
 define internal ptr @v__df__rowmono_0_bindEither_0(ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_x, i32 0
   %t1 = load ptr, ptr %t0
@@ -384,10 +332,9 @@ case.arm.4.15:
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
   %t18 = call ptr @v__lam_18(ptr %t17)
-  %t19 = call ptr @v__lift_19(ptr %t18)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
-  ret ptr %t19
+  ret ptr %t18
 case.default.3:
   unreachable
 }
