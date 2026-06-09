@@ -73,10 +73,6 @@
             }
           }
         }
-        case 3289118412: {
-          const v__a = __s[1];
-          return "A";
-        }
       }
     }
   };
@@ -101,10 +97,6 @@
       case 995908654: {
         const v__lift_14 = s[1];
         return [1454647603, v__lift_13(v__lift_14)];
-      }
-      case 3289118412: {
-        const v__lift_15 = s[1];
-        return [3289118412, v__lift_15];
       }
     }
   })(v_narrow);

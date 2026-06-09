@@ -7,9 +7,6 @@ runIO:
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-  case-pattern    cont                            count=0
-  case-pattern    cont                            count=0
-  case-pattern    cont                            count=0
 
 de:
   param           x                               count=1
@@ -45,40 +42,14 @@ $df$andThenIO$2:
 
 $cps$$df$andThenIO$2:
   param           io                              count=2
-  param           $k                              count=5
+  param           $k                              count=1
   case-pattern    a                               count=0
-  case-pattern    e                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-  case-pattern    cont                            count=0
-  case-pattern    cont                            count=0
-  case-pattern    cont                            count=0
 
 $apply$$df$andThenIO$2:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_33                          count=0
+  case-pattern    $pk_26                          count=0
   case-pattern    s                               count=0
-
-$scc$$apply1_$df$$lam$0$3_$df$$lam$1$4_$df$$lam$2$5:
-  param           $args                           count=1
-
-$cps$$scc$$apply1_$df$$lam$0$3_$df$$lam$1$4_$df$$lam$2$5:
-  param           $args                           count=7
-  param           $k                              count=0
-  case-pattern    $cl                             count=0
-  case-pattern    $arg0                           count=0
-  case-pattern    $cap25_0                        count=0
-  case-pattern    $cap26_0                        count=0
-  case-pattern    $cap27_0                        count=0
-  case-pattern    cont                            count=0
-  case-pattern    result                          count=0
-  case-pattern    cont                            count=0
-  case-pattern    result                          count=0
-  case-pattern    cont                            count=0
-  case-pattern    bytes                           count=0
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=1
 

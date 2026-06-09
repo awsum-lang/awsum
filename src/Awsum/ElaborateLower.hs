@@ -850,7 +850,12 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
 --
 -- Generalises beyond 'runIO': any 'case' arm whose tag is not in
 -- the program's reachable construction set is dead. Sum types whose
--- some constructors are never used produce smaller binaries.
+-- some constructors are never used produce smaller binaries. The
+-- construction set is computed flow-sensitively by 'reachableTags' —
+-- a construction reachable only through a dead arm does not count, so
+-- a combinator arm that rebuilds the very constructor that gates it
+-- (e.g. 'andThenIO' rebuilding 'IOGetArgs' inside its own tag-8 arm)
+-- cannot keep itself alive.
 --
 -- Built-in baseline: built-ins like 'concatString' return values of
 -- ADT types ('Either StringTooLong String') whose constructors are
@@ -871,8 +876,7 @@ treeShakeFromMain conInfo =
        in if x' == x then x else fixpoint f x'
     step baselineCon baselineRow prog =
       let prog' = functionLevelShake prog
-          conTags = baselineCon <> collectConTags prog'
-          rowTags = baselineRow <> collectRowTags prog'
+          (conTags, rowTags) = reachableTags baselineCon baselineRow prog'
        in mapBodies (pruneDeadArms conTags rowTags) prog'
 
 -- | Set of constructor tags that built-ins might construct via
@@ -934,59 +938,67 @@ functionLevelShake (CoreProgram ds) =
       live = [d | d <- ds, Set.member (declName' d) reached]
    in CoreProgram live
 
--- | Set of every 'CCon' tag that appears anywhere in the program.
--- Used by 'pruneDeadArms' to decide which 'CCase' arms can be
--- dropped: an arm whose tag is not in this set is unreachable
--- because nothing constructs a value carrying that tag.
-collectConTags :: CoreProgram -> Set Int
-collectConTags (CoreProgram ds) = foldMap declConTags ds
+-- | The '(CCon'/'CReuse' tag, 'CRow' tag)' construction sets reachable
+-- in the program, as the least fixed point of a /guarded/ walk:
+-- descent into a 'CCase' arm is gated on the arm's tag being a known
+-- constructable 'CCon' tag, and into a 'CRowCase' arm on the arm's tag
+-- being a known constructable row tag. The scrutinee is always walked
+-- (it is evaluated whichever arm matches); only arm bodies are gated.
+--
+-- This is what distinguishes the sets from a flat "every tag textually
+-- present" collection. A 'CCon t' that occurs only inside an arm whose
+-- own tag nothing constructs is dead and must not seed itself — the
+-- exact shape that defeats flat collection: 'andThenIO' / 'handleErrorIO'
+-- rebuild 'IOGetArgs' (@CCon 8 [CCon 27 [cont]]@) inside their own tag-8
+-- arm, so a flat walk sees tag 8 as constructable and keeps the arm,
+-- which keeps the construction — a cycle disconnected from any real
+-- 'IO.Args.getArgs' source. Gating the arm on tag 8 breaks it: with no
+-- real construction of 8, the arm is never entered, never harvested.
+--
+-- Seed: the built-in baseline plus every construction outside any arm.
+-- Each round opens the arms whose tags just became reachable and
+-- harvests their constructions; the pair of sets grows monotonically,
+-- bounded by every tag in the program, so iteration converges.
+--
+-- Sound (never prunes a live arm): an arm taken at runtime has a
+-- scrutinee whose tag was constructed on a live path, hence is in the
+-- set, hence the arm was walked and its constructions harvested. The
+-- induction bottoms out at constructions outside any arm (always
+-- harvested) and the baseline.
+reachableTags :: Set Int -> Set Word32 -> CoreProgram -> (Set Int, Set Word32)
+reachableTags baseCon baseRow (CoreProgram ds) = go baseCon baseRow
   where
-    declConTags = \case
-      CFunDef _ _ body -> exprConTags body
-      CValDef _ body -> exprConTags body
+    go cs rs =
+      let (cs', rs') = foldMap (guardedTags cs rs . declBody) ds
+          cs'' = baseCon <> cs'
+          rs'' = baseRow <> rs'
+       in if cs'' == cs && rs'' == rs then (cs, rs) else go cs'' rs''
+    declBody = \case
+      CFunDef _ _ body -> body
+      CValDef _ body -> body
 
-exprConTags :: CExpr -> Set Int
-exprConTags = \case
-  CCon t fs -> Set.insert t (foldMap exprConTags fs)
-  CCall f xs -> exprConTags f <> foldMap exprConTags xs
-  CCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
-  CRow _ v -> exprConTags v
-  CRowCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
-  CLoop b -> exprConTags b
-  CContinue xs -> foldMap exprConTags xs
-  CDrop _ _ b -> exprConTags b
-  CReuse _ t fs -> Set.insert t (foldMap exprConTags fs)
-  CVar _ -> mempty
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
-
--- | Set of every row tag (FNV-1a hash of a row label) that appears
--- anywhere in the program. The dual of 'collectConTags' for
--- structural sums; 'pruneDeadArms' drops 'CRowCase' arms whose tag
--- is not in this set.
-collectRowTags :: CoreProgram -> Set Word32
-collectRowTags (CoreProgram ds) = foldMap declRowTags ds
+-- | Collect '(con tags, row tags)' constructed in @e@, descending into
+-- a 'CCase' arm only when its tag is in @cs@ and into a 'CRowCase' arm
+-- only when its tag is in @rs@. Con and row are gathered in one walk
+-- because the two sets co-evolve: a live 'CCase' arm may construct row
+-- tags and a live 'CRowCase' arm may construct con tags.
+guardedTags :: Set Int -> Set Word32 -> CExpr -> (Set Int, Set Word32)
+guardedTags cs rs = go
   where
-    declRowTags = \case
-      CFunDef _ _ body -> exprRowTags body
-      CValDef _ body -> exprRowTags body
-
-exprRowTags :: CExpr -> Set Word32
-exprRowTags = \case
-  CRow t v -> Set.insert t (exprRowTags v)
-  CRowCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
-  CCon _ fs -> foldMap exprRowTags fs
-  CCall f xs -> exprRowTags f <> foldMap exprRowTags xs
-  CCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
-  CLoop b -> exprRowTags b
-  CContinue xs -> foldMap exprRowTags xs
-  CDrop _ _ b -> exprRowTags b
-  CReuse _ _ fs -> foldMap exprRowTags fs
-  CVar _ -> mempty
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
+    go = \case
+      CCon t fs -> (Set.singleton t, mempty) <> foldMap go fs
+      CReuse _ t fs -> (Set.singleton t, mempty) <> foldMap go fs
+      CRow t v -> (mempty, Set.singleton t) <> go v
+      CCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t cs then go b else mempty) alts
+      CRowCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t rs then go b else mempty) alts
+      CCall f xs -> go f <> foldMap go xs
+      CLoop b -> go b
+      CContinue xs -> foldMap go xs
+      CDrop _ _ b -> go b
+      CVar _ -> mempty
+      CString _ -> mempty
+      CIntLit _ _ -> mempty
+      CBuiltIn _ -> mempty
 
 -- | Map a transformation across every top-level decl's body.
 mapBodies :: (CExpr -> CExpr) -> CoreProgram -> CoreProgram

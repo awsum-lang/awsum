@@ -56,12 +56,6 @@ CoreProgram
                             [ CVar "$lift$14" ]
                         )
                     )
-                ,
-                    ( 3289118412
-                    , "$lift$15"
-                    , CRow 3289118412
-                        ( CVar "$lift$15" )
-                    )
                 ]
             )
         , CFunDef "describe" [ "x" ]
@@ -108,12 +102,6 @@ CoreProgram
                                 )
                             ]
                         )
-                    )
-                ,
-                    ( 3289118412
-                    , "_a"
-                    , CDrop DropFreeUnchecked "_a"
-                        ( CString "A" )
                     )
                 ]
             )

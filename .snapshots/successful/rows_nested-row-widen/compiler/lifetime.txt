@@ -6,14 +6,12 @@ runIO:
 
 widened:
   row-case        $lift$14                        count=1
-  row-case        $lift$15                        count=1
 
 describe:
   param           x                               count=1
   row-case        m                               count=0
   case-pattern    inner                           count=0
   row-case        b                               count=0
-  row-case        _a                              count=0
 
 $lift$13:
   param           __input                         count=1
