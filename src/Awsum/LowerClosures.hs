@@ -35,25 +35,38 @@
 -- One walk per top-level decl. Each closure value (bare 'CVar' to a
 -- top-level fn in non-callee position, or partial application
 -- 'CCall (CVar f) args' with @length args < arity f@) is rewritten
--- to @CCon shapeTag captures@. Each residual call site
--- @CCall (CVar n) args@ where @n@ is not a top-level fn is rewritten
--- to @CCall (CVar (apply_k)) (CVar n : args)@.
+-- to @CCon shapeTag captures@. Each residual call @CCall callee args@
+-- whose @callee@ is not a direct top-level fn or built-in — a binder,
+-- or a value computed by over-application — is rewritten to
+-- @CCall (CVar (apply_k)) (callee : args)@.
 --
--- Tag assignment is per-arity: every closure shape @(helper,
--- captureCount)@ gets a tag in the namespace of its remaining-arity
--- dispatcher (@apply_(arity helper - captureCount)@). Same shape
--- always lands in the same dispatcher because captureCount is
--- structural — a closure's remaining arity is fixed once the helper
--- is known.
+-- Tags are per-shape: every closure shape @(helper, captureCount)@ has
+-- one globally-unique tag used wherever that closure is built (static
+-- site or grown at runtime) and matched (any dispatcher it flows
+-- through). Allocated from 'nextFreshConTag' in @(remaining, helper,
+-- captureCount)@ order, which matches the prior per-arity allocation —
+-- a program whose shape set is unchanged keeps its tags.
 --
--- Per-arity dispatchers:
+-- ## Generalised apply (saturate + grow)
+--
+-- A closure of shape @(helper, c)@ has remaining arity
+-- @r = arity helper - c@. The language requires every top-level
+-- 'CFunDef' to bind all its arrow-arity parameters, so @r@ is the
+-- closure's true arrow-remaining and a well-typed application supplies
+-- @k <= r@ arguments — over-application of a closure value (@k > r@)
+-- cannot occur. Dispatcher @apply_k@ therefore handles two cases per
+-- shape with @r >= k@:
 --
 -- @
---   apply_k closure x_1 .. x_k = case closure of
---     0 (cap_0_0 .. cap_0_{m_0-1}) -> helper_0 cap_0_0 .. cap_0_{m_0-1} x_1 .. x_k
---     1 (cap_1_0 .. cap_1_{m_1-1}) -> helper_1 cap_1_0 .. cap_1_{m_1-1} x_1 .. x_k
---     ...
+--   apply_k cl x_1 .. x_k = case cl of
+--     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k  -- r == k: saturate
+--     tag (cap_0 .. cap_{c-1}) -> growTag (cap_0 .. cap_{c-1} x_1 .. x_k) -- r >  k: grow
 -- @
+--
+-- The grow arm builds a /larger/ closure @(helper, c+k)@ at runtime —
+-- the defunctionalised equivalent of an STG @PAP@ — instead of calling
+-- @helper@. The shape set is closed under growth ('closeUnderGrow') so
+-- every grow target has a tag.
 --
 -- ## What stays untouched
 --
@@ -75,17 +88,6 @@ import Relude
 -- share a tag.
 type ClosureShape = (Name, Int)
 
--- | Layout of one apply_k dispatcher: shapes that flow through it,
--- each paired with its globally unique tag. Tags are allocated from
--- a program-wide supply seeded by 'nextFreshConTag', so a shape's
--- tag never collides with another type's constructor tag (or with
--- another dispatcher's shape tag).
-data ApplyDispatcher = ApplyDispatcher
-  { adRemainingArity :: !Int,
-    adShapes :: ![(Int, ClosureShape)]
-  }
-  deriving stock (Show, Eq)
-
 -- | Top-level entry. Returns a Core program with every residual
 -- function value replaced by a tagged 'CCon' and every residual call
 -- routed through an @apply_k@ dispatcher; the dispatchers are
@@ -95,40 +97,57 @@ data ApplyDispatcher = ApplyDispatcher
 lowerClosuresProgram :: CoreProgram -> CoreProgram
 lowerClosuresProgram prog@(CoreProgram decls) =
   let arities = Map.fromList [(n, length args) | CFunDef n args _ <- decls]
-      shapeMap = collectShapes arities decls
-      residualArities = collectResidualArities arities decls
-      -- Ensure a dispatcher exists for every arity that appears as a
-      -- residual call site, even when no closure shape currently flows
-      -- through it. Without this, 'runIO''s 'IOGetArgs' arm calls
-      -- '$apply1' on programs that never construct an 'IOGetArgs'
-      -- value — the call is dead at runtime, but the codegen still
-      -- needs '$apply1' to be defined for the binary to link.
-      arityKeysWithEmpty =
-        Map.unionWith
-          (<>)
-          shapeMap
-          (Map.fromSet (const []) residualArities)
-      baseTag = nextFreshConTag prog
-      dispatchers = buildDispatchers baseTag arityKeysWithEmpty
-      shapeTagOf = shapeTagOfFn dispatchers
-      rewritten = map (rewriteDecl arities shapeTagOf) decls
-   in CoreProgram (rewritten <> map dispatcherDecl dispatchers)
+      observed = foldMap (declShapes arities) decls
+      -- Every arity at which a closure value is applied; each needs an
+      -- @apply_k@ dispatcher. Seeds 'closeUnderGrow' (which @k@s can
+      -- grow a closure) and decides which dispatchers to emit.
+      applyArities = collectResidualArities arities decls
+      shapes = closeUnderGrow arities applyArities observed
+      shapeTag = assignTags (nextFreshConTag prog) arities shapes
+      rewritten = map (rewriteDecl arities shapeTag) decls
+      dispatchers =
+        map (dispatcherDecl arities shapeTag shapes) (Set.toAscList applyArities)
+   in CoreProgram (rewritten <> dispatchers)
 
--- | All closure shapes referenced anywhere in the program, grouped by
--- their remaining arity. Each shape appears once even if used at
--- many sites; shapes within one remaining-arity bucket are
--- alphabetically ordered for snapshot stability and readability.
-collectShapes :: Map Name Int -> [CDecl] -> Map Int [ClosureShape]
-collectShapes arities decls =
-  let shapes = Set.toAscList $ foldMap (declShapes arities) decls
-   in Map.map sort
-        $ Map.fromListWith
-          (<>)
-          [ (remainingArity, [(helper, captureCount)])
-          | (helper, captureCount) <- shapes,
-            Just helperArity <- [Map.lookup helper arities],
-            let remainingArity = helperArity - captureCount
-          ]
+-- | Remaining (uncaptured) arity of a closure shape. The language
+-- requires every top-level 'CFunDef' to bind all its arrow-arity
+-- parameters, so this equals the closure's true arrow-remaining and a
+-- well-typed application never supplies more than @r@ arguments.
+remainingArity :: Map Name Int -> ClosureShape -> Int
+remainingArity arities (helper, captureCount) =
+  maybe 0 (subtract captureCount) (Map.lookup helper arities)
+
+-- | Close a shape set under /growth/: a closure @(h, c)@ applied to
+-- fewer arguments than its remaining arity (@k < r@) yields a larger
+-- closure @(h, c+k)@ built at runtime by the @apply_k@ dispatcher.
+-- Gated by the residual-call arities actually present, so a grown
+-- shape is only minted when some call site could produce it. Iterates
+-- to a fixpoint because a grown closure can itself be grown.
+closeUnderGrow :: Map Name Int -> Set Int -> Set ClosureShape -> Set ClosureShape
+closeUnderGrow arities applyArities = go
+  where
+    go shapes =
+      let shapes' = shapes <> foldMap grow1 (Set.toList shapes)
+       in if Set.size shapes' == Set.size shapes then shapes else go shapes'
+    grow1 s@(helper, captureCount) =
+      let r = remainingArity arities s
+       in Set.fromList
+            [ (helper, captureCount + k)
+            | k <- Set.toList applyArities,
+              k >= 1,
+              k < r
+            ]
+
+-- | One globally-unique tag per closure shape, allocated from a supply
+-- seeded by 'nextFreshConTag' so they never collide with a
+-- nominal-constructor tag. Order — @(remaining, helper, captureCount)@
+-- — matches the previous per-arity bucket allocation, so a program
+-- whose shape set is unchanged keeps its tags.
+assignTags :: Int -> Map Name Int -> Set ClosureShape -> Map ClosureShape Int
+assignTags baseTag arities shapes =
+  Map.fromList (zip ordered [baseTag ..])
+  where
+    ordered = sortOn (\s@(helper, captureCount) -> (remainingArity arities s, helper, captureCount)) (Set.toList shapes)
 
 -- | Closure shapes referenced inside one declaration. Walks every
 -- value-position sub-expression looking for bare references and
@@ -138,13 +157,23 @@ declShapes arities = \case
   CFunDef _ _ body -> exprShapes arities body
   CValDef _ rhs -> exprShapes arities rhs
 
--- | Set of arities used at residual call sites — calls
--- @CCall (CVar n) args@ where @n@ is not a top-level fn.
--- Independent of closure-flow: a residual call may appear in a
--- function body whose runtime path never executes (e.g. the
--- 'IOGetArgs' arm of 'runIO' in a program that never constructs
--- 'IOGetArgs'); the corresponding dispatcher must still exist for
--- the codegen to emit a valid binary.
+-- | True iff a 'CCall' with this callee is a /direct/ call — a known
+-- top-level function or a built-in — rather than an application of a
+-- closure value that must route through an @apply_k@ dispatcher.
+isDirectCallee :: Map Name Int -> CExpr -> Bool
+isDirectCallee arities = \case
+  CVar f -> Map.member f arities
+  CBuiltIn _ -> True
+  _ -> False
+
+-- | Every arity at which a closure value is applied — calls whose
+-- callee is not a direct top-level function or built-in: a residual
+-- binder (@CCall (CVar n) args@, @n@ not top-level) or a value
+-- computed by over-application (@CCall (CCall …) args@). Each such
+-- site routes through @apply_k@. Independent of closure-flow: the
+-- dispatcher must exist even when no closure of the right remaining
+-- arity currently flows through it (e.g. the 'IOGetArgs' arm of
+-- 'runIO' in a program that never constructs 'IOGetArgs').
 collectResidualArities :: Map Name Int -> [CDecl] -> Set Int
 collectResidualArities arities = foldMap declArities
   where
@@ -153,10 +182,10 @@ collectResidualArities arities = foldMap declArities
       CValDef _ rhs -> exprArities rhs
 
     exprArities = \case
-      CCall (CVar n) args
-        | Nothing <- Map.lookup n arities ->
-            Set.singleton (length args) <> foldMap exprArities args
-      CCall callee args -> exprArities callee <> foldMap exprArities args
+      CCall callee args ->
+        (if isDirectCallee arities callee then mempty else Set.singleton (length args))
+          <> exprArities callee
+          <> foldMap exprArities args
       CCon _ fs -> foldMap exprArities fs
       CCase s alts -> exprArities s <> foldMap (\(_, _, b) -> exprArities b) alts
       CRow _ v -> exprArities v
@@ -209,68 +238,41 @@ exprShapes arities = goValue
       CBuiltIn _ -> mempty
       e -> goValue e
 
--- | Build one 'ApplyDispatcher' per used remaining arity. Shapes are
--- stable-sorted (already 'Set'-ordered by 'collectShapes') so tag
--- assignment is deterministic across runs. Tags are allocated from
--- @baseTag@ in ascending arity order, then ascending shape order
--- inside each arity bucket — every shape across the whole program
--- ends up with a globally unique tag.
-buildDispatchers :: Int -> Map Int [ClosureShape] -> [ApplyDispatcher]
-buildDispatchers baseTag shapeMap =
-  let buckets = Map.toAscList shapeMap
-      (_, dispatchers) = mapAccumL assignBucket baseTag buckets
-   in dispatchers
-  where
-    assignBucket nextTag (k, shapes) =
-      let tagged = zip [nextTag ..] shapes
-       in ( nextTag + length shapes,
-            ApplyDispatcher {adRemainingArity = k, adShapes = tagged}
-          )
-
--- | Lookup function: shape → (dispatcher's remaining arity, globally
--- unique tag of the shape within that dispatcher). 'Nothing' for an
--- unrecognised shape (a closure whose helper has an unknown arity,
--- e.g. a 'CBuiltIn' — shouldn't arise after Defunctionalize but we
--- tolerate it).
-shapeTagOfFn :: [ApplyDispatcher] -> ClosureShape -> Maybe (Int, Int)
-shapeTagOfFn dispatchers shape =
-  listToMaybe
-    [ (adRemainingArity ad, tag)
-    | ad <- dispatchers,
-      (tag, s) <- adShapes ad,
-      s == shape
-    ]
-
 -- | Apply the rewrite to one declaration's body.
-rewriteDecl :: Map Name Int -> (ClosureShape -> Maybe (Int, Int)) -> CDecl -> CDecl
-rewriteDecl arities tagOf = \case
-  CFunDef n args body -> CFunDef n args (rewriteExpr arities tagOf body)
-  CValDef n rhs -> CValDef n (rewriteExpr arities tagOf rhs)
+rewriteDecl :: Map Name Int -> Map ClosureShape Int -> CDecl -> CDecl
+rewriteDecl arities shapeTag = \case
+  CFunDef n args body -> CFunDef n args (rewriteExpr arities shapeTag body)
+  CValDef n rhs -> CValDef n (rewriteExpr arities shapeTag rhs)
 
--- | Rewrite an expression: encode closure values, route residual
--- calls through the right apply_k dispatcher.
-rewriteExpr :: Map Name Int -> (ClosureShape -> Maybe (Int, Int)) -> CExpr -> CExpr
-rewriteExpr arities tagOf = goValue
+-- | Rewrite an expression: encode closure values as tagged 'CCon's and
+-- route every residual application through the right @apply_k@
+-- dispatcher.
+rewriteExpr :: Map Name Int -> Map ClosureShape Int -> CExpr -> CExpr
+rewriteExpr arities shapeTag = goValue
   where
     goValue = \case
+      -- Bare top-level reference in value position: a zero-capture closure.
       CVar n
-        | Just _ <- Map.lookup n arities,
-          Just (_, tag) <- tagOf (n, 0) ->
-            CCon tag []
+        | Just tag <- Map.lookup (n, 0) shapeTag -> CCon tag []
       e@(CVar _) -> e
+      -- Partial application in value position: an N-capture closure.
       CCall (CVar f) args
         | Just ar <- Map.lookup f arities,
           length args < ar,
-          Just (_, tag) <- tagOf (f, length args) ->
+          Just tag <- Map.lookup (f, length args) shapeTag ->
             CCon tag (map goValue args)
-      CCall (CVar n) args
-        | Nothing <- Map.lookup n arities ->
-            -- Residual call: callee is a parameter or arm-binder.
-            -- Route through apply_k with the closure prepended.
-            let args' = map goValue args
-             in CCall (CVar (applyName (length args'))) (CVar n : args')
+      -- Saturated direct call to a top-level function — already first-order.
+      CCall (CVar f) args
+        | Map.member f arities ->
+            CCall (CVar f) (map goValue args)
+      -- Direct built-in call.
+      CCall (CBuiltIn b) args ->
+        CCall (CBuiltIn b) (map goValue args)
+      -- Residual application: the callee is a closure value (a binder,
+      -- or a value computed by over-application). Route through
+      -- @apply_k@ with the closure prepended.
       CCall callee args ->
-        CCall (goCallee callee) (map goValue args)
+        CCall (CVar (applyName (length args))) (goValue callee : map goValue args)
       CCon tag fs -> CCon tag (map goValue fs)
       CCase s alts -> CCase (goValue s) (map (\(t, vs, b) -> (t, vs, goValue b)) alts)
       CRow t v -> CRow t (goValue v)
@@ -283,39 +285,43 @@ rewriteExpr arities tagOf = goValue
       e@(CIntLit _ _) -> e
       e@(CBuiltIn _) -> e
 
-    -- Callee position: leave 'CVar' / 'CBuiltIn' direct, recurse
-    -- through anything else as a value.
-    goCallee = \case
-      e@(CVar _) -> e
-      e@(CBuiltIn _) -> e
-      e -> goValue e
-
--- | Materialise an 'ApplyDispatcher' as a 'CFunDef'.
+-- | Materialise the @apply_k@ dispatcher: one arm per closure shape
+-- whose remaining arity is at least @k@. A shape with @r == k@
+-- saturates its helper; a shape with @r > k@ grows into the larger
+-- closure @(helper, c + k)@ — always present in the shape set because
+-- 'closeUnderGrow' added it for this @k@.
 --
 -- @
---   apply_k closure x_1 .. x_k = case closure of
---     0 (cap0_0 .. cap0_{m_0-1}) -> helper_0 cap0_0 .. cap0_{m_0-1} x_1 .. x_k
---     ...
+--   apply_k cl x_1 .. x_k = case cl of
+--     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k  -- r == k
+--     tag (cap_0 .. cap_{c-1}) -> CCon growTag (cap_0 .. cap_{c-1} x_1 .. x_k)  -- r > k
 -- @
-dispatcherDecl :: ApplyDispatcher -> CDecl
-dispatcherDecl ad =
-  let k :: Int
-      k = adRemainingArity ad
-      closureParam :: Name
+dispatcherDecl :: Map Name Int -> Map ClosureShape Int -> Set ClosureShape -> Int -> CDecl
+dispatcherDecl arities shapeTag shapes k =
+  let closureParam :: Name
       closureParam = "$cl"
       argParams :: [Name]
       argParams = ["$arg" <> show i | i <- [0 .. k - 1]]
       params :: [Name]
       params = closureParam : argParams
+      armShapes :: [ClosureShape]
+      armShapes =
+        sortOn
+          (`Map.lookup` shapeTag)
+          [s | s <- Set.toList shapes, remainingArity arities s >= k]
       arms :: [(Int, [Name], CExpr)]
       arms =
-        [ ( tag,
-            captureNames,
-            CCall (CVar helper) (map CVar (captureNames <> argParams))
-          )
-        | (tag, (helper, captureCount)) <- adShapes ad,
+        [ (tag, captureNames, body)
+        | s@(helper, captureCount) <- armShapes,
+          Just tag <- [Map.lookup s shapeTag],
           let captureNames :: [Name]
               captureNames = ["$cap" <> show tag <> "_" <> show i | i <- [0 .. captureCount - 1]]
+              allArgs :: [CExpr]
+              allArgs = map CVar (captureNames <> argParams)
+              body :: CExpr
+              body
+                | remainingArity arities s == k = CCall (CVar helper) allArgs
+                | otherwise = CCon (shapeTag Map.! (helper, captureCount + k)) allArgs
         ]
    in CFunDef (applyName k) params (CCase (CVar closureParam) arms)
 

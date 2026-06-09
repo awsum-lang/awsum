@@ -1,0 +1,25 @@
+{- Regression: the over-applied result is *under*-applied.
+   `identity applyOnce inc` over-applies `identity` (arity 1) by one
+   argument, but the computed `applyOnce` value still needs two arguments
+   and is given only `inc` — one short.
+
+   The `$apply1` dispatcher must build a *larger* closure at runtime (the
+   defunctionalised equivalent of an STG `PAP`) rather than saturate a
+   helper it has too few arguments for. Binding it to `g` and applying
+   `g 7` then saturates: `applyOnce inc 7` = `inc 7` = `7`. -}
+
+import IO.Stdout
+
+applyOnce : (Int32 -> Int32) -> Int32 -> Int32
+applyOnce f x = f x
+
+identity : a -> a
+identity x = x
+
+inc : Int32 -> Int32
+inc n = n
+
+main : IO Never Unit
+main =
+  let g = identity applyOnce inc
+   in IO.Stdout.print (showInt32 (g 7))

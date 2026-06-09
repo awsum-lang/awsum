@@ -1,0 +1,34 @@
+{- Regression: over-application whose function value is a *captured*
+   partial application of a prelude row combinator (`bindEither oa`, one
+   capture), with the result row widening to `ErrA | ErrB`.
+
+   `identity (bindEither oa) cont` over-applies `identity` (arity 1) by
+   one; the computed one-capture closure is then saturated by `cont`.
+   Exercises over-application where the closure carries a capture and the
+   helper is a row combinator. Prints the success value `10`. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+type ErrB = ErrB
+
+identity : a -> a
+identity x = x
+
+oa : Either ErrA Int32
+oa = Right 10
+
+cont : Int32 -> Either ErrB Int32
+cont n = Right n
+
+result : Either (ErrA | ErrB) Int32
+result = identity (bindEither oa) cont
+
+showResult : Either (ErrA | ErrB) Int32 -> String
+showResult r = case r of
+  Left (_a : ErrA) -> "ERR_A"
+  Left (_b : ErrB) -> "ERR_B"
+  Right n -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (showResult result)
