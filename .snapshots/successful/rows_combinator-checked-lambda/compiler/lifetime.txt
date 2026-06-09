@@ -13,7 +13,7 @@ describe:
   row-case        _a                              count=0
   case-pattern    n                               count=0
 
-$lam$18:
+$lam$13:
   param           _n                              count=0
 
 $df$$rowmono$0$bindEither$0:

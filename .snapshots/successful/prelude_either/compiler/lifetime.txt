@@ -17,7 +17,7 @@ main:
   case-pattern    $do_e_0                         count=1
   case-pattern    s0                              count=1
 
-$let$18:
+$let$13:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

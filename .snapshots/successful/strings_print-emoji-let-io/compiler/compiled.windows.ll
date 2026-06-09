@@ -206,11 +206,11 @@ define internal ptr @v_main() {
   store ptr %t7, ptr %t10
   %t11 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t11
-  %t12 = call ptr @v__let_18(ptr %t0)
+  %t12 = call ptr @v__let_13(ptr %t0)
   ret ptr %t12
 }
 
-define internal ptr @v__let_18(ptr %v_unit) {
+define internal ptr @v__let_13(ptr %v_unit) {
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

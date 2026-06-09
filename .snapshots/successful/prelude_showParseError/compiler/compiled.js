@@ -1,16 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_showParseError = (v__wild0) => {
-    return "ParseError";
-  };
+  const v_showParseError = v__wild0 => "ParseError";
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

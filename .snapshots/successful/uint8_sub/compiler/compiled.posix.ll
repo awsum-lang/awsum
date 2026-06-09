@@ -646,11 +646,11 @@ case.default.7:
 case.join.8:
   %t183 = phi ptr [ %t13, %case.end.3.10 ], [ %t182, %case.end.4.18 ]
   call void @__free_recursive(ptr %t3)
-  %t184 = call ptr @v__let_18(ptr %t183)
+  %t184 = call ptr @v__let_13(ptr %t183)
   ret ptr %t184
 }
 
-define internal ptr @v__let_18(ptr %v_res) {
+define internal ptr @v__let_13(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

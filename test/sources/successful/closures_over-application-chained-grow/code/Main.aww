@@ -1,0 +1,23 @@
+{- Regression: the over-applied result is grown more than
+   once. `identity add3 7` over-applies `identity` (arity 1), leaving a
+   closure of `add3` (arity 3) captured with `7` — remaining arity 2.
+   `g 8` grows it again (remaining 1), and `h 9` finally saturates:
+   `add3 7 8 9` = `7`.
+
+   Exercises the fixpoint that closes the closure-shape set under repeated
+   growth: the `$apply1` dispatcher dispatches `(add3, 0)` → grow,
+   `(add3, 1)` → grow, `(add3, 2)` → saturate, all under one arity. -}
+
+import IO.Stdout
+
+add3 : Int32 -> Int32 -> Int32 -> Int32
+add3 a _b _c = a
+
+identity : a -> a
+identity x = x
+
+main : IO Never Unit
+main =
+  let g = identity add3 7
+   in let h = g 8
+       in IO.Stdout.print (showInt32 (h 9))

@@ -54,7 +54,7 @@ CoreProgram
             , "b"
             ]
             ( CCall
-                ( CVar "$df$$let$19$0" )
+                ( CVar "$df$$let$14$0" )
                 [ CVar "b"
                 , CVar "n"
                 , CVar "s"
@@ -62,7 +62,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$20" )
+                ( CVar "$let$15" )
                 [ CCall
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
@@ -71,9 +71,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$18" [ "x" ]
+        , CFunDef "$lam$13" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$let$20" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -100,7 +100,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$df$$let$19$0"
+        , CFunDef "$df$$let$14$0"
             [ "b"
             , "n"
             , "s"
@@ -111,7 +111,7 @@ CoreProgram
                     [ CCall
                         ( CBuiltIn "showInt32" )
                         [ CCall
-                            ( CVar "$lam$18" )
+                            ( CVar "$lam$13" )
                             [ CVar "n" ]
                         ]
                     , CString "/"
@@ -134,7 +134,7 @@ CoreProgram
                                 ( CBuiltIn "concatString" )
                                 [ CVar "s0"
                                 , CCall
-                                    ( CVar "$lam$18" )
+                                    ( CVar "$lam$13" )
                                     [ CVar "s" ]
                                 ]
                             )
@@ -175,7 +175,7 @@ CoreProgram
                                                     , CCall
                                                         ( CVar "showTri" )
                                                         [ CCall
-                                                            ( CVar "$lam$18" )
+                                                            ( CVar "$lam$13" )
                                                             [ CVar "b" ]
                                                         ]
                                                     ]

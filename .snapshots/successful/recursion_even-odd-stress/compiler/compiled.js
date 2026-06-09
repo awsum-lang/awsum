@@ -1,28 +1,21 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showUnderflowError = (v__wild0) => {
-    return "UnderflowError";
-  };
+  const v_showUnderflowError = v__wild0 => "UnderflowError";
 
-  const v_showBool = (v_b) => {
+  const v_showBool = v_b => {
     {
       const __s = v_b;
       switch (__s[0]) {
@@ -36,7 +29,7 @@
     }
   };
 
-  const v_showResult = (v_r) => {
+  const v_showResult = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -52,7 +45,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -80,7 +73,7 @@
     }
   };
 
-  const v__scc_evenInt_oddInt = (v__args) => {
+  const v__scc_evenInt_oddInt = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -146,11 +139,9 @@
     }
   };
 
-  const v_evenInt = (v_n) => {
-    return v__scc_evenInt_oddInt([8, v_n]);
-  };
+  const v_evenInt = v_n => v__scc_evenInt_oddInt([8, v_n]);
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -166,7 +157,7 @@
     }
   };
 
-  const main = v__let_18(v_showResult(v_evenInt(1000000 | 0)));
+  const main = v__let_13(v_showResult(v_evenInt(1000000 | 0)));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

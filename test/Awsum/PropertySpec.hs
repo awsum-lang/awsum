@@ -29,6 +29,7 @@ import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import Test.QuickCheck (Arbitrary (..), Gen, chooseBoundedIntegral, chooseInteger, counterexample, elements, forAll, frequency, ioProperty, listOf, listOf1)
 import Test.QuickCheck qualified as QC
+import TestSources (pruneOrphanTestDirs)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Framework
@@ -51,8 +52,11 @@ data Property a = Property
 
 data SomeProperty = forall a. (Show a) => SomeProperty (Property a)
 
+propertyRoot :: FilePath
+propertyRoot = "test/sources/property"
+
 propertySourceFile :: FilePath -> FilePath
-propertySourceFile dir = "test/sources/property" </> dir </> "code" </> "Main.aww"
+propertySourceFile dir = propertyRoot </> dir </> "code" </> "Main.aww"
 
 spec :: Spec
 spec = describe "Property tests"
@@ -64,6 +68,11 @@ spec = describe "Property tests"
   $ parallel
   $ modifyMaxSuccess (const 100)
   $ do
+    -- Sweep orphaned husks (a directory with no code/Main.aww, stranded by
+    -- a git move) before compiling. This suite drives itself from the
+    -- hard-coded 'properties' catalogue, so an orphan is never referenced —
+    -- but it shouldn't linger either.
+    runIO (pruneOrphanTestDirs propertyRoot)
     forM_ properties $ \(SomeProperty p) ->
       describe (toString p.propName) $ do
         artifacts <- runIO (compileFromFile (propertySourceFile p.propSourceDir))

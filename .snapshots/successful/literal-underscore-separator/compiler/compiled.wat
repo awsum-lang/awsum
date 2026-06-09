@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00sum=")
   (data (i32.const 108) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00FAIL")
   (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v__lift_18)
+  (elem (i32.const 0) $v_runIO $v__lift_13)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -963,7 +963,7 @@
       local.get 0
     end)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

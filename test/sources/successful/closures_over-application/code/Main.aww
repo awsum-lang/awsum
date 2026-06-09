@@ -1,0 +1,24 @@
+{- Regression: over-application of a higher-order function.
+   `identity` has arity 1 but is applied to three arguments — `applyOnce`
+   fills its single slot, then `inc` and `5` over-apply the *result*
+   (the `applyOnce` value `identity` returns).
+
+   Before the fix `Defunctionalize` scanned every argument for closures,
+   placed a slot index past `identity`'s parameter list, and crashed
+   `generateSpec` on `Map.!`. Now the arguments beyond `identity`'s arity
+   are split off as a residual application routed through the `$apply2`
+   dispatcher, which saturates `applyOnce inc 5` = `inc 5` = `5`. -}
+
+import IO.Stdout
+
+applyOnce : (Int32 -> Int32) -> Int32 -> Int32
+applyOnce f x = f x
+
+identity : a -> a
+identity x = x
+
+inc : Int32 -> Int32
+inc n = n
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (identity applyOnce inc 5))

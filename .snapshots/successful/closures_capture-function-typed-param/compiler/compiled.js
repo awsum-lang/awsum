@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,32 +34,25 @@
     }
   };
 
-  const v__lam_19 = (v_m) => {
-    return v_m;
-  };
+  const v__lam_14 = v_m => v_m;
 
   const v__apply1 = (v__cl, v__arg0) => {
     {
       const __s = v__cl;
       switch (__s[0]) {
         case 8: {
-          return v__lam_19(v__arg0);
+          return v__lam_14(v__arg0);
         }
       }
     }
   };
 
-  const v__lam_18 = (v_k, v_n) => {
-    return v__apply1(v_k, v_n);
-  };
+  const v__lam_13 = (v_k, v_n) => v__apply1(v_k, v_n);
 
-  const v__df_applyOnce_0 = (v_x, v__df_applyOnce_0_cap0_0) => {
-    return v__lam_18(v__df_applyOnce_0_cap0_0, v_x);
-  };
+  const v__df_applyOnce_0 = (v_x, v__df_applyOnce_0_cap0_0) =>
+    v__lam_13(v__df_applyOnce_0_cap0_0, v_x);
 
-  const v__df_poly_1 = () => {
-    return v__df_applyOnce_0(5 | 0, [8]);
-  };
+  const v__df_poly_1 = () => v__df_applyOnce_0(5 | 0, [8]);
 
   const main = [7, String(v__df_poly_1()), [5, [0]]];
 

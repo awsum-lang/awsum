@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,11 +17,10 @@
     return [4, r | 0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -55,7 +54,7 @@
 
   const v_sum = __addInt32(v_big, v_negativeBig);
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -71,7 +70,7 @@
     }
   };
 
-  const v_line = ((s) => {
+  const v_line = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_0 = s[1];
@@ -79,12 +78,12 @@
       }
       case 4: {
         const v_s = s[1];
-        return v__lift_18(__concat("sum=", String(v_s)));
+        return v__lift_13(__concat("sum=", String(v_s)));
       }
     }
   })(v_sum);
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];

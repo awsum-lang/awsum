@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00 ")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00error")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_double $v_triple $v_callBox $v__lift_18 $v__apply1)
+  (elem (i32.const 0) $v_runIO $v_double $v_triple $v_callBox $v__lift_13 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1217,7 +1217,7 @@
       local.get 0
     end)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

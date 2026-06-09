@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,17 +37,13 @@
     }
   };
 
-  const v_pureEither = (v_x) => {
-    return [4, v_x];
-  };
+  const v_pureEither = v_x => [4, v_x];
 
-  const v_op2WithA = (v_n) => {
-    return [4, v_n];
-  };
+  const v_op2WithA = v_n => [4, v_n];
 
   const v_op1 = [4, 1 | 0];
 
-  const v_g = ((s) => {
+  const v_g = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_1 = s[1];
@@ -56,7 +51,7 @@
       }
       case 4: {
         const v_a = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_0 = s[1];
@@ -72,7 +67,7 @@
     }
   })(v_op1);
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -114,7 +109,7 @@
     }
   };
 
-  const v__let_19 = (v_res) => {
+  const v__let_14 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -130,18 +125,14 @@
     }
   };
 
-  const v__lam_18 = (v_n) => {
-    return v_n;
-  };
+  const v__lam_13 = v_n => v_n;
 
-  const v__df_apply_0 = (v_x) => {
-    return v__lam_18(v_x);
-  };
+  const v__df_apply_0 = v_x => v__lam_13(v_x);
 
   const v_inc42 = v__df_apply_0(42 | 0);
 
-  const main = v__let_19(
-    ((s) => {
+  const main = v__let_14(
+    (s => {
       switch (s[0]) {
         case 3: {
           const v__do_e_3 = s[1];
@@ -149,7 +140,7 @@
         }
         case 4: {
           const v_d = s[1];
-          return ((s) => {
+          return (s => {
             switch (s[0]) {
               case 3: {
                 const v__do_e_2 = s[1];

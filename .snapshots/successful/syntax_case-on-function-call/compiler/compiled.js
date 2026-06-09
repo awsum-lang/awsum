@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_search = (v_key) => {
+  const v_search = v_key => {
     {
       const __s = __concat("found:", v_key);
       switch (__s[0]) {
@@ -26,7 +25,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -54,7 +53,7 @@
     }
   };
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -70,8 +69,8 @@
     }
   };
 
-  const main = v__let_18(
-    ((s) => {
+  const main = v__let_13(
+    (s => {
       switch (s[0]) {
         case 3: {
           const v_e = s[1];
@@ -79,7 +78,7 @@
         }
         case 4: {
           const v___p0 = s[1];
-          return ((s) => {
+          return (s => {
             switch (s[0]) {
               case 24: {
                 const v_v = s[1];

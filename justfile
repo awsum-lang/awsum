@@ -191,6 +191,21 @@ benchmark-all timeout="60":
   fi
   echo "════════════════════════════════════════════════════════════════════════════"
 
+# Overwrite the median-benchmark snapshots for every benchmark (manual; no threshold).
+# Runs each program `runs` times per backend and writes the median wall time + peak RSS
+# to .snapshots/benchmark/<NAME>/bench.txt. Workflow: overwrite-before, `git add`, make
+# the change, overwrite-after, read `git diff` — local and hardware-independent, so it
+# doesn't depend on which machine (developer/CI) produced the numbers. macOS-only.
+# Override: `just benchmark-snapshot 7 90`.
+benchmark-snapshot runs="5" timeout="60":
+  #!/bin/sh
+  set -u
+  for dir in test/sources/benchmark/*/; do
+    name=$(basename "$dir")
+    echo "── snapshot: $name"
+    stack run awsum-bench -- "$name" --snapshot --runs {{runs}} --timeout {{timeout}}
+  done
+
 show-binary-sizes:
   #!/bin/sh
   set -eu

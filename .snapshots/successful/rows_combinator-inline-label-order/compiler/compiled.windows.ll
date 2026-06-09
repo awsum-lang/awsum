@@ -293,7 +293,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v_n) {
+define internal ptr @v__lam_13(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v_pureEither(ptr %v_n)
   call void @__free_recursive(ptr %v_n)
@@ -330,7 +330,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_18(ptr %t17)
+  %t18 = call ptr @v__lam_13(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18

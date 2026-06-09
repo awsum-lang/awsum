@@ -470,7 +470,7 @@ case.arm.4.71:
   call void @__inc_ref(ptr %t51)
   %t75 = call ptr @__showInt32(ptr %t51)
   %t76 = call ptr @__concat(ptr %t74, ptr %t75)
-  %t77 = call ptr @v__lift_18(ptr %t76)
+  %t77 = call ptr @v__lift_13(ptr %t76)
   br label %case.end.4.72
 case.end.4.72:
   br label %case.join.58
@@ -563,7 +563,7 @@ case.join.5:
   ret ptr %t38
 }
 
-define internal ptr @v__lift_18(ptr %v___input) {
+define internal ptr @v__lift_13(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

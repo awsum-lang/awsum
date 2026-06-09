@@ -90,6 +90,7 @@ library
       Awsum.Tco
       Awsum.TExpr
       Awsum.Typing
+      Awsum.UniquifyLocals
       Awsum.Version
       Common.File
   other-modules:
@@ -165,6 +166,7 @@ executable awsum-bench
   build-depends:
       awsum
     , base >=4.7 && <5
+    , directory
     , filepath
     , optparse-applicative
     , process
@@ -215,6 +217,7 @@ test-suite awsum-test
       Awsum.TextMateSpec
       Awsum.TreeSitterSpec
       Matchers
+      TestSources
       TextMateMain
       TreeSitterMain
       Paths_awsum

@@ -224,7 +224,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_18(object) cil managed
+  .method private hidebysig static object v__lam_13(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -284,7 +284,7 @@
     ldelem.ref
     stloc.1
     ldloc.1
-    call object AwsumMain::v__lam_18(object)
+    call object AwsumMain::v__lam_13(object)
   IL_c0:
     ret
   }

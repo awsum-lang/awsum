@@ -1,0 +1,40 @@
+{- Regression: a local binder may share a bare name with a top-level
+   declaration. This is legal — cross-module shadowing is allowed, and
+   the prelude's `bindIO io k = case io of IOGetArgs cont -> IOGetArgs
+   (bindIOAfterArgs cont k)` binds a pattern variable `cont` that here
+   coexists with the user top-level `cont` below.
+
+   Every Core pass that resolves a bare reference against the global
+   declaration table (defunctionalisation, closure lowering) must treat
+   that local `cont` as the `IOGetArgs` continuation, not as the
+   top-level function. Before the fix it resolved to the top-level,
+   dropped the continuation's captures, and emitted a dangling closure;
+   `runIO` then called a non-function and every backend failed
+   (`v_cont is not a function` on JS, a runtime trap on LLVM, a hang on
+   the JVM). The uniquify-locals pass renames the colliding local away
+   before defunctionalisation, so all five backends agree.
+
+   Nested `bindIO` with error-row widening, so both the generic prelude
+   body and the row-monomorphised copy of it carry the `cont` pattern
+   variable. `getArgs` succeeds with no arguments, the continuation fails
+   with `EB`, and the handler prints `EB`. -}
+
+import IO.Stdout
+import IO.Args
+
+type EB = EB
+
+cont : List String -> IO EB Int32
+cont _args = failIO EB
+
+showN : Int32 -> IO Never Unit
+showN n = IO.Stdout.print (showInt32 n)
+
+handler : (StringTooLong | UnpairedUtf16Surrogate | EB) -> IO Never Unit
+handler e = case e of
+  (_s : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+  (_b : EB) -> IO.Stdout.print "EB"
+
+main : IO Never Unit
+main = bindIO (bindIO IO.Args.getArgs cont) showN |> handleErrorIO handler

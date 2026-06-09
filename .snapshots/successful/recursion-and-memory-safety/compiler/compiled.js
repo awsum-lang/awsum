@@ -1,24 +1,18 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
-  const v_showUnderflowError = (v__wild0) => {
-    return "UnderflowError";
-  };
+  const v_showUnderflowError = v__wild0 => "UnderflowError";
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -110,7 +104,7 @@
     }
   };
 
-  const v_buildTree = (v_depth) => {
+  const v_buildTree = v_depth => {
     {
       const __s = v_buildLeft(v_depth, [24]);
       switch (__s[0]) {
@@ -138,7 +132,7 @@
     }
   };
 
-  const v__scc_deepestLeftA_deepestLeftB_deepestLeftC = (v__args) => {
+  const v__scc_deepestLeftA_deepestLeftB_deepestLeftC = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -208,11 +202,10 @@
     }
   };
 
-  const v_deepestLeftA = (v_lastV, v_t) => {
-    return v__scc_deepestLeftA_deepestLeftB_deepestLeftC([26, v_lastV, v_t]);
-  };
+  const v_deepestLeftA = (v_lastV, v_t) =>
+    v__scc_deepestLeftA_deepestLeftB_deepestLeftC([26, v_lastV, v_t]);
 
-  const v__scc__apply_mirror__cps_mirror = (v__args) => {
+  const v__scc__apply_mirror__cps_mirror = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -289,13 +282,10 @@
     }
   };
 
-  const v__cps_mirror = (v_t, v__k) => {
-    return v__scc__apply_mirror__cps_mirror([33, v_t, v__k]);
-  };
+  const v__cps_mirror = (v_t, v__k) =>
+    v__scc__apply_mirror__cps_mirror([33, v_t, v__k]);
 
-  const v_mirror = (v_t) => {
-    return v__cps_mirror(v_t, [29]);
-  };
+  const v_mirror = v_t => v__cps_mirror(v_t, [29]);
 
   const v_mirrorN = (v_times, v_t) => {
     while (true) {
@@ -329,7 +319,7 @@
     }
   };
 
-  const v_runDemo = ((s) => {
+  const v_runDemo = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_1 = s[1];
@@ -337,7 +327,7 @@
       }
       case 4: {
         const v_tree = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_0 = s[1];
@@ -353,7 +343,7 @@
     }
   })(v_buildTree(10000 | 0));
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v_e = s[1];

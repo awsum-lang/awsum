@@ -1,0 +1,126 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "add3"
+            [ "a"
+            , "_b"
+            , "_c"
+            ]
+            ( CVar "a" )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$14" )
+                [ CCall
+                    ( CVar "$apply1" )
+                    [ CCall
+                        ( CVar "$df$identity$0" ) []
+                    , CIntLit 7 TInt32
+                    ]
+                ]
+            )
+        , CFunDef "$let$13" [ "h" ]
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$apply1" )
+                        [ CVar "h"
+                        , CIntLit 9 TInt32
+                        ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$let$14" [ "g" ]
+            ( CCall
+                ( CVar "$let$13" )
+                [ CCall
+                    ( CVar "$apply1" )
+                    [ CVar "g"
+                    , CIntLit 8 TInt32
+                    ]
+                ]
+            )
+        , CFunDef "$df$identity$0" []
+            ( CCon 10 [] )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" )
+                [
+                    ( 8
+                    ,
+                        [ "$cap8_0"
+                        , "$cap8_1"
+                        ]
+                    , CDrop DropFreeUnchecked "$cap8_0"
+                        ( CDrop DropFreeUnchecked "$cap8_1"
+                            ( CCall
+                                ( CVar "add3" )
+                                [ CVar "$cap8_0"
+                                , CVar "$cap8_1"
+                                , CVar "$arg0"
+                                ]
+                            )
+                        )
+                    )
+                ,
+                    ( 9
+                    , [ "$cap9_0" ]
+                    , CDrop DropFreeUnchecked "$cap9_0"
+                        ( CCon 8
+                            [ CVar "$cap9_0"
+                            , CVar "$arg0"
+                            ]
+                        )
+                    )
+                ,
+                    ( 10
+                    , []
+                    , CCon 9
+                        [ CVar "$arg0" ]
+                    )
+                ]
+            )
+        ]
+    }

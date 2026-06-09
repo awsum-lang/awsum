@@ -16,7 +16,7 @@
   (data (i32.const 156) "\00\00\00\00\00\00\00\00\00\00\00\00\14\00\00\00\14\00\00\00bad-Left good-Right ")
   (data (i32.const 196) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00WAT")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v__let_18 $v__lam_19 $v__let_20 $v__lam_21 $v__let_22 $v__df_mapLeft_0 $v__df_mapLeft_1)
+  (elem (i32.const 0) $v_runIO $v__let_13 $v__lam_14 $v__let_15 $v__lam_16 $v__let_17 $v__df_mapLeft_0 $v__df_mapLeft_1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -761,7 +761,7 @@
     call 24
     call 23)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -870,7 +870,7 @@
       end
     end)
 
-  (func $v__lam_19 (param i32) (result i32)
+  (func $v__lam_14 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -889,7 +889,7 @@
       local.get 2
     end)
 
-  (func $v__let_20 (param i32 i32) (result i32)
+  (func $v__let_15 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1001,7 +1001,7 @@
       local.get 6
     end)
 
-  (func $v__lam_21 (param i32) (result i32)
+  (func $v__lam_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1020,7 +1020,7 @@
       local.get 2
     end)
 
-  (func $v__let_22 (param i32) (result i32)
+  (func $v__let_17 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

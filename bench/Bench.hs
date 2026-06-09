@@ -9,6 +9,12 @@
 --   runner; @gtimeout@ guarantees a hung backend doesn't tie up the
 --   benchmark indefinitely.
 --
+--   With @--snapshot@ it instead runs each backend @--runs@ times and
+--   overwrites the per-backend median wall time + peak RSS to
+--   @.snapshots\/benchmark\/<NAME>\/bench.txt@ — no threshold, no
+--   pass\/fail. The measurement workflow is local and hardware-independent:
+--   snapshot before a change, snapshot again after, read the @git diff@.
+--
 --   macOS-only at the moment (BSD @\/usr\/bin\/time@ output format,
 --   @gtimeout@ from Homebrew @coreutils@). Linux would need a small
 --   branch to call @\/usr\/bin\/time -v@ and parse a different shape.
@@ -30,6 +36,7 @@ import Data.Text.IO qualified as TIO
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
 import Options.Applicative qualified as OA
 import Relude
+import System.Directory (createDirectoryIfMissing)
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -43,7 +50,9 @@ import Text.Printf (printf)
 
 data Options = Options
   { optTest :: !Text,
-    optTimeoutSecs :: !Int
+    optTimeoutSecs :: !Int,
+    optSnapshot :: !Bool,
+    optRuns :: !Int
   }
 
 optionsParser :: OA.ParserInfo Options
@@ -62,6 +71,18 @@ optionsParser =
                 <> OA.showDefault
                 <> OA.help "Per-backend timeout (passed to gtimeout)"
             )
+          <*> OA.switch
+            ( OA.long "snapshot"
+                <> OA.help "Write the per-backend median to .snapshots/benchmark/<TEST>/bench.txt (overwrite, no threshold)"
+            )
+          <*> OA.option
+            OA.auto
+            ( OA.long "runs"
+                <> OA.metavar "N"
+                <> OA.value 5
+                <> OA.showDefault
+                <> OA.help "Runs per backend for the median (snapshot mode; odd N gives a true median)"
+            )
       )
         <**> OA.helper
     )
@@ -75,7 +96,7 @@ main = do
     TIO.hPutStrLn stderr "awsum-bench currently supports macOS only (BSD /usr/bin/time -l + gtimeout from coreutils)."
     exitFailure
   opts <- OA.execParser optionsParser
-  runBench opts
+  if opts.optSnapshot then runSnapshot opts else runBench opts
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Compile + run
@@ -95,16 +116,21 @@ data RunResult = RunResult
     rrStderr :: !Text
   }
 
+-- | Parse + lower a benchmark program to Core. Shared by the print and
+--   snapshot drivers.
+loadCore :: Text -> IO (PreludeTags, CoreProgram)
+loadCore test = do
+  let path = "test/sources/benchmark" </> toString test </> "code" </> "Main.aww"
+  src <- readFileTextUtf8 path
+  case parseProgram src of
+    Left e -> error ("parse failed: " <> e)
+    Right ast -> case elaborateLowerProgram ProgramCli (withPrelude ast) of
+      Left err -> error ("elaborate failed: " <> show err)
+      Right (_warns, pt, core) -> pure (pt, core)
+
 runBench :: Options -> IO ()
 runBench opts = do
-  let path = "test/sources/benchmark" </> toString opts.optTest </> "code" </> "Main.aww"
-  src <- readFileTextUtf8 path
-  let ast = case parseProgram src of
-        Left e -> error ("parse failed: " <> e)
-        Right x -> x
-      (ptags, core) = case elaborateLowerProgram ProgramCli (withPrelude ast) of
-        Left err -> error ("elaborate failed: " <> show err)
-        Right (_warns, pt, x) -> (pt, x)
+  (ptags, core) <- loadCore opts.optTest
   putTextLn $ "Benchmark: " <> opts.optTest
   putTextLn $ "Timeout:   " <> show opts.optTimeoutSecs <> "s"
   putTextLn ""
@@ -118,6 +144,112 @@ runBench opts = do
       pure (b, r)
     putTextLn ""
     forM_ rows $ \(b, r) -> when (rrExit r /= ExitSuccess) (printFailureDetail b r)
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- Snapshot mode: median over N runs per backend, overwritten to a golden file
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- | Aggregated per-backend result over the N runs: a status plus the median
+--   wall time and median peak RSS of the successful runs, and one captured
+--   stdout for the behavioural anchor.
+data Agg = Agg
+  { aggStatus :: !Text,
+    aggMedWallSec :: !(Maybe Double),
+    aggMedRssBytes :: !(Maybe Integer),
+    aggStdout :: !Text
+  }
+
+-- | Run every backend @--runs@ times, take the per-backend median, and
+--   overwrite @.snapshots/benchmark/<TEST>/bench.txt@. No threshold, no
+--   pass/fail — the file is read through @git diff@ before/after a change.
+runSnapshot :: Options -> IO ()
+runSnapshot opts = do
+  (ptags, core) <- loadCore opts.optTest
+  putTextLn $ "Snapshot: " <> opts.optTest <> "  (median of " <> show opts.optRuns <> " runs/backend, timeout " <> show opts.optTimeoutSecs <> "s)"
+  withSystemTempDirectory "awsum-bench" $ \dir -> do
+    artifacts <- buildAllArtifacts dir ptags core
+    rows <- forM allBackends $ \b -> do
+      results <- replicateM opts.optRuns (runOne opts.optTimeoutSecs dir artifacts b)
+      let agg = aggregate results
+      putTextLn ("  " <> toText (printf "%-7s  %s" (show b :: String) (toString (aggStatus agg)) :: String))
+      pure (b, agg)
+    let outDir = ".snapshots" </> "benchmark" </> toString opts.optTest
+    createDirectoryIfMissing True outDir
+    let outFile = outDir </> "bench.txt"
+    writeFileText outFile (renderSnapshot opts.optTest rows)
+    putTextLn $ "  wrote " <> toText outFile
+
+-- | Collapse the N runs of one backend into a status + medians. The median
+--   uses only the successful runs; the status is the first non-success exit
+--   (or @ok@ when every run succeeded).
+aggregate :: [RunResult] -> Agg
+aggregate rs =
+  let oks = filter ((== ExitSuccess) . rrExit) rs
+   in Agg
+        { aggStatus = maybe "ok" (statusText . rrExit) (find ((/= ExitSuccess) . rrExit) rs),
+          aggMedWallSec = median (map rrWallSec oks),
+          aggMedRssBytes = median (mapMaybe rrPeakRssBytes oks),
+          aggStdout = maybe "" rrStdout (listToMaybe oks)
+        }
+
+-- | Median by sorting and taking the middle element. With an odd sample count
+--   (the default @--runs@ is 5) this is the true median; with an even count it
+--   is the upper-middle element.
+median :: (Ord a) => [a] -> Maybe a
+median xs = sortOn identity xs !!? (length xs `div` 2)
+
+-- | The golden file: a per-backend table of medians plus a short stdout anchor.
+--   Benchmark programs are not in the Hspec suite, so the anchor is the only
+--   guard that a change didn't alter their behaviour. Only the numbers vary
+--   between runs — no hostname / CPU — so a before/after @git diff@ reads as
+--   pure deltas.
+renderSnapshot :: Text -> [(Backend, Agg)] -> Text
+renderSnapshot test rows =
+  unlines $
+    [ "benchmark: " <> test,
+      "medians over several runs per backend (wall time, peak RSS); macOS",
+      "",
+      toText snapHeader
+    ]
+      <> map (uncurry snapRow) rows
+      <> ["", "stdout: " <> stdoutAnchor]
+  where
+    stdoutAnchor = case mapMaybe (nonEmpty' . shortStdout . aggStdout . snd) rows of
+      (s : _) -> s
+      [] -> "—"
+    nonEmpty' s = if T.null s then Nothing else Just s
+
+snapHeader :: String
+snapHeader = printf "%-7s  %-10s  %9s  %14s" ("target" :: String) ("status" :: String) ("time(s)" :: String) ("peakMem(MiB)" :: String)
+
+snapRow :: Backend -> Agg -> Text
+snapRow b agg =
+  let wall = case aggMedWallSec agg of
+        Just t -> printf "%9.2f" t :: String
+        Nothing -> printf "%9s" ("—" :: String) :: String
+      rss = case aggMedRssBytes agg of
+        Just n -> printf "%14.1f" (fromIntegral n / mib :: Double) :: String
+        Nothing -> printf "%14s" ("—" :: String) :: String
+   in toText (printf "%-7s  %-10s  %s  %s" (show b :: String) (toString (aggStatus agg)) wall rss :: String)
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- Shared formatting helpers
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- | Exit code → short human status, shared by the print table and the snapshot.
+statusText :: ExitCode -> Text
+statusText = \case
+  ExitSuccess -> "ok"
+  ExitFailure 124 -> "timeout"
+  ExitFailure n -> "fail(" <> show n <> ")"
+
+-- | First line (≤40 chars) of stdout, newlines flattened — a compact anchor.
+shortStdout :: Text -> Text
+shortStdout = T.take 40 . T.replace "\n" "⏎" . T.strip
+
+-- | Bytes → MiB divisor, shared by both formatters.
+mib :: Double
+mib = 1024 * 1024
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Artifact production
@@ -243,20 +375,13 @@ separator = T.replicate 90 "─"
 
 formatRow :: Backend -> RunResult -> Text
 formatRow b r =
-  let st :: String
-      st = case rrExit r of
-        ExitSuccess -> "ok"
-        ExitFailure 124 -> "timeout"
-        ExitFailure n -> "fail(" <> show n <> ")"
+  let st = toString (statusText (rrExit r)) :: String
       wall = printf "%9.2f" (rrWallSec r) :: String
       rss = case rrPeakRssBytes r of
         Just n -> printf "%14.1f" (fromIntegral n / mib :: Double) :: String
         Nothing -> printf "%14s" ("—" :: String) :: String
-      stdoutShort = T.take 40 (T.replace "\n" "⏎" (T.strip (rrStdout r)))
       head_ = printf "%-7s  %-12s  %s  %s  " (show b :: String) st wall rss :: String
-   in toText head_ <> stdoutShort
-  where
-    mib = 1024 * 1024 :: Double
+   in toText head_ <> shortStdout (rrStdout r)
 
 printFailureDetail :: Backend -> RunResult -> IO ()
 printFailureDetail b r = do

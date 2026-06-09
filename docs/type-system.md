@@ -83,7 +83,7 @@ Use `case` to match:
 describe : Maybe Int32 -> String
 describe x = case x of
   Nothing -> "nothing"
-  Just n -> "just " ++ showInt32 n
+  Just n -> showInt32 n
 ```
 
 ### Exhaustiveness
@@ -222,10 +222,10 @@ inc42 = apply (\n -> n) 42
 Without a top-down type, parameters get fresh tyvars and the body is inferred against the extended environment. A bare `let id = \x -> x in body` then works at multiple types — each use unifies the shared variable independently:
 
 ```awsum
-both : Int32 -> String -> String
+both : Int32 -> String -> Tuple2 Int32 String
 both n s =
   let id = \x -> x
-   in showInt32 (id n) ++ " / " ++ id s
+   in Tuple2 (id n) (id s)
 ```
 
 The same path covers a lambda as the head of an application (`(\x -> x) 5`). Top-level definitions still need an explicit signature — `noContext = \n -> n` is rejected for the missing signature, not the lambda.
@@ -247,11 +247,11 @@ No backend has a closure runtime. The compiler /defunctionalises/ each HOF call 
 ```awsum
 -- Without |>
 shoutLoud : String -> IO Never Unit
-shoutLoud msg = bindIO (IO.Stdout.print msg) (\_u -> IO.Stdout.print "!")
+shoutLoud msg = andThenIO (\_u -> IO.Stdout.print "!") (IO.Stdout.print msg)
 
 -- With |>
 shoutLoud : String -> IO Never Unit
-shoutLoud msg = IO.Stdout.print msg |> bindIO (\_u -> IO.Stdout.print "!")
+shoutLoud msg = IO.Stdout.print msg |> andThenIO (\_u -> IO.Stdout.print "!")
 ```
 
 The rewrite happens before any Core-to-Core pass: after lowering, the IR for `x |> f` is the same IR you'd get for `f x`, so there is no residual call frame on any backend.
@@ -357,16 +357,13 @@ Literals inside an arm's body pick up their type from the enclosing function's s
 
 `(value : T)` everywhere means **"the value at this node has type `T`"**. The form appears in two syntactic positions:
 
-- **Expression position** — `(e : T)` pins the type of an expression at the use site. Useful where bidirectional inference alone has too little context — most often a bare integer literal flowing into a polymorphic argument:
+- **Expression position** — `(e : T)` pins the type of an expression at the use site. Useful where bidirectional inference alone has too little context — most often a bare integer literal that nothing else gives a type:
 
   ```awsum
-  identity : a -> a
-  identity x = x
-
-  -- Without ascription: 'identity 42' has no synth form (the literal
-  -- needs a numeric type pin), and 'a' is unresolved.
-  pinned : Int32
-  pinned = identity (42 : Int32)
+  -- An unannotated `let` binding: the bare literal needs a type, and
+  -- `(42 : Int32)` supplies it.
+  shown : String
+  shown = let n = (42 : Int32) in showInt32 n
   ```
 
   The ascription becomes the expected type for the inner expression. Integer literals validate against the ascribed range; polymorphic call sites resolve their `a` to the ascribed type; row-injection picks the right alternative.
@@ -394,8 +391,8 @@ A type can be the union of two or more types, written with `|` inside parens:
 ```awsum
 ageOrName : (Int32 | String) -> String
 ageOrName x = case x of
-  (n : Int32) -> "age " ++ showInt32 n
-  (s : String) -> "name " ++ s
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
 ```
 
 The pipe binds **looser** than the arrow — `A | B -> C` parses as `A | (B -> C)`. Always wrap unions in parens.
@@ -421,7 +418,7 @@ describe x = case x of
   (n : Int32) -> showInt32 n
   (s : String) -> s
 
--- error: NonExhaustiveRow — 'String' is uncovered.
+-- error: Non-exhaustive case on structural sum Int32 | String: missing alternative String
 -- broken : (Int32 | String) -> String
 -- broken x = case x of
 --   (n : Int32) -> showInt32 n
@@ -439,13 +436,13 @@ type ErrB = ErrB
 
 whatsThat : (Int32 | String | Maybe (Bool | Unit)) -> String
 whatsThat x = case x of
-  (n : Int32) -> "Int32 " ++ showInt32 n
-  (s : String) -> "String " ++ s
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
   Nothing -> "Nothing"
   Just (b : Bool) -> case b of
     True -> "Just True"
     False -> "Just False"
-  Just (u : Unit) -> "Just " ++ showUnit u
+  Just (u : Unit) -> showUnit u
 ```
 
 Coverage is checked at every level: every row alternative, every constructor of nominal alternatives, and inner rows like `Maybe`'s argument.
@@ -457,8 +454,8 @@ A value of type `A` flows into a position expecting `(A | B | …)` without an e
 ```awsum
 greet : (Int32 | String) -> String
 greet x = case x of
-  (n : Int32) -> "n=" ++ showInt32 n
-  (s : String) -> "s=" ++ s
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
 
 main : IO Never Unit
 main = IO.Stdout.print (greet "hello")  -- "hello" is a String, fits the row
@@ -571,12 +568,12 @@ g = do
 A `do` block can introduce a non-monadic binding with `let`:
 
 ```awsum
-run : Int32 -> Either String String
-run start = do
-  a <- step1 start
-  let prefix = "answer="
-  b <- step2 a
-  pureEither (prefix ++ showInt32 b)
+run : Either (ErrorA | ErrorB) Int32
+run = do
+  a <- op1
+  let carried = a
+  b <- op2WithA carried
+  pureEither b
 ```
 
 The form is `let n = e` (no `in` — the rest of the block _is_ the body). Optional ascription `let n : T = e` applies when synthesis can't pin `e` — typically when the RHS is itself a `do`-block with mixed-row errors. The standalone `let n = e in body` (and ascribed variant) is also available outside `do` (see [`let` bindings](#let-bindings)); both desugar identically.
@@ -600,8 +597,12 @@ Desugars to `case parseInput raw of Left err -> Left err; Right (Tuple3 a b c) -
 `let n = e in body` binds `n` for the duration of `body`. It is an expression — usable wherever an expression is.
 
 ```awsum
-pad : String -> String
-pad s = let p = "[" ++ s in let q = p ++ "]" in q ++ q
+labelOf : Maybe Int32 -> String
+labelOf m =
+  let fallback = "none"
+   in case m of
+        Nothing -> fallback
+        Just n -> showInt32 n
 ```
 
 - **No defaulting on the RHS.** `let n = 1 in body` is rejected — annotate (`let n : Int32 = 1`) or use an expression whose type is known.
@@ -609,6 +610,7 @@ pad s = let p = "[" ++ s in let q = p ++ "]" in q ++ q
 - **Destructuring on the LHS.** `let (Tuple3 a b c) = e` binds three fields in one step (also inside `do`). Refutable patterns raise `NonExhaustiveCase`. Ascribing a destructuring let is rejected (`PatternLetAscription`) — ascribe the RHS instead.
 - **No shadowing.** `let n = …` cannot reuse a name in scope at the let site.
 - **The RHS is evaluated once.** Multiple references to `n` in `body` do not re-evaluate `e`.
+- **A polymorphic row combinator can't be bound unannotated.** `let pb = bindEither oa in …` binds `pb` to a partially-applied row combinator whose result-row variable is still free — `pb` could be used at several error rows, but Awsum monomorphises rows per call-site with no runtime row evidence, so one shared closure over a partial combinator can't be specialised. The typechecker rejects it (`Cannot monomorphise let-binding 'pb' …`) and asks for an annotation; `let pb : (Int32 -> Either EB Int32) -> Either (EA | EB) Int32 = bindEither oa` compiles. A value with no such row variable — a genuinely-polymorphic `let id = \x -> x`, or a single-variable-error partial like `let m = mapLeft oa` — is unaffected.
 
 The same form appears inside `do` blocks (see [`let` inside `do`](#let-inside-do)); both desugar identically.
 
@@ -758,7 +760,7 @@ A comment with **no blank line between it and the next top-level declaration** b
 
 ```awsum
 {- Square of an integer. -}
-square : Int32 -> Either OverflowError Int32
+square : Int32 -> Either (UnderflowError | OverflowError) Int32
 square n = mulInt32 n n
 ```
 

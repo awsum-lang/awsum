@@ -483,7 +483,7 @@ L_tarm8:
   aload 11
   aload 8
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 11
   aconst_null
@@ -585,12 +585,12 @@ L_join9:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_14(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -652,7 +652,7 @@ L_join13:
 .end method
 
 
-.method static v__let_19(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_14(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

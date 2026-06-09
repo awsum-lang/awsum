@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -36,7 +36,7 @@
 
   const v_narrow = [995908654, [12, [1]]];
 
-  const v_describe = (v_x) => {
+  const v_describe = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -73,15 +73,11 @@
             }
           }
         }
-        case 3289118412: {
-          const v__a = __s[1];
-          return "A";
-        }
       }
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -96,15 +92,11 @@
     }
   };
 
-  const v_widened = ((s) => {
+  const v_widened = (s => {
     switch (s[0]) {
       case 995908654: {
-        const v__lift_19 = s[1];
-        return [1454647603, v__lift_18(v__lift_19)];
-      }
-      case 3289118412: {
-        const v__lift_20 = s[1];
-        return [3289118412, v__lift_20];
+        const v__lift_14 = s[1];
+        return [1454647603, v__lift_13(v__lift_14)];
       }
     }
   })(v_narrow);

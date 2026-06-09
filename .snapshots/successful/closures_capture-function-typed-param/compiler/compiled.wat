@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v__lam_18 $v__lam_19 $v__df_applyOnce_0 $v__df_poly_1 $v__apply1)
+  (elem (i32.const 0) $v_runIO $v__lam_13 $v__lam_14 $v__df_applyOnce_0 $v__df_poly_1 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -651,7 +651,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lam_18 (param i32 i32) (result i32)
+  (func $v__lam_13 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)
@@ -672,7 +672,7 @@
       local.get 2
     end)
 
-  (func $v__lam_19 (param i32) (result i32)
+  (func $v__lam_14 (param i32) (result i32)
     (local i32)
     (local i32)
     local.get 0)

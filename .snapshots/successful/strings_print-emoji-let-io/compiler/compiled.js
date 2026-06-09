@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,11 +34,9 @@
     }
   };
 
-  const v__let_18 = (v_unit) => {
-    return [7, "🔥", [5, [0]]];
-  };
+  const v__let_13 = v_unit => [7, "🔥", [5, [0]]];
 
-  const main = v__let_18([7, "💩", [5, [0]]]);
+  const main = v__let_13([7, "💩", [5, [0]]]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

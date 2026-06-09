@@ -277,7 +277,7 @@ define internal ptr @v_chained() {
 
 define internal ptr @v_viaLambda() {
   %t0 = call ptr @v_n()
-  %t1 = call ptr @v__lam_18(ptr %t0)
+  %t1 = call ptr @v__lam_13(ptr %t0)
   ret ptr %t1
 }
 
@@ -454,7 +454,7 @@ case.join.5:
   ret ptr %t38
 }
 
-define internal ptr @v__lam_18(ptr %v_i) {
+define internal ptr @v__lam_13(ptr %v_i) {
   call void @__inc_ref(ptr %v_i)
   %t0 = call ptr @__showInt32(ptr %v_i)
   call void @__free_recursive(ptr %v_i)

@@ -23,7 +23,7 @@
   (data (i32.const 301) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00r")
   (data (i32.const 322) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_greeting $v_unwrapBox $v_unwrapBoxNamed $v_showPair $v__let_18)
+  (elem (i32.const 0) $v_runIO $v_greeting $v_unwrapBox $v_unwrapBoxNamed $v_showPair $v__let_13)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -953,7 +953,7 @@
     end
     call 19)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

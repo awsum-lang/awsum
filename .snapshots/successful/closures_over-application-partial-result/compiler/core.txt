@@ -1,0 +1,146 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "inc" [ "n" ]
+            ( CVar "n" )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$13" )
+                [ CCall
+                    ( CVar "$apply1" )
+                    [ CCall
+                        ( CVar "$df$identity$0" ) []
+                    , CCon 9 []
+                    ]
+                ]
+            )
+        , CFunDef "$let$13" [ "g" ]
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$apply1" )
+                        [ CVar "g"
+                        , CIntLit 7 TInt32
+                        ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$df$identity$0" []
+            ( CCon 10 [] )
+        , CFunDef "$scc$$apply1_applyOnce" [ "$args" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 11
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CDrop DropFreeUnchecked "$cl"
+                            ( CDrop DropFreeUnchecked "$arg0"
+                                ( CCase
+                                    ( CVar "$cl" )
+                                    [
+                                        ( 8
+                                        , [ "$cap8_0" ]
+                                        , CDrop DropFreeUnchecked "$cap8_0"
+                                            ( CContinue
+                                                [ CReuse "$args" 12
+                                                    [ CVar "$cap8_0"
+                                                    , CVar "$arg0"
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    ,
+                                        ( 9
+                                        , []
+                                        , CCall
+                                            ( CVar "inc" )
+                                            [ CVar "$arg0" ]
+                                        )
+                                    ,
+                                        ( 10
+                                        , []
+                                        , CCon 8
+                                            [ CVar "$arg0" ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 12
+                        ,
+                            [ "f"
+                            , "x"
+                            ]
+                        , CDrop DropFreeUnchecked "f"
+                            ( CDrop DropFreeUnchecked "x"
+                                ( CContinue
+                                    [ CReuse "$args" 11
+                                        [ CVar "f"
+                                        , CVar "x"
+                                        ]
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_applyOnce" )
+                [ CCon 11
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
+            )
+        ]
+    }

@@ -4,22 +4,17 @@ import Awsum.Format (formatSource)
 import Common.File
 import Matchers
 import Relude
-import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 import Test.Hspec
+import TestSources (discoverTestDirs)
 
 spec :: Spec
 spec = describe "Formatting snapshots" $ do
-  testNames <- runIO discoverTests
+  testNames <- runIO (discoverTestDirs sourcesDir)
   traverse_ testFormatting testNames
 
 sourcesDir :: FilePath
 sourcesDir = "test/sources/formatting"
-
-discoverTests :: IO [FilePath]
-discoverTests = do
-  entries <- listDirectory sourcesDir
-  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
 
 testFormatting :: FilePath -> Spec
 testFormatting testName = do

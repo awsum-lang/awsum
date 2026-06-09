@@ -49,18 +49,12 @@ CoreProgram
                 ( CVar "narrow" )
                 [
                     ( 995908654
-                    , "$lift$19"
+                    , "$lift$14"
                     , CRow 1454647603
                         ( CCall
-                            ( CVar "$lift$18" )
-                            [ CVar "$lift$19" ]
+                            ( CVar "$lift$13" )
+                            [ CVar "$lift$14" ]
                         )
-                    )
-                ,
-                    ( 3289118412
-                    , "$lift$20"
-                    , CRow 3289118412
-                        ( CVar "$lift$20" )
                     )
                 ]
             )
@@ -109,12 +103,6 @@ CoreProgram
                             ]
                         )
                     )
-                ,
-                    ( 3289118412
-                    , "_a"
-                    , CDrop DropFreeUnchecked "_a"
-                        ( CString "A" )
-                    )
                 ]
             )
         , CValDef "main"
@@ -126,7 +114,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [

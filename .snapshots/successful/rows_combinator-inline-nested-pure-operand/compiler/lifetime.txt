@@ -17,10 +17,10 @@ describe:
   row-case        _c                              count=0
   case-pattern    v                               count=0
 
-$lam$18:
+$lam$13:
   param           _m                              count=0
 
-$lam$19:
+$lam$14:
   param           _n                              count=0
 
 $df$$rowmono$0$bindEither$0:

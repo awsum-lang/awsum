@@ -20,7 +20,7 @@ show:
   case-pattern    $do_e_0                         count=0
   case-pattern    s2                              count=0
 
-$let$18:
+$let$13:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

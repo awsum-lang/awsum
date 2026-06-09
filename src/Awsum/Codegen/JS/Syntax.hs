@@ -114,7 +114,9 @@ data JsExpr
     ECall JsExpr [JsExpr]
   | -- | @new C(args)@
     ENew JsExpr [JsExpr]
-  | -- | @(params) => { body }@ (always block-bodied)
+  | -- | arrow function @params => body@. A single-'SReturn' body renders as an
+    --   expression (@x => e@); any other body renders as a block (@x => { … }@).
+    --   A lone parameter drops its parens; zero or two-plus take @(…)@.
     EArrow [Text] [JsStmt]
   | -- | @lhs = rhs@ (an expression: also the elements of a 'ESeq' cell-reuse)
     EAssign JsExpr JsExpr
@@ -242,7 +244,8 @@ exprBody = \case
   EIndex e i -> expr 18 e <> brackets (expr 0 i)
   ECall f xs -> expr 18 f <> argList xs
   ENew f xs -> "new" <+> expr 18 f <> argList xs
-  EArrow ps body -> commaList lparen rparen (map pretty ps) <+> "=>" <+> block body
+  EArrow ps [SReturn e] -> arrowHead ps <+> "=>" <> arrowBody e
+  EArrow ps body -> arrowHead ps <+> "=>" <+> block body
   EAssign l r -> expr 18 l <+> "=" <+> expr 2 r
   EUnary UTypeof e -> "typeof" <+> expr 16 e
   EUnary UNot e -> "!" <> expr 16 e
@@ -268,6 +271,26 @@ exprBody = \case
 
 argList :: [JsExpr] -> Doc ann
 argList xs = commaList lparen rparen (map (expr 2) xs)
+
+-- | An arrow's parameter list. A lone parameter needs no parens (params are
+--   always plain identifiers, never destructuring, so @x =>@ is always safe);
+--   zero or two-plus parameters take @(…)@.
+arrowHead :: [Text] -> Doc ann
+arrowHead [p] = pretty p
+arrowHead ps = commaList lparen rparen (map pretty ps)
+
+-- | A single-return arrow's body as an expression, folded onto the next line
+--   (indented) when it doesn't fit beside @=>@, inline when it does. An object
+--   literal is parenthesised — a @{@ immediately after @=>@ lexes as a block,
+--   not an object. Otherwise the body renders like a @return@ operand
+--   (precedence 2): a comma\/sequence expression is wrapped, a conditional or
+--   binary is not.
+arrowBody :: JsExpr -> Doc ann
+arrowBody e = group (nest 2 (line <> body))
+  where
+    body = case e of
+      EObject _ -> parens (exprBody e)
+      _ -> expr 2 e
 
 -- | Does this expression render with a leading @-@ — a nested unary minus or a
 --   negative numeric literal? Such an operand under a unary minus must be

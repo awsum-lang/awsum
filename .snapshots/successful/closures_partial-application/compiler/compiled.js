@@ -1,16 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_wrap = (v_s) => {
-    return [24, v_s];
-  };
+  const v_wrap = v_s => [24, v_s];
 
-  const v_unwrap = (v_b) => {
+  const v_unwrap = v_b => {
     {
       const __s = v_b;
       switch (__s[0]) {
@@ -22,7 +20,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -64,13 +62,10 @@
     }
   };
 
-  const v_compose = (v_f, v_g, v_x) => {
-    return v__apply1(v_f, v__apply1(v_g, v_x));
-  };
+  const v_compose = (v_f, v_g, v_x) => v__apply1(v_f, v__apply1(v_g, v_x));
 
-  const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1) => {
-    return v_compose(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
-  };
+  const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1) =>
+    v_compose(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
 
   const main = [7, v__df_apply_0("chain", [25], [26]), [5, [0]]];
 

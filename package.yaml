@@ -137,6 +137,7 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - awsum
+      - directory # for creating the snapshot directory
       - filepath # for FilePath ops
       - optparse-applicative # for CLI args
       - process # for /usr/bin/time + clang

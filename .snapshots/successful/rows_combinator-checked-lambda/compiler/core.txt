@@ -89,7 +89,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$18" [ "_n" ]
+        , CFunDef "$lam$13" [ "_n" ]
             ( CCall
                 ( CVar "pureEither" )
                 [ CIntLit 7 TInt32 ]
@@ -112,7 +112,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lam$18" )
+                            ( CVar "$lam$13" )
                             [ CVar "a" ]
                         )
                     )

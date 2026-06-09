@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,7 +17,7 @@
     return [4, r | 0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -44,6 +44,20 @@
       }
     }
   };
+
+  const v_mixed = [
+    14,
+    [2711245919, 1 | 0],
+    [
+      14,
+      [1615808600, "x"],
+      [
+        14,
+        [2711245919, 2 | 0],
+        [14, [1615808600, "y"], [14, [2711245919, 3 | 0], [13]]]
+      ]
+    ]
+  ];
 
   const v__apply_sumRow = (v__k, v__x) => {
     while (true) {
@@ -121,71 +135,7 @@
     }
   };
 
-  const v_sumRow = (v_xs) => {
-    return v__cps_sumRow(v_xs, [15]);
-  };
-
-  const v__apply__lift_18 = (v__k, v__x) => {
-    while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 17: {
-            return v__x;
-          }
-          case 18: {
-            const v__pk_18 = __s[1];
-            const v___f0 = __s[2];
-            const __t0 = v__pk_18;
-            const __t1 = (v__k[0] = 14, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-            v__k = __t0;
-            v__x = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__cps__lift_18 = (v___input, v__k) => {
-    while (true) {
-      {
-        const __s = v___input;
-        switch (__s[0]) {
-          case 13: {
-            return v__apply__lift_18(v__k, [13]);
-          }
-          case 14: {
-            const v___f0 = __s[1];
-            const v___f1 = __s[2];
-            const __t0 = v___f1;
-            const __t1 = (v___input[0] = 18, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-            v___input = __t0;
-            v__k = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__lift_18 = (v___input) => {
-    return v__cps__lift_18(v___input, [17]);
-  };
-
-  const v_mixed = [
-    14,
-    [2711245919, 1 | 0],
-    [
-      14,
-      [1615808600, "x"],
-      [
-        14,
-        [2711245919, 2 | 0],
-        [14, [1615808600, "y"], [14, [2711245919, 3 | 0], v__lift_18([13])]]
-      ]
-    ]
-  ];
+  const v_sumRow = v_xs => v__cps_sumRow(v_xs, [15]);
 
   const main = [7, String(v_sumRow(v_mixed)), [5, [0]]];
 

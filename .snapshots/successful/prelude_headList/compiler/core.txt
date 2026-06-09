@@ -85,13 +85,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$21" )
+                ( CVar "$let$16" )
                 [ CCall
                     ( CVar "headList" )
                     [ CCon 13 [] ]
                 ]
             )
-        , CFunDef "$let$18" [ "msg" ]
+        , CFunDef "$let$13" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -118,13 +118,13 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$19"
+        , CFunDef "$let$14"
             [ "noElems"
             , "single"
             , "multi"
             ]
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$13" )
                 [ CCase
                     ( CCall
                         ( CVar "show" )
@@ -258,12 +258,12 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$20"
+        , CFunDef "$let$15"
             [ "noElems"
             , "single"
             ]
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$14" )
                 [ CVar "noElems"
                 , CVar "single"
                 , CCall
@@ -281,9 +281,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$21" [ "noElems" ]
+        , CFunDef "$let$16" [ "noElems" ]
             ( CCall
-                ( CVar "$let$20" )
+                ( CVar "$let$15" )
                 [ CVar "noElems"
                 , CCall
                     ( CVar "headList" )

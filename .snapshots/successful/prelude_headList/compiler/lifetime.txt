@@ -13,12 +13,12 @@ show:
   param           m                               count=1
   case-pattern    s                               count=0
 
-$let$18:
+$let$13:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$let$19:
+$let$14:
   param           noElems                         count=1
   param           single                          count=1
   param           multi                           count=1
@@ -35,10 +35,10 @@ $let$19:
   case-pattern    $do_e_0                         count=0
   case-pattern    s2                              count=0
 
-$let$20:
+$let$15:
   param           noElems                         count=1
   param           single                          count=1
 
-$let$21:
+$let$16:
   param           noElems                         count=1
 

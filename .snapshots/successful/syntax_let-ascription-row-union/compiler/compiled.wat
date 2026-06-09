@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_A")
   (data (i32.const 109) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_B")
   (table 3 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v__let_18)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v__let_13)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -774,7 +774,7 @@
     end
     call 19)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

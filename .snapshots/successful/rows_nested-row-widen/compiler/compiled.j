@@ -128,9 +128,6 @@ L_tarm1:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   istore_1
-  iload_1
-  ldc 995908654
-  if_icmpne L_arm3
   aload_0
   iconst_1
   aaload
@@ -145,26 +142,8 @@ L_tarm1:
   dup
   iconst_1
   aload_2
-  invokestatic AwsumMain/v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
-  goto L_join2
-L_arm3:
-  aload_0
-  iconst_1
-  aaload
-  astore_2
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  ldc -1005848884
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_2
-  aastore
-L_join2:
   areturn
 .end method
 
@@ -181,9 +160,6 @@ L_join2:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   istore_2
-  iload_2
-  ldc 1454647603
-  if_icmpne L_arm5
   aload_1
   iconst_1
   aaload
@@ -199,12 +175,12 @@ L_join2:
   istore 5
   iload 5
   bipush 11
-  if_icmpne L_arm7
+  if_icmpne L_arm3
   aconst_null
   astore 6
   ldc "N"
-  goto L_join6
-L_arm7:
+  goto L_join2
+L_arm3:
   aload 4
   iconst_1
   aaload
@@ -233,21 +209,13 @@ L_arm7:
   istore 11
   iload 11
   iconst_1
-  if_icmpne L_arm9
+  if_icmpne L_arm5
   ldc "T"
-  goto L_join8
-L_arm9:
-  ldc "F"
-L_join8:
-L_join6:
   goto L_join4
 L_arm5:
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  ldc "A"
+  ldc "F"
 L_join4:
+L_join2:
   areturn
 .end method
 
@@ -291,7 +259,7 @@ L_join4:
 .end method
 
 
-.method static v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -305,7 +273,7 @@ L_join4:
   istore_2
   iload_2
   bipush 11
-  if_icmpne L_arm11
+  if_icmpne L_arm7
   aconst_null
   astore_3
   iconst_1
@@ -315,8 +283,8 @@ L_join4:
   bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  goto L_join10
-L_arm11:
+  goto L_join6
+L_arm7:
   aload_1
   iconst_1
   aaload
@@ -342,7 +310,7 @@ L_arm11:
   aload_3
   aastore
   aastore
-L_join10:
+L_join6:
   areturn
 .end method
 

@@ -64,7 +64,7 @@ CoreProgram
                     ( 4
                     , [ "s" ]
                     , CCall
-                        ( CVar "$lift$18" )
+                        ( CVar "$lift$13" )
                         [ CCall
                             ( CBuiltIn "concatString" )
                             [ CString "sum="
@@ -99,7 +99,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [

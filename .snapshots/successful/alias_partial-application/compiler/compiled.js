@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,13 +34,9 @@
     }
   };
 
-  const v_const = (v_x, v__y) => {
-    return v_x;
-  };
+  const v_const = (v_x, v__y) => v_x;
 
-  const v_partial = (v__eta0) => {
-    return v_const("RESULT", v__eta0);
-  };
+  const v_partial = v__eta0 => v_const("RESULT", v__eta0);
 
   const main = [7, v_partial("ignored"), [5, [0]]];
 

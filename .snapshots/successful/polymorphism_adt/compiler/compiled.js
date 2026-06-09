@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -34,13 +34,11 @@
     }
   };
 
-  const v_identity = (v_x) => {
-    return v_x;
-  };
+  const v_identity = v_x => v_x;
 
   const main = [
     7,
-    ((s) => {
+    (s => {
       switch (s[0]) {
         case 24: {
           const v_v = s[1];

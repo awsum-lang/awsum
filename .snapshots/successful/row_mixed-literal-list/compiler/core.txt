@@ -185,9 +185,7 @@ CoreProgram
                             , CCon 14
                                 [ CRow 2711245919
                                     ( CIntLit 3 TInt32 )
-                                , CCall
-                                    ( CVar "$lift$18" )
-                                    [ CCon 13 [] ]
+                                , CCon 13 []
                                 ]
                             ]
                         ]
@@ -205,87 +203,6 @@ CoreProgram
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
-            )
-        , CFunDef "$lift$18" [ "__input" ]
-            ( CCall
-                ( CVar "$cps$$lift$18" )
-                [ CVar "__input"
-                , CCon 17 []
-                ]
-            )
-        , CFunDef "$cps$$lift$18"
-            [ "__input"
-            , "$k"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "__input" )
-                    [
-                        ( 13
-                        , []
-                        , CCall
-                            ( CVar "$apply$$lift$18" )
-                            [ CVar "$k"
-                            , CCon 13 []
-                            ]
-                        )
-                    ,
-                        ( 14
-                        ,
-                            [ "__f0"
-                            , "__f1"
-                            ]
-                        , CDrop DropFreeUnchecked "__f0"
-                            ( CDrop DropFreeUnchecked "__f1"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CContinue
-                                        [ CVar "__f1"
-                                        , CReuse "__input" 18
-                                            [ CVar "$k"
-                                            , CVar "__f0"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$apply$$lift$18"
-            [ "$k"
-            , "$x"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "$k" )
-                    [
-                        ( 17
-                        , []
-                        , CVar "$x"
-                        )
-                    ,
-                        ( 18
-                        ,
-                            [ "$pk_18"
-                            , "__f0"
-                            ]
-                        , CDrop DropFreeUnchecked "$pk_18"
-                            ( CDrop DropFreeUnchecked "__f0"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_18"
-                                        , CReuse "$k" 14
-                                            [ CVar "__f0"
-                                            , CVar "$x"
-                                            ]
-                                        ]
-                                    )
-                                )
-                            )
-                        )
-                    ]
-                )
             )
         ]
     }

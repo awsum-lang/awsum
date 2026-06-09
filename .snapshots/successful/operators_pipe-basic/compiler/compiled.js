@@ -1,20 +1,17 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_wrap = (v_s) => {
-    return v_s;
-  };
+  const v_wrap = v_s => v_s;
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -48,13 +45,11 @@
 
   const v_basic = String(v_n);
 
-  const v__lam_18 = (v_i) => {
-    return String(v_i);
-  };
+  const v__lam_13 = v_i => String(v_i);
 
-  const v_viaLambda = v__lam_18(v_n);
+  const v_viaLambda = v__lam_13(v_n);
 
-  const v_joined = ((s) => {
+  const v_joined = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_2 = s[1];
@@ -62,7 +57,7 @@
       }
       case 4: {
         const v_a = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_1 = s[1];
@@ -70,7 +65,7 @@
             }
             case 4: {
               const v_b = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_0 = s[1];
@@ -89,7 +84,7 @@
     }
   })(__concat(v_basic, "|"));
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];

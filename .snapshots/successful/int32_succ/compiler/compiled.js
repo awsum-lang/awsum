@@ -1,24 +1,19 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __succInt32 = (x) => {
-    return x === 2147483647 ? [3, [18]] : [4, x + 1 | 0];
-  };
+  const __succInt32 = x => x === 2147483647 ? [3, [18]] : [4, x + 1 | 0];
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showOverflowError = (v__wild0) => {
-    return "OverflowError";
-  };
+  const v_showOverflowError = v__wild0 => "OverflowError";
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -46,7 +41,7 @@
     }
   };
 
-  const v_render = (v_r) => {
+  const v_render = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -64,7 +59,7 @@
 
   const v_maxInt32 = 2147483647 | 0;
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = v_res => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -80,8 +75,8 @@
     }
   };
 
-  const main = v__let_18(
-    ((s) => {
+  const main = v__let_13(
+    (s => {
       switch (s[0]) {
         case 3: {
           const v__do_e_2 = s[1];
@@ -89,7 +84,7 @@
         }
         case 4: {
           const v_a = s[1];
-          return ((s) => {
+          return (s => {
             switch (s[0]) {
               case 3: {
                 const v__do_e_1 = s[1];
@@ -97,7 +92,7 @@
               }
               case 4: {
                 const v_b = s[1];
-                return ((s) => {
+                return (s => {
                   switch (s[0]) {
                     case 3: {
                       const v__do_e_0 = s[1];

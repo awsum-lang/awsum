@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
@@ -17,11 +17,10 @@
     return [4, r | 0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_triple = (v_n) => {
+  const v_triple = v_n => {
     {
       const __s = __addInt32(v_n, v_n);
       switch (__s[0]) {
@@ -37,7 +36,7 @@
     }
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -65,11 +64,9 @@
     }
   };
 
-  const v_double = (v_n) => {
-    return __addInt32(v_n, v_n);
-  };
+  const v_double = v_n => __addInt32(v_n, v_n);
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -111,7 +108,7 @@
     }
   };
 
-  const v_formatOutputs = ((s) => {
+  const v_formatOutputs = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_3 = s[1];
@@ -119,7 +116,7 @@
       }
       case 4: {
         const v_d = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_2 = s[1];
@@ -127,7 +124,7 @@
             }
             case 4: {
               const v_t = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_1 = s[1];
@@ -135,7 +132,7 @@
                   }
                   case 4: {
                     const v_ds = s[1];
-                    return v__lift_18(__concat(v_ds, String(v_t)));
+                    return v__lift_13(__concat(v_ds, String(v_t)));
                   }
                 }
               })(__concat(String(v_d), " "));
@@ -146,7 +143,7 @@
     }
   })(v_callBox([24, [25]], 7 | 0));
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v__e = s[1];

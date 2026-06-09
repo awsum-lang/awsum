@@ -241,17 +241,33 @@ transformCall env callee args = do
           -- function it is (captures prepended) rather than looping.
           transformCall (M.delete n env) (CVar n) fullArgs
         else transformCall env (CVar (closHelper clos)) fullArgs
-    CVar f | Just _ <- M.lookup f arities -> do
-      let slotClosures =
+    CVar f | Just ar <- M.lookup f arities -> do
+      -- Only the first 'ar' arguments fill 'f''s parameter slots; any
+      -- beyond that are an /over-application/ of @f@'s result. Scanning
+      -- all args for closures (the old behaviour) put slot indices past
+      -- the parameter list and crashed 'generateSpec' on 'M.!'. Split
+      -- here: specialise @f@ for the closures in 'within', then apply
+      -- the resulting value to 'beyond' (a residual call the next pass
+      -- routes through an @$applyN@ dispatcher). 'splitAt ar' leaves
+      -- 'beyond' empty for every saturated or partial call, so programs
+      -- without over-application lower exactly as before.
+      let (within, beyond) = splitAt ar args
+          slotClosures =
             [ (i, c)
-            | (i, arg) <- zip [0 ..] args,
+            | (i, arg) <- zip [0 ..] within,
               Just c <- [asClosure env arities arg]
             ]
-      if null slotClosures
-        then do
-          args' <- traverse (transformExpr env) args
-          pure (CCall (CVar f) args')
-        else specializeAndCall env f args slotClosures
+      withinCall <-
+        if null slotClosures
+          then do
+            within' <- traverse (transformExpr env) within
+            pure (CCall (CVar f) within')
+          else specializeAndCall env f within slotClosures
+      if null beyond
+        then pure withinCall
+        else do
+          beyond' <- traverse (transformExpr env) beyond
+          pure (CCall withinCall beyond')
     _ -> do
       callee' <- transformExpr env callee
       args' <- traverse (transformExpr env) args

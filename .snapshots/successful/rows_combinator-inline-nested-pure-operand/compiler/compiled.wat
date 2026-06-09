@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00B")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00C")
   (table 8 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v_cPure $v_describe $v__lam_18 $v__lam_19 $v__df__rowmono_0_bindEither_0 $v__df__rowmono_1_bindEither_1)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v_cPure $v_describe $v__lam_13 $v__lam_14 $v__df__rowmono_0_bindEither_0 $v__df__rowmono_1_bindEither_1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -793,7 +793,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lam_18 (param i32) (result i32)
+  (func $v__lam_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -834,7 +834,7 @@
       local.get 4
     end)
 
-  (func $v__lam_19 (param i32) (result i32)
+  (func $v__lam_14 (param i32) (result i32)
     (local i32)
     (local i32)
     block (result i32)

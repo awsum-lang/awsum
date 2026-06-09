@@ -39,6 +39,7 @@ import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), texprType, tparamType)
 import Awsum.Tco (tcoProgram)
 import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, markEmptyTypesInDecl, splitArrow, typecheckProgram)
+import Awsum.UniquifyLocals (uniquifyLocals)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -548,7 +549,16 @@ elaborateLowerProgram progType progIn = do
   let callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
       reachable = reachableCore "main" callGraph <> reachableCore "runIO" callGraph
       live = filter (\d -> Set.member (declName' d) reachable) allDecls
-      core = CoreProgram live
+      -- Uniquify local binders that collide with a top-level name. A
+      -- prelude pattern variable (e.g. @cont@ in @bindIO@'s @IOGetArgs@
+      -- arm) can share a name with a user top-level — legal cross-module
+      -- shadowing — but every pass below that resolves a bare 'CVar'
+      -- against the global declaration table ('Awsum.Defunctionalize',
+      -- 'Awsum.LowerClosures', 'Awsum.Cps') would mistake the local for
+      -- the top-level, drop its captures, and emit a dangling closure.
+      -- Renaming the collisions away restores the invariant those passes
+      -- assume before the first one runs.
+      core = uniquifyLocals (CoreProgram live)
   -- 4) Defunctionalise: specialise each higher-order-function call
   --    site for the closure statically flowing in. After this pass
   --    no first-class function value remains in any reachable
@@ -850,7 +860,12 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
 --
 -- Generalises beyond 'runIO': any 'case' arm whose tag is not in
 -- the program's reachable construction set is dead. Sum types whose
--- some constructors are never used produce smaller binaries.
+-- some constructors are never used produce smaller binaries. The
+-- construction set is computed flow-sensitively by 'reachableTags' —
+-- a construction reachable only through a dead arm does not count, so
+-- a combinator arm that rebuilds the very constructor that gates it
+-- (e.g. 'andThenIO' rebuilding 'IOGetArgs' inside its own tag-8 arm)
+-- cannot keep itself alive.
 --
 -- Built-in baseline: built-ins like 'concatString' return values of
 -- ADT types ('Either StringTooLong String') whose constructors are
@@ -871,8 +886,7 @@ treeShakeFromMain conInfo =
        in if x' == x then x else fixpoint f x'
     step baselineCon baselineRow prog =
       let prog' = functionLevelShake prog
-          conTags = baselineCon <> collectConTags prog'
-          rowTags = baselineRow <> collectRowTags prog'
+          (conTags, rowTags) = reachableTags baselineCon baselineRow prog'
        in mapBodies (pruneDeadArms conTags rowTags) prog'
 
 -- | Set of constructor tags that built-ins might construct via
@@ -934,59 +948,67 @@ functionLevelShake (CoreProgram ds) =
       live = [d | d <- ds, Set.member (declName' d) reached]
    in CoreProgram live
 
--- | Set of every 'CCon' tag that appears anywhere in the program.
--- Used by 'pruneDeadArms' to decide which 'CCase' arms can be
--- dropped: an arm whose tag is not in this set is unreachable
--- because nothing constructs a value carrying that tag.
-collectConTags :: CoreProgram -> Set Int
-collectConTags (CoreProgram ds) = foldMap declConTags ds
+-- | The '(CCon'/'CReuse' tag, 'CRow' tag)' construction sets reachable
+-- in the program, as the least fixed point of a /guarded/ walk:
+-- descent into a 'CCase' arm is gated on the arm's tag being a known
+-- constructable 'CCon' tag, and into a 'CRowCase' arm on the arm's tag
+-- being a known constructable row tag. The scrutinee is always walked
+-- (it is evaluated whichever arm matches); only arm bodies are gated.
+--
+-- This is what distinguishes the sets from a flat "every tag textually
+-- present" collection. A 'CCon t' that occurs only inside an arm whose
+-- own tag nothing constructs is dead and must not seed itself — the
+-- exact shape that defeats flat collection: 'andThenIO' / 'handleErrorIO'
+-- rebuild 'IOGetArgs' (@CCon 8 [CCon 27 [cont]]@) inside their own tag-8
+-- arm, so a flat walk sees tag 8 as constructable and keeps the arm,
+-- which keeps the construction — a cycle disconnected from any real
+-- 'IO.Args.getArgs' source. Gating the arm on tag 8 breaks it: with no
+-- real construction of 8, the arm is never entered, never harvested.
+--
+-- Seed: the built-in baseline plus every construction outside any arm.
+-- Each round opens the arms whose tags just became reachable and
+-- harvests their constructions; the pair of sets grows monotonically,
+-- bounded by every tag in the program, so iteration converges.
+--
+-- Sound (never prunes a live arm): an arm taken at runtime has a
+-- scrutinee whose tag was constructed on a live path, hence is in the
+-- set, hence the arm was walked and its constructions harvested. The
+-- induction bottoms out at constructions outside any arm (always
+-- harvested) and the baseline.
+reachableTags :: Set Int -> Set Word32 -> CoreProgram -> (Set Int, Set Word32)
+reachableTags baseCon baseRow (CoreProgram ds) = go baseCon baseRow
   where
-    declConTags = \case
-      CFunDef _ _ body -> exprConTags body
-      CValDef _ body -> exprConTags body
+    go cs rs =
+      let (cs', rs') = foldMap (guardedTags cs rs . declBody) ds
+          cs'' = baseCon <> cs'
+          rs'' = baseRow <> rs'
+       in if cs'' == cs && rs'' == rs then (cs, rs) else go cs'' rs''
+    declBody = \case
+      CFunDef _ _ body -> body
+      CValDef _ body -> body
 
-exprConTags :: CExpr -> Set Int
-exprConTags = \case
-  CCon t fs -> Set.insert t (foldMap exprConTags fs)
-  CCall f xs -> exprConTags f <> foldMap exprConTags xs
-  CCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
-  CRow _ v -> exprConTags v
-  CRowCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
-  CLoop b -> exprConTags b
-  CContinue xs -> foldMap exprConTags xs
-  CDrop _ _ b -> exprConTags b
-  CReuse _ t fs -> Set.insert t (foldMap exprConTags fs)
-  CVar _ -> mempty
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
-
--- | Set of every row tag (FNV-1a hash of a row label) that appears
--- anywhere in the program. The dual of 'collectConTags' for
--- structural sums; 'pruneDeadArms' drops 'CRowCase' arms whose tag
--- is not in this set.
-collectRowTags :: CoreProgram -> Set Word32
-collectRowTags (CoreProgram ds) = foldMap declRowTags ds
+-- | Collect '(con tags, row tags)' constructed in @e@, descending into
+-- a 'CCase' arm only when its tag is in @cs@ and into a 'CRowCase' arm
+-- only when its tag is in @rs@. Con and row are gathered in one walk
+-- because the two sets co-evolve: a live 'CCase' arm may construct row
+-- tags and a live 'CRowCase' arm may construct con tags.
+guardedTags :: Set Int -> Set Word32 -> CExpr -> (Set Int, Set Word32)
+guardedTags cs rs = go
   where
-    declRowTags = \case
-      CFunDef _ _ body -> exprRowTags body
-      CValDef _ body -> exprRowTags body
-
-exprRowTags :: CExpr -> Set Word32
-exprRowTags = \case
-  CRow t v -> Set.insert t (exprRowTags v)
-  CRowCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
-  CCon _ fs -> foldMap exprRowTags fs
-  CCall f xs -> exprRowTags f <> foldMap exprRowTags xs
-  CCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
-  CLoop b -> exprRowTags b
-  CContinue xs -> foldMap exprRowTags xs
-  CDrop _ _ b -> exprRowTags b
-  CReuse _ _ fs -> foldMap exprRowTags fs
-  CVar _ -> mempty
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
+    go = \case
+      CCon t fs -> (Set.singleton t, mempty) <> foldMap go fs
+      CReuse _ t fs -> (Set.singleton t, mempty) <> foldMap go fs
+      CRow t v -> (mempty, Set.singleton t) <> go v
+      CCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t cs then go b else mempty) alts
+      CRowCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t rs then go b else mempty) alts
+      CCall f xs -> go f <> foldMap go xs
+      CLoop b -> go b
+      CContinue xs -> foldMap go xs
+      CDrop _ _ b -> go b
+      CVar _ -> mempty
+      CString _ -> mempty
+      CIntLit _ _ -> mempty
+      CBuiltIn _ -> mempty
 
 -- | Map a transformation across every top-level decl's body.
 mapBodies :: (CExpr -> CExpr) -> CoreProgram -> CoreProgram
@@ -1554,43 +1576,37 @@ findCoercibleLabel src = find (coercible src)
 --   so recursive types like @List a@ get a single self-recursive
 --   helper rather than an infinite expansion.
 synthCoerce :: ConInfoEnv -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
-synthCoerce _ src tgt
-  | typeEq src tgt = pure pure
-synthCoerce _ (TyVar _ _) _ = pure pure
-synthCoerce _ _ (TyVar _ _) = pure pure
--- A value at an empty type ('Never' / '_empty') has no inhabitants, so
--- any coercion of it is vacuous. This is what lets @IO Never Unit@
--- (e.g. @IO.Stdout.print …@) flow into a wider @IO (E1 | E2) Unit@
--- position: the recursion into 'IO''s error type-argument hits
--- @Never → (E1 | E2)@, and there are no error values to re-tag.
-synthCoerce _ (TyEmpty _ _) _ = pure pure
--- Row → row is a runtime no-op: a 'CRow'-tagged value carries a
--- per-label FNV tag, so it is already valid in any row that contains
--- that label. Widening (sub-row → wider row), narrowing that only drops
--- an uninhabited 'Never' / '_empty' alternative, and reordering all need
--- no re-wrap. (A row-polymorphic combinator body whose error type
--- variable was instantiated to a /row/ by 'monomorphizeRows' produces
--- exactly this shape — e.g. @(StringTooLong | InvalidUtf8)@ flowing into
--- @(StringTooLong | InvalidUtf8 | Never)@ inside a specialised @bindIO@.)
-synthCoerce conInfo src@(TyOr {}) tgt@(TyOr {})
-  | not (rowRetagNeeded src tgt) = pure pure
-  | otherwise = do
-      -- A label whose structure changed (a nominal head with a grown
-      -- inner row, e.g. Maybe Bool -> Maybe (Bool | Unit)) takes a
-      -- different FNV tag, so the no-op above is unsound: dispatch on the
-      -- value's current label and re-coerce each into the target row,
-      -- re-tagging where the per-label tag moved.
-      arms <-
-        traverse
-          ( \lbl -> do
-              coerceLbl <- synthCoerce conInfo lbl tgt
-              tag <- recordRowTag lbl
-              binder <- freshLiftName
-              body <- coerceLbl (CVar binder)
-              pure (tag, binder, body)
-          )
-          (flattenRow src)
-      pure (\v -> pure (CRowCase v arms))
+-- The single identity oracle. 'coercionIsIdentity' is True exactly when
+-- the coercion is a no-op on the runtime representation, subsuming every
+-- former fast path: equal types, a 'TyVar' / 'TyEmpty' end (a tyvar is
+-- opaque; 'Never' is uninhabited, so coercing it is vacuous — this is
+-- what lets @IO Never Unit@ flow into a wider @IO (E1 | E2) Unit@), and a
+-- 'CRow'-tagged value widened within its row (per-label FNV tags are
+-- stable across rows, so no re-wrap). The case the former fast paths
+-- missed: a nominal head or function arrow whose every field / side
+-- coercion is itself identity. That last one collapses the IO error-row
+-- widening @IO Never X → IO (e | Never) X@ inserted by @andThenIO@ /
+-- @bindIO@ / @mapIO@ / @handleErrorIO@, which used to emit a full
+-- structural deep-copy '$lift$N' — itself recursive, hence CPS'd, with
+-- defunctionalised continuation wrappers — for what is the identity.
+synthCoerce conInfo src tgt
+  | coercionIsIdentity conInfo src tgt = pure pure
+-- Reached only when at least one concrete label's FNV tag moved (a
+-- nominal head with a grown inner row, e.g. Maybe Bool -> Maybe (Bool |
+-- Unit)): dispatch on the value's current label and re-coerce each into
+-- the target row, re-tagging where the per-label tag changed.
+synthCoerce conInfo src@(TyOr {}) tgt@(TyOr {}) = do
+  arms <-
+    traverse
+      ( \lbl -> do
+          coerceLbl <- synthCoerce conInfo lbl tgt
+          tag <- recordRowTag lbl
+          binder <- freshLiftName
+          body <- coerceLbl (CVar binder)
+          pure (tag, binder, body)
+      )
+      (flattenRow src)
+  pure (\v -> pure (CRowCase v arms))
 synthCoerce conInfo src tgt@(TyOr {}) =
   case findCoercibleLabel src (flattenRow tgt) of
     Just lbl -> do
@@ -1662,37 +1678,101 @@ synthNominalHeadCoerce conInfo tyName src tgt = do
     Nothing -> do
       helper <- freshLiftName
       modify (\s -> s {lsLifters = M.insert key helper (lsLifters s)})
-      let cons = constructorsOfType conInfo tyName
-          srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
-          -- Freshen the generic-head's parameters (and the per-field
-          -- types that mention them) before unifying. Without this,
-          -- an input type whose tyvar happens to share a name with
-          -- one of the type's own parameters — e.g. @Either PE a@,
-          -- where @a@ also names @Either@'s second parameter — would
-          -- cross-bind during 'unify' and corrupt the per-field
-          -- substitution. The "$ctor" suffix is just a marker; the
-          -- exact name doesn't matter as long as it doesn't collide
-          -- with any tyvar in @src@ or @tgt@.
-          freshSubst =
-            mconcat [singletonSubst p (TyVar noSpan (p <> "$ctor")) | p <- srcParams]
-          freshGeneric = applySubst freshSubst (applyTyParams tyName srcParams)
-          srcSubst = fromRight mempty $ unify freshGeneric src
-          tgtSubst = fromRight mempty $ unify freshGeneric tgt
       arms <-
-        forM cons $ \(_cName, ci) -> do
-          let tag = ciTag ci
-              fieldNames = ["__f" <> show i | i <- [(0 :: Int) .. ciArity ci - 1]]
-              fields = map (applySubst freshSubst) (ciFieldTypes ci)
-              srcFields = map (applySubst srcSubst) fields
-              tgtFields = map (applySubst tgtSubst) fields
+        forM (nominalConFieldTypes conInfo tyName src tgt) $ \(tag, fields) -> do
           coercedFields <-
-            forM (zip3 fieldNames srcFields tgtFields) $ \(fn, sTy, tTy) -> do
+            forM fields $ \(fn, sTy, tTy) -> do
               wrap <- synthCoerce conInfo sTy tTy
               wrap (CVar fn)
-          pure (tag, fieldNames, CCon tag coercedFields)
+          pure (tag, map (\(fn, _, _) -> fn) fields, CCon tag coercedFields)
       let body = CCase (CVar "__input") arms
       emitHelper (CFunDef helper ["__input"] body)
       pure (\v -> pure (CCall (CVar helper) [v]))
+
+-- | Per-constructor field-coercion types for a coercion @src → tgt@
+--   between two type-applications that share a nominal head. For each
+--   constructor of the head's owning type, returns its tag and a
+--   @(fieldName, srcFieldType, tgtFieldType)@ triple per field. Shared
+--   by 'synthNominalHeadCoerce' (which builds the destructure-and-rebuild
+--   helper from these) and 'coercionIsIdentity' (which only inspects the
+--   field types) so the two can never disagree on field shape — a
+--   disagreement would be a miscompile, the predicate declaring identity
+--   where the builder would have done real work.
+--
+--   Freshens the generic head's parameters (and the per-field types that
+--   mention them) before unifying. Without this, an input type whose
+--   tyvar happens to share a name with one of the type's own parameters
+--   — e.g. @Either PE a@, where @a@ also names @Either@'s second
+--   parameter — would cross-bind during 'unify' and corrupt the per-field
+--   substitution. The "$ctor" suffix is just a marker; the exact name
+--   doesn't matter as long as it doesn't collide with any tyvar in @src@
+--   or @tgt@.
+nominalConFieldTypes :: ConInfoEnv -> Name -> Type' -> Type' -> [(Int, [(Name, Type', Type')])]
+nominalConFieldTypes conInfo tyName src tgt =
+  let cons = constructorsOfType conInfo tyName
+      srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
+      freshSubst =
+        mconcat [singletonSubst p (TyVar noSpan (p <> "$ctor")) | p <- srcParams]
+      freshGeneric = applySubst freshSubst (applyTyParams tyName srcParams)
+      srcSubst = fromRight mempty $ unify freshGeneric src
+      tgtSubst = fromRight mempty $ unify freshGeneric tgt
+   in [ ( ciTag ci,
+          [ ("__f" <> show i, applySubst srcSubst f, applySubst tgtSubst f)
+          | (i, fTy) <- zip [(0 :: Int) ..] (ciFieldTypes ci),
+            let f = applySubst freshSubst fTy
+          ]
+        )
+      | (_cName, ci) <- cons
+      ]
+
+-- | Is the coercion @src → tgt@ the identity on the runtime
+--   representation? A greatest fixpoint over the type structure: the
+--   nominal-head case assumes identity for the @(src, tgt)@ pair it is
+--   currently deciding (the @seen@ set) before checking its fields, so a
+--   recursive type like @IO@ — whose @IOStdoutPrint@ tail and
+--   @IOGetArgs@-continuation result both recurse to the same coercion —
+--   converges to True instead of looping. The answer drives the single
+--   guard in 'synthCoerce'; every True branch is a genuine no-op:
+--
+--     * 'typeEq' — same type, nothing to do.
+--     * 'TyVar' on either end — a tyvar is opaque; it can carry no
+--       row-tag change.
+--     * 'TyEmpty' source — uninhabited ('Never'), so vacuous.
+--     * 'TyOr' → 'TyOr' with no concrete label re-tagged — per-label FNV
+--       tags are stable across rows, so a 'CRow'-tagged value is already
+--       valid in the wider row ('rowRetagNeeded' is the existing test).
+--     * shared nominal head, all field coercions identity — the rebuild
+--       @CCon tag [id f0, id f1, …]@ reconstructs the same cell.
+--     * function arrow, both sides identity — @\\f a -> f a@ is @f@.
+--
+--   Injection into a row (@src@ not a row, @tgt@ a row) is never the
+--   identity: it adds a 'CRow' tag. Anything else (incompatible shapes,
+--   a row narrowed to a non-row) is conservatively False — 'synthCoerce'
+--   handles or rejects it downstream.
+coercionIsIdentity :: ConInfoEnv -> Type' -> Type' -> Bool
+coercionIsIdentity conInfo = go Set.empty
+  where
+    go :: Set.Set (Text, Text) -> Type' -> Type' -> Bool
+    go seen src tgt
+      | typeEq src tgt = True
+      | TyVar {} <- tgt = True
+      | TyVar {} <- src = True
+      | TyEmpty {} <- src = True
+      | TyOr {} <- src, TyOr {} <- tgt = not (rowRetagNeeded src tgt)
+      | TyOr {} <- tgt = False
+      | TyOr {} <- src = False
+      | TyArrow _ sA sB <- src,
+        TyArrow _ tA tB <- tgt =
+          go seen tA sA && go seen sB tB
+      | Just h1 <- tyConHead src,
+        Just h2 <- tyConHead tgt,
+        h1 == h2 =
+          let key = (canonicalLabel src, canonicalLabel tgt)
+           in Set.member key seen
+                || all
+                  (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
+                  (nominalConFieldTypes conInfo h1 src tgt)
+      | otherwise = False
 
 -- | All constructors of a given user-defined type, sorted by tag.
 --   Used by 'synthNominalHeadCoerce' to walk the constructors of the

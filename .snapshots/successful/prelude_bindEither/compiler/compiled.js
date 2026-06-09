@@ -1,16 +1,15 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -38,13 +37,11 @@
     }
   };
 
-  const v_opB = (v_n) => {
-    return [4, v_n];
-  };
+  const v_opB = v_n => [4, v_n];
 
   const v_opA = [4, 1 | 0];
 
-  const v__lift_20 = (v___input) => {
+  const v__lift_15 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -60,7 +57,7 @@
     }
   };
 
-  const v__let_18 = (v_msg) => {
+  const v__let_13 = v_msg => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -76,13 +73,13 @@
     }
   };
 
-  const v__let_19 = (v_chained) => {
-    return v__let_18(
-      ((s) => {
+  const v__let_14 = v_chained =>
+    v__let_13(
+      (s => {
         switch (s[0]) {
           case 3: {
             const v___pa0 = s[1];
-            return ((s) => {
+            return (s => {
               switch (s[0]) {
                 case 2252990199: {
                   const v__a = s[1];
@@ -102,9 +99,8 @@
         }
       })(v_chained)
     );
-  };
 
-  const v__df__rowmono_0_bindEither_0 = (v_x) => {
+  const v__df__rowmono_0_bindEither_0 = v_x => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -114,13 +110,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_20(v_opB(v_a));
+          return v__lift_15(v_opB(v_a));
         }
       }
     }
   };
 
-  const main = v__let_19(v__df__rowmono_0_bindEither_0(v_opA));
+  const main = v__let_14(v__df__rowmono_0_bindEither_0(v_opA));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

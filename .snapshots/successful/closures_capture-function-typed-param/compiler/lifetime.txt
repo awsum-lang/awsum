@@ -4,11 +4,11 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
-$lam$18:
+$lam$13:
   param           k                               count=1
   param           n                               count=1
 
-$lam$19:
+$lam$14:
   param           m                               count=1
 
 $df$applyOnce$0:

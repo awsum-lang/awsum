@@ -1,18 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __predInt32 = (x) => {
-    return x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
-  };
+  const __predInt32 = x => x === -2147483648 ? [3, [17]] : [4, x - 1 | 0];
 
-  const __eqInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqInt32 = (a, b) => a === b ? [1] : [2];
 
   const __addInt32 = (a, b) => {
     const r = a + b;
@@ -25,7 +21,7 @@
     return [4, r | 0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -85,7 +81,7 @@
     }
   };
 
-  const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
+  const v__scc__apply_sumTree__cps_sumTree = v__args => {
     while (true) {
       {
         const __s = v__args;
@@ -191,13 +187,10 @@
     }
   };
 
-  const v__cps_sumTree = (v_t, v__k) => {
-    return v__scc__apply_sumTree__cps_sumTree([30, v_t, v__k]);
-  };
+  const v__cps_sumTree = (v_t, v__k) =>
+    v__scc__apply_sumTree__cps_sumTree([30, v_t, v__k]);
 
-  const v_sumTree = (v_t) => {
-    return v__cps_sumTree(v_t, [26]);
-  };
+  const v_sumTree = v_t => v__cps_sumTree(v_t, [26]);
 
   const main = [7, String(v_sumTree(v_buildLeft(200000 | 0, [24]))), [5, [0]]];
 

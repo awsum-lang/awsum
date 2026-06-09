@@ -15,7 +15,7 @@ describe:
   row-case        _c                              count=0
   case-pattern    n                               count=0
 
-$lam$18:
+$lam$13:
   param           _n                              count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    b                               count=0

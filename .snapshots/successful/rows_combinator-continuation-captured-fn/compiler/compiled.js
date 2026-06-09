@@ -1,12 +1,12 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -36,7 +36,7 @@
 
   const v_oa = [4, 1 | 0];
 
-  const v_describe = (v_r) => {
+  const v_describe = v_r => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -64,11 +64,9 @@
     }
   };
 
-  const v_cont = (v__n) => {
-    return [3, [25]];
-  };
+  const v_cont = v__n => [3, [25]];
 
-  const v__lift_19 = (v___input) => {
+  const v__lift_14 = v___input => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -95,9 +93,7 @@
     }
   };
 
-  const v__lam_18 = (v_k, v_n) => {
-    return v__apply1(v_k, v_n);
-  };
+  const v__lam_13 = (v_k, v_n) => v__apply1(v_k, v_n);
 
   const v__df__rowmono_0_bindEither_0 = (
     v_x,
@@ -112,17 +108,15 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_19(
-            v__lam_18(v__df__rowmono_0_bindEither_0_cap1_0, v_a)
+          return v__lift_14(
+            v__lam_13(v__df__rowmono_0_bindEither_0_cap1_0, v_a)
           );
         }
       }
     }
   };
 
-  const v__df_poly_1 = () => {
-    return v__df__rowmono_0_bindEither_0(v_oa, [26]);
-  };
+  const v__df_poly_1 = () => v__df__rowmono_0_bindEither_0(v_oa, [26]);
 
   const main = [7, v_describe(v__df_poly_1()), [5, [0]]];
 

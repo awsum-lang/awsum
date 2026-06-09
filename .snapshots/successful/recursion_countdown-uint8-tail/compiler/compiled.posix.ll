@@ -332,7 +332,7 @@ tco.case.arm.1.13:
   call void @__inc_ref(ptr %t5)
   %t14 = call ptr @__showUInt8(ptr %t5)
   %t15 = call ptr @__concat(ptr %t6, ptr %t14)
-  %t16 = call ptr @v__lift_18(ptr %t15)
+  %t16 = call ptr @v__lift_13(ptr %t15)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -541,11 +541,11 @@ define internal ptr @v_main() {
   store i8 255, ptr %t0
   %t1 = call ptr @v_countDown(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.5, i64 12))
   %t2 = call ptr @v_showResult(ptr %t1)
-  %t3 = call ptr @v__let_19(ptr %t2)
+  %t3 = call ptr @v__let_14(ptr %t2)
   ret ptr %t3
 }
 
-define internal ptr @v__lift_18(ptr %v___input) {
+define internal ptr @v__lift_13(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -588,7 +588,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_19(ptr %v_res) {
+define internal ptr @v__let_14(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

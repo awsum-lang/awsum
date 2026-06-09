@@ -1,16 +1,14 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const v_showUnit = (v__wild0) => {
-    return "Unit";
-  };
+  const v_showUnit = v__wild0 => "Unit";
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;

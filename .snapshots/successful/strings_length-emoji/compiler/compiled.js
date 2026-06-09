@@ -1,32 +1,23 @@
 "use strict";
 
 (() => {
-  const __print = (s) => {
+  const __print = s => {
     process.stdout.write(String(s));
     return [0];
   };
 
-  const __concat = (a, b) => {
-    return a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
-  };
+  const __concat = (a, b) =>
+    a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const __eqUInt32 = (a, b) => {
-    return a === b ? [1] : [2];
-  };
+  const __eqUInt32 = (a, b) => a === b ? [1] : [2];
 
-  const __lengthCodePoints = (s) => {
-    return Array.from(s).length >>> 0;
-  };
+  const __lengthCodePoints = s => Array.from(s).length >>> 0;
 
-  const __lengthUtf16CodeUnits = (s) => {
-    return s.length >>> 0;
-  };
+  const __lengthUtf16CodeUnits = s => s.length >>> 0;
 
-  const __lengthUtf8Bytes = (s) => {
-    return new TextEncoder().encode(s).length >>> 0;
-  };
+  const __lengthUtf8Bytes = s => new TextEncoder().encode(s).length >>> 0;
 
-  const v_runIO = (v_io) => {
+  const v_runIO = v_io => {
     while (true) {
       {
         const __s = v_io;
@@ -116,7 +107,7 @@
     }
   };
 
-  const v_run = ((s) => {
+  const v_run = (s => {
     switch (s[0]) {
       case 3: {
         const v__do_e_9 = s[1];
@@ -124,7 +115,7 @@
       }
       case 4: {
         const v_a = s[1];
-        return ((s) => {
+        return (s => {
           switch (s[0]) {
             case 3: {
               const v__do_e_8 = s[1];
@@ -132,7 +123,7 @@
             }
             case 4: {
               const v_b = s[1];
-              return ((s) => {
+              return (s => {
                 switch (s[0]) {
                   case 3: {
                     const v__do_e_7 = s[1];
@@ -140,7 +131,7 @@
                   }
                   case 4: {
                     const v_c = s[1];
-                    return ((s) => {
+                    return (s => {
                       switch (s[0]) {
                         case 3: {
                           const v__do_e_6 = s[1];
@@ -148,7 +139,7 @@
                         }
                         case 4: {
                           const v_s0 = s[1];
-                          return ((s) => {
+                          return (s => {
                             switch (s[0]) {
                               case 3: {
                                 const v__do_e_5 = s[1];
@@ -156,7 +147,7 @@
                               }
                               case 4: {
                                 const v_s1 = s[1];
-                                return ((s) => {
+                                return (s => {
                                   switch (s[0]) {
                                     case 3: {
                                       const v__do_e_4 = s[1];
@@ -186,7 +177,7 @@
     }
   })(v_check(1 >>> 0, __lengthCodePoints("🔥"), "lengthCodePoints"));
 
-  const main = ((s) => {
+  const main = (s => {
     switch (s[0]) {
       case 3: {
         const v___w0 = s[1];
