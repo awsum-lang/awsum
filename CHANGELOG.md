@@ -8,6 +8,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Added
+
+- **`awsum-bench --snapshot` / `just benchmark-snapshot`: median-benchmark golden files.** Runs each `test/sources/benchmark/` program N times per backend (default 5) and writes the per-backend median wall time + peak RSS to `.snapshots/benchmark/<NAME>/bench.txt`. Overwrite-only — no threshold, not part of `just test`/CI; the workflow is to snapshot before a change, snapshot again after, and read the `git diff`. Runs are sequential (concurrent execution would contend and corrupt the numbers); compilation happens once per benchmark, so the runs measure execution only. macOS-only, like `awsum-bench`.
+
 ### Changed
 
 - **JS output (`awsum build -t js`) renders a single-`return` arrow as an expression body and drops the parens around a lone parameter.** A function or runtime helper whose body is one `return` was emitted as `(x) => { return e; }`; it is now `x => e`, folded onto an indented continuation line when it doesn't fit beside `=>`. Multi-statement bodies stay block-form (`x => { … }`), and the parameter list keeps its parens with zero or two-plus parameters. Program output is unchanged — identical stdout across all five backends still holds, and no runtime snapshot moved; the effect is purely more legible generated JS (the `compiled.js` snapshots shrink).
