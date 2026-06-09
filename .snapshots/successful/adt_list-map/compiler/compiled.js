@@ -42,7 +42,7 @@
     }
   };
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -221,7 +221,7 @@
     return v__cps__df_map_0(v_list, [17]);
   };
 
-  const main = v__let_18(
+  const main = v__let_13(
     v_show(v__df_map_0([14, "a", [14, "b", [14, "c", [13]]]]))
   );
 

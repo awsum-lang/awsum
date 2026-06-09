@@ -374,11 +374,11 @@ define internal ptr @v_main() {
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @v_nothingAsLeft(ptr %t0, ptr %t3)
-  %t7 = call ptr @v__let_21(ptr %t6)
+  %t7 = call ptr @v__let_16(ptr %t6)
   ret ptr %t7
 }
 
-define internal ptr @v__let_18(ptr %v_msg) {
+define internal ptr @v__let_13(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -438,7 +438,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_19(ptr %v_fromJust, ptr %v_fromNothing, ptr %v_chained) {
+define internal ptr @v__let_14(ptr %v_fromJust, ptr %v_fromNothing, ptr %v_chained) {
   call void @__inc_ref(ptr %v_fromNothing)
   %t0 = call ptr @v_show(ptr %v_fromNothing)
   %t1 = getelementptr ptr, ptr %t0, i32 0
@@ -647,14 +647,14 @@ case.default.4:
 case.join.5:
   %t114 = phi ptr [ %t10, %case.end.3.7 ], [ %t113, %case.end.4.15 ]
   call void @__free_recursive(ptr %t0)
-  %t115 = call ptr @v__let_18(ptr %t114)
+  %t115 = call ptr @v__let_13(ptr %t114)
   call void @__free_recursive(ptr %v_fromJust)
   call void @__free_recursive(ptr %v_fromNothing)
   call void @__free_recursive(ptr %v_chained)
   ret ptr %t115
 }
 
-define internal ptr @v__let_20(ptr %v_fromNothing, ptr %v_fromJust) {
+define internal ptr @v__let_15(ptr %v_fromNothing, ptr %v_fromJust) {
   call void @__inc_ref(ptr %v_fromJust)
   call void @__inc_ref(ptr %v_fromNothing)
   %t0 = call ptr @__alloc(i64 8, i32 0)
@@ -717,13 +717,13 @@ case.default.21:
 case.join.22:
   %t36 = phi ptr [ %t27, %case.end.3.24 ], [ %t35, %case.end.4.32 ]
   call void @__free_recursive(ptr %t17)
-  %t37 = call ptr @v__let_19(ptr %v_fromJust, ptr %v_fromNothing, ptr %t36)
+  %t37 = call ptr @v__let_14(ptr %v_fromJust, ptr %v_fromNothing, ptr %t36)
   call void @__free_recursive(ptr %v_fromNothing)
   call void @__free_recursive(ptr %v_fromJust)
   ret ptr %t37
 }
 
-define internal ptr @v__let_21(ptr %v_fromNothing) {
+define internal ptr @v__let_16(ptr %v_fromNothing) {
   call void @__inc_ref(ptr %v_fromNothing)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 24 to ptr
@@ -736,7 +736,7 @@ define internal ptr @v__let_21(ptr %v_fromNothing) {
   %t6 = getelementptr ptr, ptr %t3, i32 1
   store ptr getelementptr inbounds (i8, ptr @.str.6, i64 12), ptr %t6
   %t7 = call ptr @v_nothingAsLeft(ptr %t0, ptr %t3)
-  %t8 = call ptr @v__let_20(ptr %v_fromNothing, ptr %t7)
+  %t8 = call ptr @v__let_15(ptr %v_fromNothing, ptr %t7)
   call void @__free_recursive(ptr %v_fromNothing)
   ret ptr %t8
 }

@@ -456,12 +456,12 @@ L_join4:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/v_threeAndDouble(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

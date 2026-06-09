@@ -145,14 +145,14 @@ CoreProgram
                 ( CVar "$df$handleErrorIO$4" )
                 [ CVar "combined" ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$18" )
+                ( CVar "$cps$$lift$13" )
                 [ CVar "__input"
                 , CCon 45 []
                 ]
             )
-        , CFunDef "$cps$$lift$18"
+        , CFunDef "$cps$$lift$13"
             [ "__input"
             , "$k"
             ]
@@ -164,7 +164,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$18" )
+                                ( CVar "$apply$$lift$13" )
                                 [ CVar "$k"
                                 , CCon 5
                                     [ CVar "__f0" ]
@@ -176,7 +176,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$18" )
+                                ( CVar "$apply$$lift$13" )
                                 [ CVar "$k"
                                 , CCon 6
                                     [ CRow 718021640
@@ -210,7 +210,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$18" )
+                                ( CVar "$apply$$lift$13" )
                                 [ CVar "$k"
                                 , CCon 8
                                     [ CCon 32
@@ -224,7 +224,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$18" )
+                                ( CVar "$apply$$lift$13" )
                                 [ CVar "$k"
                                 , CCon 9
                                     [ CCon 33
@@ -238,7 +238,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$18" )
+                                ( CVar "$apply$$lift$13" )
                                 [ CVar "$k"
                                 , CCon 10
                                     [ CCon 34
@@ -250,7 +250,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$18"
+        , CFunDef "$apply$$lift$13"
             [ "$k"
             , "$x"
             ]
@@ -328,7 +328,7 @@ CoreProgram
                                 ( CVar "$apply$$df$$rowmono$0$bindIO$0" )
                                 [ CVar "$k"
                                 , CCall
-                                    ( CVar "$lift$18" )
+                                    ( CVar "$lift$13" )
                                     [ CCall
                                         ( CVar "step" )
                                         [ CVar "a" ]
@@ -515,7 +515,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 8
-                                    [ CCon 25
+                                    [ CCon 27
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -529,7 +529,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 9
-                                    [ CCon 26
+                                    [ CCon 25
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -543,7 +543,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 10
-                                    [ CCon 27
+                                    [ CCon 26
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -587,14 +587,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21" [ "$args" ]
+        , CFunDef "$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21" )
+                ( CVar "$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16" )
                 [ CVar "$args"
                 , CCon 51 []
                 ]
             )
-        , CFunDef "$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21"
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16"
             [ "$args"
             , "$k"
             ]
@@ -705,7 +705,7 @@ CoreProgram
                                         ( 31
                                         , []
                                         , CCall
-                                            ( CVar "$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21" )
+                                            ( CVar "$apply$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16" )
                                             [ CVar "$k"
                                             , CCall
                                                 ( CVar "$io_getargs_cont" )
@@ -786,15 +786,15 @@ CoreProgram
                         ( 37
                         ,
                             [ "cont"
-                            , "result"
+                            , "bytes"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "result"
+                            ( CDrop DropFreeUnchecked "bytes"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 35
                                             [ CVar "cont"
-                                            , CVar "result"
+                                            , CVar "bytes"
                                             ]
                                         , CCon 53
                                             [ CVar "$k" ]
@@ -807,15 +807,15 @@ CoreProgram
                         ( 38
                         ,
                             [ "cont"
-                            , "bytes"
+                            , "result"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
+                            ( CDrop DropFreeUnchecked "result"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 35
                                             [ CVar "cont"
-                                            , CVar "bytes"
+                                            , CVar "result"
                                             ]
                                         , CCon 54
                                             [ CVar "$k" ]
@@ -953,7 +953,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21"
+        , CFunDef "$apply$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16"
             [ "$k"
             , "$x"
             ]
@@ -1070,7 +1070,7 @@ CoreProgram
                                     ( CContinue
                                         [ CVar "$pk_58"
                                         , CCall
-                                            ( CVar "$lift$18" )
+                                            ( CVar "$lift$13" )
                                             [ CVar "$x" ]
                                         ]
                                     )
@@ -1086,7 +1086,7 @@ CoreProgram
                                     ( CContinue
                                         [ CVar "$pk_59"
                                         , CCall
-                                            ( CVar "$lift$18" )
+                                            ( CVar "$lift$13" )
                                             [ CVar "$x" ]
                                         ]
                                     )
@@ -1102,7 +1102,7 @@ CoreProgram
                                     ( CContinue
                                         [ CVar "$pk_60"
                                         , CCall
-                                            ( CVar "$lift$18" )
+                                            ( CVar "$lift$13" )
                                             [ CVar "$x" ]
                                         ]
                                     )
@@ -1117,7 +1117,7 @@ CoreProgram
             , "$arg0"
             ]
             ( CCall
-                ( CVar "$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$19_$lift$20_$lift$21" )
+                ( CVar "$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3_$lift$14_$lift$15_$lift$16" )
                 [ CCon 35
                     [ CVar "$cl"
                     , CVar "$arg0"

@@ -240,7 +240,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v_k, ptr %v__n) {
+define internal ptr @v__lam_13(ptr %v_k, ptr %v__n) {
   call void @__free_recursive(ptr %v__n)
   ret ptr %v_k
 }
@@ -248,7 +248,7 @@ define internal ptr @v__lam_18(ptr %v_k, ptr %v__n) {
 define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0) {
   call void @__inc_ref(ptr %v__df_apply_0_cap0_0)
   call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_18(ptr %v__df_apply_0_cap0_0, ptr %v_x)
+  %t0 = call ptr @v__lam_13(ptr %v__df_apply_0_cap0_0, ptr %v_x)
   call void @__free_recursive(ptr %v_x)
   call void @__free_recursive(ptr %v__df_apply_0_cap0_0)
   ret ptr %t0

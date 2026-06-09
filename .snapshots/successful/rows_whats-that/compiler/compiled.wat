@@ -16,7 +16,7 @@
   (data (i32.const 140) "\00\00\00\00\00\00\00\00\00\00\00\00\0a\00\00\00\0a\00\00\00Just False")
   (data (i32.const 170) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_whatsThat $v__lift_18 $v__let_19)
+  (elem (i32.const 0) $v_runIO $v_whatsThat $v__lift_13 $v__let_14)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -620,7 +620,7 @@
     call 12
     call 15)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -688,7 +688,7 @@
       end
     end)
 
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_14 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

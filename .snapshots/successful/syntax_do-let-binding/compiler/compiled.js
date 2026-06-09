@@ -115,7 +115,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -131,7 +131,7 @@
     }
   };
 
-  const v__let_19 = (v_a, v_prefix) => {
+  const v__let_14 = (v_a, v_prefix) => {
     {
       const __s = v_step2(v_a);
       switch (__s[0]) {
@@ -141,7 +141,7 @@
         }
         case 4: {
           const v_b = __s[1];
-          return v__lift_18(__concat(v_prefix, String(v_b)));
+          return v__lift_13(__concat(v_prefix, String(v_b)));
         }
       }
     }
@@ -157,7 +157,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__let_19(v_a, "answer=");
+          return v__let_14(v_a, "answer=");
         }
       }
     }

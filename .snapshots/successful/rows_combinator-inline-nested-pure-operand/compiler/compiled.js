@@ -68,7 +68,7 @@
     }
   };
 
-  const v__lam_18 = (v__m) => {
+  const v__lam_13 = (v__m) => {
     return [3, [365691641, [26]]];
   };
 
@@ -82,13 +82,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_18(v_a);
+          return v__lam_13(v_a);
         }
       }
     }
   };
 
-  const v__lam_19 = (v__n) => {
+  const v__lam_14 = (v__n) => {
     return v__df__rowmono_1_bindEither_1(v_ob);
   };
 
@@ -102,7 +102,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_19(v_a);
+          return v__lam_14(v_a);
         }
       }
     }

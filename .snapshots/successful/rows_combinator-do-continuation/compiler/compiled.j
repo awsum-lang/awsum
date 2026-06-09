@@ -278,7 +278,7 @@ L_join2:
 .end method
 
 
-.method static v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 7
   invokestatic AwsumMain/v_ob()Ljava/lang/Object;
@@ -422,7 +422,7 @@ L_arm12:
   aaload
   astore_3
   aload_3
-  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_13(Ljava/lang/Object;)Ljava/lang/Object;
 L_join11:
   areturn
 .end method

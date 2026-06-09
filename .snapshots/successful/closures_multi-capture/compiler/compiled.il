@@ -206,12 +206,12 @@
     ldc.i4.s 22
     box [System.Runtime]System.Int32
     call object AwsumMain::v_both(object, object)
-    call object AwsumMain::v__let_19(object)
+    call object AwsumMain::v__let_14(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_18(object,object,object) cil managed
+  .method private hidebysig static object v__lam_13(object,object,object) cil managed
   {
     .maxstack 2
     ldarg.0
@@ -221,7 +221,7 @@
   }
 
 
-  .method private hidebysig static object v__let_19(object) cil managed
+  .method private hidebysig static object v__let_14(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -331,7 +331,7 @@
     ldarg.1
     ldarg.2
     ldarg.0
-    call object AwsumMain::v__lam_18(object, object, object)
+    call object AwsumMain::v__lam_13(object, object, object)
     ret
   }
 

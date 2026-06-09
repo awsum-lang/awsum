@@ -122,7 +122,7 @@ L_tarm1:
 .end method
 
 
-.method static v__lam_18(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
   .limit locals 2
   aload_0
@@ -132,7 +132,7 @@ L_tarm1:
 .end method
 
 
-.method static v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_14(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   aload_0
@@ -145,7 +145,7 @@ L_tarm1:
   .limit locals 2
   aload_1
   aload_0
-  invokestatic AwsumMain/v__lam_18(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -180,7 +180,7 @@ L_tarm1:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   aload_1
-  invokestatic AwsumMain/v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_14(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

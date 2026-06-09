@@ -18,7 +18,7 @@
   (data (i32.const 193) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00right: ")
   (data (i32.const 220) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 7 funcref)
-  (elem (i32.const 0) $v_showBool $v_runIO $v_showUnderflowError $v_showResult $v__let_18 $v__scc_evenInt_oddInt $v_evenInt)
+  (elem (i32.const 0) $v_showBool $v_runIO $v_showUnderflowError $v_showResult $v__let_13 $v__scc_evenInt_oddInt $v_evenInt)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -786,7 +786,7 @@
     call 19
     call 21)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

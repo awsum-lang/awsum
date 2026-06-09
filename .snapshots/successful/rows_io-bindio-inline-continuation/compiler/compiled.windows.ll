@@ -803,7 +803,7 @@ define internal ptr @v_main() {
   ret ptr %t1
 }
 
-define internal ptr @v__lam_18(ptr %v__args) {
+define internal ptr @v__lam_13(ptr %v__args) {
   %t0 = call ptr @__alloc(i64 16, i32 1)
   %t1 = inttoptr i64 718021640 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -888,7 +888,7 @@ tco.case.arm.5.11:
   call void @__inc_ref(ptr %t13)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @v__lam_18(ptr %t13)
+  %t14 = call ptr @v__lam_13(ptr %t13)
   %t15 = call ptr @v__apply__df__rowmono_0_bindIO_0(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
@@ -1217,7 +1217,7 @@ tco.case.arm.8.47:
   %t52 = getelementptr ptr, ptr %t50, i32 0
   store ptr %t51, ptr %t52
   %t53 = call ptr @__alloc(i64 16, i32 1)
-  %t54 = inttoptr i64 25 to ptr
+  %t54 = inttoptr i64 27 to ptr
   %t55 = getelementptr ptr, ptr %t53, i32 0
   store ptr %t54, ptr %t55
   call void @__inc_ref(ptr %t49)
@@ -1241,7 +1241,7 @@ tco.case.arm.9.59:
   %t64 = getelementptr ptr, ptr %t62, i32 0
   store ptr %t63, ptr %t64
   %t65 = call ptr @__alloc(i64 16, i32 1)
-  %t66 = inttoptr i64 26 to ptr
+  %t66 = inttoptr i64 25 to ptr
   %t67 = getelementptr ptr, ptr %t65, i32 0
   store ptr %t66, ptr %t67
   call void @__inc_ref(ptr %t61)
@@ -1265,7 +1265,7 @@ tco.case.arm.10.71:
   %t76 = getelementptr ptr, ptr %t74, i32 0
   store ptr %t75, ptr %t76
   %t77 = call ptr @__alloc(i64 16, i32 1)
-  %t78 = inttoptr i64 27 to ptr
+  %t78 = inttoptr i64 26 to ptr
   %t79 = getelementptr ptr, ptr %t77, i32 0
   store ptr %t78, ptr %t79
   call void @__inc_ref(ptr %t73)
@@ -1356,18 +1356,18 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args) {
+define internal ptr @v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args) {
   call void @__inc_ref(ptr %v__args)
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 43 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args, ptr %t0)
+  %t3 = call ptr @v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args, ptr %t0)
   call void @__free_recursive(ptr %v__args)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -1649,7 +1649,7 @@ tco.case.arm.31.140:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t15)
   %t141 = call ptr @v__io_getargs_cont(ptr %t15)
-  %t142 = call ptr @v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %t6, ptr %t141)
+  %t142 = call ptr @v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %t6, ptr %t141)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
@@ -1905,7 +1905,7 @@ tco.exit.1:
   ret ptr %t281
 }
 
-define internal ptr @v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -2020,7 +2020,7 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
   call void @__inc_ref(ptr %v__arg0)
   %t4 = getelementptr ptr, ptr %t0, i32 2
   store ptr %v__arg0, ptr %t4
-  %t5 = call ptr @v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %t0)
+  %t5 = call ptr @v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(ptr %t0)
   call void @__free_recursive(ptr %v__cl)
   call void @__free_recursive(ptr %v__arg0)
   ret ptr %t5

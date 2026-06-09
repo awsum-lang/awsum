@@ -125,7 +125,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$13" )
                 [ CCon 14
                     [ CIntLit 0 TUInt8
                     , CCon 14
@@ -144,28 +144,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$0" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$lam$17"
+        , CFunDef "$lam$12"
             [ "b"
             , "restHex"
             ]
@@ -177,7 +156,7 @@ CoreProgram
                 , CVar "restHex"
                 ]
             )
-        , CFunDef "$let$18" [ "bytes" ]
+        , CFunDef "$let$13" [ "bytes" ]
             ( CCase
                 ( CCall
                     ( CVar "bytesToHexStringNoPrefix" )
@@ -226,12 +205,9 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$0" )
-                            [ CCall
-                                ( CVar "$lam$17" )
-                                [ CVar "$df$bindEither$0$cap1$0"
-                                , CVar "a"
-                                ]
+                            ( CVar "$lam$12" )
+                            [ CVar "$df$bindEither$0$cap1$0"
+                            , CVar "a"
                             ]
                         )
                     )

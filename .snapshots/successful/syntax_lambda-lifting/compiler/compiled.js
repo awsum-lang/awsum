@@ -114,7 +114,7 @@
     }
   };
 
-  const v__let_19 = (v_res) => {
+  const v__let_14 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -130,17 +130,17 @@
     }
   };
 
-  const v__lam_18 = (v_n) => {
+  const v__lam_13 = (v_n) => {
     return v_n;
   };
 
   const v__df_apply_0 = (v_x) => {
-    return v__lam_18(v_x);
+    return v__lam_13(v_x);
   };
 
   const v_inc42 = v__df_apply_0(42 | 0);
 
-  const main = v__let_19(
+  const main = v__let_14(
     ((s) => {
       switch (s[0]) {
         case 3: {

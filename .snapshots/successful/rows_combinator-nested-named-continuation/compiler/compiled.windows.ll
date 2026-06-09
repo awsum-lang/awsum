@@ -315,7 +315,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v_n) {
+define internal ptr @v__lam_13(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v_pureEither(ptr %v_n)
   %t1 = call ptr @v__df__rowmono_1_bindEither_1(ptr %t0)
@@ -323,7 +323,7 @@ define internal ptr @v__lam_18(ptr %v_n) {
   ret ptr %t1
 }
 
-define internal ptr @v__lift_19(ptr %v___input) {
+define internal ptr @v__lift_14(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -396,7 +396,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_18(ptr %t17)
+  %t18 = call ptr @v__lam_13(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18
@@ -429,7 +429,7 @@ case.arm.4.11:
   call void @__inc_ref(ptr %t13)
   call void @__inc_ref(ptr %t13)
   %t14 = call ptr @v_inner(ptr %t13)
-  %t15 = call ptr @v__lift_19(ptr %t14)
+  %t15 = call ptr @v__lift_14(ptr %t14)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t15

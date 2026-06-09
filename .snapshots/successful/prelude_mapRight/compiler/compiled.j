@@ -188,12 +188,12 @@ L_tarm1:
   .limit locals 0
   invokestatic AwsumMain/v_ok()Ljava/lang/Object;
   invokestatic AwsumMain/v__df_mapRight_0(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_22(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_17(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -285,7 +285,7 @@ L_join2:
 .end method
 
 
-.method static v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_14(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   aload_0
@@ -293,7 +293,7 @@ L_join2:
 .end method
 
 
-.method static v__let_20(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 12
   aload_0
@@ -389,12 +389,12 @@ L_join6:
 L_join4:
   astore_2
   aload_2
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lam_21(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   aload_0
@@ -402,13 +402,13 @@ L_join4:
 .end method
 
 
-.method static v__let_22(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_17(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 1
   aload_0
   invokestatic AwsumMain/v_bad()Ljava/lang/Object;
   invokestatic AwsumMain/v__df_mapRight_1(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_20(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -459,7 +459,7 @@ L_arm9:
   dup
   iconst_1
   aload_3
-  invokestatic AwsumMain/v__lam_21(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_16(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
 L_join8:
   areturn
@@ -512,7 +512,7 @@ L_arm11:
   dup
   iconst_1
   aload_3
-  invokestatic AwsumMain/v__lam_19(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_14(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
 L_join10:
   areturn

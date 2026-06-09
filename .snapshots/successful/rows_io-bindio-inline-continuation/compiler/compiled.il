@@ -327,7 +327,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_18(object) cil managed
+  .method private hidebysig static object v__lam_13(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1)
@@ -453,7 +453,7 @@
     stloc.1
     ldarg.1
     ldloc.1
-    call object AwsumMain::v__lam_18(object)
+    call object AwsumMain::v__lam_13(object)
     call object AwsumMain::v__apply__df__rowmono_0_bindIO_0(object, object)
     ret
   IL_c0:
@@ -804,7 +804,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -841,7 +841,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 26
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -875,7 +875,7 @@
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
-    ldc.i4.s 27
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
@@ -941,7 +941,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object) cil managed
+  .method private hidebysig static object v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -955,12 +955,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object, object)
+    call object AwsumMain::v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object,object) cil managed
+  .method private hidebysig static object v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -1173,7 +1173,7 @@
     ldarg.1
     ldloc.2
     call object AwsumMain::v__io_getargs_cont(object)
-    call object AwsumMain::v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object, object)
+    call object AwsumMain::v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object, object)
     ret
   IL_c6:
     dup
@@ -1451,7 +1451,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object,object) cil managed
+  .method private hidebysig static object v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1)
@@ -1579,7 +1579,7 @@
     ldarg.1
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object)
+    call object AwsumMain::v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(object)
     ret
   }
 

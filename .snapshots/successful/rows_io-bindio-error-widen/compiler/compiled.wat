@@ -15,7 +15,7 @@
   (data (i32.const 128) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 163) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00EX")
   (table 18 funcref)
-  (elem (i32.const 0) $v_failIO $v_runIO $v_step $v_handler $v__lift_18 $v__cps__lift_18 $v__apply__lift_18 $v__io_getargs_cont $v__df__rowmono_0_bindIO_0 $v__cps__df__rowmono_0_bindIO_0 $v__apply__df__rowmono_0_bindIO_0 $v__df_handleErrorIO_4 $v__cps__df_handleErrorIO_4 $v__apply__df_handleErrorIO_4 $v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 $v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 $v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 $v__apply1)
+  (elem (i32.const 0) $v_failIO $v_runIO $v_step $v_handler $v__lift_13 $v__cps__lift_13 $v__apply__lift_13 $v__io_getargs_cont $v__df__rowmono_0_bindIO_0 $v__cps__df__rowmono_0_bindIO_0 $v__apply__df__rowmono_0_bindIO_0 $v__df_handleErrorIO_4 $v__cps__df_handleErrorIO_4 $v__apply__df_handleErrorIO_4 $v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 $v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 $v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1611,7 +1611,7 @@
     call 22
     call 32)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1635,7 +1635,7 @@
       local.get 2
     end)
 
-  (func $v__cps__lift_18 (param i32 i32) (result i32)
+  (func $v__cps__lift_13 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1943,7 +1943,7 @@
       end
     end)
 
-  (func $v__apply__lift_18 (param i32 i32) (result i32)
+  (func $v__apply__lift_13 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2667,7 +2667,7 @@
                 call 15
                 local.set 3
                 local.get 3
-                i32.const 25
+                i32.const 27
                 i32.store
                 local.get 3
                 local.get 5
@@ -2717,7 +2717,7 @@
                   call 15
                   local.set 3
                   local.get 3
-                  i32.const 26
+                  i32.const 25
                   i32.store
                   local.get 3
                   local.get 5
@@ -2762,7 +2762,7 @@
                   call 15
                   local.set 3
                   local.get 3
-                  i32.const 27
+                  i32.const 26
                   i32.store
                   local.get 3
                   local.get 5
@@ -2865,7 +2865,7 @@
       end
     end)
 
-  (func $v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 (param i32) (result i32)
+  (func $v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2889,7 +2889,7 @@
       local.get 2
     end)
 
-  (func $v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 (param i32 i32) (result i32)
+  (func $v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -3757,7 +3757,7 @@
       end
     end)
 
-  (func $v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_19__lift_20__lift_21 (param i32 i32) (result i32)
+  (func $v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3__lift_14__lift_15__lift_16 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -40,7 +40,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$13" )
                 [ CCon 7
                     [ CString "💩"
                     , CCon 5
@@ -48,7 +48,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$18" [ "unit" ]
+        , CFunDef "$let$13" [ "unit" ]
             ( CCon 7
                 [ CString "🔥"
                 , CCon 5

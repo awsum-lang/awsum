@@ -355,64 +355,12 @@ L_tarm5:
   aastore
   aastore
   aastore
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_0(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
-  .limit locals 4
-  aload_0
-  checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_2
-  iload_2
-  iconst_3
-  if_icmpne L_arm7
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_3
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-  goto L_join6
-L_arm7:
-  aload_1
-  iconst_1
-  aaload
-  astore_3
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_4
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-L_join6:
-  areturn
-.end method
-
-
-.method static v__lam_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
   .limit locals 2
   aload_0
@@ -429,7 +377,7 @@ L_join6:
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0
@@ -444,7 +392,7 @@ L_join6:
   istore_2
   iload_2
   iconst_3
-  if_icmpne L_arm9
+  if_icmpne L_arm7
   aload_1
   iconst_1
   aaload
@@ -480,8 +428,8 @@ L_join6:
   aastore
   aastore
   aastore
-  goto L_join8
-L_arm9:
+  goto L_join6
+L_arm7:
   aload_1
   iconst_1
   aaload
@@ -517,7 +465,7 @@ L_arm9:
   aastore
   aastore
   aastore
-L_join8:
+L_join6:
   areturn
 .end method
 
@@ -536,7 +484,7 @@ L_join8:
   istore_3
   iload_3
   iconst_3
-  if_icmpne L_arm11
+  if_icmpne L_arm9
   aload_2
   iconst_1
   aaload
@@ -552,17 +500,16 @@ L_join8:
   iconst_1
   aload 4
   aastore
-  goto L_join10
-L_arm11:
+  goto L_join8
+L_arm9:
   aload_2
   iconst_1
   aaload
   astore 4
   aload_1
   aload 4
-  invokestatic AwsumMain/v__lam_17(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_0(Ljava/lang/Object;)Ljava/lang/Object;
-L_join10:
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+L_join8:
   areturn
 .end method
 

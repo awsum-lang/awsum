@@ -150,7 +150,7 @@
     return v__scc_evenInt_oddInt([8, v_n]);
   };
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -166,7 +166,7 @@
     }
   };
 
-  const main = v__let_18(v_showResult(v_evenInt(1000000 | 0)));
+  const main = v__let_13(v_showResult(v_evenInt(1000000 | 0)));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

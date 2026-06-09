@@ -104,15 +104,15 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$14" )
                 [ CCall
                     ( CVar "$df$mapIOError$0" )
                     [ CVar "action" ]
                 ]
             )
-        , CFunDef "$lam$18" [ "_a" ]
+        , CFunDef "$lam$13" [ "_a" ]
             ( CCon 25 [] )
-        , CFunDef "$let$19" [ "renamed" ]
+        , CFunDef "$let$14" [ "renamed" ]
             ( CCall
                 ( CVar "$df$handleErrorIO$4" )
                 [ CVar "renamed" ]
@@ -152,7 +152,7 @@ CoreProgram
                                 [ CVar "$k"
                                 , CCon 6
                                     [ CCall
-                                        ( CVar "$lam$18" )
+                                        ( CVar "$lam$13" )
                                         [ CVar "e" ]
                                     ]
                                 ]
@@ -186,7 +186,7 @@ CoreProgram
                                 ( CVar "$apply$$df$mapIOError$0" )
                                 [ CVar "$k"
                                 , CCon 8
-                                    [ CCon 26
+                                    [ CCon 28
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -200,7 +200,7 @@ CoreProgram
                                 ( CVar "$apply$$df$mapIOError$0" )
                                 [ CVar "$k"
                                 , CCon 9
-                                    [ CCon 27
+                                    [ CCon 29
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -214,7 +214,7 @@ CoreProgram
                                 ( CVar "$apply$$df$mapIOError$0" )
                                 [ CVar "$k"
                                 , CCon 10
-                                    [ CCon 28
+                                    [ CCon 30
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -325,7 +325,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 8
-                                    [ CCon 29
+                                    [ CCon 31
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -339,7 +339,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 9
-                                    [ CCon 30
+                                    [ CCon 26
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -353,7 +353,7 @@ CoreProgram
                                 ( CVar "$apply$$df$handleErrorIO$4" )
                                 [ CVar "$k"
                                 , CCon 10
-                                    [ CCon 31
+                                    [ CCon 27
                                         [ CVar "cont" ]
                                     ]
                                 ]
@@ -397,14 +397,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7" [ "$args" ]
+        , CFunDef "$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7" )
+                ( CVar "$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5" )
                 [ CVar "$args"
                 , CCon 43 []
                 ]
             )
-        , CFunDef "$cps$$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7"
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5"
             [ "$args"
             , "$k"
             ]
@@ -540,15 +540,15 @@ CoreProgram
                         ( 34
                         ,
                             [ "cont"
-                            , "result"
+                            , "bytes"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "result"
+                            ( CDrop DropFreeUnchecked "bytes"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 32
                                             [ CVar "cont"
-                                            , CVar "result"
+                                            , CVar "bytes"
                                             ]
                                         , CCon 45
                                             [ CVar "$k" ]
@@ -561,15 +561,15 @@ CoreProgram
                         ( 35
                         ,
                             [ "cont"
-                            , "bytes"
+                            , "result"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
+                            ( CDrop DropFreeUnchecked "result"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 32
                                             [ CVar "cont"
-                                            , CVar "bytes"
+                                            , CVar "result"
                                             ]
                                         , CCon 46
                                             [ CVar "$k" ]
@@ -603,15 +603,15 @@ CoreProgram
                         ( 37
                         ,
                             [ "cont"
-                            , "result"
+                            , "bytes"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "result"
+                            ( CDrop DropFreeUnchecked "bytes"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 32
                                             [ CVar "cont"
-                                            , CVar "result"
+                                            , CVar "bytes"
                                             ]
                                         , CCon 48
                                             [ CVar "$k" ]
@@ -624,15 +624,15 @@ CoreProgram
                         ( 38
                         ,
                             [ "cont"
-                            , "bytes"
+                            , "result"
                             ]
                         , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
+                            ( CDrop DropFreeUnchecked "result"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CReuse "$args" 32
                                             [ CVar "cont"
-                                            , CVar "bytes"
+                                            , CVar "result"
                                             ]
                                         , CCon 49
                                             [ CVar "$k" ]
@@ -649,7 +649,7 @@ CoreProgram
             , "$arg0"
             ]
             ( CCall
-                ( CVar "$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7" )
+                ( CVar "$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5" )
                 [ CCon 32
                     [ CVar "$cl"
                     , CVar "$arg0"

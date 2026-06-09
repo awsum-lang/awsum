@@ -151,12 +151,12 @@ L_tarm1:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_handleA(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

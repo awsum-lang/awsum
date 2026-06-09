@@ -293,7 +293,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v__n) {
+define internal ptr @v__lam_13(ptr %v__n) {
   %t0 = call ptr @__alloc(i64 16, i32 1)
   %t1 = inttoptr i64 3 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -344,7 +344,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_18(ptr %t17)
+  %t18 = call ptr @v__lam_13(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18

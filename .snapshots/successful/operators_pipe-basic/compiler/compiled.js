@@ -48,11 +48,11 @@
 
   const v_basic = String(v_n);
 
-  const v__lam_18 = (v_i) => {
+  const v__lam_13 = (v_i) => {
     return String(v_i);
   };
 
-  const v_viaLambda = v__lam_18(v_n);
+  const v_viaLambda = v__lam_13(v_n);
 
   const v_joined = ((s) => {
     switch (s[0]) {

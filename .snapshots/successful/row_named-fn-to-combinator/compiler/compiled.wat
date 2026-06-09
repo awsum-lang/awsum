@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00A")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00B")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_kk $v_de $v__lift_18 $v__df__rowmono_0_bindEither_0)
+  (elem (i32.const 0) $v_runIO $v_kk $v_de $v__lift_13 $v__df__rowmono_0_bindEither_0)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -786,7 +786,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

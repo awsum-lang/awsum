@@ -286,11 +286,11 @@ define internal ptr @v_good() {
 define internal ptr @v_main() {
   %t0 = call ptr @v_bad()
   %t1 = call ptr @v__df_mapLeft_0(ptr %t0)
-  %t2 = call ptr @v__let_22(ptr %t1)
+  %t2 = call ptr @v__let_17(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_18(ptr %v_msg) {
+define internal ptr @v__let_13(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -350,7 +350,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lam_19(ptr %v__a) {
+define internal ptr @v__lam_14(ptr %v__a) {
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 25 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -359,7 +359,7 @@ define internal ptr @v__lam_19(ptr %v__a) {
   ret ptr %t0
 }
 
-define internal ptr @v__let_20(ptr %v_renamedBad, ptr %v_renamedGood) {
+define internal ptr @v__let_15(ptr %v_renamedBad, ptr %v_renamedGood) {
   %t0 = getelementptr ptr, ptr %v_renamedBad, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -447,13 +447,13 @@ case.default.3:
   unreachable
 case.join.4:
   %t53 = phi ptr [ %t44, %case.end.3.6 ], [ %t49, %case.end.4.46 ]
-  %t54 = call ptr @v__let_18(ptr %t53)
+  %t54 = call ptr @v__let_13(ptr %t53)
   call void @__free_recursive(ptr %v_renamedBad)
   call void @__free_recursive(ptr %v_renamedGood)
   ret ptr %t54
 }
 
-define internal ptr @v__lam_21(ptr %v__a) {
+define internal ptr @v__lam_16(ptr %v__a) {
   %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 25 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -462,11 +462,11 @@ define internal ptr @v__lam_21(ptr %v__a) {
   ret ptr %t0
 }
 
-define internal ptr @v__let_22(ptr %v_renamedBad) {
+define internal ptr @v__let_17(ptr %v_renamedBad) {
   call void @__inc_ref(ptr %v_renamedBad)
   %t0 = call ptr @v_good()
   %t1 = call ptr @v__df_mapLeft_1(ptr %t0)
-  %t2 = call ptr @v__let_20(ptr %v_renamedBad, ptr %t1)
+  %t2 = call ptr @v__let_15(ptr %v_renamedBad, ptr %t1)
   call void @__free_recursive(ptr %v_renamedBad)
   ret ptr %t2
 }
@@ -485,7 +485,7 @@ case.arm.3.4:
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
   call void @__inc_ref(ptr %t6)
-  %t10 = call ptr @v__lam_21(ptr %t6)
+  %t10 = call ptr @v__lam_16(ptr %t6)
   %t11 = getelementptr ptr, ptr %t7, i32 1
   store ptr %t10, ptr %t11
   call void @__free_recursive(ptr %t6)
@@ -523,7 +523,7 @@ case.arm.3.4:
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
   call void @__inc_ref(ptr %t6)
-  %t10 = call ptr @v__lam_19(ptr %t6)
+  %t10 = call ptr @v__lam_14(ptr %t6)
   %t11 = getelementptr ptr, ptr %t7, i32 1
   store ptr %t10, ptr %t11
   call void @__free_recursive(ptr %t6)

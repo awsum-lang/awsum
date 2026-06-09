@@ -17,10 +17,10 @@ describe:
   row-case        _c                              count=0
   case-pattern    v                               count=0
 
-$lam$18:
+$lam$13:
   param           n                               count=1
 
-$lift$19:
+$lift$14:
   param           __input                         count=1
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0

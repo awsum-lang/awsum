@@ -283,11 +283,11 @@ define internal ptr @v_main() {
   store ptr %t4, ptr %t17
   %t18 = call ptr @v__df_map_0(ptr %t0)
   %t19 = call ptr @v_show(ptr %t18)
-  %t20 = call ptr @v__let_18(ptr %t19)
+  %t20 = call ptr @v__let_13(ptr %t19)
   ret ptr %t20
 }
 
-define internal ptr @v__let_18(ptr %v_res) {
+define internal ptr @v__let_13(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

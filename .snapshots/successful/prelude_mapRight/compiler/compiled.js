@@ -42,7 +42,7 @@
 
   const v_bad = [3, [24]];
 
-  const v__let_18 = (v_msg) => {
+  const v__let_13 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -58,8 +58,8 @@
     }
   };
 
-  const v__let_20 = (v_mappedOk, v_mappedBad) => {
-    return v__let_18(
+  const v__let_15 = (v_mappedOk, v_mappedBad) => {
+    return v__let_13(
       ((s) => {
         switch (s[0]) {
           case 3: {
@@ -98,11 +98,11 @@
     );
   };
 
-  const v__lam_21 = (v_n) => {
+  const v__lam_16 = (v_n) => {
     return v_n;
   };
 
-  const v__lam_19 = (v_n) => {
+  const v__lam_14 = (v_n) => {
     return v_n;
   };
 
@@ -116,14 +116,14 @@
         }
         case 4: {
           const v_a = __s[1];
-          return [4, v__lam_19(v_a)];
+          return [4, v__lam_14(v_a)];
         }
       }
     }
   };
 
-  const v__let_22 = (v_mappedOk) => {
-    return v__let_20(v_mappedOk, v__df_mapRight_1(v_bad));
+  const v__let_17 = (v_mappedOk) => {
+    return v__let_15(v_mappedOk, v__df_mapRight_1(v_bad));
   };
 
   const v__df_mapRight_0 = (v_x) => {
@@ -136,13 +136,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return [4, v__lam_21(v_a)];
+          return [4, v__lam_16(v_a)];
         }
       }
     }
   };
 
-  const main = v__let_22(v__df_mapRight_0(v_ok));
+  const main = v__let_17(v__df_mapRight_0(v_ok));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

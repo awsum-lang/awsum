@@ -1554,43 +1554,37 @@ findCoercibleLabel src = find (coercible src)
 --   so recursive types like @List a@ get a single self-recursive
 --   helper rather than an infinite expansion.
 synthCoerce :: ConInfoEnv -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
-synthCoerce _ src tgt
-  | typeEq src tgt = pure pure
-synthCoerce _ (TyVar _ _) _ = pure pure
-synthCoerce _ _ (TyVar _ _) = pure pure
--- A value at an empty type ('Never' / '_empty') has no inhabitants, so
--- any coercion of it is vacuous. This is what lets @IO Never Unit@
--- (e.g. @IO.Stdout.print …@) flow into a wider @IO (E1 | E2) Unit@
--- position: the recursion into 'IO''s error type-argument hits
--- @Never → (E1 | E2)@, and there are no error values to re-tag.
-synthCoerce _ (TyEmpty _ _) _ = pure pure
--- Row → row is a runtime no-op: a 'CRow'-tagged value carries a
--- per-label FNV tag, so it is already valid in any row that contains
--- that label. Widening (sub-row → wider row), narrowing that only drops
--- an uninhabited 'Never' / '_empty' alternative, and reordering all need
--- no re-wrap. (A row-polymorphic combinator body whose error type
--- variable was instantiated to a /row/ by 'monomorphizeRows' produces
--- exactly this shape — e.g. @(StringTooLong | InvalidUtf8)@ flowing into
--- @(StringTooLong | InvalidUtf8 | Never)@ inside a specialised @bindIO@.)
-synthCoerce conInfo src@(TyOr {}) tgt@(TyOr {})
-  | not (rowRetagNeeded src tgt) = pure pure
-  | otherwise = do
-      -- A label whose structure changed (a nominal head with a grown
-      -- inner row, e.g. Maybe Bool -> Maybe (Bool | Unit)) takes a
-      -- different FNV tag, so the no-op above is unsound: dispatch on the
-      -- value's current label and re-coerce each into the target row,
-      -- re-tagging where the per-label tag moved.
-      arms <-
-        traverse
-          ( \lbl -> do
-              coerceLbl <- synthCoerce conInfo lbl tgt
-              tag <- recordRowTag lbl
-              binder <- freshLiftName
-              body <- coerceLbl (CVar binder)
-              pure (tag, binder, body)
-          )
-          (flattenRow src)
-      pure (\v -> pure (CRowCase v arms))
+-- The single identity oracle. 'coercionIsIdentity' is True exactly when
+-- the coercion is a no-op on the runtime representation, subsuming every
+-- former fast path: equal types, a 'TyVar' / 'TyEmpty' end (a tyvar is
+-- opaque; 'Never' is uninhabited, so coercing it is vacuous — this is
+-- what lets @IO Never Unit@ flow into a wider @IO (E1 | E2) Unit@), and a
+-- 'CRow'-tagged value widened within its row (per-label FNV tags are
+-- stable across rows, so no re-wrap). The case the former fast paths
+-- missed: a nominal head or function arrow whose every field / side
+-- coercion is itself identity. That last one collapses the IO error-row
+-- widening @IO Never X → IO (e | Never) X@ inserted by @andThenIO@ /
+-- @bindIO@ / @mapIO@ / @handleErrorIO@, which used to emit a full
+-- structural deep-copy '$lift$N' — itself recursive, hence CPS'd, with
+-- defunctionalised continuation wrappers — for what is the identity.
+synthCoerce conInfo src tgt
+  | coercionIsIdentity conInfo src tgt = pure pure
+-- Reached only when at least one concrete label's FNV tag moved (a
+-- nominal head with a grown inner row, e.g. Maybe Bool -> Maybe (Bool |
+-- Unit)): dispatch on the value's current label and re-coerce each into
+-- the target row, re-tagging where the per-label tag changed.
+synthCoerce conInfo src@(TyOr {}) tgt@(TyOr {}) = do
+  arms <-
+    traverse
+      ( \lbl -> do
+          coerceLbl <- synthCoerce conInfo lbl tgt
+          tag <- recordRowTag lbl
+          binder <- freshLiftName
+          body <- coerceLbl (CVar binder)
+          pure (tag, binder, body)
+      )
+      (flattenRow src)
+  pure (\v -> pure (CRowCase v arms))
 synthCoerce conInfo src tgt@(TyOr {}) =
   case findCoercibleLabel src (flattenRow tgt) of
     Just lbl -> do
@@ -1662,37 +1656,101 @@ synthNominalHeadCoerce conInfo tyName src tgt = do
     Nothing -> do
       helper <- freshLiftName
       modify (\s -> s {lsLifters = M.insert key helper (lsLifters s)})
-      let cons = constructorsOfType conInfo tyName
-          srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
-          -- Freshen the generic-head's parameters (and the per-field
-          -- types that mention them) before unifying. Without this,
-          -- an input type whose tyvar happens to share a name with
-          -- one of the type's own parameters — e.g. @Either PE a@,
-          -- where @a@ also names @Either@'s second parameter — would
-          -- cross-bind during 'unify' and corrupt the per-field
-          -- substitution. The "$ctor" suffix is just a marker; the
-          -- exact name doesn't matter as long as it doesn't collide
-          -- with any tyvar in @src@ or @tgt@.
-          freshSubst =
-            mconcat [singletonSubst p (TyVar noSpan (p <> "$ctor")) | p <- srcParams]
-          freshGeneric = applySubst freshSubst (applyTyParams tyName srcParams)
-          srcSubst = fromRight mempty $ unify freshGeneric src
-          tgtSubst = fromRight mempty $ unify freshGeneric tgt
       arms <-
-        forM cons $ \(_cName, ci) -> do
-          let tag = ciTag ci
-              fieldNames = ["__f" <> show i | i <- [(0 :: Int) .. ciArity ci - 1]]
-              fields = map (applySubst freshSubst) (ciFieldTypes ci)
-              srcFields = map (applySubst srcSubst) fields
-              tgtFields = map (applySubst tgtSubst) fields
+        forM (nominalConFieldTypes conInfo tyName src tgt) $ \(tag, fields) -> do
           coercedFields <-
-            forM (zip3 fieldNames srcFields tgtFields) $ \(fn, sTy, tTy) -> do
+            forM fields $ \(fn, sTy, tTy) -> do
               wrap <- synthCoerce conInfo sTy tTy
               wrap (CVar fn)
-          pure (tag, fieldNames, CCon tag coercedFields)
+          pure (tag, map (\(fn, _, _) -> fn) fields, CCon tag coercedFields)
       let body = CCase (CVar "__input") arms
       emitHelper (CFunDef helper ["__input"] body)
       pure (\v -> pure (CCall (CVar helper) [v]))
+
+-- | Per-constructor field-coercion types for a coercion @src → tgt@
+--   between two type-applications that share a nominal head. For each
+--   constructor of the head's owning type, returns its tag and a
+--   @(fieldName, srcFieldType, tgtFieldType)@ triple per field. Shared
+--   by 'synthNominalHeadCoerce' (which builds the destructure-and-rebuild
+--   helper from these) and 'coercionIsIdentity' (which only inspects the
+--   field types) so the two can never disagree on field shape — a
+--   disagreement would be a miscompile, the predicate declaring identity
+--   where the builder would have done real work.
+--
+--   Freshens the generic head's parameters (and the per-field types that
+--   mention them) before unifying. Without this, an input type whose
+--   tyvar happens to share a name with one of the type's own parameters
+--   — e.g. @Either PE a@, where @a@ also names @Either@'s second
+--   parameter — would cross-bind during 'unify' and corrupt the per-field
+--   substitution. The "$ctor" suffix is just a marker; the exact name
+--   doesn't matter as long as it doesn't collide with any tyvar in @src@
+--   or @tgt@.
+nominalConFieldTypes :: ConInfoEnv -> Name -> Type' -> Type' -> [(Int, [(Name, Type', Type')])]
+nominalConFieldTypes conInfo tyName src tgt =
+  let cons = constructorsOfType conInfo tyName
+      srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
+      freshSubst =
+        mconcat [singletonSubst p (TyVar noSpan (p <> "$ctor")) | p <- srcParams]
+      freshGeneric = applySubst freshSubst (applyTyParams tyName srcParams)
+      srcSubst = fromRight mempty $ unify freshGeneric src
+      tgtSubst = fromRight mempty $ unify freshGeneric tgt
+   in [ ( ciTag ci,
+          [ ("__f" <> show i, applySubst srcSubst f, applySubst tgtSubst f)
+          | (i, fTy) <- zip [(0 :: Int) ..] (ciFieldTypes ci),
+            let f = applySubst freshSubst fTy
+          ]
+        )
+      | (_cName, ci) <- cons
+      ]
+
+-- | Is the coercion @src → tgt@ the identity on the runtime
+--   representation? A greatest fixpoint over the type structure: the
+--   nominal-head case assumes identity for the @(src, tgt)@ pair it is
+--   currently deciding (the @seen@ set) before checking its fields, so a
+--   recursive type like @IO@ — whose @IOStdoutPrint@ tail and
+--   @IOGetArgs@-continuation result both recurse to the same coercion —
+--   converges to True instead of looping. The answer drives the single
+--   guard in 'synthCoerce'; every True branch is a genuine no-op:
+--
+--     * 'typeEq' — same type, nothing to do.
+--     * 'TyVar' on either end — a tyvar is opaque; it can carry no
+--       row-tag change.
+--     * 'TyEmpty' source — uninhabited ('Never'), so vacuous.
+--     * 'TyOr' → 'TyOr' with no concrete label re-tagged — per-label FNV
+--       tags are stable across rows, so a 'CRow'-tagged value is already
+--       valid in the wider row ('rowRetagNeeded' is the existing test).
+--     * shared nominal head, all field coercions identity — the rebuild
+--       @CCon tag [id f0, id f1, …]@ reconstructs the same cell.
+--     * function arrow, both sides identity — @\\f a -> f a@ is @f@.
+--
+--   Injection into a row (@src@ not a row, @tgt@ a row) is never the
+--   identity: it adds a 'CRow' tag. Anything else (incompatible shapes,
+--   a row narrowed to a non-row) is conservatively False — 'synthCoerce'
+--   handles or rejects it downstream.
+coercionIsIdentity :: ConInfoEnv -> Type' -> Type' -> Bool
+coercionIsIdentity conInfo = go Set.empty
+  where
+    go :: Set.Set (Text, Text) -> Type' -> Type' -> Bool
+    go seen src tgt
+      | typeEq src tgt = True
+      | TyVar {} <- tgt = True
+      | TyVar {} <- src = True
+      | TyEmpty {} <- src = True
+      | TyOr {} <- src, TyOr {} <- tgt = not (rowRetagNeeded src tgt)
+      | TyOr {} <- tgt = False
+      | TyOr {} <- src = False
+      | TyArrow _ sA sB <- src,
+        TyArrow _ tA tB <- tgt =
+          go seen tA sA && go seen sB tB
+      | Just h1 <- tyConHead src,
+        Just h2 <- tyConHead tgt,
+        h1 == h2 =
+          let key = (canonicalLabel src, canonicalLabel tgt)
+           in Set.member key seen
+                || all
+                  (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
+                  (nominalConFieldTypes conInfo h1 src tgt)
+      | otherwise = False
 
 -- | All constructors of a given user-defined type, sorted by tag.
 --   Used by 'synthNominalHeadCoerce' to walk the constructors of the

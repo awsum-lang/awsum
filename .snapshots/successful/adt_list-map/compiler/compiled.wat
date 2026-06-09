@@ -18,7 +18,7 @@
   (data (i32.const 168) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 203) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00,")
   (table 10 funcref)
-  (elem (i32.const 0) $v_runIO $v_shout $v__let_18 $v__df_map_0 $v__cps__df_map_0 $v__apply__df_map_0 $v__scc_show_showCons $v__cps__scc_show_showCons $v__apply__scc_show_showCons $v_show)
+  (elem (i32.const 0) $v_runIO $v_shout $v__let_13 $v__df_map_0 $v__cps__df_map_0 $v__apply__df_map_0 $v__scc_show_showCons $v__cps__scc_show_showCons $v__apply__scc_show_showCons $v_show)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -670,7 +670,7 @@
     call 23
     call 16)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

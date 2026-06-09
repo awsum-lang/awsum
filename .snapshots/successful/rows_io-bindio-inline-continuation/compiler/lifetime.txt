@@ -16,7 +16,7 @@ handler:
   row-case        _s                              count=0
   row-case        _x                              count=0
 
-$lam$18:
+$lam$13:
   param           _args                           count=0
 
 $io_getargs_cont:
@@ -64,10 +64,10 @@ $apply$$df$handleErrorIO$4:
   case-pattern    $pk_42                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
+$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
+$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
   param           $args                           count=13
   param           $k                              count=1
   case-pattern    $cl                             count=0
@@ -81,9 +81,9 @@ $cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindI
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
-  case-pattern    result                          count=0
-  case-pattern    cont                            count=0
   case-pattern    bytes                           count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
@@ -91,7 +91,7 @@ $cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindI
   case-pattern    cont                            count=0
   case-pattern    bytes                           count=0
 
-$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
+$apply$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$9$5_$df$$rowmono$1$bindIOAfterArgs$1_$df$$rowmono$2$bindIOAfterStdinString$2_$df$$rowmono$3$bindIOAfterStdinBytes$3:
   param           $k                              count=1
   param           $x                              count=1
   case-pattern    $pk_44                          count=0

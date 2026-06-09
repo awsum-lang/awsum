@@ -21,7 +21,7 @@
   (data (i32.const 257) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00b")
   (data (i32.const 278) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00c")
   (table 10 funcref)
-  (elem (i32.const 0) $v_runIO $v_tailList $v_showList $v__cps_showList $v__apply_showList $v_show $v__let_18 $v__let_19 $v__let_20 $v__let_21)
+  (elem (i32.const 0) $v_runIO $v_tailList $v_showList $v__cps_showList $v__apply_showList $v_show $v__let_13 $v__let_14 $v__let_15 $v__let_16)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1078,7 +1078,7 @@
     call 14
     call 23)
 
-  (func $v__let_18 (param i32) (result i32)
+  (func $v__let_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1187,7 +1187,7 @@
       end
     end)
 
-  (func $v__let_19 (param i32 i32 i32) (result i32)
+  (func $v__let_14 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1549,7 +1549,7 @@
       local.get 11
     end)
 
-  (func $v__let_20 (param i32 i32) (result i32)
+  (func $v__let_15 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1622,7 +1622,7 @@
       local.get 6
     end)
 
-  (func $v__let_21 (param i32) (result i32)
+  (func $v__let_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

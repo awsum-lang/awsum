@@ -79,7 +79,7 @@
     }
   };
 
-  const v__lift_19 = (v___input) => {
+  const v__lift_14 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -94,7 +94,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -172,12 +172,12 @@
               })(v_whatsInside([11]));
             }
           }
-        })(v_whatsInside(v__lift_19([12, [0]])));
+        })(v_whatsInside(v__lift_14([12, [0]])));
       }
     }
-  })(v_whatsInside(v__lift_18([12, [1]])));
+  })(v_whatsInside(v__lift_13([12, [1]])));
 
-  const v__let_20 = (v_res) => {
+  const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -193,7 +193,7 @@
     }
   };
 
-  const main = v__let_20(v_summary);
+  const main = v__let_15(v_summary);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

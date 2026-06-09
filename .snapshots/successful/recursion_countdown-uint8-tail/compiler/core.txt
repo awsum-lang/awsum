@@ -56,7 +56,7 @@ CoreProgram
                         ( 1
                         , []
                         , CCall
-                            ( CVar "$lift$18" )
+                            ( CVar "$lift$13" )
                             [ CCall
                                 ( CBuiltIn "concatString" )
                                 [ CVar "acc"
@@ -208,7 +208,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$14" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
@@ -219,7 +219,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -242,7 +242,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$19" [ "res" ]
+        , CFunDef "$let$14" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -44,7 +44,7 @@
 
   const v_opA = [4, 1 | 0];
 
-  const v__lift_20 = (v___input) => {
+  const v__lift_15 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -60,7 +60,7 @@
     }
   };
 
-  const v__let_18 = (v_msg) => {
+  const v__let_13 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -76,8 +76,8 @@
     }
   };
 
-  const v__let_19 = (v_chained) => {
-    return v__let_18(
+  const v__let_14 = (v_chained) => {
+    return v__let_13(
       ((s) => {
         switch (s[0]) {
           case 3: {
@@ -114,13 +114,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_20(v_opB(v_a));
+          return v__lift_15(v_opB(v_a));
         }
       }
     }
   };
 
-  const main = v__let_19(v__df__rowmono_0_bindEither_0(v_opA));
+  const main = v__let_14(v__df__rowmono_0_bindEither_0(v_opA));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

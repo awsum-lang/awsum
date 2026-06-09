@@ -34,11 +34,11 @@
     }
   };
 
-  const v__let_18 = (v_unit) => {
+  const v__let_13 = (v_unit) => {
     return [7, "🔥", [5, [0]]];
   };
 
-  const main = v__let_18([7, "💩", [5, [0]]]);
+  const main = v__let_13([7, "💩", [5, [0]]]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

@@ -101,13 +101,13 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$18" [ "_m" ]
+        , CFunDef "$lam$13" [ "_m" ]
             ( CCon 3
                 [ CRow 365691641
                     ( CCon 26 [] )
                 ]
             )
-        , CFunDef "$lam$19" [ "_n" ]
+        , CFunDef "$lam$14" [ "_n" ]
             ( CCall
                 ( CVar "$df$$rowmono$1$bindEither$1" )
                 [ CVar "ob" ]
@@ -128,7 +128,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lam$19" )
+                            ( CVar "$lam$14" )
                             [ CVar "a" ]
                         )
                     )
@@ -152,7 +152,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lam$18" )
+                            ( CVar "$lam$13" )
                             [ CVar "a" ]
                         )
                     )

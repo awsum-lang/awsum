@@ -81,7 +81,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -99,12 +99,12 @@
   const v_widened = ((s) => {
     switch (s[0]) {
       case 995908654: {
-        const v__lift_19 = s[1];
-        return [1454647603, v__lift_18(v__lift_19)];
+        const v__lift_14 = s[1];
+        return [1454647603, v__lift_13(v__lift_14)];
       }
       case 3289118412: {
-        const v__lift_20 = s[1];
-        return [3289118412, v__lift_20];
+        const v__lift_15 = s[1];
+        return [3289118412, v__lift_15];
       }
     }
   })(v_narrow);

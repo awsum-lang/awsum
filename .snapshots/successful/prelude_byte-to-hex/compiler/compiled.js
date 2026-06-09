@@ -38,23 +38,7 @@
     }
   };
 
-  const v__lift_0 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, v___f0];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
-        }
-      }
-    }
-  };
-
-  const v__lam_17 = (v_b, v_restHex) => {
+  const v__lam_12 = (v_b, v_restHex) => {
     return __concat(v_b.toString(16).padStart(2, "0"), v_restHex);
   };
 
@@ -68,7 +52,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_0(v__lam_17(v__df_bindEither_0_cap1_0, v_a));
+          return v__lam_12(v__df_bindEither_0_cap1_0, v_a);
         }
       }
     }
@@ -122,7 +106,7 @@
     return v__cps_bytesToHexStringNoPrefix(v_bytes, [15]);
   };
 
-  const v__let_18 = (v_bytes) => {
+  const v__let_13 = (v_bytes) => {
     {
       const __s = v_bytesToHexStringNoPrefix(v_bytes);
       switch (__s[0]) {
@@ -138,7 +122,7 @@
     }
   };
 
-  const main = v__let_18(
+  const main = v__let_13(
     [
       14,
       0 & 0xFF,

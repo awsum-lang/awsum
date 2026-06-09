@@ -92,7 +92,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$18"
+        , CFunDef "$lam$13"
             [ "k"
             , "n"
             ]
@@ -102,7 +102,7 @@ CoreProgram
                 , CVar "n"
                 ]
             )
-        , CFunDef "$lift$19" [ "__input" ]
+        , CFunDef "$lift$14" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -146,9 +146,9 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$19" )
+                            ( CVar "$lift$14" )
                             [ CCall
-                                ( CVar "$lam$18" )
+                                ( CVar "$lam$13" )
                                 [ CVar "$df$$rowmono$0$bindEither$0$cap1$0"
                                 , CVar "a"
                                 ]

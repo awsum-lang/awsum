@@ -99,7 +99,7 @@ CoreProgram
                 ( CCall
                     ( CVar "whatsInside" )
                     [ CCall
-                        ( CVar "$lift$18" )
+                        ( CVar "$lift$13" )
                         [ CCon 12
                             [ CCon 1 [] ]
                         ]
@@ -118,7 +118,7 @@ CoreProgram
                         ( CCall
                             ( CVar "whatsInside" )
                             [ CCall
-                                ( CVar "$lift$19" )
+                                ( CVar "$lift$14" )
                                 [ CCon 12
                                     [ CCon 0 [] ]
                                 ]
@@ -215,10 +215,10 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$20" )
+                ( CVar "$let$15" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -238,7 +238,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$19" [ "__input" ]
+        , CFunDef "$lift$14" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -258,7 +258,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$20" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

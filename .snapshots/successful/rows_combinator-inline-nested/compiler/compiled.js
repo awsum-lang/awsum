@@ -76,7 +76,7 @@
     }
   };
 
-  const v__lam_18 = (v_c) => {
+  const v__lam_13 = (v_c) => {
     return v_pureEither(v_c);
   };
 
@@ -90,13 +90,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_18(v_a);
+          return v__lam_13(v_a);
         }
       }
     }
   };
 
-  const v__lam_19 = (v__b) => {
+  const v__lam_14 = (v__b) => {
     return v__df__rowmono_2_bindEither_1(v_oc);
   };
 
@@ -110,13 +110,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_19(v_a);
+          return v__lam_14(v_a);
         }
       }
     }
   };
 
-  const v__lam_20 = (v__a) => {
+  const v__lam_15 = (v__a) => {
     return v__df__rowmono_1_bindEither_2(v_ob);
   };
 
@@ -130,7 +130,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_20(v_a);
+          return v__lam_15(v_a);
         }
       }
     }

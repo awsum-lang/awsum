@@ -68,7 +68,7 @@
     }
   };
 
-  const v__lam_18 = (v__n) => {
+  const v__lam_13 = (v__n) => {
     return [3, [348914022, [25]]];
   };
 
@@ -82,7 +82,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_18(v_a);
+          return v__lam_13(v_a);
         }
       }
     }

@@ -91,7 +91,7 @@
     return [6, v_e];
   };
 
-  const v__lam_18 = (v__args) => {
+  const v__lam_13 = (v__args) => {
     return v_failIO([718021640, [24]]);
   };
 
@@ -157,15 +157,15 @@
           }
           case 8: {
             const v_cont = __s[1];
-            return v__apply__df_handleErrorIO_4(v__k, [8, [25, v_cont]]);
+            return v__apply__df_handleErrorIO_4(v__k, [8, [27, v_cont]]);
           }
           case 9: {
             const v_cont = __s[1];
-            return v__apply__df_handleErrorIO_4(v__k, [9, [26, v_cont]]);
+            return v__apply__df_handleErrorIO_4(v__k, [9, [25, v_cont]]);
           }
           case 10: {
             const v_cont = __s[1];
-            return v__apply__df_handleErrorIO_4(v__k, [10, [27, v_cont]]);
+            return v__apply__df_handleErrorIO_4(v__k, [10, [26, v_cont]]);
           }
         }
       }
@@ -205,7 +205,7 @@
         switch (__s[0]) {
           case 5: {
             const v_a = __s[1];
-            return v__apply__df__rowmono_0_bindIO_0(v__k, v__lam_18(v_a));
+            return v__apply__df__rowmono_0_bindIO_0(v__k, v__lam_13(v_a));
           }
           case 6: {
             const v_e = __s[1];
@@ -241,7 +241,7 @@
     return v__cps__df__rowmono_0_bindIO_0(v_io, [39]);
   };
 
-  const v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
+  const v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
     v__k,
     v__x
   ) => {
@@ -305,7 +305,7 @@
     }
   };
 
-  const v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
+  const v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
     v__args,
     v__k
   ) => {
@@ -368,7 +368,7 @@
                   continue;
                 }
                 case 31: {
-                  return v__apply__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
+                  return v__apply__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
                     v__k,
                     v__io_getargs_cont(v__arg0)
                   );
@@ -387,8 +387,8 @@
           }
           case 34: {
             const v_cont = __s[1];
-            const v_result = __s[2];
-            const __t0 = (v__args[0] = 32, v__args[1] = v_cont, v__args[2] = v_result, v__args);
+            const v_bytes = __s[2];
+            const __t0 = (v__args[0] = 32, v__args[1] = v_cont, v__args[2] = v_bytes, v__args);
             const __t1 = [45, v__k];
             v__args = __t0;
             v__k = __t1;
@@ -396,8 +396,8 @@
           }
           case 35: {
             const v_cont = __s[1];
-            const v_bytes = __s[2];
-            const __t0 = (v__args[0] = 32, v__args[1] = v_cont, v__args[2] = v_bytes, v__args);
+            const v_result = __s[2];
+            const __t0 = (v__args[0] = 32, v__args[1] = v_cont, v__args[2] = v_result, v__args);
             const __t1 = [46, v__k];
             v__args = __t0;
             v__k = __t1;
@@ -435,17 +435,17 @@
     }
   };
 
-  const v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
+  const v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3 = (
     v__args
   ) => {
-    return v__cps__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
+    return v__cps__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
       v__args,
       [43]
     );
   };
 
   const v__apply1 = (v__cl, v__arg0) => {
-    return v__scc__apply1__df__lam_14_5__df__lam_15_6__df__lam_16_7__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
+    return v__scc__apply1__df__lam_10_6__df__lam_11_7__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__df__rowmono_2_bindIOAfterStdinString_2__df__rowmono_3_bindIOAfterStdinBytes_3(
       [32, v__cl, v__arg0]
     );
   };

@@ -17,7 +17,7 @@
   (data (i32.const 174) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00left: ")
   (data (i32.const 200) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00right: ")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_countDown $v_showResult $v__lift_18 $v__let_19)
+  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_countDown $v_showResult $v__lift_13 $v__let_14)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1201,7 +1201,7 @@
     call 20
     call 23)
 
-  (func $v__lift_18 (param i32) (result i32)
+  (func $v__lift_13 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1282,7 +1282,7 @@
       end
     end)
 
-  (func $v__let_19 (param i32) (result i32)
+  (func $v__let_14 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

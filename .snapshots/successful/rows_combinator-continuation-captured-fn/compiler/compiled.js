@@ -68,7 +68,7 @@
     return [3, [25]];
   };
 
-  const v__lift_19 = (v___input) => {
+  const v__lift_14 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -95,7 +95,7 @@
     }
   };
 
-  const v__lam_18 = (v_k, v_n) => {
+  const v__lam_13 = (v_k, v_n) => {
     return v__apply1(v_k, v_n);
   };
 
@@ -112,8 +112,8 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_19(
-            v__lam_18(v__df__rowmono_0_bindEither_0_cap1_0, v_a)
+          return v__lift_14(
+            v__lam_13(v__df__rowmono_0_bindEither_0_cap1_0, v_a)
           );
         }
       }

@@ -512,7 +512,7 @@ L_arm7:
   astore_3
   aload_3
   ldc "answer="
-  invokestatic AwsumMain/v__let_19(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_14(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_join6:
   areturn
 .end method
@@ -720,7 +720,7 @@ L_join10:
 .end method
 
 
-.method static v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -782,7 +782,7 @@ L_join14:
 .end method
 
 
-.method static v__let_19(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_14(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 5
   aload_0
@@ -834,7 +834,7 @@ L_arm17:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
 L_join16:
   areturn
 .end method

@@ -460,7 +460,7 @@
     ldloc.s 6
     ldloc.s 4
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__lift_18(object)
+    call object AwsumMain::v__lift_13(object)
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -554,12 +554,12 @@
     box [System.Runtime]System.Int32
     call object AwsumMain::v_countDown(object)
     call object AwsumMain::v_showResult(object)
-    call object AwsumMain::v__let_19(object)
+    call object AwsumMain::v__let_14(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lift_18(object) cil managed
+  .method private hidebysig static object v__lift_13(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -627,7 +627,7 @@
   }
 
 
-  .method private hidebysig static object v__let_19(object) cil managed
+  .method private hidebysig static object v__let_14(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

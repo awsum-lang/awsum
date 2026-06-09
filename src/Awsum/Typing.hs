@@ -1637,7 +1637,8 @@ solveRowVars pinAllFree rigid tailVars = go
               -- never row-absorbed (see the haddock): the guard fails and the
               -- variable is left free for the generic body / plain-var pin.
               [v]
-                | not (null targetConcrete), not (S.member v tailVars) ->
+                | not (null targetConcrete),
+                  not (S.member v tailVars) ->
                     singletonSubst v (rowFromLabels targetConcrete)
               -- Two or more free variables: their split is ambiguous, so the
               -- conservative (synth) phase defers — the operand pins one, a

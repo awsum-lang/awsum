@@ -5,8 +5,8 @@ runIO:
   case-pattern    next                            count=0
 
 widened:
-  row-case        $lift$19                        count=1
-  row-case        $lift$20                        count=1
+  row-case        $lift$14                        count=1
+  row-case        $lift$15                        count=1
 
 describe:
   param           x                               count=1
@@ -15,7 +15,7 @@ describe:
   row-case        b                               count=0
   row-case        _a                              count=0
 
-$lift$18:
+$lift$13:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 

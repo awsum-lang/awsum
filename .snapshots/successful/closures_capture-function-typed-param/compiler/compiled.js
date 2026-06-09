@@ -34,7 +34,7 @@
     }
   };
 
-  const v__lam_19 = (v_m) => {
+  const v__lam_14 = (v_m) => {
     return v_m;
   };
 
@@ -43,18 +43,18 @@
       const __s = v__cl;
       switch (__s[0]) {
         case 8: {
-          return v__lam_19(v__arg0);
+          return v__lam_14(v__arg0);
         }
       }
     }
   };
 
-  const v__lam_18 = (v_k, v_n) => {
+  const v__lam_13 = (v_k, v_n) => {
     return v__apply1(v_k, v_n);
   };
 
   const v__df_applyOnce_0 = (v_x, v__df_applyOnce_0_cap0_0) => {
-    return v__lam_18(v__df_applyOnce_0_cap0_0, v_x);
+    return v__lam_13(v__df_applyOnce_0_cap0_0, v_x);
   };
 
   const v__df_poly_1 = () => {

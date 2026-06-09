@@ -10,17 +10,8 @@ runTest:
   case-pattern    __w0                            count=0
   case-pattern    __w0                            count=0
 
-$lift$0:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$scc$$df$andThenEither$0_$lam$18_build:
-  param           $args                           count=1
-
-$cps$$scc$$df$andThenEither$0_$lam$18_build:
+$scc$$df$andThenEither$0_$lam$13_build:
   param           $args                           count=4
-  param           $k                              count=2
   case-pattern    x                               count=0
   case-pattern    $df$andThenEither$0$cap0$0      count=0
   case-pattern    e                               count=0
@@ -31,11 +22,6 @@ $cps$$scc$$df$andThenEither$0_$lam$18_build:
   case-pattern    acc                             count=0
   case-pattern    __w0                            count=0
   case-pattern    m                               count=0
-
-$apply$$scc$$df$andThenEither$0_$lam$18_build:
-  param           $k                              count=1
-  param           $x                              count=1
-  case-pattern    $pk_12                          count=0
 
 build:
   param           n                               count=1

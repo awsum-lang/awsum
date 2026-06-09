@@ -49,7 +49,7 @@
     }
   };
 
-  const v__let_20 = (v_res) => {
+  const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -65,13 +65,13 @@
     }
   };
 
-  const v__lam_18 = (v_x) => {
+  const v__lam_13 = (v_x) => {
     return v_x;
   };
 
-  const v__df__let_19_0 = (v_b, v_n, v_s) => {
+  const v__df__let_14_0 = (v_b, v_n, v_s) => {
     {
-      const __s = __concat(String(v__lam_18(v_n)), "/");
+      const __s = __concat(String(v__lam_13(v_n)), "/");
       switch (__s[0]) {
         case 3: {
           const v__do_e_2 = __s[1];
@@ -80,7 +80,7 @@
         case 4: {
           const v_s0 = __s[1];
           {
-            const __s = __concat(v_s0, v__lam_18(v_s));
+            const __s = __concat(v_s0, v__lam_13(v_s));
             switch (__s[0]) {
               case 3: {
                 const v__do_e_1 = __s[1];
@@ -97,7 +97,7 @@
                     }
                     case 4: {
                       const v_s2 = __s[1];
-                      return __concat(v_s2, v_showTri(v__lam_18(v_b)));
+                      return __concat(v_s2, v_showTri(v__lam_13(v_b)));
                     }
                   }
                 }
@@ -110,10 +110,10 @@
   };
 
   const v_threeTypes = (v_n, v_s, v_b) => {
-    return v__df__let_19_0(v_b, v_n, v_s);
+    return v__df__let_14_0(v_b, v_n, v_s);
   };
 
-  const main = v__let_20(v_threeTypes(42 | 0, "hello", [24]));
+  const main = v__let_15(v_threeTypes(42 | 0, "hello", [24]));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

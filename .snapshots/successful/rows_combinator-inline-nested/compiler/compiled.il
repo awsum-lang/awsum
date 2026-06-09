@@ -290,7 +290,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_18(object) cil managed
+  .method private hidebysig static object v__lam_13(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -299,7 +299,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_19(object) cil managed
+  .method private hidebysig static object v__lam_14(object) cil managed
   {
     .maxstack 1
     call object AwsumMain::v_oc()
@@ -308,7 +308,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_20(object) cil managed
+  .method private hidebysig static object v__lam_15(object) cil managed
   {
     .maxstack 1
     call object AwsumMain::v_ob()
@@ -368,7 +368,7 @@
     ldelem.ref
     stloc.1
     ldloc.1
-    call object AwsumMain::v__lam_20(object)
+    call object AwsumMain::v__lam_15(object)
   IL_c0:
     ret
   }
@@ -425,7 +425,7 @@
     ldelem.ref
     stloc.1
     ldloc.1
-    call object AwsumMain::v__lam_18(object)
+    call object AwsumMain::v__lam_13(object)
   IL_c0:
     ret
   }
@@ -482,7 +482,7 @@
     ldelem.ref
     stloc.1
     ldloc.1
-    call object AwsumMain::v__lam_19(object)
+    call object AwsumMain::v__lam_14(object)
   IL_c0:
     ret
   }

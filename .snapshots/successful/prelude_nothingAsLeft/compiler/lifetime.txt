@@ -22,12 +22,12 @@ show:
   case-pattern    __p0                            count=0
   case-pattern    s                               count=0
 
-$let$18:
+$let$13:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$let$19:
+$let$14:
   param           fromJust                        count=1
   param           fromNothing                     count=1
   param           chained                         count=1
@@ -44,12 +44,12 @@ $let$19:
   case-pattern    $do_e_1                         count=0
   case-pattern    s2                              count=0
 
-$let$20:
+$let$15:
   param           fromNothing                     count=1
   param           fromJust                        count=1
   case-pattern    $do_e_0                         count=0
   case-pattern    h                               count=0
 
-$let$21:
+$let$16:
   param           fromNothing                     count=1
 

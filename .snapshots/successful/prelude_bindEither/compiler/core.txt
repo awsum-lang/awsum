@@ -48,13 +48,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$19" )
+                ( CVar "$let$14" )
                 [ CCall
                     ( CVar "$df$$rowmono$0$bindEither$0" )
                     [ CVar "opA" ]
                 ]
             )
-        , CFunDef "$let$18" [ "msg" ]
+        , CFunDef "$let$13" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,9 +81,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$19" [ "chained" ]
+        , CFunDef "$let$14" [ "chained" ]
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$13" )
                 [ CCase
                     ( CVar "chained" )
                     [
@@ -127,7 +127,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$20" [ "__input" ]
+        , CFunDef "$lift$15" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -168,7 +168,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$20" )
+                            ( CVar "$lift$15" )
                             [ CCall
                                 ( CVar "opB" )
                                 [ CVar "a" ]

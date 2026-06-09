@@ -335,21 +335,21 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v_c) {
+define internal ptr @v__lam_13(ptr %v_c) {
   call void @__inc_ref(ptr %v_c)
   %t0 = call ptr @v_pureEither(ptr %v_c)
   call void @__free_recursive(ptr %v_c)
   ret ptr %t0
 }
 
-define internal ptr @v__lam_19(ptr %v__b) {
+define internal ptr @v__lam_14(ptr %v__b) {
   %t0 = call ptr @v_oc()
   %t1 = call ptr @v__df__rowmono_2_bindEither_1(ptr %t0)
   call void @__free_recursive(ptr %v__b)
   ret ptr %t1
 }
 
-define internal ptr @v__lam_20(ptr %v__a) {
+define internal ptr @v__lam_15(ptr %v__a) {
   %t0 = call ptr @v_ob()
   %t1 = call ptr @v__df__rowmono_1_bindEither_2(ptr %t0)
   call void @__free_recursive(ptr %v__a)
@@ -386,7 +386,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_20(ptr %t17)
+  %t18 = call ptr @v__lam_15(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18
@@ -424,7 +424,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_18(ptr %t17)
+  %t18 = call ptr @v__lam_13(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18
@@ -462,7 +462,7 @@ case.arm.4.15:
   %t17 = load ptr, ptr %t16
   call void @__inc_ref(ptr %t17)
   call void @__inc_ref(ptr %t17)
-  %t18 = call ptr @v__lam_19(ptr %t17)
+  %t18 = call ptr @v__lam_14(ptr %t17)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t18

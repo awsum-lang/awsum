@@ -13,10 +13,10 @@ runIO:
 handler:
   param           _b                              count=0
 
-$lam$18:
+$lam$13:
   param           _a                              count=0
 
-$let$19:
+$let$14:
   param           renamed                         count=1
 
 $df$mapIOError$0:
@@ -59,10 +59,10 @@ $apply$$df$handleErrorIO$4:
   case-pattern    $pk_42                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7:
+$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$lam$15$6_$df$$lam$16$7:
+$cps$$scc$$apply1_$df$$lam$10$6_$df$$lam$11$7_$df$$lam$6$1_$df$$lam$7$2_$df$$lam$8$3_$df$$lam$9$5:
   param           $args                           count=13
   param           $k                              count=0
   case-pattern    $cl                             count=0
@@ -76,8 +76,6 @@ $cps$$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$l
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
-  case-pattern    result                          count=0
-  case-pattern    cont                            count=0
   case-pattern    bytes                           count=0
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
@@ -85,6 +83,8 @@ $cps$$scc$$apply1_$df$$lam$11$1_$df$$lam$12$2_$df$$lam$13$3_$df$$lam$14$5_$df$$l
   case-pattern    result                          count=0
   case-pattern    cont                            count=0
   case-pattern    bytes                           count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
 
 $apply1:
   param           $cl                             count=1

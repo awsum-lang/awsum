@@ -85,7 +85,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -107,7 +107,7 @@
         const __s = __eqUInt8(v_n, 0 & 0xFF);
         switch (__s[0]) {
           case 1: {
-            return v__lift_18(__concat(v_acc, String(v_n)));
+            return v__lift_13(__concat(v_acc, String(v_n)));
           }
           case 2: {
             {
@@ -157,7 +157,7 @@
     }
   };
 
-  const v__let_19 = (v_res) => {
+  const v__let_14 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -173,7 +173,7 @@
     }
   };
 
-  const main = v__let_19(v_showResult(v_countDown(255 & 0xFF, "")));
+  const main = v__let_14(v_showResult(v_countDown(255 & 0xFF, "")));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

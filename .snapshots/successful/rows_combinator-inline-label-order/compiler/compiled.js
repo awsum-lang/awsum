@@ -64,7 +64,7 @@
     }
   };
 
-  const v__lam_18 = (v_n) => {
+  const v__lam_13 = (v_n) => {
     return v_pureEither(v_n);
   };
 
@@ -78,7 +78,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_18(v_a);
+          return v__lam_13(v_a);
         }
       }
     }

@@ -29,7 +29,7 @@ main:
   case-pattern    _e                              count=0
   case-pattern    s                               count=1
 
-$lift$18:
+$lift$13:
   param           __input                         count=1
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0

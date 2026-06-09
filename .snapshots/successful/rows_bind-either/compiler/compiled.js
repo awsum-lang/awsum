@@ -88,7 +88,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -114,13 +114,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_18(v_opB(v_a));
+          return v__lift_13(v_opB(v_a));
         }
       }
     }
   };
 
-  const v__let_19 = (v_res) => {
+  const v__let_14 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -136,7 +136,7 @@
     }
   };
 
-  const main = v__let_19(v_describe(v_run(5 | 0)));
+  const main = v__let_14(v_describe(v_run(5 | 0)));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

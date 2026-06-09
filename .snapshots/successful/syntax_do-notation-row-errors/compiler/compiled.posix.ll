@@ -520,11 +520,11 @@ case.default.3:
 define internal ptr @v_main() {
   %t0 = call ptr @v_f()
   %t1 = call ptr @v_describe(ptr %t0)
-  %t2 = call ptr @v__let_18(ptr %t1)
+  %t2 = call ptr @v__let_13(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_18(ptr %v_res) {
+define internal ptr @v__let_13(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

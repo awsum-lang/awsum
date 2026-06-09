@@ -575,11 +575,11 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v_tailList(ptr %t0)
-  %t4 = call ptr @v__let_21(ptr %t3)
+  %t4 = call ptr @v__let_16(ptr %t3)
   ret ptr %t4
 }
 
-define internal ptr @v__let_18(ptr %v_msg) {
+define internal ptr @v__let_13(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -639,7 +639,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_19(ptr %v_noElems, ptr %v_single, ptr %v_multi) {
+define internal ptr @v__let_14(ptr %v_noElems, ptr %v_single, ptr %v_multi) {
   call void @__inc_ref(ptr %v_noElems)
   %t0 = call ptr @v_show(ptr %v_noElems)
   %t1 = getelementptr ptr, ptr %t0, i32 0
@@ -848,14 +848,14 @@ case.default.4:
 case.join.5:
   %t114 = phi ptr [ %t10, %case.end.3.7 ], [ %t113, %case.end.4.15 ]
   call void @__free_recursive(ptr %t0)
-  %t115 = call ptr @v__let_18(ptr %t114)
+  %t115 = call ptr @v__let_13(ptr %t114)
   call void @__free_recursive(ptr %v_noElems)
   call void @__free_recursive(ptr %v_single)
   call void @__free_recursive(ptr %v_multi)
   ret ptr %t115
 }
 
-define internal ptr @v__let_20(ptr %v_noElems, ptr %v_single) {
+define internal ptr @v__let_15(ptr %v_noElems, ptr %v_single) {
   call void @__inc_ref(ptr %v_noElems)
   call void @__inc_ref(ptr %v_single)
   %t0 = call ptr @__alloc(i64 24, i32 2)
@@ -887,13 +887,13 @@ define internal ptr @v__let_20(ptr %v_noElems, ptr %v_single) {
   %t17 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t17
   %t18 = call ptr @v_tailList(ptr %t0)
-  %t19 = call ptr @v__let_19(ptr %v_noElems, ptr %v_single, ptr %t18)
+  %t19 = call ptr @v__let_14(ptr %v_noElems, ptr %v_single, ptr %t18)
   call void @__free_recursive(ptr %v_noElems)
   call void @__free_recursive(ptr %v_single)
   ret ptr %t19
 }
 
-define internal ptr @v__let_21(ptr %v_noElems) {
+define internal ptr @v__let_16(ptr %v_noElems) {
   call void @__inc_ref(ptr %v_noElems)
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 14 to ptr
@@ -908,7 +908,7 @@ define internal ptr @v__let_21(ptr %v_noElems) {
   %t7 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t7
   %t8 = call ptr @v_tailList(ptr %t0)
-  %t9 = call ptr @v__let_20(ptr %v_noElems, ptr %t8)
+  %t9 = call ptr @v__let_15(ptr %v_noElems, ptr %t8)
   call void @__free_recursive(ptr %v_noElems)
   ret ptr %t9
 }

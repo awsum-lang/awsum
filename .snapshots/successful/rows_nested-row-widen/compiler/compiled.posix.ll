@@ -224,7 +224,7 @@ case.arm.995908654.6:
   %t12 = getelementptr ptr, ptr %t10, i32 0
   store ptr %t11, ptr %t12
   call void @__inc_ref(ptr %t9)
-  %t13 = call ptr @v__lift_18(ptr %t9)
+  %t13 = call ptr @v__lift_13(ptr %t9)
   %t14 = getelementptr ptr, ptr %t10, i32 1
   store ptr %t13, ptr %t14
   br label %case.end.995908654.7
@@ -338,7 +338,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lift_18(ptr %v___input) {
+define internal ptr @v__lift_13(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

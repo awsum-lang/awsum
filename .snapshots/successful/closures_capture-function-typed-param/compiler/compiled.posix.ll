@@ -224,7 +224,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_18(ptr %v_k, ptr %v_n) {
+define internal ptr @v__lam_13(ptr %v_k, ptr %v_n) {
   call void @__inc_ref(ptr %v_k)
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v__apply1(ptr %v_k, ptr %v_n)
@@ -233,14 +233,14 @@ define internal ptr @v__lam_18(ptr %v_k, ptr %v_n) {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_19(ptr %v_m) {
+define internal ptr @v__lam_14(ptr %v_m) {
   ret ptr %v_m
 }
 
 define internal ptr @v__df_applyOnce_0(ptr %v_x, ptr %v__df_applyOnce_0_cap0_0) {
   call void @__inc_ref(ptr %v__df_applyOnce_0_cap0_0)
   call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_18(ptr %v__df_applyOnce_0_cap0_0, ptr %v_x)
+  %t0 = call ptr @v__lam_13(ptr %v__df_applyOnce_0_cap0_0, ptr %v_x)
   call void @__free_recursive(ptr %v_x)
   call void @__free_recursive(ptr %v__df_applyOnce_0_cap0_0)
   ret ptr %t0
@@ -264,7 +264,7 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
   switch i64 %t2, label %case.default.3 [ i64 8, label %case.arm.8.4 ]
 case.arm.8.4:
   call void @__inc_ref(ptr %v__arg0)
-  %t5 = call ptr @v__lam_19(ptr %v__arg0)
+  %t5 = call ptr @v__lam_14(ptr %v__arg0)
   call void @__free_recursive(ptr %v__cl)
   call void @__free_recursive(ptr %v__arg0)
   ret ptr %t5

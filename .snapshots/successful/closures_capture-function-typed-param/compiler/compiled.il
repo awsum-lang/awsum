@@ -120,7 +120,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_18(object,object) cil managed
+  .method private hidebysig static object v__lam_13(object,object) cil managed
   {
     .maxstack 2
     ldarg.0
@@ -130,7 +130,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_19(object) cil managed
+  .method private hidebysig static object v__lam_14(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -143,7 +143,7 @@
     .maxstack 2
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__lam_18(object, object)
+    call object AwsumMain::v__lam_13(object, object)
     ret
   }
 
@@ -180,7 +180,7 @@
     unbox.any [System.Runtime]System.Int32
     pop
     ldarg.1
-    call object AwsumMain::v__lam_19(object)
+    call object AwsumMain::v__lam_14(object)
   IL_c0:
     ret
   }

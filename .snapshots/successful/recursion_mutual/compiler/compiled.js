@@ -38,7 +38,7 @@
     }
   };
 
-  const v__let_18 = (v_res) => {
+  const v__let_13 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -221,7 +221,7 @@
     return v__scc_handleA_handleB([28, v_step]);
   };
 
-  const main = v__let_18(v_handleA([24]));
+  const main = v__let_13(v_handleA([24]));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

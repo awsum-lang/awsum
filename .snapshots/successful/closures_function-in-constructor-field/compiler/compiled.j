@@ -484,7 +484,7 @@ L_arm9:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
 L_join8:
 L_join6:
 L_join4:
@@ -584,7 +584,7 @@ L_join10:
 .end method
 
 
-.method static v__lift_18(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0

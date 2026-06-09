@@ -68,7 +68,7 @@
     return [3, [25]];
   };
 
-  const v__lift_19 = (v___input) => {
+  const v__lift_14 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -84,7 +84,7 @@
     }
   };
 
-  const v__lift_18 = (v___input) => {
+  const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -110,14 +110,14 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_19(v_cont(v_a));
+          return v__lift_14(v_cont(v_a));
         }
       }
     }
   };
 
   const v__df_partialB_0 = () => {
-    return v__df__rowmono_0_bindEither_1(v__lift_18(v_oa));
+    return v__df__rowmono_0_bindEither_1(v__lift_13(v_oa));
   };
 
   const main = [7, v_describe(v__df_partialB_0()), [5, [0]]];

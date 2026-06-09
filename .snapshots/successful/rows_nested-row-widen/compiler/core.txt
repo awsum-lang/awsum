@@ -49,18 +49,18 @@ CoreProgram
                 ( CVar "narrow" )
                 [
                     ( 995908654
-                    , "$lift$19"
+                    , "$lift$14"
                     , CRow 1454647603
                         ( CCall
-                            ( CVar "$lift$18" )
-                            [ CVar "$lift$19" ]
+                            ( CVar "$lift$13" )
+                            [ CVar "$lift$14" ]
                         )
                     )
                 ,
                     ( 3289118412
-                    , "$lift$20"
+                    , "$lift$15"
                     , CRow 3289118412
-                        ( CVar "$lift$20" )
+                        ( CVar "$lift$15" )
                     )
                 ]
             )
@@ -126,7 +126,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$18" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [

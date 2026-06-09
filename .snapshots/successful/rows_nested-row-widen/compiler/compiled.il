@@ -144,7 +144,7 @@
     ldloc.2
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lift_18(object)
+    call object AwsumMain::v__lift_13(object)
     stelem.ref
     ldloc.2
     br IL_c0
@@ -296,7 +296,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_18(object) cil managed
+  .method private hidebysig static object v__lift_13(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)

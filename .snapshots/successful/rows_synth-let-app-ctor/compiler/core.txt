@@ -51,12 +51,12 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$13" )
                 [ CCon 12
                     [ CString "world" ]
                 ]
             )
-        , CFunDef "$let$18" [ "m" ]
+        , CFunDef "$let$13" [ "m" ]
             ( CCase
                 ( CVar "m" )
                 [

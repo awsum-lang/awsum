@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00h-E1")
   (table 9 funcref)
-  (elem (i32.const 0) $v_failIO $v_runIO $v_h $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3 $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3 $v__apply1)
+  (elem (i32.const 0) $v_failIO $v_runIO $v_h $v__df_handleErrorIO_0 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__scc__apply1__df__lam_10_2__df__lam_11_3__df__lam_9_1 $v__cps__scc__apply1__df__lam_10_2__df__lam_11_3__df__lam_9_1 $v__apply1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1677,7 +1677,7 @@
                 call 15
                 local.set 3
                 local.get 3
-                i32.const 25
+                i32.const 27
                 i32.store
                 local.get 3
                 local.get 5
@@ -1727,7 +1727,7 @@
                   call 15
                   local.set 3
                   local.get 3
-                  i32.const 26
+                  i32.const 25
                   i32.store
                   local.get 3
                   local.get 5
@@ -1772,7 +1772,7 @@
                   call 15
                   local.set 3
                   local.get 3
-                  i32.const 27
+                  i32.const 26
                   i32.store
                   local.get 3
                   local.get 5
@@ -1875,7 +1875,7 @@
       end
     end)
 
-  (func $v__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3 (param i32) (result i32)
+  (func $v__scc__apply1__df__lam_10_2__df__lam_11_3__df__lam_9_1 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1899,7 +1899,7 @@
       local.get 2
     end)
 
-  (func $v__cps__scc__apply1__df__lam_14_1__df__lam_15_2__df__lam_16_3 (param i32 i32) (result i32)
+  (func $v__cps__scc__apply1__df__lam_10_2__df__lam_11_3__df__lam_9_1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

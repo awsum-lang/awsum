@@ -46,7 +46,7 @@
     }
   };
 
-  const v__let_18 = (v_m) => {
+  const v__let_13 = (v_m) => {
     {
       const __s = v_m;
       switch (__s[0]) {
@@ -61,7 +61,7 @@
     }
   };
 
-  const main = v__let_18([12, "world"]);
+  const main = v__let_13([12, "world"]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

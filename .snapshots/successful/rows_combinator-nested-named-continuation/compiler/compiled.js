@@ -72,7 +72,7 @@
     }
   };
 
-  const v__lift_19 = (v___input) => {
+  const v__lift_14 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -98,13 +98,13 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lift_19(v_inner(v_a));
+          return v__lift_14(v_inner(v_a));
         }
       }
     }
   };
 
-  const v__lam_18 = (v_n) => {
+  const v__lam_13 = (v_n) => {
     return v__df__rowmono_1_bindEither_1(v_pureEither(v_n));
   };
 
@@ -118,7 +118,7 @@
         }
         case 4: {
           const v_a = __s[1];
-          return v__lam_18(v_a);
+          return v__lam_13(v_a);
         }
       }
     }

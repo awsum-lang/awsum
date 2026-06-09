@@ -23,18 +23,3 @@ $apply$sumRow:
   case-pattern    _e                              count=0
   case-pattern    r                               count=0
 
-$lift$18:
-  param           __input                         count=1
-
-$cps$$lift$18:
-  param           __input                         count=2
-  param           $k                              count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f1                            count=0
-
-$apply$$lift$18:
-  param           $k                              count=2
-  param           $x                              count=1
-  case-pattern    $pk_18                          count=0
-  case-pattern    __f0                            count=0
-

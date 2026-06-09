@@ -54,44 +54,7 @@
 
   const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-  const v__lift_0 = (v___input) => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, v___f0];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
-        }
-      }
-    }
-  };
-
-  const v__apply__scc__df_andThenEither_0__lam_18_build = (v__k, v__x) => {
-    while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 11: {
-            return v__x;
-          }
-          case 12: {
-            const v__pk_12 = __s[1];
-            const __t0 = v__pk_12;
-            const __t1 = v__lift_0(v__x);
-            v__k = __t0;
-            v__x = __t1;
-            continue;
-          }
-        }
-      }
-    }
-  };
-
-  const v__cps__scc__df_andThenEither_0__lam_18_build = (v__args, v__k) => {
+  const v__scc__df_andThenEither_0__lam_13_build = (v__args) => {
     while (true) {
       {
         const __s = v__args;
@@ -104,17 +67,12 @@
               switch (__s[0]) {
                 case 3: {
                   const v_e = __s[1];
-                  return v__apply__scc__df_andThenEither_0__lam_18_build(
-                    v__k,
-                    [3, v_e]
-                  );
+                  return [3, v_e];
                 }
                 case 4: {
                   const v_a = __s[1];
                   const __t0 = (v__args[0] = 9, v__args[1] = v__df_andThenEither_0_cap0_0, v__args[2] = v_a, v__args);
-                  const __t1 = [12, v__k];
                   v__args = __t0;
-                  v__k = __t1;
                   continue;
                 }
               }
@@ -124,9 +82,7 @@
             const v_m = __s[1];
             const v_doubled = __s[2];
             const __t0 = (v__args[0] = 10, v__args[1] = v_m, v__args[2] = v_doubled, v__args);
-            const __t1 = v__k;
             v__args = __t0;
-            v__k = __t1;
             continue;
           }
           case 10: {
@@ -137,10 +93,7 @@
               switch (__s[0]) {
                 case 3: {
                   const v___w0 = __s[1];
-                  return v__apply__scc__df_andThenEither_0__lam_18_build(
-                    v__k,
-                    [4, v_acc]
-                  );
+                  return [4, v_acc];
                 }
                 case 4: {
                   const v_m = __s[1];
@@ -148,9 +101,7 @@
                     v_acc,
                     v_acc
                   ), v__args[2] = v_m, v__args);
-                  const __t1 = v__k;
                   v__args = __t0;
-                  v__k = __t1;
                   continue;
                 }
               }
@@ -161,12 +112,8 @@
     }
   };
 
-  const v__scc__df_andThenEither_0__lam_18_build = (v__args) => {
-    return v__cps__scc__df_andThenEither_0__lam_18_build(v__args, [11]);
-  };
-
   const v_build = (v_n, v_acc) => {
-    return v__scc__df_andThenEither_0__lam_18_build([10, v_n, v_acc]);
+    return v__scc__df_andThenEither_0__lam_13_build([10, v_n, v_acc]);
   };
 
   const v_runTest = ((s) => {
