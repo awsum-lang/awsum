@@ -39,6 +39,7 @@ import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), texprType, tparamType)
 import Awsum.Tco (tcoProgram)
 import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, markEmptyTypesInDecl, splitArrow, typecheckProgram)
+import Awsum.UniquifyLocals (uniquifyLocals)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -548,7 +549,16 @@ elaborateLowerProgram progType progIn = do
   let callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
       reachable = reachableCore "main" callGraph <> reachableCore "runIO" callGraph
       live = filter (\d -> Set.member (declName' d) reachable) allDecls
-      core = CoreProgram live
+      -- Uniquify local binders that collide with a top-level name. A
+      -- prelude pattern variable (e.g. @cont@ in @bindIO@'s @IOGetArgs@
+      -- arm) can share a name with a user top-level — legal cross-module
+      -- shadowing — but every pass below that resolves a bare 'CVar'
+      -- against the global declaration table ('Awsum.Defunctionalize',
+      -- 'Awsum.LowerClosures', 'Awsum.Cps') would mistake the local for
+      -- the top-level, drop its captures, and emit a dangling closure.
+      -- Renaming the collisions away restores the invariant those passes
+      -- assume before the first one runs.
+      core = uniquifyLocals (CoreProgram live)
   -- 4) Defunctionalise: specialise each higher-order-function call
   --    site for the closure statically flowing in. After this pass
   --    no first-class function value remains in any reachable

@@ -90,6 +90,7 @@ library
       Awsum.Tco
       Awsum.TExpr
       Awsum.Typing
+      Awsum.UniquifyLocals
       Awsum.Version
       Common.File
   other-modules:
