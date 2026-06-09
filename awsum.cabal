@@ -166,6 +166,7 @@ executable awsum-bench
   build-depends:
       awsum
     , base >=4.7 && <5
+    , directory
     , filepath
     , optparse-applicative
     , process
