@@ -1,0 +1,33 @@
+{- Regression: cross-module shadowing. Top-level functions named `x` and
+   `a` reuse names the prelude binds locally inside `eitherToIO`
+   (`eitherToIO x = case x of Left e -> failIO e; Right a -> pureIO a`).
+   This is legal — within-module shadowing is an error, but the prelude
+   and the user program are separate modules.
+
+   Every Core pass that resolves a bare reference against the global
+   declaration table must treat those prelude locals as locals, not as
+   the same-named top-level functions. Before the fix, defunctionalisation
+   read the `a` in `pureIO a` as the top-level function `a` (it is in the
+   arity table), specialised `pureIO` as if its argument were that
+   function, and dropped the actual `Right` payload — every backend
+   miscompiled. The uniquify-locals pass renames the colliding prelude
+   binders first, so the payload survives.
+
+   This `pureIO`-argument collision is a different defunctionalisation
+   path from the `IOGetArgs`-continuation case in
+   `closures_local-name-shadows-toplevel`; both must work. `x 7 = Right 6`,
+   `a 6 = Right 7`, so this prints `7`. -}
+
+import IO.Stdout
+
+x : Int32 -> Either UnderflowError Int32
+x n = predInt32 n
+
+a : Int32 -> Either OverflowError Int32
+a n = succInt32 n
+
+main : IO Never Unit
+main = eitherToIO (x 7)
+  |> andThenIO (\v -> eitherToIO (a v))
+  |> andThenIO (\w -> IO.Stdout.print (showInt32 w))
+  |> handleErrorIO (\_e -> IO.Stdout.print "err")
