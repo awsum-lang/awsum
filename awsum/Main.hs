@@ -416,7 +416,12 @@ runChild errLabel cmd args = do
     ExitSuccess -> putTextLn (decodeUtf8 outBs)
     ExitFailure _ -> die $ toString (errLabel <> ":\n" <> decodeUtf8 errBs)
 
--- | .NET runtime configuration template for CLR target.
+-- | .NET runtime configuration template for CLR target. Enables Server GC
+--   (parallel per-core heaps): awsum programs allocate a heap object per Core
+--   cell, so the workstation GC's single heap serialises that allocation
+--   churn. Output is identical either way; only GC throughput changes. Keep in
+--   sync with the copies in test/Awsum/RunBackend.hs (tests) and
+--   bench/Bench.hs (benchmarks).
 runtimeConfigJson :: Text
 runtimeConfigJson =
   "{\n\
@@ -426,7 +431,10 @@ runtimeConfigJson =
   \      \"name\": \"Microsoft.NETCore.App\",\n\
   \      \"version\": \"9.0.0\"\n\
   \    },\n\
-  \    \"rollForward\": \"LatestMajor\"\n\
+  \    \"rollForward\": \"LatestMajor\",\n\
+  \    \"configProperties\": {\n\
+  \      \"System.GC.Server\": true\n\
+  \    }\n\
   \  }\n\
   \}\n"
 

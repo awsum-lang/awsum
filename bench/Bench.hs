@@ -496,7 +496,7 @@ printFailureDetail b r = do
   putTextLn ""
 
 -- ────────────────────────────────────────────────────────────────────────────
--- CLR runtime config (kept in sync with test/Awsum/RunBackend.hs).
+-- CLR runtime config (kept in sync with awsum/Main.hs and test/Awsum/RunBackend.hs).
 -- ────────────────────────────────────────────────────────────────────────────
 
 runtimeConfigJson :: Text
@@ -508,6 +508,9 @@ runtimeConfigJson =
   \      \"name\": \"Microsoft.NETCore.App\",\n\
   \      \"version\": \"9.0.0\"\n\
   \    },\n\
-  \    \"rollForward\": \"LatestMajor\"\n\
+  \    \"rollForward\": \"LatestMajor\",\n\
+  \    \"configProperties\": {\n\
+  \      \"System.GC.Server\": true\n\
+  \    }\n\
   \  }\n\
   \}\n"
