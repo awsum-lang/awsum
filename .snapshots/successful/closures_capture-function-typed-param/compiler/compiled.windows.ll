@@ -174,30 +174,19 @@ tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   call void @__inc_ref(ptr %t14)
-  %t15 = getelementptr ptr, ptr %t4, i32 2
-  %t16 = load ptr, ptr %t15
-  call void @__inc_ref(ptr %t16)
-  call void @__inc_ref(ptr %t14)
-  %t17 = call ptr @__print(ptr %t14)
-  %t18 = getelementptr ptr, ptr %t17, i32 0
-  %t19 = load ptr, ptr %t18
-  %t20 = ptrtoint ptr %t19 to i64
-  switch i64 %t20, label %tco.case.default.21 [ i64 0, label %tco.case.arm.0.22 ]
-tco.case.arm.0.22:
-  call void @__inc_ref(ptr %t16)
-  call void @__free_recursive(ptr %t17)
+  %t15 = call ptr @__print(ptr %t14)
+  %t16 = getelementptr ptr, ptr %t4, i32 2
+  %t17 = load ptr, ptr %t16
+  call void @__inc_ref(ptr %t17)
   call void @__free_recursive(ptr %t4)
-  call void @__free_recursive(ptr %t16)
-  call void @__free_recursive(ptr %t14)
-  store ptr %t16, ptr %t3
+  call void @__free_recursive(ptr %t15)
+  store ptr %t17, ptr %t3
   br label %tco.loop.0
-tco.case.default.21:
-  unreachable
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t23 = load ptr, ptr %t2
-  ret ptr %t23
+  %t18 = load ptr, ptr %t2
+  ret ptr %t18
 }
 
 define internal ptr @v_main() {
@@ -205,7 +194,8 @@ define internal ptr @v_main() {
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__df_poly_1()
+  %t3 = call ptr @__alloc(i64 4, i32 0)
+  store i32 5, ptr %t3
   %t4 = call ptr @__showInt32(ptr %t3)
   %t5 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t4, ptr %t5
@@ -222,54 +212,6 @@ define internal ptr @v_main() {
   %t13 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t6, ptr %t13
   ret ptr %t0
-}
-
-define internal ptr @v__lam_13(ptr %v_k, ptr %v_n) {
-  call void @__inc_ref(ptr %v_k)
-  call void @__inc_ref(ptr %v_n)
-  %t0 = call ptr @v__apply1(ptr %v_k, ptr %v_n)
-  call void @__free_recursive(ptr %v_k)
-  call void @__free_recursive(ptr %v_n)
-  ret ptr %t0
-}
-
-define internal ptr @v__lam_14(ptr %v_m) {
-  ret ptr %v_m
-}
-
-define internal ptr @v__df_applyOnce_0(ptr %v_x, ptr %v__df_applyOnce_0_cap0_0) {
-  call void @__inc_ref(ptr %v__df_applyOnce_0_cap0_0)
-  call void @__inc_ref(ptr %v_x)
-  %t0 = call ptr @v__lam_13(ptr %v__df_applyOnce_0_cap0_0, ptr %v_x)
-  call void @__free_recursive(ptr %v_x)
-  call void @__free_recursive(ptr %v__df_applyOnce_0_cap0_0)
-  ret ptr %t0
-}
-
-define internal ptr @v__df_poly_1() {
-  %t0 = call ptr @__alloc(i64 4, i32 0)
-  store i32 5, ptr %t0
-  %t1 = call ptr @__alloc(i64 8, i32 0)
-  %t2 = inttoptr i64 8 to ptr
-  %t3 = getelementptr ptr, ptr %t1, i32 0
-  store ptr %t2, ptr %t3
-  %t4 = call ptr @v__df_applyOnce_0(ptr %t0, ptr %t1)
-  ret ptr %t4
-}
-
-define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
-  %t0 = getelementptr ptr, ptr %v__cl, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 8, label %case.arm.8.4 ]
-case.arm.8.4:
-  call void @__inc_ref(ptr %v__arg0)
-  %t5 = call ptr @v__lam_14(ptr %v__arg0)
-  call void @__free_recursive(ptr %v__cl)
-  call void @__free_recursive(ptr %v__arg0)
-  ret ptr %t5
-case.default.3:
-  unreachable
 }
 
 declare i32 @_setmode(i32, i32)

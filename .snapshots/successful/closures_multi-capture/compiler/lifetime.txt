@@ -1,31 +1,14 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-both:
-  param           a                               count=1
-  param           b                               count=1
-
-bothBody:
-  param           a                               count=1
-  param           b                               count=1
-  case-pattern    $do_e_0                         count=0
-  case-pattern    s0                              count=0
-
-$lam$13:
-  param           a                               count=1
-  param           b                               count=1
-  param           _n                              count=0
-
-$let$14:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$df$apply$0:
-  param           x                               count=1
-  param           $df$apply$0$cap0$0              count=1
-  param           $df$apply$0$cap0$1              count=1
+main:
+  join-param      $inl12$scrut                    count=2
+  case-pattern    $inl9$__w0                      count=0
+  case-pattern    $inl10$s                        count=0
+  case-pattern    $inl7$$do_e_0                   count=0
+  case-pattern    $inl8$s0                        count=1
 

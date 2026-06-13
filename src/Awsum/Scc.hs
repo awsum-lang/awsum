@@ -177,7 +177,11 @@ rewriteCrossCalls memberSet mergedName memberOrder tagOf = go
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
       CDrop k n b -> CDrop k n (go b)
-      CReuse n t fs -> CReuse n t (map go fs)
+      CReuse rm n t fs -> CReuse rm n t (map go fs)
+      CLet x rhs body -> CLet x (go rhs) (go body)
+      CJoin {} -> error "Scc: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "Scc: CJump is minted by Awsum.Simplify, which runs later"
+      e@(CProj _ _) -> e
       e@(CVar _) -> e
       e@(CString _) -> e
       e@(CIntLit _ _) -> e

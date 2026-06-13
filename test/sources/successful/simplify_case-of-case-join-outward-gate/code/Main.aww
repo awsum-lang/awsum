@@ -1,0 +1,58 @@
+{- A case-of-case tower whose middle fusion declines (the literal arm's
+   selected outer arm is a 17-node constructor tree, demoted by the
+   duplication gate) while the outer fusion succeeds — so the re-walk sees
+   the minted join's inner case with `CJump`-carrying arms as the outer case
+   of a second fusion. Minting that second join would put a jump to the
+   enclosing join inside its body — a join body that jumps outward, the one
+   shape the expression-position emitters do not lower (the tower sits in
+   `showInt32`'s argument). The outward-jump gate declines the second fusion;
+   the first join still forms and both its paths run: input 5 takes the
+   static branch (head of the big literal, `9`), input 3 the jump branch
+   (`mklist` of `mkmb`'s payload, `1`). -}
+
+import IO.Stdout
+import IO.Args
+
+type MyList = MyNil | MyCons Int32 MyList
+
+mklist : Int32 -> MyList
+mklist a = case eqInt32 a 0 of
+  True -> MyNil
+  False -> case predInt32 a of
+    Left _e -> MyNil
+    Right b -> MyCons a (mklist b)
+
+mkmb : Int32 -> Maybe Int32
+mkmb c = case eqInt32 c 0 of
+  True -> Nothing
+  False -> case predInt32 c of
+    Left _e2 -> Nothing
+    Right d -> case mkmb d of
+      Nothing -> Just c
+      Just w -> Just w
+
+run : List String -> IO Never Unit
+run args =
+  let k2 : Int32 = case headList args of
+        Nothing -> 3
+        Just s -> case parseInt32 s of
+          Left _e3 -> 4
+          Right m -> m
+   in IO.Stdout.print (showInt32 (case (case (case eqInt32 k2 5 of
+            True -> Nothing
+            False -> mkmb k2) of
+          Nothing -> MyCons 9 (MyCons 2 (MyCons 3 (MyCons 4 (MyCons 5 (MyCons 6 (MyCons 7 (MyCons 8 MyNil)))))))
+          Just v -> mklist v) of
+        MyCons h _t -> h
+        MyNil -> 0))
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO run
+    |> handleErrorIO handleInputErr

@@ -1,175 +1,12 @@
-pureIO:
-  param           x                               count=1
-
-failIO:
-  param           e                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-kNeverIO:
-  param           n                               count=1
-
-kAOkIO:
-  param           n                               count=1
-
-kAFailIO:
-  param           _n                              count=0
-
-kBFailIO:
-  param           _n                              count=0
-
-kSOkIO:
-  param           n                               count=1
-
-kSFailIO:
-  param           _n                              count=0
-
-kSecondIO:
-  param           _n                              count=0
-
-handlerA:
-  param           e                               count=1
-
-observeA:
-  param           io                              count=1
-
-observeNever:
-  param           io                              count=1
-
-handlerTwo:
-  param           e                               count=1
-
-observeTwo:
-  param           io                              count=1
-
-handlerStr:
-  param           e                               count=1
-
-observeStr:
-  param           io                              count=1
-
-handlerStrA:
-  param           e                               count=1
-  row-case        s                               count=0
-  row-case        _a                              count=0
-
-observeStrA:
-  param           io                              count=1
-
-handlerAB:
-  param           e                               count=1
-  row-case        _a                              count=0
-  row-case        _b                              count=0
-
-observeAB:
-  param           io                              count=1
-
-handlerTwoA:
-  param           e                               count=1
-  row-case        t                               count=0
-  row-case        _a                              count=0
-
-observeTwoA:
-  param           io                              count=1
-
-handlerThree:
-  param           e                               count=1
-  row-case        t                               count=0
-  row-case        s                               count=0
-  row-case        _a                              count=0
-
-observeThree:
-  param           io                              count=1
-
-line:
-  param           label                           count=1
-  param           act                             count=1
-
-$lam$13:
-  param           _u                              count=0
-
-$lam$14:
-  param           act                             count=1
-  param           _u                              count=0
-
-$lam$15:
-  param           _u                              count=0
-
-$lam$16:
-  param           _u                              count=0
-
-$lam$17:
-  param           _u                              count=0
-
-$lam$18:
-  param           _u                              count=0
-
-$lam$19:
-  param           _u                              count=0
-
-$lam$20:
-  param           _u                              count=0
-
-$lam$21:
-  param           _u                              count=0
-
-$lam$22:
-  param           _u                              count=0
-
-$lam$23:
-  param           _u                              count=0
-
-$lam$24:
-  param           _u                              count=0
-
-$lam$25:
-  param           _u                              count=0
-
-$lam$26:
-  param           _u                              count=0
-
-$lam$27:
-  param           _u                              count=0
-
-$lam$28:
-  param           _u                              count=0
-
-$lam$29:
-  param           _u                              count=0
-
-$lam$30:
-  param           _u                              count=0
-
-$lam$31:
-  param           _u                              count=0
-
-$lam$32:
-  param           _u                              count=0
-
-$lam$33:
-  param           _u                              count=0
-
-$lam$34:
-  param           _u                              count=0
-
-$lam$35:
-  param           _u                              count=0
-
-$lam$36:
-  param           _u                              count=0
-
-$lam$37:
-  param           _u                              count=0
-
-$lift$38:
-  param           __input                         count=1
+  let             $inl0$eff                       count=0
 
 $cps$$lift$38:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -182,11 +19,8 @@ $apply$$lift$38:
   case-pattern    $pk_29                          count=0
   case-pattern    __f0                            count=0
 
-$lift$42:
-  param           __input                         count=1
-
 $cps$$lift$42:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -199,11 +33,8 @@ $apply$$lift$42:
   case-pattern    $pk_31                          count=0
   case-pattern    __f0                            count=0
 
-$lift$46:
-  param           __input                         count=1
-
 $cps$$lift$46:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -216,11 +47,8 @@ $apply$$lift$46:
   case-pattern    $pk_33                          count=0
   case-pattern    __f0                            count=0
 
-$lift$50:
-  param           __input                         count=1
-
 $cps$$lift$50:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -233,11 +61,8 @@ $apply$$lift$50:
   case-pattern    $pk_35                          count=0
   case-pattern    __f0                            count=0
 
-$lift$54:
-  param           __input                         count=1
-
 $cps$$lift$54:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -250,17 +75,8 @@ $apply$$lift$54:
   case-pattern    $pk_37                          count=0
   case-pattern    __f0                            count=0
 
-$bi$IO.Stdout.print:
-  param           $x0                             count=1
-
-$bi$showInt32:
-  param           $x0                             count=1
-
-$df$bindIO$0:
-  param           io                              count=1
-
 $cps$$df$bindIO$0:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -273,11 +89,8 @@ $apply$$df$bindIO$0:
   case-pattern    $pk_39                          count=0
   case-pattern    s                               count=0
 
-$df$bindIO$4:
-  param           io                              count=1
-
 $cps$$df$bindIO$4:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -290,11 +103,8 @@ $apply$$df$bindIO$4:
   case-pattern    $pk_41                          count=0
   case-pattern    s                               count=0
 
-$df$bindIO$8:
-  param           io                              count=1
-
 $cps$$df$bindIO$8:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -307,11 +117,8 @@ $apply$$df$bindIO$8:
   case-pattern    $pk_43                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$0$bindIO$12:
-  param           io                              count=1
-
 $cps$$df$$rowmono$0$bindIO$12:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -323,9 +130,6 @@ $apply$$df$$rowmono$0$bindIO$12:
   param           $x                              count=1
   case-pattern    $pk_45                          count=0
   case-pattern    s                               count=0
-
-$df$$rowmono$0$bindIO$16:
-  param           io                              count=1
 
 $cps$$df$$rowmono$0$bindIO$16:
   param           io                              count=2
@@ -341,11 +145,8 @@ $apply$$df$$rowmono$0$bindIO$16:
   case-pattern    $pk_47                          count=0
   case-pattern    s                               count=0
 
-$df$bindIO$20:
-  param           io                              count=1
-
 $cps$$df$bindIO$20:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -357,9 +158,6 @@ $apply$$df$bindIO$20:
   param           $x                              count=1
   case-pattern    $pk_49                          count=0
   case-pattern    s                               count=0
-
-$df$$rowmono$4$bindIO$24:
-  param           io                              count=1
 
 $cps$$df$$rowmono$4$bindIO$24:
   param           io                              count=2
@@ -375,11 +173,8 @@ $apply$$df$$rowmono$4$bindIO$24:
   case-pattern    $pk_51                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$8$bindIO$28:
-  param           io                              count=1
-
 $cps$$df$$rowmono$8$bindIO$28:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -391,9 +186,6 @@ $apply$$df$$rowmono$8$bindIO$28:
   param           $x                              count=1
   case-pattern    $pk_53                          count=0
   case-pattern    s                               count=0
-
-$df$$rowmono$8$bindIO$32:
-  param           io                              count=1
 
 $cps$$df$$rowmono$8$bindIO$32:
   param           io                              count=2
@@ -409,11 +201,8 @@ $apply$$df$$rowmono$8$bindIO$32:
   case-pattern    $pk_55                          count=0
   case-pattern    s                               count=0
 
-$df$bindIO$36:
-  param           io                              count=1
-
 $cps$$df$bindIO$36:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -426,11 +215,8 @@ $apply$$df$bindIO$36:
   case-pattern    $pk_57                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$12$bindIO$40:
-  param           io                              count=1
-
 $cps$$df$$rowmono$12$bindIO$40:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -443,11 +229,8 @@ $apply$$df$$rowmono$12$bindIO$40:
   case-pattern    $pk_59                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$16$bindIO$44:
-  param           io                              count=1
-
 $cps$$df$$rowmono$16$bindIO$44:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -459,9 +242,6 @@ $apply$$df$$rowmono$16$bindIO$44:
   param           $x                              count=1
   case-pattern    $pk_61                          count=0
   case-pattern    s                               count=0
-
-$df$$rowmono$16$bindIO$48:
-  param           io                              count=1
 
 $cps$$df$$rowmono$16$bindIO$48:
   param           io                              count=2
@@ -477,11 +257,8 @@ $apply$$df$$rowmono$16$bindIO$48:
   case-pattern    $pk_63                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$12$bindIO$52:
-  param           io                              count=1
-
 $cps$$df$$rowmono$12$bindIO$52:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -494,11 +271,8 @@ $apply$$df$$rowmono$12$bindIO$52:
   case-pattern    $pk_65                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$56:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$56:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -511,11 +285,8 @@ $apply$$df$handleErrorIO$56:
   case-pattern    $pk_67                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$60:
-  param           io                              count=1
-
 $cps$$df$andThenIO$60:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -528,11 +299,8 @@ $apply$$df$andThenIO$60:
   case-pattern    $pk_69                          count=0
   case-pattern    s                               count=0
 
-$df$mapIO$64:
-  param           io                              count=1
-
 $cps$$df$mapIO$64:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -545,11 +313,8 @@ $apply$$df$mapIO$64:
   case-pattern    $pk_71                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$68:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$68:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -562,11 +327,8 @@ $apply$$df$handleErrorIO$68:
   case-pattern    $pk_73                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$72:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$72:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -579,14 +341,14 @@ $apply$$df$handleErrorIO$72:
   case-pattern    $pk_75                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$76:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$76:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
+  let             $inl8$e                         count=0
+  row-case        $inl6$s                         count=0
+  row-case        $inl7$_a                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -596,11 +358,8 @@ $apply$$df$handleErrorIO$76:
   case-pattern    $pk_77                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$20$andThenIO$80:
-  param           io                              count=1
-
 $cps$$df$$rowmono$20$andThenIO$80:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -613,14 +372,13 @@ $apply$$df$$rowmono$20$andThenIO$80:
   case-pattern    $pk_79                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$84:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$84:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
+  row-case        $inl4$_a                        count=0
+  row-case        $inl5$_b                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -630,11 +388,8 @@ $apply$$df$handleErrorIO$84:
   case-pattern    $pk_81                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$21$andThenIO$88:
-  param           io                              count=1
-
 $cps$$df$$rowmono$21$andThenIO$88:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -647,14 +402,14 @@ $apply$$df$$rowmono$21$andThenIO$88:
   case-pattern    $pk_83                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$92:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$92:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
+  let             $inl3$e                         count=0
+  row-case        $inl1$t                         count=0
+  row-case        $inl2$_a                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -664,11 +419,8 @@ $apply$$df$handleErrorIO$92:
   case-pattern    $pk_85                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$22$andThenIO$96:
-  param           io                              count=1
-
 $cps$$df$$rowmono$22$andThenIO$96:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -681,14 +433,15 @@ $apply$$df$$rowmono$22$andThenIO$96:
   case-pattern    $pk_87                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$100:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$100:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
+  let             $inl12$e                        count=0
+  row-case        $inl9$t                         count=0
+  row-case        $inl10$s                        count=0
+  row-case        $inl11$_a                       count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -698,11 +451,8 @@ $apply$$df$handleErrorIO$100:
   case-pattern    $pk_89                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$23$andThenIO$104:
-  param           io                              count=1
-
 $cps$$df$$rowmono$23$andThenIO$104:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -715,11 +465,8 @@ $apply$$df$$rowmono$23$andThenIO$104:
   case-pattern    $pk_91                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$108:
-  param           io                              count=1
-
 $cps$$df$andThenIO$108:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -732,12 +479,8 @@ $apply$$df$andThenIO$108:
   case-pattern    $pk_93                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$112:
-  param           io                              count=1
-  param           $df$andThenIO$112$cap0$0        count=1
-
 $cps$$df$andThenIO$112:
-  param           io                              count=2
+  param           io                              count=3
   param           $df$andThenIO$112$cap0$0        count=1
   param           $k                              count=2
   case-pattern    a                               count=0
@@ -751,11 +494,8 @@ $apply$$df$andThenIO$112:
   case-pattern    $pk_95                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$116:
-  param           io                              count=1
-
 $cps$$df$andThenIO$116:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -768,11 +508,8 @@ $apply$$df$andThenIO$116:
   case-pattern    $pk_97                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$120:
-  param           io                              count=1
-
 $cps$$df$andThenIO$120:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -785,11 +522,8 @@ $apply$$df$andThenIO$120:
   case-pattern    $pk_99                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$124:
-  param           io                              count=1
-
 $cps$$df$andThenIO$124:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -802,11 +536,8 @@ $apply$$df$andThenIO$124:
   case-pattern    $pk_101                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$128:
-  param           io                              count=1
-
 $cps$$df$andThenIO$128:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -819,11 +550,8 @@ $apply$$df$andThenIO$128:
   case-pattern    $pk_103                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$132:
-  param           io                              count=1
-
 $cps$$df$andThenIO$132:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -836,11 +564,8 @@ $apply$$df$andThenIO$132:
   case-pattern    $pk_105                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$136:
-  param           io                              count=1
-
 $cps$$df$andThenIO$136:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -853,11 +578,8 @@ $apply$$df$andThenIO$136:
   case-pattern    $pk_107                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$140:
-  param           io                              count=1
-
 $cps$$df$andThenIO$140:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -870,11 +592,8 @@ $apply$$df$andThenIO$140:
   case-pattern    $pk_109                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$144:
-  param           io                              count=1
-
 $cps$$df$andThenIO$144:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -887,11 +606,8 @@ $apply$$df$andThenIO$144:
   case-pattern    $pk_111                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$148:
-  param           io                              count=1
-
 $cps$$df$andThenIO$148:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -904,11 +620,8 @@ $apply$$df$andThenIO$148:
   case-pattern    $pk_113                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$152:
-  param           io                              count=1
-
 $cps$$df$andThenIO$152:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -921,11 +634,8 @@ $apply$$df$andThenIO$152:
   case-pattern    $pk_115                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$156:
-  param           io                              count=1
-
 $cps$$df$andThenIO$156:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -938,11 +648,8 @@ $apply$$df$andThenIO$156:
   case-pattern    $pk_117                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$160:
-  param           io                              count=1
-
 $cps$$df$andThenIO$160:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -955,11 +662,8 @@ $apply$$df$andThenIO$160:
   case-pattern    $pk_119                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$164:
-  param           io                              count=1
-
 $cps$$df$andThenIO$164:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -972,11 +676,8 @@ $apply$$df$andThenIO$164:
   case-pattern    $pk_121                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$168:
-  param           io                              count=1
-
 $cps$$df$andThenIO$168:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -989,11 +690,8 @@ $apply$$df$andThenIO$168:
   case-pattern    $pk_123                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$172:
-  param           io                              count=1
-
 $cps$$df$andThenIO$172:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1006,11 +704,8 @@ $apply$$df$andThenIO$172:
   case-pattern    $pk_125                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$176:
-  param           io                              count=1
-
 $cps$$df$andThenIO$176:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1023,11 +718,8 @@ $apply$$df$andThenIO$176:
   case-pattern    $pk_127                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$180:
-  param           io                              count=1
-
 $cps$$df$andThenIO$180:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1040,11 +732,8 @@ $apply$$df$andThenIO$180:
   case-pattern    $pk_129                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$184:
-  param           io                              count=1
-
 $cps$$df$andThenIO$184:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1057,11 +746,8 @@ $apply$$df$andThenIO$184:
   case-pattern    $pk_131                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$188:
-  param           io                              count=1
-
 $cps$$df$andThenIO$188:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1074,11 +760,8 @@ $apply$$df$andThenIO$188:
   case-pattern    $pk_133                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$192:
-  param           io                              count=1
-
 $cps$$df$andThenIO$192:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1091,11 +774,8 @@ $apply$$df$andThenIO$192:
   case-pattern    $pk_135                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$196:
-  param           io                              count=1
-
 $cps$$df$andThenIO$196:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1108,11 +788,8 @@ $apply$$df$andThenIO$196:
   case-pattern    $pk_137                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$200:
-  param           io                              count=1
-
 $cps$$df$andThenIO$200:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -1125,11 +802,8 @@ $apply$$df$andThenIO$200:
   case-pattern    $pk_139                         count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$204:
-  param           io                              count=1
-
 $cps$$df$andThenIO$204:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0

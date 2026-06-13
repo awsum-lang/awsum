@@ -1,32 +1,30 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-unwrap:
-  param           r                               count=1
-  case-pattern    r2                              count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
-  case-pattern    r2                              count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_4                         count=1
+  join-param      $inl12$scrut                    count=2
+  case-pattern    $inl9$__w0                      count=0
+  case-pattern    $inl10$s                        count=0
+  case-pattern    $inl1$r2                        count=1
+  case-pattern    $inl2$r2                        count=1
+  case-pattern    $do_e_4                         count=0
   case-pattern    s0                              count=1
+  case-pattern    $inl3$r2                        count=1
+  case-pattern    $inl4$r2                        count=1
   case-pattern    $do_e_3                         count=1
   case-pattern    s1                              count=1
   case-pattern    $do_e_2                         count=1
   case-pattern    s2                              count=1
+  case-pattern    $inl5$r2                        count=1
+  case-pattern    $inl6$r2                        count=1
   case-pattern    $do_e_1                         count=1
   case-pattern    s3                              count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    s4                              count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
+  case-pattern    $inl7$r2                        count=1
+  case-pattern    $inl8$r2                        count=1
 

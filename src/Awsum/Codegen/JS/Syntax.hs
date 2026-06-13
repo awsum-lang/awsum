@@ -78,6 +78,11 @@ data JsStmt
     SSwitch JsExpr [(Integer, [JsStmt])]
   | -- | @continue;@
     SContinue
+  | -- | labelled block @l: {…}@ — a 'CJoin': the block holds the join's
+    --   inner expression, the join body sits right after it
+    SLabeled Text [JsStmt]
+  | -- | @break l;@ — a 'CJump': exits the labelled block into the join body
+    SBreak Text
   | -- | a bare block @{ … }@
     SBlock [JsStmt]
   | -- | @try {…} catch (n) {…}@
@@ -195,6 +200,8 @@ stmt = \case
   SWhileTrue body -> "while" <+> parens "true" <+> block body
   SSwitch e cs -> "switch" <+> parens (expr 0 e) <+> braceBlock (map switchCase cs)
   SContinue -> "continue" <> semi
+  SLabeled l body -> pretty l <> colon <+> block body
+  SBreak l -> "break" <+> pretty l <> semi
   SBlock body -> block body
   STry tb cn cb -> "try" <+> block tb <+> "catch" <+> parens (pretty cn) <+> block cb
   SBlank -> mempty

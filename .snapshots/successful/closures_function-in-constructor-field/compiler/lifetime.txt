@@ -1,21 +1,15 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-double:
-  param           n                               count=2
-
-triple:
-  param           n                               count=3
-  case-pattern    $do_e_0                         count=0
-  case-pattern    m                               count=0
+  let             $inl0$eff                       count=0
 
 callBox:
   param           b                               count=1
-  param           x                               count=1
-  case-pattern    f                               count=0
+  param           x                               count=5
+  case-pattern    $inl3$$do_e_0                   count=0
+  case-pattern    $inl4$m                         count=0
 
 formatOutputs:
   case-pattern    $do_e_3                         count=1
@@ -24,17 +18,11 @@ formatOutputs:
   case-pattern    t                               count=1
   case-pattern    $do_e_1                         count=1
   case-pattern    ds                              count=1
+  let             $inl7$__input                   count=0
+  case-pattern    $inl5$__f0                      count=0
+  case-pattern    $inl6$__f0                      count=0
 
 main:
   case-pattern    _e                              count=0
   case-pattern    s                               count=1
-
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=2
 

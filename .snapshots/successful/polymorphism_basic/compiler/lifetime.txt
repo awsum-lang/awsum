@@ -1,28 +1,14 @@
-const:
-  param           x                               count=1
-  param           _y                              count=0
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_0                         count=1
+  join-param      $inl4$scrut                     count=2
+  case-pattern    $inl1$__w0                      count=0
+  case-pattern    $inl2$s                         count=0
+  case-pattern    $do_e_0                         count=0
   case-pattern    ax                              count=1
-
-identity:
-  param           x                               count=1
-
-appendX:
-  param           s                               count=1
-
-appendY:
-  param           s                               count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
 

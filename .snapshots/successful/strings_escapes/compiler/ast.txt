@@ -5,7 +5,7 @@ Program
 
          Identical stdout bytes on every backend confirm both the parser's
          escape handling and the runtime's "print exactly" semantics; the
-         no-stdin snapshot pins the exact byte sequence (including CR / LF /
+         no-input snapshot pins the exact byte sequence (including CR / LF /
          TAB / NUL characters that look unusual in text editors). The NUL
          case in particular verifies that strings are length-prefixed end-to-
          end on every backend — including LLVM and WASM, which moved off

@@ -1,56 +1,62 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-unwrap:
-  param           r                               count=1
-  case-pattern    inner1                          count=0
-  case-pattern    inner2                          count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
-  case-pattern    inner2                          count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
-  case-pattern    inner1                          count=0
-  case-pattern    inner2                          count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
-  case-pattern    inner2                          count=0
-  case-pattern    value                           count=0
-  case-pattern    value                           count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_12                        count=1
+  join-param      $inl28$scrut                    count=2
+  case-pattern    $inl25$__w0                     count=0
+  case-pattern    $inl26$s                        count=0
+  let             $inl3$r                         count=0
+  case-pattern    $inl1$inner2                    count=1
+  case-pattern    $inl2$inner2                    count=1
+  case-pattern    $do_e_12                        count=0
   case-pattern    s0                              count=1
+  let             $inl6$r                         count=0
+  case-pattern    $inl4$inner2                    count=1
+  case-pattern    $inl5$inner2                    count=1
   case-pattern    $do_e_11                        count=1
   case-pattern    s1                              count=1
   case-pattern    $do_e_10                        count=1
   case-pattern    s2                              count=1
+  let             $inl9$r                         count=0
+  case-pattern    $inl7$inner2                    count=1
+  case-pattern    $inl8$inner2                    count=1
   case-pattern    $do_e_9                         count=1
   case-pattern    s3                              count=1
   case-pattern    $do_e_8                         count=1
   case-pattern    s4                              count=1
+  let             $inl12$r                        count=0
+  case-pattern    $inl10$inner2                   count=1
+  case-pattern    $inl11$inner2                   count=1
   case-pattern    $do_e_7                         count=1
   case-pattern    s5                              count=1
   case-pattern    $do_e_6                         count=1
   case-pattern    s6                              count=1
+  let             $inl15$r                        count=0
+  case-pattern    $inl13$inner2                   count=1
+  case-pattern    $inl14$inner2                   count=1
   case-pattern    $do_e_5                         count=1
   case-pattern    s7                              count=1
   case-pattern    $do_e_4                         count=1
   case-pattern    s8                              count=1
+  let             $inl18$r                        count=0
+  case-pattern    $inl16$inner2                   count=1
+  case-pattern    $inl17$inner2                   count=1
   case-pattern    $do_e_3                         count=1
   case-pattern    s9                              count=1
   case-pattern    $do_e_2                         count=1
   case-pattern    s10                             count=1
+  let             $inl21$r                        count=0
+  case-pattern    $inl19$inner2                   count=1
+  case-pattern    $inl20$inner2                   count=1
   case-pattern    $do_e_1                         count=1
   case-pattern    s11                             count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    s12                             count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
+  let             $inl24$r                        count=0
+  case-pattern    $inl22$inner2                   count=1
+  case-pattern    $inl23$inner2                   count=1
 

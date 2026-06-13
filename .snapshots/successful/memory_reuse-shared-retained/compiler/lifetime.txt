@@ -1,0 +1,44 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+revInto2:
+  param           lst                             count=2
+  param           acc                             count=1
+  case-pattern    s                               count=0
+  case-pattern    rest                            count=0
+
+mk:
+  param           n                               count=2
+  param           acc                             count=2
+  case-pattern    _u                              count=0
+  case-pattern    m                               count=0
+
+main:
+  let             $inl17$xs                       count=0
+  case-pattern    $inl13$_s2                      count=0
+  case-pattern    $inl14$r                        count=2
+  case-pattern    $inl15$s3                       count=0
+  case-pattern    $inl16$_r2                      count=0
+
+$cps$$df$andThenIO$0:
+  param           io                              count=2
+  param           $df$andThenIO$0$cap0$0          count=1
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    $inl5$_s2                       count=0
+  case-pattern    $inl6$r                         count=0
+  case-pattern    $inl7$s3                        count=0
+  case-pattern    $inl8$_r2                       count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    s                               count=0
+

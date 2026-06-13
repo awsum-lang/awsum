@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,46 +15,31 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "unwrap" [ "r" ]
-            ( CCase
-                ( CVar "r" )
-                [
-                    ( 25
-                    , [ "value" ]
-                    , CDrop DropFreeUnchecked "value"
-                        ( CVar "value" )
-                    )
-                ]
-            )
         , CValDef "main"
             ( CCon 7
-                [ CCall
-                    ( CVar "unwrap" )
-                    [ CCon 25
+                [ CLet "$inl1$r"
+                    ( CCon 25
                         [ CString "hello" ]
-                    ]
+                    )
+                    ( CDrop DropFreeUnchecked "$inl1$r"
+                        ( CProj "$inl1$r" 1 )
+                    )
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

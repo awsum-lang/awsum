@@ -1,0 +1,31 @@
+{- Regression: `Awsum.Simplify` must not inline a single-use case-binder
+   into a `CProj` when the scrutinee name is shadowed deeper in the arm.
+
+   Lowering mints deterministic pattern-binder names (`__p0`, …) whose
+   counter restarts per nesting level — load-bearing, so sibling arms share
+   names and `mergeAlts` can fuse them. Because the `Maybe` scrutinee here is
+   a `splitOnFirst` call (not a variable), its `Just` payload stays a `__p0`
+   binder, and the two nested `Just (Tuple2 …)` patterns both bind `__p0`.
+   With the binders kept, `a` is extracted in the outer scope before the
+   inner `__p0` shadows it. Before the fix, Simplify inlined `a` into
+   `CProj __p0 1`, pushing its read down into the inner `__p0`'s scope, so
+   `a` read the inner cell's field ("Y") instead of the outer's ("X"). Every
+   backend agreed on the wrong answer, so the identical-stdout snapshot check
+   could not see it; the property suite (the arithmetic- and concat-
+   associativity properties, which parse "a:b:c" through this same nested
+   pattern) is what caught it.
+
+   `splitOnFirst` on "X:Y:Z" gives `Tuple2 "X" "Y:Z"`, then `Tuple2 "Y" "Z"`,
+   so `pick "X:Y:Z"` is the first field "X". -}
+
+import IO.Stdout
+
+pick : String -> String
+pick raw = case splitOnFirst ":" raw of
+  Nothing -> "NO_OUTER"
+  Just (Tuple2 a rest) -> case splitOnFirst ":" rest of
+    Nothing -> "NO_INNER"
+    Just (Tuple2 _b _c) -> a
+
+main : IO Never Unit
+main = IO.Stdout.print (pick "X:Y:Z")

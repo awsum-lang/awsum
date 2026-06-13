@@ -17,27 +17,14 @@
 
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
@@ -49,54 +36,39 @@
 
   const v__scc__df_andThenEither_0__lam_13_build = v__args => {
     while (true) {
-      {
-        const __s = v__args;
-        switch (__s[0]) {
-          case 8: {
-            const v_x = __s[1];
-            const v__df_andThenEither_0_cap0_0 = __s[2];
-            {
-              const __s = v_x;
-              switch (__s[0]) {
-                case 3: {
-                  const v_e = __s[1];
-                  return [3, v_e];
-                }
-                case 4: {
-                  const v_a = __s[1];
-                  const __t0 = (v__args[0] = 9, v__args[1] = v__df_andThenEither_0_cap0_0, v__args[2] = v_a, v__args);
-                  v__args = __t0;
-                  continue;
-                }
-              }
+      switch (v__args[0]) {
+        case 8: {
+          const v_x = v__args[1];
+          switch (v_x[0]) {
+            case 3: {
+              return v_x;
+            }
+            case 4: {
+              v__args = (v__args[0] = 9, v__args[1] = v__args[2], v__args[2] = v_x[1], v__args);
+              continue;
             }
           }
-          case 9: {
-            const v_m = __s[1];
-            const v_doubled = __s[2];
-            const __t0 = (v__args[0] = 10, v__args[1] = v_m, v__args[2] = v_doubled, v__args);
-            v__args = __t0;
-            continue;
-          }
-          case 10: {
-            const v_n = __s[1];
-            const v_acc = __s[2];
-            {
-              const __s = __predUInt32(v_n);
-              switch (__s[0]) {
-                case 3: {
-                  const v___w0 = __s[1];
-                  return [4, v_acc];
-                }
-                case 4: {
-                  const v_m = __s[1];
-                  const __t0 = (v__args[0] = 8, v__args[1] = __concat(
-                    v_acc,
-                    v_acc
-                  ), v__args[2] = v_m, v__args);
-                  v__args = __t0;
-                  continue;
-                }
+        }
+        case 9: {
+          v__args = (v__args[0] = 10, v__args);
+          continue;
+        }
+        case 10: {
+          const v_n = v__args[1];
+          const v_acc = v__args[2];
+          {
+            const __s = __predUInt32(v_n);
+            switch (__s[0]) {
+              case 3: {
+                return [4, v_acc];
+              }
+              case 4: {
+                const v_m = __s[1];
+                v__args = (v__args[0] = 8, v__args[1] = __concat(
+                  v_acc,
+                  v_acc
+                ), v__args[2] = v_m, v__args);
+                continue;
               }
             }
           }
@@ -105,46 +77,40 @@
     }
   };
 
-  const v_build = (v_n, v_acc) =>
-    v__scc__df_andThenEither_0__lam_13_build([10, v_n, v_acc]);
-
   const v_runTest = (s => {
     switch (s[0]) {
       case 3: {
-        const v___w0 = s[1];
         return "FAIL: build returned Left at the cap";
       }
       case 4: {
         const v_capStr = s[1];
-        return (s => {
-          switch (s[0]) {
+        {
+          const __s = __eqUInt32(
+            __lengthUtf16CodeUnits(v_capStr),
+            v_maxStringLengthUtf16CodeUnits
+          );
+          switch (__s[0]) {
             case 1: {
-              return (s => {
-                switch (s[0]) {
+              {
+                const __s = __concat(v_capStr, "!");
+                switch (__s[0]) {
                   case 3: {
-                    const v___w0 = s[1];
                     return "OK";
                   }
                   case 4: {
-                    const v___w0 = s[1];
                     return "FAIL: cap + 1 returned Right";
                   }
                 }
-              })(__concat(v_capStr, "!"));
+              }
             }
             case 2: {
               return "FAIL: built string length is not at cap";
             }
           }
-        })(
-          __eqUInt32(
-            __lengthUtf16CodeUnits(v_capStr),
-            v_maxStringLengthUtf16CodeUnits
-          )
-        );
+        }
       }
     }
-  })(v_build(20 >>> 0, v_block));
+  })(v__scc__df_andThenEither_0__lam_13_build([10, 20 >>> 0, v_block]));
 
   const main = [7, v_runTest, [5, [0]]];
 

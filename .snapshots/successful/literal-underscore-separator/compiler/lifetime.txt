@@ -1,19 +1,18 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
 line:
   case-pattern    $do_e_0                         count=1
   case-pattern    s                               count=1
+  let             $inl3$__input                   count=0
+  case-pattern    $inl1$__f0                      count=0
+  case-pattern    $inl2$__f0                      count=0
 
 main:
   case-pattern    __w0                            count=0
   case-pattern    s                               count=1
-
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
 

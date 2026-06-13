@@ -1,0 +1,56 @@
+{- The same-arity carve-out applies only to reuse-eligible scrutinees.
+
+   swap's inner case scrutinises an arm binder that is read twice (the
+   One arm returns p itself) — not a sole-scrutinee binder, so no drop
+   sinks and the cell is never a reuse target: the Two arm's single-use
+   binders inline to projections even though it rebuilds a same-arity
+   Pair. core.txt has CProj over the binder, no extraction.
+
+   spin cases on its own parameter and rebuilds a same-arity cell in each
+   loop arm — the carve-out holds, the binders stay extracted, and
+   Awsum.Reuse rewrites the reconstruction in place: core.txt has CReuse.
+
+   make and eat are loops only so their argument and result stay
+   runtime-opaque — neither inlines, so no case folds at compile time. -}
+
+import IO.Stdout
+
+type Pair = Two String String | One String
+
+type Wrap = Wrap Pair
+
+make : Int32 -> Wrap
+make n = case eqInt32 n 0 of
+  True -> Wrap (Two "a" "b")
+  False -> case predInt32 n of
+    Left _u -> Wrap (One "u")
+    Right m -> make m
+
+swap : Wrap -> Pair
+swap w = case w of
+  Wrap p -> case p of
+    One _s -> p
+    Two x y -> Two y x
+
+eat : Int32 -> Pair -> String
+eat k q = case eqInt32 k 0 of
+  True -> case q of
+    One s2 -> s2
+    Two x2 _y2 -> x2
+  False -> case predInt32 k of
+    Left _u2 -> "u"
+    Right j -> eat j q
+
+spin : Int32 -> Pair -> Pair
+spin c q2 = case eqInt32 c 0 of
+  True -> q2
+  False -> case predInt32 c of
+    Left _u3 -> q2
+    Right m2 -> case q2 of
+      One s3 -> spin m2 (One s3)
+      Two x3 y3 -> spin m2 (Two y3 x3)
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (eat 1 (swap (make 1)))
+    |> andThenIO (\_u4 -> IO.Stdout.print (eat 0 (spin 1 (swap (make 0)))))

@@ -1,0 +1,20 @@
+{- The duplication gate holds: both inner arms select the same outer arm,
+   but that arm contains cases of its own, so duplicating it would grow the
+   case count (the fusion's termination measure). The arms demote to the
+   jump side, which leaves no statically-resolved arm at all — and a fusion
+   that collapses nothing is not performed. The Core snapshot pins the
+   unfused case-of-case shape. -}
+
+import IO.Stdout
+
+big : Bool -> String
+big b = case or b True of
+  True -> case "a" ++ "b" of
+    Left _e -> "overflow"
+    Right ab -> case ab ++ "c" of
+      Left _e2 -> "overflow2"
+      Right abc -> abc
+  False -> "no"
+
+main : IO Never Unit
+main = IO.Stdout.print (big (eqUInt32 (lengthUtf8Bytes "x") 9))

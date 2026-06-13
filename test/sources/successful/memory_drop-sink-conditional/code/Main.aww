@@ -1,0 +1,47 @@
+{- A binder whose sole use is the scrutinee of an inner nominal case that
+   only ONE path reaches: `v`'s consuming `case v of` sits under the True
+   arm of an unrelated dispatch, so its drop must NOT sink into that case's
+   arms — the False path would then release `v` nowhere and the Duo cell
+   would leak on the reference-counted backends (199 cells per iteration in
+   the instrumented repro that found this). The spine gate in
+   `soleScrutineeUse` keeps the scope wrap here; the committed core.txt /
+   lifetime.txt pin the `CDrop v` around the whole MkBoxed arm. stdout is
+   identical either way — the leak is invisible to every stdout suite. -}
+
+import IO.Stdout
+import IO.Args
+
+type Duo = MkDuo String String
+type Boxed = MkBoxed Duo
+
+build : Int32 -> Boxed
+build n = case eqInt32 n 0 of
+  True -> MkBoxed (MkDuo "x" "y")
+  False -> case predInt32 n of
+    Left _e -> MkBoxed (MkDuo "p" "q")
+    Right m -> build m
+
+pick : Boxed -> Bool -> String
+pick bx flag = case bx of
+  MkBoxed v -> case flag of
+    True -> case v of
+      MkDuo a _b -> a
+    False -> "skip"
+
+run : List String -> IO Never Unit
+run args =
+  let flag : Bool = case headList args of
+        Nothing -> True
+        Just _s -> False
+   in IO.Stdout.print (pick (build 1) flag)
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO run
+    |> handleErrorIO handleInputErr

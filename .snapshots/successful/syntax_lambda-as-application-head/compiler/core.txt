@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,22 +15,16 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
@@ -39,15 +32,9 @@ CoreProgram
                 )
             )
         , CValDef "runMe"
-            ( CCall
-                ( CVar "$lam$13" )
-                [ CIntLit 5 TInt32 ]
-            )
+            ( CIntLit 5 TInt32 )
         , CValDef "doubled"
-            ( CCall
-                ( CVar "$lam$14" )
-                [ CVar "runMe" ]
-            )
+            ( CVar "runMe" )
         , CValDef "main"
             ( CCon 7
                 [ CCall
@@ -57,9 +44,5 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$13" [ "x" ]
-            ( CVar "x" )
-        , CFunDef "$lam$14" [ "n" ]
-            ( CVar "n" )
         ]
     }

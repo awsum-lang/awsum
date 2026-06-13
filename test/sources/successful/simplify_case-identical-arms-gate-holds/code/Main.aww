@@ -1,0 +1,41 @@
+{- Two gates hold. multi reads its binder twice — a multi-use binder stays
+   a real read (no projection inline), so the body uses it and the case
+   stays. rebuild's loop returns the same one-field cell from both arms of
+   a case on its own parameter — the reuse-eligible scrutinee keeps the
+   same-arity carve-out live, the case stays, and Awsum.Reuse rewrites the
+   reconstruction in place (CReuse on the reference-counted backends). The
+   loop is what keeps the pin honest: a non-recursive rebuild would inline
+   into main, where the scrutinee is no longer a parameter and the collapse
+   is the right call. -}
+
+import IO.Stdout
+
+multi : Tuple2 String String -> String
+multi t = case t of
+  Tuple2 a _b -> (case a ++ a of
+    Left _e -> "TOO_LONG"
+    Right r -> r)
+
+rebuild : UInt32 -> Maybe UInt32 -> Maybe UInt32
+rebuild k m = case eqUInt32 k 0 of
+  True -> m
+  False -> case predUInt32 k of
+    Left _u -> m
+    Right j -> case m of
+      Just _n -> rebuild j (Just 5)
+      Nothing -> rebuild j (Just 5)
+
+maybeOf : String -> Maybe UInt32
+maybeOf s = case eqUInt32 (lengthUtf8Bytes s) 1 of
+  True -> Just 9
+  False -> Nothing
+
+render : Maybe UInt32 -> String
+render m = case m of
+  Just n -> showUInt32 n
+  Nothing -> "none"
+
+main : IO Never Unit
+main = case multi (Tuple2 "ab" "cd") ++ render (rebuild 1 (maybeOf "x")) of
+  Left _e2 -> IO.Stdout.print "TOO_LONG"
+  Right out -> IO.Stdout.print out

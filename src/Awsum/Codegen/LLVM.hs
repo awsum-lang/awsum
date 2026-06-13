@@ -141,7 +141,7 @@ codegenLLVM :: LLVMHost -> PreludeTags -> CoreProgram -> Text
 codegenLLVM host ptags prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
-      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing, armPatternByScrut = Map.empty, elidedBinders = Set.empty}
+      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing, armPatternByScrut = Map.empty, elidedBinders = Set.empty, joinTargets = Map.empty}
       userCode = T.intercalate "\n\n" (map renderFunc (evalState (traverse (emitDecl ctx) decls) 0))
       builtIns = usedBuiltIns prog
    in T.intercalate
@@ -161,7 +161,7 @@ data EmitCtx = EmitCtx
   { params :: Set Text,
     valDefs :: Set Text,
     stringPool :: StringPool,
-    locals :: Map Text Text, -- case-bound variable name → SSA temp
+    locals :: Map Text LVal, -- case- or let-bound variable name → bound value (SSA temp for case extracts; any 'LVal' for a 'CLet', e.g. a string-constant gep)
 
     -- | @Just@ while we are emitting a 'CFunDef' body wrapped in 'CLoop'.
     -- Carries the label / alloca-slot names the TCO pass's 'CContinue'
@@ -187,8 +187,71 @@ data EmitCtx = EmitCtx
     -- via 'isSelfMoveAt'. Empty for any binder that flows anywhere
     -- other than that one 'CReuse' field (CContinue arg, CCall arg,
     -- multiple uses, etc.) — those keep the full inc/dec dance.
-    elidedBinders :: Set Text
+    elidedBinders :: Set Text,
+    -- | In-scope join points: join name → branch target. Entered by the
+    -- 'CJoin' emitters for the extent of the inner expression; a 'CJump'
+    -- resolves its label, parameter slots, and — in the tail walks — the
+    -- 'pending'\/fresh-scrutinee baselines recorded at the 'CJoin', so the
+    -- jump releases exactly what accumulated since the node.
+    joinTargets :: Map Text JoinTarget
   }
+
+-- | Branch target of an in-scope 'CJoin'. The parameters live in
+-- prologue-allocated slots ('joinSlotName'; mem2reg turns the
+-- store\/load pairs into phis), so a jump needs no knowledge of its
+-- own basic-block label.
+data JoinTarget = JoinTarget
+  { jtLabel :: Text,
+    jtParams :: [Text],
+    -- | Lengths of the tail walks' @pending@ / @freshScruts@ stacks at
+    -- the 'CJoin' node. Binders and scrutinees accumulated past these
+    -- baselines belong to the jumping path and are released at the jump
+    -- (mirroring 'CContinue'); whatever was already pending at the node
+    -- outlives it and is released at the join body's own terminals.
+    jtPendingBase :: Int,
+    jtScrutBase :: Int
+  }
+
+-- | The prologue-allocated slot carrying a join parameter's value across
+-- the jump. Join parameter names are globally unique (one mint counter in
+-- 'Awsum.Simplify'), so the name alone identifies the slot. Allocated in
+-- the function prologue — an alloca at the 'CJoin' site would grow the
+-- stack per iteration when the join sits inside a 'CLoop' body.
+joinSlotName :: Name -> Text
+joinSlotName p = "%" <> mangle p <> ".jslot"
+
+-- | Every 'CJoin' parameter anywhere in a declaration body — the
+-- prologue allocates one slot per entry.
+joinParamsIn :: CExpr -> [Name]
+joinParamsIn = go
+  where
+    go = \case
+      CJoin _ ps body inner -> ps <> go body <> go inner
+      CJump _ args -> concatMap go args
+      CCall f xs -> go f <> concatMap go xs
+      CCon _ fs -> concatMap go fs
+      CRow _ v -> go v
+      CCase s alts -> go s <> concatMap (\(_, _, b) -> go b) alts
+      CRowCase s alts -> go s <> concatMap (\(_, _, b) -> go b) alts
+      CLoop b -> go b
+      CContinue xs -> concatMap go xs
+      CLet _ rhs b -> go rhs <> go b
+      CDrop _ _ b -> go b
+      CReuse _ _ _ fs -> concatMap go fs
+      CVar _ -> []
+      CProj _ _ -> []
+      CString _ -> []
+      CIntLit _ _ -> []
+      CBuiltIn _ -> []
+
+-- | Strip the 'CDrop' wrappers 'Awsum.Lifetime' places around a jumping
+-- arm body: the binders are released at the jump (after the argument
+-- incs), and the bare 'CJump' underneath is what the arm dispatchers
+-- detect.
+peelDrops :: CExpr -> ([Name], CExpr)
+peelDrops = \case
+  CDrop _ n b -> first (n :) (peelDrops b)
+  e -> ([], e)
 
 -- | Scaffolding the 'CFunDef' prologue sets up so 'emitTail' can emit
 -- either a jump back to the loop head (for 'CContinue') or a jump to a
@@ -248,10 +311,14 @@ stringsInExpr = \case
   CRow _ v -> stringsInExpr v
   CRowCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
+  CLet _ rhs body -> stringsInExpr rhs <> stringsInExpr body
+  CProj _ _ -> []
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
   CDrop _ _ body -> stringsInExpr body
-  CReuse _ _ fs -> concatMap stringsInExpr fs
+  CReuse _ _ _ fs -> concatMap stringsInExpr fs
+  CJoin _ _ body inner -> stringsInExpr body <> stringsInExpr inner
+  CJump _ args -> concatMap stringsInExpr args
 
 -- | Emit string-pool constants in the language-fixed length-prefixed
 --   layout, prefixed by a 12-byte @{i32 flag = 0, i32 refcount = 0,
@@ -2683,12 +2750,13 @@ emitDecl ctx = \case
               ]
             | (origName, slot) <- paramSlotPairs
             ]
+            <> [IAlloca (joinSlotName p) Ptr Nothing | p <- joinParamsIn body]
     -- At the loop head, pull each parameter back into an SSA value. These
     -- are the names 'emitExpr' will resolve 'CVar' references to.
     loadPairs <- forM (zip args paramSlotPairs) $ \(origName, (_, slot)) -> do
       loaded <- freshTemp
       pure ((origName, loaded), ILoad loaded Ptr (VReg slot))
-    let loopLocals = Map.fromList (map fst loadPairs)
+    let loopLocals = Map.fromList [(n, VReg t) | (n, t) <- map fst loadPairs]
         loadInstrs = map snd loadPairs
         lctx =
           LoopCtx
@@ -2741,7 +2809,7 @@ emitDecl ctx = \case
           lfRetType = Ptr,
           lfName = mangle nm,
           lfParams = [(Ptr, "%" <> mangle a) | a <- args],
-          lfBody = bodyEmit
+          lfBody = [IAlloca (joinSlotName p) Ptr Nothing | p <- joinParamsIn body] <> bodyEmit
         }
   CValDef nm rhs -> do
     put 0
@@ -2753,8 +2821,126 @@ emitDecl ctx = \case
           lfRetType = Ptr,
           lfName = mangle nm,
           lfParams = [],
-          lfBody = instrs <> [IRet (Just (Ptr, result))]
+          lfBody =
+            [IAlloca (joinSlotName p) Ptr Nothing | p <- joinParamsIn rhs]
+              <> instrs
+              <> [IRet (Just (Ptr, result))]
         }
+
+-- | The inner expression of an expression-position 'CJoin': a case —
+-- possibly under 'CLet' bindings floated out of its scrutinee and the
+-- 'CDrop' wrappers 'Awsum.Lifetime' places around those binders — whose
+-- arms either jump to the join (a 'CJump' at the arm root, possibly under
+-- 'CDrop' wrappers — anything deeper would be a jump in non-tail
+-- position, which the node's invariant excludes) or produce the join's
+-- bypass values. Returns the emitted instructions plus the
+-- @(value, end-label)@ pairs for the caller's phi. Releases accumulated
+-- on the way down — a 'CDrop' crossed above the dispatch joins
+-- @pendingDecs@, and the fresh inner scrutinee's dec is appended at the
+-- case — fire once per path: value arms after their owned result, jump
+-- arms before the branch (the jump path never reaches the after-block
+-- where the vanilla case emitter would have released them) — the same
+-- discipline the tail walks express through their @pending@ stacks. A
+-- degenerate inner — the fusion's case later collapsed to a bare jump or
+-- a plain value — takes the same two paths without the dispatch.
+emitJoinInnerExpr :: EmitCtx -> Text -> [LInstr] -> CExpr -> CodegenM ([LInstr], [(LVal, Text)])
+emitJoinInnerExpr ctx afterLbl pendingDecs = \case
+  CRowCase scrut alts ->
+    emitJoinInnerExpr ctx afterLbl pendingDecs (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+  -- A let floated out of the inner case's scrutinee wraps the whole inner
+  -- expression: bind it and continue.
+  CLet x rhs body -> do
+    (ri, rv) <- emitExpr ctx rhs
+    let ctx' = ctx {locals = Map.insert x rv ctx.locals}
+    (bi, ends) <- emitJoinInnerExpr ctx' afterLbl pendingDecs body
+    pure (ri <> emitIncIfCVar ctx rhs rv <> bi, ends)
+  -- A drop above the dispatch (a let binder whose scope is the whole
+  -- inner expression): the dec joins the per-path releases below.
+  CDrop _ n body ->
+    emitJoinInnerExpr ctx afterLbl (pendingDecs <> emitFree ctx n) body
+  CCase scrut alts -> do
+    (instrS, resS) <- emitExpr ctx scrut
+    tagSlot <- freshTemp
+    tagLoaded <- freshTemp
+    tagTmp <- freshTemp
+    let tagInstrs =
+          [ IGep tagSlot Ptr resS [(I32, VInt 0)],
+            ILoad tagLoaded Ptr (VReg tagSlot),
+            IConv tagTmp PtrToInt Ptr (VReg tagLoaded) I64
+          ]
+    defLabel <- freshLabel "join.case.default"
+    let scrutDec =
+          pendingDecs
+            <> [ ICall Nothing Void Nothing "@__free_recursive" [(Ptr, resS)]
+               | isNothing (borrowedSource ctx scrut)
+               ]
+    arms <- forM alts $ \(tag, vars, body) -> do
+      lbl <- freshLabel ("join.case.arm." <> show tag)
+      let armElidedSelfMove = case scrut of
+            CVar n -> elidableArmBinders n vars body
+            _ -> Set.empty
+          armElided = armElidedSelfMove `Set.union` Set.fromList [v | v <- vars, not (binderUsedIn v body)]
+      varInstrs <- forM [(v, idx) | (v, idx) <- zip vars [1 :: Int ..], binderUsedIn v body] $ \(v, idx) -> do
+        slotT <- freshTemp
+        valT <- freshTemp
+        let incPart =
+              ([ICall Nothing Void Nothing "@__inc_ref" [(Ptr, VReg valT)] | not (v `Set.member` armElided)])
+        pure
+          ( [ IGep slotT Ptr resS [(I32, VInt (toInteger idx))],
+              ILoad valT Ptr (VReg slotT)
+            ]
+              <> incPart,
+            (v, valT)
+          )
+      let varCode = concatMap fst varInstrs
+          varBindings = map snd varInstrs
+          ctx' =
+            let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v (VReg tmp) (locals c)}) ctx varBindings
+                withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
+             in case scrut of
+                  CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
+                  _ -> withElided
+      (armCode, valueEnd) <- emitJoinArm ctx' afterLbl scrutDec body
+      pure (tag, lbl, varCode <> armCode, valueEnd)
+    let switchInstr = ISwitch I64 (VReg tagTmp) defLabel [(toInteger tag, lbl) | (tag, lbl, _, _) <- arms]
+        armBlocks = concat [ILabel lbl : code | (_, lbl, code, _) <- arms]
+        defBlock = [ILabel defLabel, IUnreachable]
+    pure
+      ( instrS <> tagInstrs <> [switchInstr] <> armBlocks <> defBlock,
+        [ve | (_, _, _, Just ve) <- arms]
+      )
+  other -> do
+    (code, valueEnd) <- emitJoinArm ctx afterLbl pendingDecs other
+    pure (code, maybeToList valueEnd)
+
+-- | One inner-arm body of an expression-position join. A jump (under its
+-- drop wrappers) evaluates the arguments, incs the borrowed ones, releases
+-- the wrapped binders and the fresh scrutinee, stores into the parameter
+-- slots and branches — 'Nothing', no phi entry. Anything else is an
+-- ordinary expression whose owned value (inc-if-borrow, the
+-- expression-position invariant) trampolines to the after-block.
+emitJoinArm :: EmitCtx -> Text -> [LInstr] -> CExpr -> CodegenM ([LInstr], Maybe (LVal, Text))
+emitJoinArm ctx afterLbl scrutDec body0 =
+  case peelDrops body0 of
+    (dropped, CJump j args)
+      | Just jt <- Map.lookup j ctx.joinTargets -> do
+          argResults <- traverse (emitExpr ctx) args
+          let (argInstrsList, argVals) = unzip argResults
+              incs = concat [emitIncIfCVar ctx e r | (e, r) <- zip args argVals]
+              dropDecs = concatMap (emitFree ctx) dropped
+              stores = [IStore Ptr r (VReg (joinSlotName p)) | (r, p) <- zip argVals jt.jtParams]
+          pure
+            ( concat argInstrsList <> incs <> dropDecs <> scrutDec <> stores <> [IBr jt.jtLabel],
+              Nothing
+            )
+    _ -> do
+      (instrB, resB) <- emitExpr ctx body0
+      endLbl <- freshLabel "join.val"
+      let armInc = emitIncIfCVar ctx body0 resB
+      pure
+        ( instrB <> armInc <> scrutDec <> [IBr endLbl, ILabel endLbl, IBr afterLbl],
+          Just (resB, endLbl)
+        )
 
 -- | Emit a non-CLoop 'CFunDef' body with proper value-tail
 -- param decs. Walks the tail-form, emitting dec per terminal: for
@@ -2778,6 +2964,48 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
       CRowCase scrut alts ->
         goCase ctx pending freshScruts scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
       CDrop _ n body -> go ctx (n : pending) freshScruts body
+      CLet x rhs body -> do
+        (ri, rv) <- emitExpr ctx rhs
+        let ctx' = ctx {locals = Map.insert x rv ctx.locals}
+        bodyInstrs <- go ctx' pending freshScruts body
+        pure (ri <> emitIncIfCVar ctx rhs rv <> bodyInstrs)
+      -- Native join point: the inner expression continues the tail walk
+      -- with the target registered; its jumps store into the prologue
+      -- slots and branch to the labelled body block. The body is walked
+      -- with the join parameters joined onto @pending@ — the value-tail
+      -- release with the move carve-out is exactly the function-parameter
+      -- discipline the parameters follow ('Awsum.Lifetime' wraps no drop
+      -- around them). Whatever was pending at the node stays pending for
+      -- the body: those binders wrap the whole join and die at its
+      -- terminals, never between a jump and the body.
+      CJoin j ps body inner -> do
+        joinLbl <- freshLabel "join"
+        let jt = JoinTarget joinLbl ps (length pending) (length freshScruts)
+            ctxJ = ctx {joinTargets = Map.insert j jt ctx.joinTargets}
+        innerInstrs <- go ctxJ pending freshScruts inner
+        loads <- forM ps $ \p -> do
+          t <- freshTemp
+          pure ((p, VReg t), ILoad t Ptr (VReg (joinSlotName p)))
+        let ctxB = ctx {locals = foldl' (\m (p, v) -> Map.insert p v m) ctx.locals (map fst loads)}
+        bodyInstrs <- go ctxB (ps <> pending) freshScruts body
+        pure (innerInstrs <> [ILabel joinLbl] <> map snd loads <> bodyInstrs)
+      -- Mirror of 'CContinue': evaluate the arguments, inc the borrowed
+      -- ones (the join parameter takes its own reference), release the
+      -- scrutinees and pending binders accumulated /since/ the join node
+      -- (the jumping path's own arms), store into the parameter slots,
+      -- branch.
+      CJump j args
+        | Just jt <- Map.lookup j ctx.joinTargets -> do
+            argResults <- traverse (emitExpr ctx) args
+            let (argInstrsList, argVals) = unzip argResults
+                incs = concat [emitIncIfCVar ctx e r | (e, r) <- zip args argVals]
+                sincePending = take (length pending - jt.jtPendingBase) pending
+                sinceScruts = take (length freshScruts - jt.jtScrutBase) freshScruts
+                scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- sinceScruts]
+                frees = concatMap (emitFree ctx) sincePending
+                stores = [IStore Ptr r (VReg (joinSlotName p)) | (r, p) <- zip argVals jt.jtParams]
+            pure (concat argInstrsList <> incs <> scrutDecs <> frees <> stores <> [IBr jt.jtLabel])
+      CJump j _ -> error ("LLVM codegen: CJump to unknown join " <> j <> " (pipeline bug)")
       other -> do
         (instrs, result) <- emitExpr ctx other
         let resultName = borrowedSource ctx other
@@ -2818,10 +3046,11 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
             Nothing -> resS : freshScruts
       arms <- forM alts $ \(tag, vars, body) -> do
         lbl <- freshLabel ("case.arm." <> show tag)
-        let armElided = case scrut of
+        let armElidedSelfMove = case scrut of
               CVar n -> elidableArmBinders n vars body
               _ -> Set.empty
-        varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+            armElided = armElidedSelfMove `Set.union` Set.fromList [v | v <- vars, not (binderUsedIn v body)]
+        varInstrs <- forM [(v, idx) | (v, idx) <- zip vars [1 :: Int ..], binderUsedIn v body] $ \(v, idx) -> do
           slotT <- freshTemp
           valT <- freshTemp
           let incPart =
@@ -2837,7 +3066,7 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
             varBindings = map snd varInstrs
             -- Linear-scrutinee elision: see 'emitExpr' 'CCase'.
             ctx' =
-              let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+              let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v (VReg tmp) (locals c)}) ctx varBindings
                   withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
                in case scrut of
                     CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
@@ -2917,15 +3146,16 @@ emitTail ctx expr = case ctx.loopCtx of
               Nothing -> resS : freshScruts
         armBlocks <- forM alts $ \(tag, vars, body) -> do
           lbl <- freshLabel ("tco.case.arm." <> show tag)
-          let armElided = case scrut of
+          let armElidedSelfMove = case scrut of
                 CVar n -> elidableArmBinders n vars body
                 _ -> Set.empty
+              armElided = armElidedSelfMove `Set.union` Set.fromList [v | v <- vars, not (binderUsedIn v body)]
           -- Inc each extracted ptr-binder (see the non-tail
           -- 'CCase' in 'emitExpr' for the rationale). Skip the inc
           -- for binders in @armElided@ (move-armVars whose only
           -- use is a 'CReuse' field on the same scrut — their
           -- paired CDrop is also skipped via 'emitFree').
-          varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+          varInstrs <- forM [(v, idx) | (v, idx) <- zip vars [1 :: Int ..], binderUsedIn v body] $ \(v, idx) -> do
             slotT <- freshTemp
             valT <- freshTemp
             let incPart =
@@ -2942,7 +3172,7 @@ emitTail ctx expr = case ctx.loopCtx of
               -- Linear-scrutinee elision: see the matching comment
               -- in 'emitExpr' 'CCase' for the rationale.
               ctx'' =
-                let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx' varBindings
+                let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v (VReg tmp) (locals c)}) ctx' varBindings
                     withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
                  in case scrut of
                       CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
@@ -2961,6 +3191,44 @@ emitTail ctx expr = case ctx.loopCtx of
       CRowCase scrut alts ->
         go ctx' lctx pending freshScruts (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
       CDrop _ n body -> go ctx' lctx (n : pending) freshScruts body
+      -- Bind, then the body continues in tail position (the binder's
+      -- 'CDrop' joins the pending stack like any other).
+      CLet x rhs body -> do
+        (ri, rv) <- emitExpr ctx' rhs
+        let ctx'' = ctx' {locals = Map.insert x rv ctx'.locals}
+        bodyInstrs <- go ctx'' lctx pending freshScruts body
+        pure (ri <> emitIncIfCVar ctx' rhs rv <> bodyInstrs)
+      -- Native join point under a 'CLoop' — same shape as in
+      -- 'emitNonLoopBody': inner walks with the target registered, the
+      -- body walks at its label with the join parameters joined onto
+      -- @pending@ (value-tail release, move carve-out). A 'CContinue'
+      -- inside the body is still excluded by the fusion gate; arms of
+      -- the inner case that continue the loop instead of jumping keep
+      -- their ordinary 'CContinue' handling.
+      CJoin j ps body inner -> do
+        joinLbl <- freshLabel "join"
+        let jt = JoinTarget joinLbl ps (length pending) (length freshScruts)
+            ctxJ = ctx' {joinTargets = Map.insert j jt ctx'.joinTargets}
+        innerInstrs <- go ctxJ lctx pending freshScruts inner
+        loads <- forM ps $ \p -> do
+          t <- freshTemp
+          pure ((p, VReg t), ILoad t Ptr (VReg (joinSlotName p)))
+        let ctxB = ctx' {locals = foldl' (\m (p, v) -> Map.insert p v m) ctx'.locals (map fst loads)}
+        bodyInstrs <- go ctxB lctx (ps <> pending) freshScruts body
+        pure (innerInstrs <> [ILabel joinLbl] <> map snd loads <> bodyInstrs)
+      -- Mirror of 'CContinue' (see 'emitNonLoopBody' for the rationale).
+      CJump j args
+        | Just jt <- Map.lookup j ctx'.joinTargets -> do
+            argResults <- traverse (emitExpr ctx') args
+            let (argInstrsList, argVals) = unzip argResults
+                incs = concat [emitIncIfCVar ctx' e r | (e, r) <- zip args argVals]
+                sincePending = take (length pending - jt.jtPendingBase) pending
+                sinceScruts = take (length freshScruts - jt.jtScrutBase) freshScruts
+                scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- sinceScruts]
+                frees = concatMap (emitFree ctx') sincePending
+                stores = [IStore Ptr r (VReg (joinSlotName p)) | (r, p) <- zip argVals jt.jtParams]
+            pure (concat argInstrsList <> incs <> scrutDecs <> frees <> stores <> [IBr jt.jtLabel])
+      CJump j _ -> error ("LLVM codegen: CJump to unknown join " <> j <> " (pipeline bug)")
       other -> do
         (instrs, result) <- emitExpr ctx' other
         -- Value-tail decs.
@@ -3002,7 +3270,7 @@ emitTail ctx expr = case ctx.loopCtx of
 
 lookupBinderSSA :: EmitCtx -> Name -> LVal
 lookupBinderSSA ctx n
-  | Just t <- Map.lookup n ctx.locals = VReg t
+  | Just v <- Map.lookup n ctx.locals = v
   | n `Set.member` ctx.params = VReg ("%" <> mangle n)
   | otherwise = error $ "LLVM codegen: CDrop on unknown binder: " <> show n
 
@@ -3051,7 +3319,15 @@ borrowedSource ctx = \case
     | n `Set.member` ctx.valDefs -> Nothing
     | n `Set.member` ctx.elidedBinders -> Nothing
     | otherwise -> Just n
-  CDrop _ _ body -> borrowedSource ctx body
+  -- A drop whose body returns the dropped binder itself is the move shape:
+  -- the 'CDrop' emission inc'd the result before the dec, so the value
+  -- leaves the drop /owned/ — a consumer must not inc it again. Any other
+  -- tail passes through.
+  CDrop _ n body -> case borrowedSource ctx body of
+    Just m | m == n -> Nothing
+    other -> other
+  -- A let's value is its body's value.
+  CLet _ _ body -> borrowedSource ctx body
   _ -> Nothing
 
 -- | Return the binder name at the tail of @expr@ when @expr@ is a
@@ -3066,6 +3342,29 @@ sourceCVarStripDrops = \case
   CVar n -> Just n
   CDrop _ _ body -> sourceCVarStripDrops body
   _ -> Nothing
+
+-- | Does the expression contain a 'CReuse' anywhere? Such a field of an
+-- enclosing 'CReuse' defers into the uniqueness branches — see the field
+-- pre-evaluation note in the 'CReuse' emission.
+containsCReuse :: CExpr -> Bool
+containsCReuse = \case
+  CReuse {} -> True
+  CCon _ fs -> any containsCReuse fs
+  CRow _ x -> containsCReuse x
+  CCall f xs -> containsCReuse f || any containsCReuse xs
+  CCase s alts -> containsCReuse s || any (\(_, _, b) -> containsCReuse b) alts
+  CRowCase s alts -> containsCReuse s || any (\(_, _, b) -> containsCReuse b) alts
+  CLet _ rhs b -> containsCReuse rhs || containsCReuse b
+  CLoop b -> containsCReuse b
+  CContinue xs -> any containsCReuse xs
+  CDrop _ _ b -> containsCReuse b
+  CJoin _ _ body inner -> containsCReuse body || containsCReuse inner
+  CJump _ args -> any containsCReuse args
+  CVar _ -> False
+  CProj _ _ -> False
+  CString _ -> False
+  CIntLit _ _ -> False
+  CBuiltIn _ -> False
 
 -- | Emit a @__inc_ref@ call for the loaded SSA iff the source
 -- expression is a borrowed @CVar@. See 'borrowedSource'.
@@ -3091,6 +3390,33 @@ emitArgWithInc ctx expr = do
 --   Returns (accumulated instructions, SSA name holding the result).
 emitExpr :: EmitCtx -> CExpr -> CodegenM ([LInstr], LVal)
 emitExpr ctx = \case
+  -- Bind: the binder takes the rhs value. A borrowed 'CVar' rhs incs (the
+  -- binding owns its own ref — same discipline as a stored cell field); a
+  -- fresh source transfers its @+1@. The matching dec is the binder's
+  -- 'CDrop' from 'Awsum.Lifetime'.
+  CLet x rhs body -> do
+    (ri, rv) <- emitExpr ctx rhs
+    let ctx' = ctx {locals = Map.insert x rv ctx.locals}
+    (bi, bv) <- emitExpr ctx' body
+    pure (ri <> emitIncIfCVar ctx rhs rv <> bi, bv)
+  -- Load slot @slot@ of the cell @n@ and take an owning reference. The
+  -- inc is the cell-takes-ownership inc a 'CVar' field would otherwise get
+  -- via 'emitIncIfCVar' at the construction site — but 'CProj' is not a
+  -- 'CVar', so it inc's itself here. The matching binder is in
+  -- 'ctx.elidedBinders' (its extract-inc and 'CDrop' are skipped), so the
+  -- net refcount equals the un-inlined case.
+  CProj n slot -> do
+    (ni, nv) <- emitExpr ctx (CVar n)
+    slotT <- freshTemp
+    valT <- freshTemp
+    pure
+      ( ni
+          <> [ IGep slotT Ptr nv [(I32, VInt (toInteger slot))],
+               ILoad valT Ptr (VReg slotT),
+               ICall Nothing Void Nothing "@__inc_ref" [(Ptr, VReg valT)]
+             ],
+        VReg valT
+      )
   CString s -> do
     let idx = case Map.lookup s ctx.stringPool of
           Just i -> i
@@ -3101,8 +3427,8 @@ emitExpr ctx = \case
     -- work unchanged. See 'emitStringConstants'.
     pure ([], VConstGep ("@.str." <> show idx) 12)
   CVar n
-    | Just tmp <- Map.lookup n ctx.locals ->
-        pure ([], VReg tmp)
+    | Just v <- Map.lookup n ctx.locals ->
+        pure ([], v)
     | n `Set.member` ctx.params ->
         pure ([], VReg ("%" <> mangle n))
     | n `Set.member` ctx.valDefs -> do
@@ -3191,15 +3517,17 @@ emitExpr ctx = \case
   -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
   -- equals the matched arm's pattern arity, so the cell has at
   -- least @1 + length fields@ slots — every store stays in bounds.
-  CReuse n tag fields -> do
-    -- Reuse-under-RC coexistence: CReuse is in-place mutation,
-    -- which is safe only if the cell is uniquely owned (refcount
-    -- == 1). Under RC the cell may be shared (refcount > 1) when
-    -- the matched binder aliases another live binding; in that
-    -- case we copy-on-write instead, leaving the shared cell
-    -- intact and producing a fresh one. The runtime branch is
-    -- ~3 cycles on the linear path (load refcount + compare +
-    -- predicted branch).
+  CReuse mode n tag fields -> do
+    -- Reuse-under-RC coexistence, split by 'ReuseMode'. A 'ReuseUnique'
+    -- cell — an Scc argument pack or a Cps continuation, loop-private by
+    -- construction — mutates in place unconditionally: no other holder
+    -- can exist, so no refcount check and no copy leg (the same straight
+    -- line the WASM assembler emits). A 'ReuseGuarded' cell — user data
+    -- the caller may retain — is in-place mutation only when uniquely
+    -- owned (refcount == 1); when shared, copy-on-write leaves the shared
+    -- cell intact and produces a fresh one. The runtime branch is ~3
+    -- cycles on the linear path (load refcount + compare + predicted
+    -- branch).
     --
     -- Linear-scrutinee elision (self-move + permutation): if a
     -- field is @CVar v@ where @v@ is one of the arm-pattern binders
@@ -3239,25 +3567,26 @@ emitExpr ctx = \case
             || case nthMaybe (slotIdx - 1) armVars of
               Just w -> w `Set.member` ctx.elidedBinders
               Nothing -> False
-    -- Pre-evaluate fields once — both branches need the same
-    -- field SSAs to either store-in-place or store-into-fresh.
-    fieldResults <- forM fields (emitExpr ctx)
-    let (fieldInstrsList, fieldNames) = unzip fieldResults
-        fieldInstrsCat = concat fieldInstrsList
-        zippedFields = zip3 fields fieldNames [1 :: Int ..]
-    rcPtr <- freshTemp
-    rcVal <- freshTemp
-    isUnique <- freshTemp
-    reuseLbl <- freshLabel "reuse.in_place"
-    copyLbl <- freshLabel "reuse.copy"
-    joinLbl <- freshLabel "reuse.join"
-    let rcCheck =
-          [ IGep rcPtr I8 nPtr [(I64, VInt (-8))],
-            ILoad rcVal I32 (VReg rcPtr),
-            IICmp isUnique IEq I32 (VReg rcVal) (VInt 1),
-            IBrCond (VReg isUnique) reuseLbl copyLbl
-          ]
-    -- In-place reuse path — uniquely owned cell. Before overwriting
+    -- Pre-evaluate fields once — both branches reuse the same field SSAs
+    -- to either store-in-place or store-into-fresh — except fields that
+    -- themselves contain a 'CReuse' (a nested reuse: the next continuation
+    -- cell rebuilt inside the cell this loop reuses). Those defer into the
+    -- branches, and only that ordering makes the nested uniqueness check
+    -- meaningful: on the in-place path this cell's old-slot decs have
+    -- already released the parent's reference to the nested target, so its
+    -- rc is 1 exactly when nothing else holds it; on the copy path no dec
+    -- has happened, the target still carries the parent-slot reference on
+    -- top of its extract-inc, the nested check fails, and the nested reuse
+    -- copies too — leaving the shared original intact. Pre-evaluating such
+    -- a field would mutate the target before this cell's branch decided.
+    fieldResults <- forM fields $ \f ->
+      if containsCReuse f
+        then pure Nothing
+        else Just <$> emitExpr ctx f
+    let fieldInstrsCat = concat [i | Just (i, _) <- fieldResults]
+        zippedFields = zip3 fields fieldResults [1 :: Int ..]
+    -- In-place stores — the whole emission for 'ReuseUnique', the
+    -- unique-ownership leg for 'ReuseGuarded'. Before overwriting
     -- slots we dec each old slot value (the cell's existing
     -- references-via-slot dies); then inc each new CVar source
     -- (the cell's new slot takes its own reference). Fresh
@@ -3278,85 +3607,123 @@ emitExpr ctx = \case
               ICall Nothing Void Nothing "@__free_recursive" [(Ptr, VReg oldVal)]
             ]
     -- Self-move slots: skip store + inc-new entirely (the slot
-    -- already has the right pointer, no new ref needed).
-    inPlaceFieldStores <- forM zippedFields $ \(fExpr, resF, idx) ->
+    -- already has the right pointer, no new ref needed). A deferred
+    -- field evaluates here, after the old-slot decs.
+    inPlaceFieldStores <- forM zippedFields $ \(fExpr, mPre, idx) ->
       if isSelfMoveAt idx
         then pure []
         else do
+          (evalI, resF) <- case mPre of
+            Just (_, r) -> pure ([], r)
+            Nothing -> emitExpr ctx fExpr
           slotTmp <- freshTemp
           pure
-            ( emitIncIfCVar ctx fExpr resF
+            ( evalI
+                <> emitIncIfCVar ctx fExpr resF
                 <> [ IGep slotTmp Ptr nPtr [(I32, VInt (toInteger idx))],
                      IStore Ptr resF (VReg slotTmp)
                    ]
             )
     inPlaceTag <- freshTemp
     inPlaceTagSlot <- freshTemp
-    let inPlaceBlock =
-          [ILabel reuseLbl]
-            <> concat inPlaceOldDecs
+    let inPlaceCore =
+          concat inPlaceOldDecs
             <> [ IConv inPlaceTag IntToPtr I64 (VInt (toInteger tag)) Ptr,
                  IGep inPlaceTagSlot Ptr nPtr [(I32, VInt 0)],
                  IStore Ptr (VReg inPlaceTag) (VReg inPlaceTagSlot)
                ]
             <> concat inPlaceFieldStores
-            <> [IBr joinLbl]
-    -- Copy path — allocate a fresh cell with proper shape, store
-    -- tag + fields (with inc-on-CVar so the new cell takes its
-    -- own refs), then dec @n@ to balance the missing reuse-path
-    -- consumption.
-    copyTmp <- freshTemp
-    copyTagPtr <- freshTemp
-    copyTagSlot <- freshTemp
-    let copyAllocInstrs =
-          [ ICall (Just copyTmp) Ptr Nothing "@__alloc" [(I64, VInt (toInteger ((1 + nFields) * 8))), (I32, VInt (toInteger nFields))],
-            IConv copyTagPtr IntToPtr I64 (VInt (toInteger tag)) Ptr,
-            IGep copyTagSlot Ptr (VReg copyTmp) [(I32, VInt 0)],
-            IStore Ptr (VReg copyTagPtr) (VReg copyTagSlot)
-          ]
-    -- In the copy path, the fresh cell takes its own ownership of
-    -- each ptr field AND the old cell @n@ stays alive at @rc - 1@
-    -- still holding its references, so every borrowed CVar source
-    -- needs an inc here. The 'elidedBinders' carve-out applies only
-    -- to the in-place path (cell stays, slot just shifts); in the
-    -- copy path we bypass 'emitIncIfCVar' (which would skip incs on
-    -- elided binders) and emit the inc unconditionally for any CVar
-    -- that isn't a top-level 'CValDef' fresh source.
-    let copyIncPart fExpr resF =
-          case sourceCVarStripDrops fExpr of
-            Just src
-              | src `Set.notMember` ctx.valDefs ->
-                  [ICall Nothing Void Nothing "@__inc_ref" [(Ptr, resF)]]
-            _ -> []
-    copyFieldStores <- forM zippedFields $ \(fExpr, resF, idx) -> do
-      slotTmp <- freshTemp
-      pure
-        ( copyIncPart fExpr resF
-            <> [ IGep slotTmp Ptr (VReg copyTmp) [(I32, VInt (toInteger idx))],
-                 IStore Ptr resF (VReg slotTmp)
-               ]
-        )
-    let copyDecN = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, nPtr)]]
-        copyBlock =
-          [ILabel copyLbl]
-            <> copyAllocInstrs
-            <> concat copyFieldStores
-            <> copyDecN
-            <> [IBr joinLbl]
-    -- Join — phi the result pointer from both paths.
-    phiTmp <- freshTemp
-    let joinBlock =
-          [ ILabel joinLbl,
-            IPhi phiTmp Ptr [(nPtr, reuseLbl), (VReg copyTmp, copyLbl)]
-          ]
-    pure
-      ( fieldInstrsCat
-          <> rcCheck
-          <> inPlaceBlock
-          <> copyBlock
-          <> joinBlock,
-        VReg phiTmp
-      )
+    case mode of
+      -- Loop-private pack/continuation cell: in place, no branch — the
+      -- old-slot decs still precede the (possibly deferred) field
+      -- evaluation, so a nested guarded reuse's own check stays
+      -- meaningful exactly as on the guarded leg below.
+      ReuseUnique -> pure (fieldInstrsCat <> inPlaceCore, nPtr)
+      ReuseGuarded -> do
+        rcPtr <- freshTemp
+        rcVal <- freshTemp
+        isUnique <- freshTemp
+        reuseLbl <- freshLabel "reuse.in_place"
+        copyLbl <- freshLabel "reuse.copy"
+        joinLbl <- freshLabel "reuse.join"
+        -- A deferred field's nested reuse opens blocks of its own inside
+        -- either branch, so the join phi cannot name the branch entry labels;
+        -- each branch funnels through a dedicated end block — the case
+        -- emitter's @case.end@ idiom.
+        reuseEndLbl <- freshLabel "reuse.in_place.end"
+        copyEndLbl <- freshLabel "reuse.copy.end"
+        let rcCheck =
+              [ IGep rcPtr I8 nPtr [(I64, VInt (-8))],
+                ILoad rcVal I32 (VReg rcPtr),
+                IICmp isUnique IEq I32 (VReg rcVal) (VInt 1),
+                IBrCond (VReg isUnique) reuseLbl copyLbl
+              ]
+            inPlaceBlock =
+              [ILabel reuseLbl]
+                <> inPlaceCore
+                <> [IBr reuseEndLbl, ILabel reuseEndLbl, IBr joinLbl]
+        -- Copy path — allocate a fresh cell with proper shape, store
+        -- tag + fields (with inc-on-CVar so the new cell takes its
+        -- own refs), then dec @n@ to balance the missing reuse-path
+        -- consumption.
+        copyTmp <- freshTemp
+        copyTagPtr <- freshTemp
+        copyTagSlot <- freshTemp
+        let copyAllocInstrs =
+              [ ICall (Just copyTmp) Ptr Nothing "@__alloc" [(I64, VInt (toInteger ((1 + nFields) * 8))), (I32, VInt (toInteger nFields))],
+                IConv copyTagPtr IntToPtr I64 (VInt (toInteger tag)) Ptr,
+                IGep copyTagSlot Ptr (VReg copyTmp) [(I32, VInt 0)],
+                IStore Ptr (VReg copyTagPtr) (VReg copyTagSlot)
+              ]
+        -- In the copy path, the fresh cell takes its own ownership of
+        -- each ptr field AND the old cell @n@ stays alive at @rc - 1@
+        -- still holding its references, so every borrowed CVar source
+        -- needs an inc here. The 'elidedBinders' carve-out applies only
+        -- to the in-place path (cell stays, slot just shifts); in the
+        -- copy path we bypass 'emitIncIfCVar' (which would skip incs on
+        -- elided binders) and emit the inc unconditionally for any CVar
+        -- that isn't a top-level 'CValDef' fresh source.
+        let copyIncPart fExpr resF =
+              case sourceCVarStripDrops fExpr of
+                Just src
+                  | src `Set.notMember` ctx.valDefs ->
+                      [ICall Nothing Void Nothing "@__inc_ref" [(Ptr, resF)]]
+                _ -> []
+        -- A deferred field evaluates here too — with no preceding decs, so a
+        -- nested reuse sees the undisturbed refcount and copies as well.
+        copyFieldStores <- forM zippedFields $ \(fExpr, mPre, idx) -> do
+          (evalI, resF) <- case mPre of
+            Just (_, r) -> pure ([], r)
+            Nothing -> emitExpr ctx fExpr
+          slotTmp <- freshTemp
+          pure
+            ( evalI
+                <> copyIncPart fExpr resF
+                <> [ IGep slotTmp Ptr (VReg copyTmp) [(I32, VInt (toInteger idx))],
+                     IStore Ptr resF (VReg slotTmp)
+                   ]
+            )
+        let copyDecN = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, nPtr)]]
+            copyBlock =
+              [ILabel copyLbl]
+                <> copyAllocInstrs
+                <> concat copyFieldStores
+                <> copyDecN
+                <> [IBr copyEndLbl, ILabel copyEndLbl, IBr joinLbl]
+        -- Join — phi the result pointer from both paths' end blocks.
+        phiTmp <- freshTemp
+        let joinBlock =
+              [ ILabel joinLbl,
+                IPhi phiTmp Ptr [(nPtr, reuseEndLbl), (VReg copyTmp, copyEndLbl)]
+              ]
+        pure
+          ( fieldInstrsCat
+              <> rcCheck
+              <> inPlaceBlock
+              <> copyBlock
+              <> joinBlock,
+            VReg phiTmp
+          )
   CRowCase scrut alts ->
     emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts -> do
@@ -3376,15 +3743,16 @@ emitExpr ctx = \case
     altLabelsAndBodies <- forM alts $ \(tag, vars, body) -> do
       lbl <- freshLabel ("case.arm." <> show tag)
       endLbl <- freshLabel ("case.end." <> show tag)
-      let armElided = case scrut of
+      let armElidedSelfMove = case scrut of
             CVar n -> elidableArmBinders n vars body
             _ -> Set.empty
+          armElided = armElidedSelfMove `Set.union` Set.fromList [v | v <- vars, not (binderUsedIn v body)]
       -- Extract bound variables from container fields. Each
       -- ptr-binder is inc'd on extract so the local binding takes
       -- its own reference (the scrut cell's slot still holds a ref
       -- too). The matching dec fires at arm end via the 'CDrop'
       -- that 'Awsum.Lifetime' wraps around every arm.
-      varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+      varInstrs <- forM [(v, idx) | (v, idx) <- zip vars [1 :: Int ..], binderUsedIn v body] $ \(v, idx) -> do
         slotT <- freshTemp
         valT <- freshTemp
         let incPart =
@@ -3403,13 +3771,20 @@ emitExpr ctx = \case
       -- under @n@ so a nested 'CReuse n t fs' can detect self-move
       -- slots.
       let ctx' =
-            let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+            let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v (VReg tmp) (locals c)}) ctx varBindings
                 withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
              in case scrut of
                   CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
                   _ -> withElided
       (instrB, resB) <- emitExpr ctx' body
-      pure (tag, lbl, endLbl, varInstrCode <> instrB, resB)
+      -- An expression-position case must yield an /owned/ value, whatever
+      -- the consumer (a cell field, a call argument, a let binding, the
+      -- scrutinee of an outer case): an arm whose tail is a borrowed
+      -- 'CVar' incs it on the way out, exactly as a call boundary would
+      -- have (function inlining replaces such calls with this shape).
+      -- Fresh-source arms and move-inc'd drop tails pass through.
+      let armInc = emitIncIfCVar ctx' body resB
+      pure (tag, lbl, endLbl, varInstrCode <> instrB <> armInc, resB)
     let switchInstr = ISwitch I64 (VReg tagTmp) defLabel [(toInteger tag, lbl) | (tag, lbl, _, _, _) <- altLabelsAndBodies]
     -- arm blocks (body may create new blocks; endLbl is always the direct predecessor of join)
     let armBlocks =
@@ -3694,6 +4069,49 @@ emitExpr ctx = \case
           )
   CLoop _ -> error "LLVM codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
   CContinue _ -> error "LLVM codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
+  -- Expression-position join point (a cell field, a call argument, a
+  -- 'CLet' right-hand side — @main@'s fused IO chains are the dominant
+  -- shape). The inner case's value arms trampoline their owned values to
+  -- the after-block ('emitJoinInnerExpr'); its jump arms store into the
+  -- prologue slots and branch to the body block. The body's value is
+  -- owned like every expression-position arm's (inc-if-borrow), the join
+  -- parameters are released right after — inc the new owner before the
+  -- old one's dec; a body that /is/ a bare parameter moves it out
+  -- instead (no inc, no dec) — and a phi merges the bypass values with
+  -- the body's.
+  CJoin j ps body inner -> do
+    joinLbl <- freshLabel "join"
+    afterLbl <- freshLabel "join.after"
+    let jt = JoinTarget joinLbl ps 0 0
+        ctxJ = ctx {joinTargets = Map.insert j jt ctx.joinTargets}
+    (innerInstrs, valueEnds) <- emitJoinInnerExpr ctxJ afterLbl [] inner
+    loads <- forM ps $ \p -> do
+      t <- freshTemp
+      pure ((p, VReg t), ILoad t Ptr (VReg (joinSlotName p)))
+    let ctxB = ctx {locals = foldl' (\m (p, v) -> Map.insert p v m) ctx.locals (map fst loads)}
+    (bodyInstrs, bodyRes) <- emitExpr ctxB body
+    bodyEnd <- freshLabel "join.end"
+    let psMoved = case borrowedSource ctxB body of
+          Just m | m `elem` ps -> Just m
+          _ -> Nothing
+        bodyInc = case psMoved of
+          Just _ -> []
+          Nothing -> emitIncIfCVar ctxB body bodyRes
+        psDecs = concat [emitFree ctxB p | p <- ps, Just p /= psMoved]
+        bodyBlock =
+          [ILabel joinLbl]
+            <> map snd loads
+            <> bodyInstrs
+            <> bodyInc
+            <> psDecs
+            <> [IBr bodyEnd, ILabel bodyEnd, IBr afterLbl]
+    phiTmp <- freshTemp
+    let afterBlock =
+          [ ILabel afterLbl,
+            IPhi phiTmp Ptr (valueEnds <> [(bodyRes, bodyEnd)])
+          ]
+    pure (innerInstrs <> bodyBlock <> afterBlock, VReg phiTmp)
+  CJump j _ -> error ("LLVM codegen: CJump to " <> j <> " in non-tail position — jumps live only in tail positions of their join's inner expression")
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling

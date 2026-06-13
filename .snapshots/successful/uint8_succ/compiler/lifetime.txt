@@ -1,22 +1,27 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-showOverflowError:
-  param           $wild0                          count=0
-
-render:
-  param           r                               count=1
-  case-pattern    e                               count=0
-  case-pattern    v                               count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_5                         count=1
+  let             $inl3$r                         count=0
+  join-param      $inl13$scrut                    count=2
+  case-pattern    $inl10$__w0                     count=0
+  case-pattern    $inl11$s                        count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$v                         count=0
+  case-pattern    $do_e_5                         count=0
   case-pattern    a                               count=1
+  let             $inl6$r                         count=0
+  case-pattern    $inl4$e                         count=0
+  case-pattern    $inl5$v                         count=0
   case-pattern    $do_e_4                         count=1
   case-pattern    b                               count=1
+  let             $inl9$r                         count=0
+  case-pattern    $inl7$e                         count=0
+  case-pattern    $inl8$v                         count=0
   case-pattern    $do_e_3                         count=1
   case-pattern    c                               count=1
   case-pattern    $do_e_2                         count=1
@@ -25,9 +30,4 @@ main:
   case-pattern    s1                              count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    s2                              count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
 

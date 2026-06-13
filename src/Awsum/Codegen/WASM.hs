@@ -142,7 +142,11 @@ stringsInExpr = \case
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
   CDrop _ _ body -> stringsInExpr body
-  CReuse _ _ fs -> concatMap stringsInExpr fs
+  CReuse _ _ _ fs -> concatMap stringsInExpr fs
+  CLet _ rhs body -> stringsInExpr rhs <> stringsInExpr body
+  CProj _ _ -> []
+  CJoin _ _ body inner -> stringsInExpr body <> stringsInExpr inner
+  CJump _ args -> concatMap stringsInExpr args
 
 -- | Collect arities used in indirect calls (CCall where callee is a param, not a known fun/prim).
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
@@ -162,6 +166,8 @@ collectIndirectArities (CoreProgram decls) funNames =
               _ -> []
             fromChildren = collectInExpr fns params f <> concatMap (collectInExpr fns params) xs
          in fromF <> fromChildren
+      CJoin _ _ body inner -> collectInExpr fns params body <> collectInExpr fns params inner
+      CJump _ args -> concatMap (collectInExpr fns params) args
       _ -> []
 
 -- ════════════════════════════════════════════════════════════════════════════

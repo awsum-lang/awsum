@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,36 +15,21 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
-            )
-        , CFunDef "showUnderflowError" [ "$wild0" ]
-            ( CString "UnderflowError" )
-        , CFunDef "countDown" [ "n" ]
-            ( CCall
-                ( CVar "$cps$countDown" )
-                [ CVar "n"
-                , CCon 8 []
-                ]
             )
         , CFunDef "$cps$countDown"
             [ "n"
@@ -124,109 +108,73 @@ CoreProgram
                     ,
                         ( 9
                         , [ "$pk_9" ]
-                        , CDrop DropFreeUnchecked "$pk_9"
-                            ( CCase
-                                ( CVar "$x" )
-                                [
-                                    ( 3
-                                    , [ "e" ]
-                                    , CDrop DropFreeUnchecked "e"
-                                        ( CDrop DropFreeUnchecked "$k"
-                                            ( CContinue
-                                                [ CVar "$pk_9"
-                                                , CReuse "$x" 3
-                                                    [ CVar "e" ]
-                                                ]
-                                            )
-                                        )
-                                    )
-                                ,
-                                    ( 4
-                                    , [ "v" ]
-                                    , CDrop DropFreeUnchecked "v"
-                                        ( CDrop DropFreeUnchecked "$k"
-                                            ( CContinue
-                                                [ CVar "$pk_9"
-                                                , CReuse "$x" 4
-                                                    [ CVar "v" ]
-                                                ]
-                                            )
-                                        )
-                                    )
-                                ]
+                        , CDrop DropFreeUnchecked "$k"
+                            ( CDrop DropFreeUnchecked "$x"
+                                ( CContinue
+                                    [ CProj "$k" 1
+                                    , CVar "$x"
+                                    ]
+                                )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "showResult" [ "r" ]
-            ( CCase
-                ( CVar "r" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "left: "
-                            , CCall
-                                ( CVar "showUnderflowError" )
-                                [ CVar "e" ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "v" ]
-                    , CDrop DropFreeUnchecked "v"
-                        ( CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "right: "
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "v" ]
-                            ]
-                        )
-                    )
-                ]
-            )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCall
-                    ( CVar "showResult" )
-                    [ CCall
-                        ( CVar "countDown" )
-                        [ CIntLit 100000 TInt32 ]
+            ( CLet "$inl3$r"
+                ( CCall
+                    ( CVar "$cps$countDown" )
+                    [ CIntLit 100000 TInt32
+                    , CCon 8 []
                     ]
-                ]
-            )
-        , CFunDef "$let$13" [ "res" ]
-            ( CCase
-                ( CVar "res" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
-                            [ CString "STRING_TOO_LONG"
-                            , CCon 5
-                                [ CCon 0 [] ]
+                )
+                ( CDrop DropFreeUnchecked "$inl3$r"
+                    ( CCase
+                        ( CCase
+                            ( CVar "$inl3$r" )
+                            [
+                                ( 3
+                                , [ "$inl1$e" ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "left: "
+                                    , CString "UnderflowError"
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl2$v" ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "right: "
+                                    , CCall
+                                        ( CBuiltIn "showInt32" )
+                                        [ CProj "$inl3$r" 1 ]
+                                    ]
+                                )
                             ]
                         )
+                        [
+                            ( 3
+                            , [ "$inl4$__w0" ]
+                            , CCon 7
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl5$s" ]
+                            , CCon 7
+                                [ CVar "$inl5$s"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ]
                     )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
-                            ]
-                        )
-                    )
-                ]
+                )
             )
         ]
     }

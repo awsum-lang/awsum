@@ -1,22 +1,13 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "pureIO" [ "x" ]
-            ( CCon 5
-                [ CVar "x" ]
-            )
-        , CFunDef "failIO" [ "e" ]
-            ( CCon 6
-                [ CVar "e" ]
-            )
-        , CFunDef "runIO" [ "io" ]
+        [ CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
                     ( CVar "io" )
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -24,58 +15,21 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
-            )
-        , CFunDef "eitherToIO" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCall
-                            ( CVar "failIO" )
-                            [ CVar "e" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "pureIO" )
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "toRowA" [ "_s" ]
-            ( CRow 2252990199
-                ( CCon 27 [] )
-            )
-        , CFunDef "toRowB" [ "_s" ]
-            ( CRow 2269767818
-                ( CCon 28 [] )
             )
         , CValDef "leftSrc"
             ( CCon 3
@@ -86,40 +40,73 @@ CoreProgram
                 [ CIntLit 5 TInt32 ]
             )
         , CValDef "mappedA"
-            ( CCall
-                ( CVar "$df$mapLeft$0" )
-                [ CVar "leftSrc" ]
+            ( CLet "$inl18$x"
+                ( CVar "leftSrc" )
+                ( CDrop DropFreeUnchecked "$inl18$x"
+                    ( CCase
+                        ( CVar "$inl18$x" )
+                        [
+                            ( 3
+                            , [ "$inl16$e" ]
+                            , CCon 3
+                                [ CRow 2252990199
+                                    ( CCon 27 [] )
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl17$a" ]
+                            , CVar "$inl18$x"
+                            )
+                        ]
+                    )
+                )
             )
         , CValDef "mappedB"
-            ( CCall
-                ( CVar "$df$mapLeft$1" )
-                [ CVar "leftSrc" ]
+            ( CLet "$inl15$x"
+                ( CVar "leftSrc" )
+                ( CDrop DropFreeUnchecked "$inl15$x"
+                    ( CCase
+                        ( CVar "$inl15$x" )
+                        [
+                            ( 3
+                            , [ "$inl13$e" ]
+                            , CCon 3
+                                [ CRow 2269767818
+                                    ( CCon 28 [] )
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl14$a" ]
+                            , CVar "$inl15$x"
+                            )
+                        ]
+                    )
+                )
             )
         , CValDef "mappedOk"
-            ( CCall
-                ( CVar "$df$mapLeft$0" )
-                [ CVar "rightSrc" ]
-            )
-        , CFunDef "remap" [ "e" ]
-            ( CRowCase
-                ( CVar "e" )
-                [
-                    ( 3640903312
-                    , "_y"
-                    , CDrop DropFreeUnchecked "_y"
-                        ( CRow 2269767818
-                            ( CCon 28 [] )
-                        )
+            ( CLet "$inl21$x"
+                ( CVar "rightSrc" )
+                ( CDrop DropFreeUnchecked "$inl21$x"
+                    ( CCase
+                        ( CVar "$inl21$x" )
+                        [
+                            ( 3
+                            , [ "$inl19$e" ]
+                            , CCon 3
+                                [ CRow 2252990199
+                                    ( CCon 27 [] )
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl20$a" ]
+                            , CVar "$inl21$x"
+                            )
+                        ]
                     )
-                ,
-                    ( 3657680931
-                    , "_x"
-                    , CDrop DropFreeUnchecked "_x"
-                        ( CRow 2252990199
-                            ( CCon 27 [] )
-                        )
-                    )
-                ]
+                )
             )
         , CValDef "leftX"
             ( CCon 3
@@ -134,84 +121,76 @@ CoreProgram
                 ]
             )
         , CValDef "remappedX"
-            ( CCall
-                ( CVar "$df$mapLeft$2" )
-                [ CVar "leftX" ]
+            ( CLet "$inl7$x"
+                ( CVar "leftX" )
+                ( CDrop DropFreeUnchecked "$inl7$x"
+                    ( CCase
+                        ( CVar "$inl7$x" )
+                        [
+                            ( 3
+                            , [ "$inl3$e" ]
+                            , CCon 3
+                                [ CRowCase
+                                    ( CProj "$inl7$x" 1 )
+                                    [
+                                        ( 3640903312
+                                        , "$inl4$_y"
+                                        , CRow 2269767818
+                                            ( CCon 28 [] )
+                                        )
+                                    ,
+                                        ( 3657680931
+                                        , "$inl5$_x"
+                                        , CRow 2252990199
+                                            ( CCon 27 [] )
+                                        )
+                                    ]
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl6$a" ]
+                            , CVar "$inl7$x"
+                            )
+                        ]
+                    )
+                )
             )
         , CValDef "remappedY"
-            ( CCall
-                ( CVar "$df$mapLeft$2" )
-                [ CVar "leftY" ]
-            )
-        , CFunDef "showAB" [ "e" ]
-            ( CCase
-                ( CVar "e" )
-                [
-                    ( 3
-                    , [ "__pa0" ]
-                    , CDrop DropFreeUnchecked "__pa0"
-                        ( CRowCase
-                            ( CVar "__pa0" )
-                            [
-                                ( 2252990199
-                                , "_a"
-                                , CDrop DropFreeUnchecked "_a"
-                                    ( CString "ErrA" )
-                                )
-                            ,
-                                ( 2269767818
-                                , "_b"
-                                , CDrop DropFreeUnchecked "_b"
-                                    ( CString "ErrB" )
-                                )
-                            ]
-                        )
+            ( CLet "$inl12$x"
+                ( CVar "leftY" )
+                ( CDrop DropFreeUnchecked "$inl12$x"
+                    ( CCase
+                        ( CVar "$inl12$x" )
+                        [
+                            ( 3
+                            , [ "$inl8$e" ]
+                            , CCon 3
+                                [ CRowCase
+                                    ( CProj "$inl12$x" 1 )
+                                    [
+                                        ( 3640903312
+                                        , "$inl9$_y"
+                                        , CRow 2269767818
+                                            ( CCon 28 [] )
+                                        )
+                                    ,
+                                        ( 3657680931
+                                        , "$inl10$_x"
+                                        , CRow 2252990199
+                                            ( CCon 27 [] )
+                                        )
+                                    ]
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl11$a" ]
+                            , CVar "$inl12$x"
+                            )
+                        ]
                     )
-                ,
-                    ( 4
-                    , [ "n" ]
-                    , CDrop DropFreeUnchecked "n"
-                        ( CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "showABC" [ "e" ]
-            ( CCase
-                ( CVar "e" )
-                [
-                    ( 3
-                    , [ "__pa0" ]
-                    , CDrop DropFreeUnchecked "__pa0"
-                        ( CRowCase
-                            ( CVar "__pa0" )
-                            [
-                                ( 2252990199
-                                , "_a"
-                                , CDrop DropFreeUnchecked "_a"
-                                    ( CString "ErrA" )
-                                )
-                            ,
-                                ( 2269767818
-                                , "_b"
-                                , CDrop DropFreeUnchecked "_b"
-                                    ( CString "ErrB" )
-                                )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "n" ]
-                    , CDrop DropFreeUnchecked "n"
-                        ( CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
-                        )
-                    )
-                ]
+                )
             )
         , CFunDef "tagged"
             [ "label"
@@ -268,47 +247,43 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "appendTagged"
-            [ "acc"
-            , "label"
-            , "val"
-            ]
-            ( CCase
-                ( CCall
-                    ( CVar "tagged" )
-                    [ CVar "label"
-                    , CVar "val"
-                    ]
-                )
-                [
-                    ( 3
-                    , [ "$do_e_2" ]
-                    , CDrop DropFreeUnchecked "$do_e_2"
-                        ( CCon 3
-                            [ CVar "$do_e_2" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "line" ]
-                    , CDrop DropFreeUnchecked "line"
-                        ( CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "acc"
-                            , CVar "line"
-                            ]
-                        )
-                    )
-                ]
-            )
         , CValDef "render"
             ( CCase
                 ( CCall
                     ( CVar "tagged" )
                     [ CString "mappedA"
-                    , CCall
-                        ( CVar "showAB" )
-                        [ CVar "mappedA" ]
+                    , CLet "$inl26$e"
+                        ( CVar "mappedA" )
+                        ( CDrop DropFreeUnchecked "$inl26$e"
+                            ( CCase
+                                ( CVar "$inl26$e" )
+                                [
+                                    ( 3
+                                    , [ "$inl22$__pa0" ]
+                                    , CRowCase
+                                        ( CProj "$inl26$e" 1 )
+                                        [
+                                            ( 2252990199
+                                            , "$inl23$_a"
+                                            , CString "ErrA"
+                                            )
+                                        ,
+                                            ( 2269767818
+                                            , "$inl24$_b"
+                                            , CString "ErrB"
+                                            )
+                                        ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl25$n" ]
+                                    , CCall
+                                        ( CBuiltIn "showInt32" )
+                                        [ CProj "$inl26$e" 1 ]
+                                    )
+                                ]
+                            )
+                        )
                     ]
                 )
                 [
@@ -320,188 +295,315 @@ CoreProgram
                 ,
                     ( 4
                     , [ "r01" ]
-                    , CCase
-                        ( CCall
-                            ( CVar "appendTagged" )
-                            [ CVar "r01"
-                            , CString "mappedB"
-                            , CCall
-                                ( CVar "showAB" )
-                                [ CVar "mappedB" ]
-                            ]
-                        )
-                        [
-                            ( 3
-                            , [ "$do_e_5" ]
-                            , CCon 3
-                                [ CVar "$do_e_5" ]
-                            )
-                        ,
-                            ( 4
-                            , [ "r02" ]
-                            , CCase
-                                ( CCall
-                                    ( CVar "appendTagged" )
-                                    [ CVar "r02"
-                                    , CString "mappedOk"
-                                    , CCall
-                                        ( CVar "showAB" )
-                                        [ CVar "mappedOk" ]
-                                    ]
+                    , CJoin "$join55" [ "$inl56$scrut" ]
+                        ( CCase
+                            ( CVar "$inl56$scrut" )
+                            [
+                                ( 3
+                                , [ "$do_e_5" ]
+                                , CVar "$inl56$scrut"
                                 )
-                                [
-                                    ( 3
-                                    , [ "$do_e_4" ]
-                                    , CCon 3
-                                        [ CVar "$do_e_4" ]
+                            ,
+                                ( 4
+                                , [ "r02" ]
+                                , CJoin "$join57" [ "$inl58$scrut" ]
+                                    ( CCase
+                                        ( CVar "$inl58$scrut" )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_4" ]
+                                            , CVar "$inl58$scrut"
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "r03" ]
+                                            , CJoin "$join59" [ "$inl60$scrut" ]
+                                                ( CCase
+                                                    ( CVar "$inl60$scrut" )
+                                                    [
+                                                        ( 3
+                                                        , [ "$do_e_3" ]
+                                                        , CVar "$inl60$scrut"
+                                                        )
+                                                    ,
+                                                        ( 4
+                                                        , [ "r04" ]
+                                                        , CCase
+                                                            ( CCall
+                                                                ( CVar "tagged" )
+                                                                [ CString "remappedY"
+                                                                , CLet "$inl52$e"
+                                                                    ( CVar "remappedY" )
+                                                                    ( CDrop DropFreeUnchecked "$inl52$e"
+                                                                        ( CCase
+                                                                            ( CVar "$inl52$e" )
+                                                                            [
+                                                                                ( 3
+                                                                                , [ "$inl48$__pa0" ]
+                                                                                , CRowCase
+                                                                                    ( CProj "$inl52$e" 1 )
+                                                                                    [
+                                                                                        ( 2252990199
+                                                                                        , "$inl49$_a"
+                                                                                        , CString "ErrA"
+                                                                                        )
+                                                                                    ,
+                                                                                        ( 2269767818
+                                                                                        , "$inl50$_b"
+                                                                                        , CString "ErrB"
+                                                                                        )
+                                                                                    ]
+                                                                                )
+                                                                            ,
+                                                                                ( 4
+                                                                                , [ "$inl51$n" ]
+                                                                                , CCall
+                                                                                    ( CBuiltIn "showInt32" )
+                                                                                    [ CProj "$inl52$e" 1 ]
+                                                                                )
+                                                                            ]
+                                                                        )
+                                                                    )
+                                                                ]
+                                                            )
+                                                            [
+                                                                ( 3
+                                                                , [ "$inl53$$do_e_2" ]
+                                                                , CDrop DropFreeUnchecked "$inl53$$do_e_2"
+                                                                    ( CCon 3
+                                                                        [ CVar "$inl53$$do_e_2" ]
+                                                                    )
+                                                                )
+                                                            ,
+                                                                ( 4
+                                                                , [ "$inl54$line" ]
+                                                                , CDrop DropFreeUnchecked "$inl54$line"
+                                                                    ( CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CProj "$inl60$scrut" 1
+                                                                        , CVar "$inl54$line"
+                                                                        ]
+                                                                    )
+                                                                )
+                                                            ]
+                                                        )
+                                                    ]
+                                                )
+                                                ( CCase
+                                                    ( CCall
+                                                        ( CVar "tagged" )
+                                                        [ CString "remappedX"
+                                                        , CLet "$inl45$e"
+                                                            ( CVar "remappedX" )
+                                                            ( CDrop DropFreeUnchecked "$inl45$e"
+                                                                ( CCase
+                                                                    ( CVar "$inl45$e" )
+                                                                    [
+                                                                        ( 3
+                                                                        , [ "$inl41$__pa0" ]
+                                                                        , CRowCase
+                                                                            ( CProj "$inl45$e" 1 )
+                                                                            [
+                                                                                ( 2252990199
+                                                                                , "$inl42$_a"
+                                                                                , CString "ErrA"
+                                                                                )
+                                                                            ,
+                                                                                ( 2269767818
+                                                                                , "$inl43$_b"
+                                                                                , CString "ErrB"
+                                                                                )
+                                                                            ]
+                                                                        )
+                                                                    ,
+                                                                        ( 4
+                                                                        , [ "$inl44$n" ]
+                                                                        , CCall
+                                                                            ( CBuiltIn "showInt32" )
+                                                                            [ CProj "$inl45$e" 1 ]
+                                                                        )
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ]
+                                                    )
+                                                    [
+                                                        ( 3
+                                                        , [ "$inl46$$do_e_2" ]
+                                                        , CDrop DropFreeUnchecked "$inl46$$do_e_2"
+                                                            ( CCon 3
+                                                                [ CVar "$inl46$$do_e_2" ]
+                                                            )
+                                                        )
+                                                    ,
+                                                        ( 4
+                                                        , [ "$inl47$line" ]
+                                                        , CDrop DropFreeUnchecked "$inl47$line"
+                                                            ( CJump "$join59"
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CProj "$inl58$scrut" 1
+                                                                    , CVar "$inl47$line"
+                                                                    ]
+                                                                ]
+                                                            )
+                                                        )
+                                                    ]
+                                                )
+                                            )
+                                        ]
                                     )
-                                ,
-                                    ( 4
-                                    , [ "r03" ]
-                                    , CCase
+                                    ( CCase
                                         ( CCall
-                                            ( CVar "appendTagged" )
-                                            [ CVar "r03"
-                                            , CString "remappedX"
-                                            , CCall
-                                                ( CVar "showABC" )
-                                                [ CVar "remappedX" ]
+                                            ( CVar "tagged" )
+                                            [ CString "mappedOk"
+                                            , CLet "$inl38$e"
+                                                ( CVar "mappedOk" )
+                                                ( CDrop DropFreeUnchecked "$inl38$e"
+                                                    ( CCase
+                                                        ( CVar "$inl38$e" )
+                                                        [
+                                                            ( 3
+                                                            , [ "$inl34$__pa0" ]
+                                                            , CRowCase
+                                                                ( CProj "$inl38$e" 1 )
+                                                                [
+                                                                    ( 2252990199
+                                                                    , "$inl35$_a"
+                                                                    , CString "ErrA"
+                                                                    )
+                                                                ,
+                                                                    ( 2269767818
+                                                                    , "$inl36$_b"
+                                                                    , CString "ErrB"
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "$inl37$n" ]
+                                                            , CCall
+                                                                ( CBuiltIn "showInt32" )
+                                                                [ CProj "$inl38$e" 1 ]
+                                                            )
+                                                        ]
+                                                    )
+                                                )
                                             ]
                                         )
                                         [
                                             ( 3
-                                            , [ "$do_e_3" ]
-                                            , CCon 3
-                                                [ CVar "$do_e_3" ]
+                                            , [ "$inl39$$do_e_2" ]
+                                            , CDrop DropFreeUnchecked "$inl39$$do_e_2"
+                                                ( CCon 3
+                                                    [ CVar "$inl39$$do_e_2" ]
+                                                )
                                             )
                                         ,
                                             ( 4
-                                            , [ "r04" ]
-                                            , CCall
-                                                ( CVar "appendTagged" )
-                                                [ CVar "r04"
-                                                , CString "remappedY"
-                                                , CCall
-                                                    ( CVar "showABC" )
-                                                    [ CVar "remappedY" ]
-                                                ]
+                                            , [ "$inl40$line" ]
+                                            , CDrop DropFreeUnchecked "$inl40$line"
+                                                ( CJump "$join57"
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CProj "$inl56$scrut" 1
+                                                        , CVar "$inl40$line"
+                                                        ]
+                                                    ]
+                                                )
                                             )
                                         ]
                                     )
+                                )
+                            ]
+                        )
+                        ( CCase
+                            ( CCall
+                                ( CVar "tagged" )
+                                [ CString "mappedB"
+                                , CLet "$inl31$e"
+                                    ( CVar "mappedB" )
+                                    ( CDrop DropFreeUnchecked "$inl31$e"
+                                        ( CCase
+                                            ( CVar "$inl31$e" )
+                                            [
+                                                ( 3
+                                                , [ "$inl27$__pa0" ]
+                                                , CRowCase
+                                                    ( CProj "$inl31$e" 1 )
+                                                    [
+                                                        ( 2252990199
+                                                        , "$inl28$_a"
+                                                        , CString "ErrA"
+                                                        )
+                                                    ,
+                                                        ( 2269767818
+                                                        , "$inl29$_b"
+                                                        , CString "ErrB"
+                                                        )
+                                                    ]
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "$inl30$n" ]
+                                                , CCall
+                                                    ( CBuiltIn "showInt32" )
+                                                    [ CProj "$inl31$e" 1 ]
+                                                )
+                                            ]
+                                        )
+                                    )
                                 ]
                             )
-                        ]
-                    )
-                ]
-            )
-        , CFunDef "printErr" [ "e" ]
-            ( CCase
-                ( CVar "e" )
-                [
-                    ( 19
-                    , []
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                            [
+                                ( 3
+                                , [ "$inl32$$do_e_2" ]
+                                , CCon 3
+                                    [ CVar "$inl32$$do_e_2" ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl33$line" ]
+                                , CJump "$join55"
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "r01"
+                                        , CVar "$inl33$line"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
                     )
                 ]
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$df$handleErrorIO$3" )
-                [ CCall
-                    ( CVar "$df$andThenIO$7" )
-                    [ CCall
-                        ( CVar "eitherToIO" )
-                        [ CVar "render" ]
-                    ]
-                ]
-            )
-        , CFunDef "$bi$IO.Stdout.print" [ "$x0" ]
-            ( CCon 7
-                [ CVar "$x0"
-                , CCon 5
-                    [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$df$mapLeft$0" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CCall
-                                ( CVar "toRowA" )
-                                [ CVar "e" ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$mapLeft$1" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CCall
-                                ( CVar "toRowB" )
-                                [ CVar "e" ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$mapLeft$2" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CCall
-                                ( CVar "remap" )
-                                [ CVar "e" ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$handleErrorIO$3" [ "io" ]
-            ( CCall
                 ( CVar "$cps$$df$handleErrorIO$3" )
-                [ CVar "io"
+                [ CCall
+                    ( CVar "$cps$$df$andThenIO$7" )
+                    [ CLet "$inl63$x"
+                        ( CVar "render" )
+                        ( CDrop DropFreeUnchecked "$inl63$x"
+                            ( CCase
+                                ( CVar "$inl63$x" )
+                                [
+                                    ( 3
+                                    , [ "$inl61$e" ]
+                                    , CCon 6
+                                        [ CProj "$inl63$x" 1 ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl62$a" ]
+                                    , CCon 5
+                                        [ CProj "$inl63$x" 1 ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 31 []
+                    ]
                 , CCon 29 []
                 ]
             )
@@ -515,27 +617,24 @@ CoreProgram
                     [
                         ( 5
                         , [ "a" ]
-                        , CDrop DropFreeUnchecked "a"
-                            ( CCall
-                                ( CVar "$apply$$df$handleErrorIO$3" )
-                                [ CVar "$k"
-                                , CCon 5
-                                    [ CVar "a" ]
-                                ]
-                            )
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$3" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
                         )
                     ,
                         ( 6
                         , [ "e" ]
-                        , CDrop DropFreeUnchecked "e"
-                            ( CCall
-                                ( CVar "$apply$$df$handleErrorIO$3" )
-                                [ CVar "$k"
-                                , CCall
-                                    ( CVar "printErr" )
-                                    [ CVar "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$3" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 5
+                                    [ CCon 0 [] ]
                                 ]
-                            )
+                            ]
                         )
                     ,
                         ( 7
@@ -548,7 +647,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 30
+                                        , CReuse ReuseGuarded "io" 30
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -583,7 +682,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
                                         [ CVar "$pk_30"
-                                        , CReuse "$k" 7
+                                        , CReuse ReuseUnique "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
                                             ]
@@ -595,13 +694,6 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$df$andThenIO$7" [ "io" ]
-            ( CCall
-                ( CVar "$cps$$df$andThenIO$7" )
-                [ CVar "io"
-                , CCon 31 []
-                ]
-            )
         , CFunDef "$cps$$df$andThenIO$7"
             [ "io"
             , "$k"
@@ -612,27 +704,24 @@ CoreProgram
                     [
                         ( 5
                         , [ "a" ]
-                        , CDrop DropFreeUnchecked "a"
-                            ( CCall
-                                ( CVar "$apply$$df$andThenIO$7" )
-                                [ CVar "$k"
-                                , CCall
-                                    ( CVar "$bi$IO.Stdout.print" )
-                                    [ CVar "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$7" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CProj "io" 1
+                                , CCon 5
+                                    [ CCon 0 [] ]
                                 ]
-                            )
+                            ]
                         )
                     ,
                         ( 6
                         , [ "e" ]
-                        , CDrop DropFreeUnchecked "e"
-                            ( CCall
-                                ( CVar "$apply$$df$andThenIO$7" )
-                                [ CVar "$k"
-                                , CCon 6
-                                    [ CVar "e" ]
-                                ]
-                            )
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$7" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
                         )
                     ,
                         ( 7
@@ -645,7 +734,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 32
+                                        , CReuse ReuseGuarded "io" 32
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -680,7 +769,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
                                         [ CVar "$pk_32"
-                                        , CReuse "$k" 7
+                                        , CReuse ReuseUnique "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
                                             ]

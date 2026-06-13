@@ -1,0 +1,43 @@
+{- Attack form: the same cell flows into one call twice — the first
+   parameter is consumed by a reuse-shaped loop, the second is read
+   afterwards. The list cells are user data (ReuseGuarded), so the
+   consuming loop may not mutate them while `b` still reaches the same
+   cells: LLVM/WASM's uniqueness check fails (the second reference is
+   live) and copies; the managed backends allocate. Both prints fuse
+   the old structure into stdout, so an in-place overwrite would show. -}
+
+import IO.Stdout
+
+type Stack = Empty | Push String Stack
+
+revInto2 : Stack -> Stack -> Stack
+revInto2 lst acc = case lst of
+  Empty -> acc
+  Push s rest -> revInto2 rest (Push s acc)
+
+second : Stack -> String
+second st = case st of
+  Empty -> "E"
+  Push _s2 r -> case r of
+    Empty -> "e"
+    Push s3 _r2 -> s3
+
+both : Stack -> Stack -> String
+both a b =
+  let x = second (revInto2 a Empty)
+   in let y = second b
+       in case x ++ y of
+            Left _e -> "L"
+            Right z -> z
+
+mk : Int32 -> Stack -> Stack
+mk n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _u -> acc
+    Right m -> mk m (Push (showInt32 n) acc)
+
+main : IO Never Unit
+main =
+  let xs = mk 3 Empty
+   in IO.Stdout.print (both xs xs)

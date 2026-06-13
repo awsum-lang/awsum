@@ -1,0 +1,30 @@
+{- Store-order pin for in-place reuse: every loop iteration swaps the
+   two fields of its pack cell (`Pack a b -> Pack b a` shape inside the
+   rebind). The pack is consumed linearly, so the rewrite fires — and
+   the lowering must read both old slots before overwriting either (a
+   genuine parallel-copy cycle, the shape that needs a temp). One bad
+   iteration would print the same value twice. Guards any future
+   reordering of CReuse field stores (per-slot scheduling). -}
+
+import IO.Stdout
+
+type Pack = Pack String String
+
+spin : Int32 -> Pack -> Pack
+spin n p = case eqInt32 n 0 of
+  True -> p
+  False -> case predInt32 n of
+    Left _u -> p
+    Right m -> case p of
+      Pack a b -> spin m (Pack b a)
+
+render : Pack -> String
+render q = case q of
+  Pack c d -> case c ++ d of
+    Left _e -> "L"
+    Right z -> z
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (render (spin 1 (Pack (showInt32 7) "x")))
+    |> andThenIO (\_u2 -> IO.Stdout.print (render (spin 2 (Pack (showInt32 7) "x"))))

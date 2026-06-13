@@ -139,11 +139,10 @@
   .method private hidebysig static object v_runIO(object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3)
+    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -151,63 +150,35 @@
     ldc.i4.5
     bne.un IL_c0
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
+    call object AwsumMain::__print(object)
+    stloc.2
+    ldarg.0
+    castclass object[]
     ldc.i4.2
     ldelem.ref
-    stloc.2
-    ldloc.1
-    call object AwsumMain::__print(object)
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    pop
-    ldloc.2
     starg.s 0
     br IL_tco_loop
   }
 
 
-  .method private hidebysig static object v_sumRow(object) cil managed
-  {
-    .maxstack 4
-    .locals init (object[] V_0)
-    ldarg.0
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldc.i4.s 15
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    call object AwsumMain::v__cps_sumRow(object, object)
-    ret
-  }
-
-
   .method private hidebysig static object v__cps_sumRow(object,object) cil managed
   {
-    .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
+    .maxstack 5
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -222,17 +193,18 @@
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
+    ldelem.ref
+    stloc.0
+    ldarg.0
+    castclass object[]
+    ldc.i4.2
     ldelem.ref
     stloc.1
     ldloc.0
-    ldc.i4.2
-    ldelem.ref
-    stloc.2
-    ldloc.1
-    stloc.3
-    ldloc.3
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -240,39 +212,34 @@
     ldc.i4 1615808600
     bne.un IL_c1
     pop
-    ldloc.3
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 4
-    ldloc.2
+    ldloc.1
     ldarg.1
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_c1:
     pop
+    ldloc.1
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    stloc.3
     ldloc.3
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 4
-    ldloc.2
-    ldarg.0
-    castclass object[]
-    stloc.s 5
-    ldloc.s 5
     ldc.i4.0
     ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.1
     ldarg.1
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     ldc.i4.2
-    ldloc.s 4
+    ldloc.0
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
     stelem.ref
-    ldloc.s 5
+    ldloc.3
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -282,11 +249,10 @@
   .method private hidebysig static object v__apply_sumRow(object,object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -298,19 +264,19 @@
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
+    stloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.2
     ldelem.ref
-    stloc.2
-    ldloc.2
     ldarg.1
     call object AwsumMain::__addInt32(object, object)
-    stloc.3
-    ldloc.3
+    stloc.2
+    ldloc.2
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -318,11 +284,7 @@
     ldc.i4.3
     bne.un IL_c1
     pop
-    ldloc.3
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 4
-    ldloc.1
+    ldloc.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     starg.s 1
@@ -330,12 +292,12 @@
     br IL_tco_loop
   IL_c1:
     pop
-    ldloc.3
+    ldloc.2
     ldc.i4.1
     ldelem.ref
-    stloc.s 4
-    ldloc.1
-    ldloc.s 4
+    stloc.3
+    ldloc.0
+    ldloc.3
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -517,7 +479,16 @@
     ldloc.0
     ldc.i4.1
     call object AwsumMain::v_mixed()
-    call object AwsumMain::v_sumRow(object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.1
+    ldloc.1
+    ldc.i4.0
+    ldc.i4.s 15
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.1
+    call object AwsumMain::v__cps_sumRow(object, object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0

@@ -1,0 +1,35 @@
+{- Function inlining must not capture an argument's free names: `pickSecond`'s
+   parameter `a` is multi-use, so the call binds its first argument through a
+   renamed `CLet` binder — and the second argument mentions the caller's own
+   local named `a`. Renaming the parameter must leave the caller's `a` (False
+   here) intact; capturing it would route the renamed first argument (True)
+   into the result. Prints `F`; the captured version printed `T` uniformly on
+   all five backends, caught only by the no-simplify differential. -}
+
+import IO.Stdout
+import IO.Args
+
+pickSecond : Bool -> Bool -> Bool
+pickSecond a b = case a of
+  True -> b
+  False -> a
+
+run : List String -> IO Never Unit
+run args =
+  let a : Bool = case headList args of
+        Nothing -> True
+        Just _s -> False
+   in case pickSecond (eqString "x" "x") a of
+        True -> IO.Stdout.print "T"
+        False -> IO.Stdout.print "F"
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO run
+    |> handleErrorIO handleInputErr

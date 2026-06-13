@@ -1,0 +1,49 @@
+import IO.Stdout
+
+type T = MkA | MkB
+
+-- Recursive: never inlined; its call is the non-duplicable CLet rhs.
+g : Int32 -> Int32
+g n = case eqInt32 n 0 of
+  True -> 7
+  False -> case subInt32 n 1 of
+    Left _e -> 7
+    Right m -> g m
+
+-- Recursive: never inlined; keeps the False inner arm non-literal.
+-- Returns MkA on one path so the MkA tag stays constructable and
+-- pruneDeadArms keeps the MkA arm in the minted join body.
+mk2 : Int32 -> T
+mk2 n = case eqInt32 n 0 of
+  True -> MkB
+  False -> case subInt32 n 1 of
+    Left _e -> MkA
+    Right m -> mk2 m
+
+-- Small: inlines everywhere. Param used twice + call argument => CLet.
+dup : Int32 -> Tuple2 Int32 Int32
+dup n = Tuple2 n n
+
+-- Small: inlines. Body is a case => becomes the inner case of the fusion.
+inner : Bool -> Int32 -> T
+inner b x = case b of
+  True -> MkA
+  False -> mk2 x
+
+-- After inlining: case-of-case whose MkA arm holds the CLet; the True inner
+-- arm selects it statically, the False inner arm jumps (join keeps the outer
+-- case). Called twice from main and too big after fusion => never inlined.
+run : Bool -> Int32 -> Tuple2 Int32 Int32
+run b x = case inner b x of
+  MkA -> dup (g x)
+  MkB -> Tuple2 x x
+
+sumPair : Tuple2 Int32 Int32 -> Int32
+sumPair (Tuple2 a b) = case addInt32 a b of
+  Left _e -> 0
+  Right s -> s
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (showInt32 (sumPair (run True 3)))
+    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (sumPair (run False 4))))

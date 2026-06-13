@@ -1,0 +1,231 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "zero"
+            ( CIntLit 0 TInt32 )
+        , CFunDef "build"
+            [ "n"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CVar "zero"
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CVar "acc"
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "acc"
+                                            ( CContinue
+                                                [ CVar "m"
+                                                , CCon 14
+                                                    [ CVar "n"
+                                                    , CVar "acc"
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "length"
+            [ "xs"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "xs" )
+                    [
+                        ( 13
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 14
+                        ,
+                            [ "_h"
+                            , "t"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "succInt32" )
+                                [ CVar "acc" ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CVar "acc"
+                                )
+                            ,
+                                ( 4
+                                , [ "a" ]
+                                , CDrop DropFreeUnchecked "a"
+                                    ( CDrop DropFreeUnchecked "xs"
+                                        ( CDrop DropFreeUnchecked "acc"
+                                            ( CContinue
+                                                [ CProj "xs" 2
+                                                , CVar "a"
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "runN"
+            [ "iters"
+            , "listLen"
+            , "accSum"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "iters"
+                        , CVar "zero"
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CVar "accSum"
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "iters" ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CVar "accSum"
+                                )
+                            ,
+                                ( 4
+                                , [ "i" ]
+                                , CDrop DropFreeUnchecked "i"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "addInt32" )
+                                            [ CVar "accSum"
+                                            , CCall
+                                                ( CVar "length" )
+                                                [ CCall
+                                                    ( CVar "build" )
+                                                    [ CVar "listLen"
+                                                    , CCon 13 []
+                                                    ]
+                                                , CVar "zero"
+                                                ]
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "_e" ]
+                                            , CVar "accSum"
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "s" ]
+                                            , CDrop DropFreeUnchecked "s"
+                                                ( CDrop DropFreeUnchecked "iters"
+                                                    ( CDrop DropFreeUnchecked "listLen"
+                                                        ( CDrop DropFreeUnchecked "accSum"
+                                                            ( CContinue
+                                                                [ CVar "i"
+                                                                , CVar "listLen"
+                                                                , CVar "s"
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "runN" )
+                        [ CIntLit 1000 TInt32
+                        , CIntLit 10000 TInt32
+                        , CVar "zero"
+                        ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

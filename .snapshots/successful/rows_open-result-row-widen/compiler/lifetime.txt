@@ -1,15 +1,12 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-zeroOr:
-  param           _n                              count=0
-
-describe:
-  param           r                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        _z                              count=0
-  case-pattern    v                               count=0
+main:
+  let             $inl3$r                         count=0
+  case-pattern    $inl1$__pa0                     count=0
+  case-pattern    $inl2$v                         count=0
 

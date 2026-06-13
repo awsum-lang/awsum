@@ -1,0 +1,16 @@
+{- Case-of-case where both inner arms select the same outer arm (the `or`
+   shape: `or b True` is True on both branches). The selected arm is small
+   and case-free, so the duplication gate allows materialising it twice and
+   the fusion still fires without a join. The Core snapshot pins the result:
+   a single `CCase` over the seed whose arms are both the duplicated outer
+   body, no `$join`. -}
+
+import IO.Stdout
+
+always : Bool -> String
+always b = case or b True of
+  True -> "yes"
+  False -> "no"
+
+main : IO Never Unit
+main = IO.Stdout.print (always (eqUInt32 (lengthUtf8Bytes "x") 9))

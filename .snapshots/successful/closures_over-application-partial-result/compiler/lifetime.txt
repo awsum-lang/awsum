@@ -1,17 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-inc:
-  param           n                               count=1
-
-$let$13:
-  param           g                               count=1
-
-$df$identity$0:
-
+  let             $inl0$eff                       count=0
 
 $scc$$apply1_applyOnce:
   param           $args                           count=3
@@ -20,8 +12,4 @@ $scc$$apply1_applyOnce:
   case-pattern    $cap8_0                         count=0
   case-pattern    f                               count=0
   case-pattern    x                               count=0
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=1
 

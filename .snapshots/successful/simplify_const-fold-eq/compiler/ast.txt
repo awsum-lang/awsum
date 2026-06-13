@@ -1,0 +1,851 @@
+Program
+    { moduleComment = Just " `Awsum.Simplify` folds the integer equality built-ins over literal
+         operands straight to the `True` / `False` constructor, and the case over
+         the folded Bool collapses — the Core snapshot holds only the selected
+         string literals. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 8
+            , spanStartCol = 1
+            , spanEndLine = 8
+            , spanEndCol = 19
+            }
+        ) "eqI32True"
+        ( TyCon
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 13
+                , spanEndLine = 8
+                , spanEndCol = 19
+                }
+            ) "String"
+        ) Nothing Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 15
+                }
+            ) "eqI32True" []
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 13
+                    , spanEndLine = 11
+                    , spanEndCol = 15
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 18
+                        , spanEndLine = 9
+                        , spanEndCol = 36
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 18
+                            , spanEndLine = 9
+                            , spanEndCol = 31
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 18
+                                , spanEndLine = 9
+                                , spanEndCol = 26
+                                }
+                            )
+                            ( QName [] "eqInt32" )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 26
+                                , spanEndLine = 9
+                                , spanEndCol = 31
+                                }
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 9
+                                    , spanStartCol = 27
+                                    , spanEndLine = 9
+                                    , spanEndCol = 29
+                                    }
+                                )
+                                ( LInt
+                                    ( -1 )
+                                )
+                            )
+                        )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 31
+                            , spanEndLine = 9
+                            , spanEndCol = 36
+                            }
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 32
+                                , spanEndLine = 9
+                                , spanEndCol = 34
+                                }
+                            )
+                            ( LInt
+                                ( -1 )
+                            )
+                        )
+                    )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 3
+                            , spanEndLine = 10
+                            , spanEndCol = 7
+                            }
+                        ) "True" []
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 11
+                            , spanEndLine = 10
+                            , spanEndCol = 14
+                            }
+                        )
+                        ( LString "T" )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 3
+                                , spanEndLine = 11
+                                , spanEndCol = 8
+                                }
+                            ) "False" []
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 12
+                                , spanEndLine = 11
+                                , spanEndCol = 15
+                                }
+                            )
+                            ( LString "F" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 13
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 19
+                }
+            ) "eqU8False"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 13
+                    , spanEndLine = 13
+                    , spanEndCol = 19
+                    }
+                ) "String"
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 14
+                , spanStartCol = 1
+                , spanEndLine = 16
+                , spanEndCol = 15
+                }
+            ) "eqU8False" []
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 13
+                    , spanEndLine = 16
+                    , spanEndCol = 15
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 18
+                        , spanEndLine = 14
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 18
+                            , spanEndLine = 14
+                            , spanEndCol = 28
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 18
+                                , spanEndLine = 14
+                                , spanEndCol = 26
+                                }
+                            )
+                            ( QName [] "eqUInt8" )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 26
+                                , spanEndLine = 14
+                                , spanEndCol = 28
+                                }
+                            )
+                            ( LInt 3 )
+                        )
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 28
+                            , spanEndLine = 14
+                            , spanEndCol = 30
+                            }
+                        )
+                        ( LInt 4 )
+                    )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 3
+                            , spanEndLine = 15
+                            , spanEndCol = 7
+                            }
+                        ) "True" []
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 11
+                            , spanEndLine = 15
+                            , spanEndCol = 14
+                            }
+                        )
+                        ( LString "T" )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 3
+                                , spanEndLine = 16
+                                , spanEndCol = 8
+                                }
+                            ) "False" []
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 12
+                                , spanEndLine = 16
+                                , spanEndCol = 15
+                                }
+                            )
+                            ( LString "F" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 18
+                , spanStartCol = 1
+                , spanEndLine = 18
+                , spanEndCol = 20
+                }
+            ) "eqU32False"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 18
+                    , spanStartCol = 14
+                    , spanEndLine = 18
+                    , spanEndCol = 20
+                    }
+                ) "String"
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 19
+                , spanStartCol = 1
+                , spanEndLine = 21
+                , spanEndCol = 15
+                }
+            ) "eqU32False" []
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 19
+                    , spanStartCol = 14
+                    , spanEndLine = 21
+                    , spanEndCol = 15
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 19
+                        , spanEndLine = 19
+                        , spanEndCol = 44
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 19
+                            , spanEndLine = 19
+                            , spanEndCol = 30
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 19
+                                , spanStartCol = 19
+                                , spanEndLine = 19
+                                , spanEndCol = 28
+                                }
+                            )
+                            ( QName [] "eqUInt32" )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 19
+                                , spanStartCol = 28
+                                , spanEndLine = 19
+                                , spanEndCol = 30
+                                }
+                            )
+                            ( LInt 0 )
+                        )
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 30
+                            , spanEndLine = 19
+                            , spanEndCol = 44
+                            }
+                        )
+                        ( LInt 4294967295 )
+                    )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 20
+                            , spanStartCol = 3
+                            , spanEndLine = 20
+                            , spanEndCol = 7
+                            }
+                        ) "True" []
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 20
+                            , spanStartCol = 11
+                            , spanEndLine = 20
+                            , spanEndCol = 14
+                            }
+                        )
+                        ( LString "T" )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 21
+                                , spanStartCol = 3
+                                , spanEndLine = 21
+                                , spanEndCol = 8
+                                }
+                            ) "False" []
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 21
+                                , spanStartCol = 12
+                                , spanEndLine = 21
+                                , spanEndCol = 15
+                                }
+                            )
+                            ( LString "F" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 23
+                , spanStartCol = 1
+                , spanEndLine = 23
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 23
+                    , spanStartCol = 8
+                    , spanEndLine = 23
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 8
+                        , spanEndLine = 23
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 8
+                            , spanEndLine = 23
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 11
+                            , spanEndLine = 23
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 17
+                        , spanEndLine = 23
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 24
+                , spanStartCol = 1
+                , spanEndLine = 28
+                , spanEndCol = 52
+                }
+            ) "main" []
+            ( EInfix
+                ( SrcSpan
+                    { spanStartLine = 24
+                    , spanStartCol = 8
+                    , spanEndLine = 28
+                    , spanEndCol = 52
+                    }
+                ) OpPipe
+                ( EInfix
+                    ( SrcSpan
+                        { spanStartLine = 24
+                        , spanStartCol = 8
+                        , spanEndLine = 27
+                        , spanEndCol = 45
+                        }
+                    ) OpPipe
+                    ( EInfix
+                        ( SrcSpan
+                            { spanStartLine = 24
+                            , spanStartCol = 8
+                            , spanEndLine = 26
+                            , spanEndCol = 51
+                            }
+                        ) OpPipe
+                        ( EInfix
+                            ( SrcSpan
+                                { spanStartLine = 24
+                                , spanStartCol = 8
+                                , spanEndLine = 25
+                                , spanEndCol = 45
+                                }
+                            ) OpPipe
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 24
+                                    , spanStartCol = 8
+                                    , spanEndLine = 24
+                                    , spanEndCol = 33
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 24
+                                        , spanStartCol = 8
+                                        , spanEndLine = 24
+                                        , spanEndCol = 24
+                                        }
+                                    )
+                                    ( QName
+                                        [ "IO"
+                                        , "Stdout"
+                                        ] "print"
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 24
+                                        , spanStartCol = 24
+                                        , spanEndLine = 24
+                                        , spanEndCol = 33
+                                        }
+                                    )
+                                    ( QName [] "eqI32True" )
+                                )
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 25
+                                    , spanStartCol = 6
+                                    , spanEndLine = 25
+                                    , spanEndCol = 45
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 25
+                                        , spanStartCol = 6
+                                        , spanEndLine = 25
+                                        , spanEndCol = 16
+                                        }
+                                    )
+                                    ( QName [] "andThenIO" )
+                                )
+                                ( EParens
+                                    ( SrcSpan
+                                        { spanStartLine = 25
+                                        , spanStartCol = 16
+                                        , spanEndLine = 25
+                                        , spanEndCol = 45
+                                        }
+                                    )
+                                    ( ELam
+                                        ( SrcSpan
+                                            { spanStartLine = 25
+                                            , spanStartCol = 17
+                                            , spanEndLine = 25
+                                            , spanEndCol = 44
+                                            }
+                                        )
+                                        [ Param
+                                            ( SrcSpan
+                                                { spanStartLine = 25
+                                                , spanStartCol = 18
+                                                , spanEndLine = 25
+                                                , spanEndCol = 21
+                                                }
+                                            ) "_s1"
+                                        ]
+                                        ( EApp
+                                            ( SrcSpan
+                                                { spanStartLine = 25
+                                                , spanStartCol = 25
+                                                , spanEndLine = 25
+                                                , spanEndCol = 44
+                                                }
+                                            )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 25
+                                                    , spanStartCol = 25
+                                                    , spanEndLine = 25
+                                                    , spanEndCol = 41
+                                                    }
+                                                )
+                                                ( QName
+                                                    [ "IO"
+                                                    , "Stdout"
+                                                    ] "print"
+                                                )
+                                            )
+                                            ( ELit
+                                                ( SrcSpan
+                                                    { spanStartLine = 25
+                                                    , spanStartCol = 41
+                                                    , spanEndLine = 25
+                                                    , spanEndCol = 44
+                                                    }
+                                                )
+                                                ( LString ";" )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 26
+                                , spanStartCol = 6
+                                , spanEndLine = 26
+                                , spanEndCol = 51
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 26
+                                    , spanStartCol = 6
+                                    , spanEndLine = 26
+                                    , spanEndCol = 16
+                                    }
+                                )
+                                ( QName [] "andThenIO" )
+                            )
+                            ( EParens
+                                ( SrcSpan
+                                    { spanStartLine = 26
+                                    , spanStartCol = 16
+                                    , spanEndLine = 26
+                                    , spanEndCol = 51
+                                    }
+                                )
+                                ( ELam
+                                    ( SrcSpan
+                                        { spanStartLine = 26
+                                        , spanStartCol = 17
+                                        , spanEndLine = 26
+                                        , spanEndCol = 50
+                                        }
+                                    )
+                                    [ Param
+                                        ( SrcSpan
+                                            { spanStartLine = 26
+                                            , spanStartCol = 18
+                                            , spanEndLine = 26
+                                            , spanEndCol = 21
+                                            }
+                                        ) "_p1"
+                                    ]
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 26
+                                            , spanStartCol = 25
+                                            , spanEndLine = 26
+                                            , spanEndCol = 50
+                                            }
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 26
+                                                , spanStartCol = 25
+                                                , spanEndLine = 26
+                                                , spanEndCol = 41
+                                                }
+                                            )
+                                            ( QName
+                                                [ "IO"
+                                                , "Stdout"
+                                                ] "print"
+                                            )
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 26
+                                                , spanStartCol = 41
+                                                , spanEndLine = 26
+                                                , spanEndCol = 50
+                                                }
+                                            )
+                                            ( QName [] "eqU8False" )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 27
+                            , spanStartCol = 6
+                            , spanEndLine = 27
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 27
+                                , spanStartCol = 6
+                                , spanEndLine = 27
+                                , spanEndCol = 16
+                                }
+                            )
+                            ( QName [] "andThenIO" )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 27
+                                , spanStartCol = 16
+                                , spanEndLine = 27
+                                , spanEndCol = 45
+                                }
+                            )
+                            ( ELam
+                                ( SrcSpan
+                                    { spanStartLine = 27
+                                    , spanStartCol = 17
+                                    , spanEndLine = 27
+                                    , spanEndCol = 44
+                                    }
+                                )
+                                [ Param
+                                    ( SrcSpan
+                                        { spanStartLine = 27
+                                        , spanStartCol = 18
+                                        , spanEndLine = 27
+                                        , spanEndCol = 21
+                                        }
+                                    ) "_s2"
+                                ]
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 27
+                                        , spanStartCol = 25
+                                        , spanEndLine = 27
+                                        , spanEndCol = 44
+                                        }
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 27
+                                            , spanStartCol = 25
+                                            , spanEndLine = 27
+                                            , spanEndCol = 41
+                                            }
+                                        )
+                                        ( QName
+                                            [ "IO"
+                                            , "Stdout"
+                                            ] "print"
+                                        )
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 27
+                                            , spanStartCol = 41
+                                            , spanEndLine = 27
+                                            , spanEndCol = 44
+                                            }
+                                        )
+                                        ( LString ";" )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 28
+                        , spanStartCol = 6
+                        , spanEndLine = 28
+                        , spanEndCol = 52
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 28
+                            , spanStartCol = 6
+                            , spanEndLine = 28
+                            , spanEndCol = 16
+                            }
+                        )
+                        ( QName [] "andThenIO" )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 28
+                            , spanStartCol = 16
+                            , spanEndLine = 28
+                            , spanEndCol = 52
+                            }
+                        )
+                        ( ELam
+                            ( SrcSpan
+                                { spanStartLine = 28
+                                , spanStartCol = 17
+                                , spanEndLine = 28
+                                , spanEndCol = 51
+                                }
+                            )
+                            [ Param
+                                ( SrcSpan
+                                    { spanStartLine = 28
+                                    , spanStartCol = 18
+                                    , spanEndLine = 28
+                                    , spanEndCol = 21
+                                    }
+                                ) "_p2"
+                            ]
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 28
+                                    , spanStartCol = 25
+                                    , spanEndLine = 28
+                                    , spanEndCol = 51
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 28
+                                        , spanStartCol = 25
+                                        , spanEndLine = 28
+                                        , spanEndCol = 41
+                                        }
+                                    )
+                                    ( QName
+                                        [ "IO"
+                                        , "Stdout"
+                                        ] "print"
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 28
+                                        , spanStartCol = 41
+                                        , spanEndLine = 28
+                                        , spanEndCol = 51
+                                        }
+                                    )
+                                    ( QName [] "eqU32False" )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing Nothing
+        ]
+    }

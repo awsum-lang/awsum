@@ -203,11 +203,10 @@
   .method private hidebysig static object v_runIO(object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3)
+    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -215,128 +214,37 @@
     ldc.i4.5
     bne.un IL_c0
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
+    call object AwsumMain::__print(object)
+    stloc.2
+    ldarg.0
+    castclass object[]
     ldc.i4.2
     ldelem.ref
-    stloc.2
-    ldloc.1
-    call object AwsumMain::__print(object)
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    pop
-    ldloc.2
     starg.s 0
     br IL_tco_loop
   }
 
 
-  .method private hidebysig static object v_render(object) cil managed
-  {
-    .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2)
-    ldarg.0
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c1
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
-    ldc.i4.0
-    ldc.i4.4
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.2
-    ldc.i4.1
-    ldstr "err"
-    stelem.ref
-    ldloc.2
-    br IL_c0
-  IL_c1:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldstr "ok:"
-    ldloc.1
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-  IL_c0:
-    ret
-  }
-
-
   .method private hidebysig static object v_main() cil managed
   {
-    .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9, object V_10, object V_11, object V_12, object V_13, object V_14, object V_15, object V_16, object V_17, object V_18, object V_19, object V_20, object V_21, object V_22, object V_23, object V_24, object V_25, object V_26, object V_27, object V_28, object V_29, object V_30, object V_31, object V_32, object V_33, object V_34, object V_35, object V_36, object V_37, object V_38, object V_39, object V_40, object V_41, object V_42, object V_43, object V_44, object V_45, object V_46, object V_47, object V_48, object V_49, object V_50, object V_51, object V_52, object V_53, object V_54, object V_55, object V_56, object V_57, object V_58, object V_59, object V_60, object V_61, object V_62, object V_63, object V_64, object V_65, object V_66)
+    .maxstack 7
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9, object V_10, object V_11, object V_12, object V_13, object V_14, object V_15, object V_16, object V_17, object V_18, object V_19, object V_20, object V_21, object V_22, object V_23, object V_24, object V_25, object V_26, object V_27, object V_28, object V_29, object V_30, object V_31, object V_32, object V_33, object V_34, object V_35, object V_36, object V_37, object V_38, object V_39, object V_40, object V_41, object V_42, object V_43, object V_44, object V_45, object V_46, object V_47, object V_48, object V_49, object V_50, object V_51, object V_52, object V_53, object V_54, object V_55, object V_56, object V_57, object V_58, object V_59, object V_60, object V_61, object V_62, object V_63, object V_64, object V_65, object V_66, object V_67, object V_68, object V_69, object V_70, object V_71, object V_72, object V_73, object V_74, object V_75, object V_76, object V_77, object V_78, object V_79)
     ldstr "42"
     call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
     stloc.0
     ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c1
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.2
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.2
-    br IL_c0
-  IL_c1:
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldstr "-42"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.2
-    ldloc.2
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -344,1287 +252,1727 @@
     ldc.i4.3
     bne.un IL_c3
     pop
-    ldloc.2
-    ldc.i4.1
-    ldelem.ref
-    stloc.3
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
+    stloc.3
+    ldloc.3
     ldc.i4.0
-    ldc.i4.3
+    ldc.i4.4
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 4
-    ldc.i4.1
     ldloc.3
+    ldc.i4.1
+    ldstr "err"
     stelem.ref
-    ldloc.s 4
+    ldloc.3
     br IL_c2
   IL_c3:
     pop
-    ldloc.2
+    ldstr "ok:"
+    ldloc.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.3
-    ldstr "0"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 4
-    ldloc.s 4
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c5
-    pop
-    ldloc.s 4
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 5
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 6
-    ldloc.s 6
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 6
-    ldc.i4.1
-    ldloc.s 5
-    stelem.ref
-    ldloc.s 6
-    br IL_c4
-  IL_c5:
-    pop
-    ldloc.s 4
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 5
-    ldstr "2147483647"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 6
-    ldloc.s 6
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c7
-    pop
-    ldloc.s 6
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 7
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 8
-    ldloc.s 8
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 8
-    ldc.i4.1
-    ldloc.s 7
-    stelem.ref
-    ldloc.s 8
-    br IL_c6
-  IL_c7:
-    pop
-    ldloc.s 6
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 7
-    ldstr "-2147483648"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 8
-    ldloc.s 8
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c9
-    pop
-    ldloc.s 8
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 9
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 10
-    ldloc.s 10
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 10
-    ldc.i4.1
-    ldloc.s 9
-    stelem.ref
-    ldloc.s 10
-    br IL_c8
-  IL_c9:
-    pop
-    ldloc.s 8
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 9
-    ldstr "2147483648"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 10
-    ldloc.s 10
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c11
-    pop
-    ldloc.s 10
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 11
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 12
-    ldloc.s 12
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 12
-    ldc.i4.1
-    ldloc.s 11
-    stelem.ref
-    ldloc.s 12
-    br IL_c10
-  IL_c11:
-    pop
-    ldloc.s 10
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 11
-    ldstr "-2147483649"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 12
-    ldloc.s 12
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c13
-    pop
-    ldloc.s 12
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 13
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 14
-    ldloc.s 14
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 14
-    ldc.i4.1
-    ldloc.s 13
-    stelem.ref
-    ldloc.s 14
-    br IL_c12
-  IL_c13:
-    pop
-    ldloc.s 12
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 13
-    ldstr ""
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 14
-    ldloc.s 14
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c15
-    pop
-    ldloc.s 14
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 15
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 16
-    ldloc.s 16
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 16
-    ldc.i4.1
-    ldloc.s 15
-    stelem.ref
-    ldloc.s 16
-    br IL_c14
-  IL_c15:
-    pop
-    ldloc.s 14
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 15
-    ldstr "-"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 16
-    ldloc.s 16
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c17
-    pop
-    ldloc.s 16
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 17
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 18
-    ldloc.s 18
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 18
-    ldc.i4.1
-    ldloc.s 17
-    stelem.ref
-    ldloc.s 18
-    br IL_c16
-  IL_c17:
-    pop
-    ldloc.s 16
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 17
-    ldstr "+42"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 18
-    ldloc.s 18
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c19
-    pop
-    ldloc.s 18
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 19
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 20
-    ldloc.s 20
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 20
-    ldc.i4.1
-    ldloc.s 19
-    stelem.ref
-    ldloc.s 20
-    br IL_c18
-  IL_c19:
-    pop
-    ldloc.s 18
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 19
-    ldstr " 42"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 20
-    ldloc.s 20
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c21
-    pop
-    ldloc.s 20
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 21
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 22
-    ldloc.s 22
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 22
-    ldc.i4.1
-    ldloc.s 21
-    stelem.ref
-    ldloc.s 22
-    br IL_c20
-  IL_c21:
-    pop
-    ldloc.s 20
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 21
-    ldstr "12abc"
-    call object AwsumMain::__parseInt32(object)
-    call object AwsumMain::v_render(object)
-    stloc.s 22
-    ldloc.s 22
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c23
-    pop
-    ldloc.s 22
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 23
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 24
-    ldloc.s 24
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 24
-    ldc.i4.1
-    ldloc.s 23
-    stelem.ref
-    ldloc.s 24
-    br IL_c22
-  IL_c23:
-    pop
-    ldloc.s 22
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 23
-    ldloc.1
-    ldstr ", "
+    callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
-    stloc.s 24
-    ldloc.s 24
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c25
-    pop
-    ldloc.s 24
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 25
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 26
-    ldloc.s 26
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 26
-    ldc.i4.1
-    ldloc.s 25
-    stelem.ref
-    ldloc.s 26
-    br IL_c24
-  IL_c25:
-    pop
-    ldloc.s 24
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 25
-    ldloc.s 25
-    ldloc.3
-    call object AwsumMain::__concat(object, object)
-    stloc.s 26
-    ldloc.s 26
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c27
-    pop
-    ldloc.s 26
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 27
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 28
-    ldloc.s 28
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 28
-    ldc.i4.1
-    ldloc.s 27
-    stelem.ref
-    ldloc.s 28
-    br IL_c26
-  IL_c27:
-    pop
-    ldloc.s 26
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 27
-    ldloc.s 27
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 28
-    ldloc.s 28
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c29
-    pop
-    ldloc.s 28
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 29
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 30
-    ldloc.s 30
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 30
-    ldc.i4.1
-    ldloc.s 29
-    stelem.ref
-    ldloc.s 30
-    br IL_c28
-  IL_c29:
-    pop
-    ldloc.s 28
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 29
-    ldloc.s 29
-    ldloc.s 5
-    call object AwsumMain::__concat(object, object)
-    stloc.s 30
-    ldloc.s 30
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c31
-    pop
-    ldloc.s 30
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 31
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 32
-    ldloc.s 32
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 32
-    ldc.i4.1
-    ldloc.s 31
-    stelem.ref
-    ldloc.s 32
-    br IL_c30
-  IL_c31:
-    pop
-    ldloc.s 30
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 31
-    ldloc.s 31
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 32
-    ldloc.s 32
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c33
-    pop
-    ldloc.s 32
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 33
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 34
-    ldloc.s 34
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 34
-    ldc.i4.1
-    ldloc.s 33
-    stelem.ref
-    ldloc.s 34
-    br IL_c32
-  IL_c33:
-    pop
-    ldloc.s 32
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 33
-    ldloc.s 33
-    ldloc.s 7
-    call object AwsumMain::__concat(object, object)
-    stloc.s 34
-    ldloc.s 34
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c35
-    pop
-    ldloc.s 34
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 35
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 36
-    ldloc.s 36
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 36
-    ldc.i4.1
-    ldloc.s 35
-    stelem.ref
-    ldloc.s 36
-    br IL_c34
-  IL_c35:
-    pop
-    ldloc.s 34
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 35
-    ldloc.s 35
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 36
-    ldloc.s 36
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c37
-    pop
-    ldloc.s 36
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 37
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 38
-    ldloc.s 38
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 38
-    ldc.i4.1
-    ldloc.s 37
-    stelem.ref
-    ldloc.s 38
-    br IL_c36
-  IL_c37:
-    pop
-    ldloc.s 36
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 37
-    ldloc.s 37
-    ldloc.s 9
-    call object AwsumMain::__concat(object, object)
-    stloc.s 38
-    ldloc.s 38
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c39
-    pop
-    ldloc.s 38
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 39
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 40
-    ldloc.s 40
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 40
-    ldc.i4.1
-    ldloc.s 39
-    stelem.ref
-    ldloc.s 40
-    br IL_c38
-  IL_c39:
-    pop
-    ldloc.s 38
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 39
-    ldloc.s 39
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 40
-    ldloc.s 40
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c41
-    pop
-    ldloc.s 40
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 41
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 42
-    ldloc.s 42
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 42
-    ldc.i4.1
-    ldloc.s 41
-    stelem.ref
-    ldloc.s 42
-    br IL_c40
-  IL_c41:
-    pop
-    ldloc.s 40
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 41
-    ldloc.s 41
-    ldloc.s 11
-    call object AwsumMain::__concat(object, object)
-    stloc.s 42
-    ldloc.s 42
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c43
-    pop
-    ldloc.s 42
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 43
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 44
-    ldloc.s 44
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 44
-    ldc.i4.1
-    ldloc.s 43
-    stelem.ref
-    ldloc.s 44
-    br IL_c42
-  IL_c43:
-    pop
-    ldloc.s 42
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 43
-    ldloc.s 43
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 44
-    ldloc.s 44
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c45
-    pop
-    ldloc.s 44
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 45
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 46
-    ldloc.s 46
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 46
-    ldc.i4.1
-    ldloc.s 45
-    stelem.ref
-    ldloc.s 46
-    br IL_c44
-  IL_c45:
-    pop
-    ldloc.s 44
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 45
-    ldloc.s 45
-    ldloc.s 13
-    call object AwsumMain::__concat(object, object)
-    stloc.s 46
-    ldloc.s 46
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c47
-    pop
-    ldloc.s 46
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 47
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 48
-    ldloc.s 48
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 48
-    ldc.i4.1
-    ldloc.s 47
-    stelem.ref
-    ldloc.s 48
-    br IL_c46
-  IL_c47:
-    pop
-    ldloc.s 46
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 47
-    ldloc.s 47
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 48
-    ldloc.s 48
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c49
-    pop
-    ldloc.s 48
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 49
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 50
-    ldloc.s 50
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 50
-    ldc.i4.1
-    ldloc.s 49
-    stelem.ref
-    ldloc.s 50
-    br IL_c48
-  IL_c49:
-    pop
-    ldloc.s 48
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 49
-    ldloc.s 49
-    ldloc.s 15
-    call object AwsumMain::__concat(object, object)
-    stloc.s 50
-    ldloc.s 50
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c51
-    pop
-    ldloc.s 50
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 51
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 52
-    ldloc.s 52
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 52
-    ldc.i4.1
-    ldloc.s 51
-    stelem.ref
-    ldloc.s 52
-    br IL_c50
-  IL_c51:
-    pop
-    ldloc.s 50
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 51
-    ldloc.s 51
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 52
-    ldloc.s 52
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c53
-    pop
-    ldloc.s 52
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 53
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 54
-    ldloc.s 54
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 54
-    ldc.i4.1
-    ldloc.s 53
-    stelem.ref
-    ldloc.s 54
-    br IL_c52
-  IL_c53:
-    pop
-    ldloc.s 52
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 53
-    ldloc.s 53
-    ldloc.s 17
-    call object AwsumMain::__concat(object, object)
-    stloc.s 54
-    ldloc.s 54
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c55
-    pop
-    ldloc.s 54
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 55
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 56
-    ldloc.s 56
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 56
-    ldc.i4.1
-    ldloc.s 55
-    stelem.ref
-    ldloc.s 56
-    br IL_c54
-  IL_c55:
-    pop
-    ldloc.s 54
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 55
-    ldloc.s 55
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 56
-    ldloc.s 56
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c57
-    pop
-    ldloc.s 56
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 57
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 58
-    ldloc.s 58
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 58
-    ldc.i4.1
-    ldloc.s 57
-    stelem.ref
-    ldloc.s 58
-    br IL_c56
-  IL_c57:
-    pop
-    ldloc.s 56
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 57
-    ldloc.s 57
-    ldloc.s 19
-    call object AwsumMain::__concat(object, object)
-    stloc.s 58
-    ldloc.s 58
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c59
-    pop
-    ldloc.s 58
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 59
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 60
-    ldloc.s 60
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 60
-    ldc.i4.1
-    ldloc.s 59
-    stelem.ref
-    ldloc.s 60
-    br IL_c58
-  IL_c59:
-    pop
-    ldloc.s 58
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 59
-    ldloc.s 59
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 60
-    ldloc.s 60
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c61
-    pop
-    ldloc.s 60
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 61
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 62
-    ldloc.s 62
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 62
-    ldc.i4.1
-    ldloc.s 61
-    stelem.ref
-    ldloc.s 62
-    br IL_c60
-  IL_c61:
-    pop
-    ldloc.s 60
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 61
-    ldloc.s 61
-    ldloc.s 21
-    call object AwsumMain::__concat(object, object)
-    stloc.s 62
-    ldloc.s 62
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c63
-    pop
-    ldloc.s 62
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 63
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 64
-    ldloc.s 64
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 64
-    ldc.i4.1
-    ldloc.s 63
-    stelem.ref
-    ldloc.s 64
-    br IL_c62
-  IL_c63:
-    pop
-    ldloc.s 62
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 63
-    ldloc.s 63
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    stloc.s 64
-    ldloc.s 64
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c65
-    pop
-    ldloc.s 64
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 65
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.s 66
-    ldloc.s 66
-    ldc.i4.0
-    ldc.i4.3
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 66
-    ldc.i4.1
-    ldloc.s 65
-    stelem.ref
-    ldloc.s 66
-    br IL_c64
-  IL_c65:
-    pop
-    ldloc.s 64
-    ldc.i4.1
-    ldelem.ref
-    stloc.s 65
-    ldloc.s 65
-    ldloc.s 23
-    call object AwsumMain::__concat(object, object)
-  IL_c64:
-  IL_c62:
-  IL_c60:
-  IL_c58:
-  IL_c56:
-  IL_c54:
-  IL_c52:
-  IL_c50:
-  IL_c48:
-  IL_c46:
-  IL_c44:
-  IL_c42:
-  IL_c40:
-  IL_c38:
-  IL_c36:
-  IL_c34:
-  IL_c32:
-  IL_c30:
-  IL_c28:
-  IL_c26:
-  IL_c24:
-  IL_c22:
-  IL_c20:
-  IL_c18:
-  IL_c16:
-  IL_c14:
-  IL_c12:
-  IL_c10:
-  IL_c8:
-  IL_c6:
-  IL_c4:
   IL_c2:
-  IL_c0:
-    call object AwsumMain::v__let_13(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__let_13(object) cil managed
-  {
-    .maxstack 7
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
-    ldarg.0
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    dup
-    ldc.i4.3
-    bne.un IL_c1
-    pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
     stloc.2
     ldloc.2
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c4
+    pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
     ldc.i4.0
     ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.2
+    ldloc.s 4
     ldc.i4.1
     ldstr "STRING_TOO_LONG"
     stelem.ref
-    ldloc.2
+    ldloc.s 4
     ldc.i4.2
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
+    stloc.s 5
+    ldloc.s 5
     ldc.i4.0
     ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.3
+    ldloc.s 5
     ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
+    stloc.s 6
+    ldloc.s 6
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.s 6
+    stelem.ref
+    ldloc.s 5
+    stelem.ref
     ldloc.s 4
-    stelem.ref
-    ldloc.3
-    stelem.ref
-    ldloc.2
-    br IL_c0
-  IL_c1:
+    br IL_c1
+  IL_c4:
     pop
-    ldloc.0
+    ldloc.2
     ldc.i4.1
     ldelem.ref
+    stloc.3
+    ldstr "-42"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 4
+    ldloc.s 4
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c6
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 6
+    ldloc.s 6
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 6
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 6
+    br IL_c5
+  IL_c6:
+    pop
+    ldstr "ok:"
+    ldloc.s 4
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c5:
+    stloc.s 5
+    ldloc.s 5
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c8
+    pop
+    ldloc.s 5
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 6
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 7
+    ldloc.s 7
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 7
+    ldc.i4.1
+    ldloc.s 6
+    stelem.ref
+    ldloc.s 7
+    br IL_c7
+  IL_c8:
+    pop
+    ldloc.s 5
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 6
+    ldstr "0"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 7
+    ldloc.s 7
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c10
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 9
+    ldloc.s 9
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 9
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 9
+    br IL_c9
+  IL_c10:
+    pop
+    ldstr "ok:"
+    ldloc.s 7
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c9:
+    stloc.s 8
+    ldloc.s 8
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c12
+    pop
+    ldloc.s 8
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 9
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 10
+    ldloc.s 10
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 10
+    ldc.i4.1
+    ldloc.s 9
+    stelem.ref
+    ldloc.s 10
+    br IL_c11
+  IL_c12:
+    pop
+    ldloc.s 8
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 9
+    ldstr "2147483647"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 10
+    ldloc.s 10
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c14
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 12
+    ldloc.s 12
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 12
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 12
+    br IL_c13
+  IL_c14:
+    pop
+    ldstr "ok:"
+    ldloc.s 10
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c13:
+    stloc.s 11
+    ldloc.s 11
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c16
+    pop
+    ldloc.s 11
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 12
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 13
+    ldloc.s 13
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 13
+    ldc.i4.1
+    ldloc.s 12
+    stelem.ref
+    ldloc.s 13
+    br IL_c15
+  IL_c16:
+    pop
+    ldloc.s 11
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 12
+    ldstr "-2147483648"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 13
+    ldloc.s 13
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c18
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 15
+    ldloc.s 15
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 15
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 15
+    br IL_c17
+  IL_c18:
+    pop
+    ldstr "ok:"
+    ldloc.s 13
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c17:
+    stloc.s 14
+    ldloc.s 14
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c20
+    pop
+    ldloc.s 14
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 15
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 16
+    ldloc.s 16
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 16
+    ldc.i4.1
+    ldloc.s 15
+    stelem.ref
+    ldloc.s 16
+    br IL_c19
+  IL_c20:
+    pop
+    ldloc.s 14
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 15
+    ldstr "2147483648"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 16
+    ldloc.s 16
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c22
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 18
+    ldloc.s 18
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 18
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 18
+    br IL_c21
+  IL_c22:
+    pop
+    ldstr "ok:"
+    ldloc.s 16
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c21:
+    stloc.s 17
+    ldloc.s 17
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c24
+    pop
+    ldloc.s 17
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 18
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 19
+    ldloc.s 19
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 19
+    ldc.i4.1
+    ldloc.s 18
+    stelem.ref
+    ldloc.s 19
+    br IL_c23
+  IL_c24:
+    pop
+    ldloc.s 17
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 18
+    ldstr "-2147483649"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 19
+    ldloc.s 19
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c26
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 21
+    ldloc.s 21
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 21
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 21
+    br IL_c25
+  IL_c26:
+    pop
+    ldstr "ok:"
+    ldloc.s 19
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c25:
+    stloc.s 20
+    ldloc.s 20
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c28
+    pop
+    ldloc.s 20
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 21
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 22
+    ldloc.s 22
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 22
+    ldc.i4.1
+    ldloc.s 21
+    stelem.ref
+    ldloc.s 22
+    br IL_c27
+  IL_c28:
+    pop
+    ldloc.s 20
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 21
+    ldstr ""
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 22
+    ldloc.s 22
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c30
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 24
+    ldloc.s 24
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 24
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 24
+    br IL_c29
+  IL_c30:
+    pop
+    ldstr "ok:"
+    ldloc.s 22
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c29:
+    stloc.s 23
+    ldloc.s 23
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c32
+    pop
+    ldloc.s 23
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 24
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 25
+    ldloc.s 25
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 25
+    ldc.i4.1
+    ldloc.s 24
+    stelem.ref
+    ldloc.s 25
+    br IL_c31
+  IL_c32:
+    pop
+    ldloc.s 23
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 24
+    ldstr "-"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 25
+    ldloc.s 25
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c34
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 27
+    ldloc.s 27
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 27
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 27
+    br IL_c33
+  IL_c34:
+    pop
+    ldstr "ok:"
+    ldloc.s 25
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c33:
+    stloc.s 26
+    ldloc.s 26
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c36
+    pop
+    ldloc.s 26
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 27
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 28
+    ldloc.s 28
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 28
+    ldc.i4.1
+    ldloc.s 27
+    stelem.ref
+    ldloc.s 28
+    br IL_c35
+  IL_c36:
+    pop
+    ldloc.s 26
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 27
+    ldstr "+42"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 28
+    ldloc.s 28
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c38
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 30
+    ldloc.s 30
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 30
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 30
+    br IL_c37
+  IL_c38:
+    pop
+    ldstr "ok:"
+    ldloc.s 28
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c37:
+    stloc.s 29
+    ldloc.s 29
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c40
+    pop
+    ldloc.s 29
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 30
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 31
+    ldloc.s 31
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 31
+    ldc.i4.1
+    ldloc.s 30
+    stelem.ref
+    ldloc.s 31
+    br IL_c39
+  IL_c40:
+    pop
+    ldloc.s 29
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 30
+    ldstr " 42"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 31
+    ldloc.s 31
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c42
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 33
+    ldloc.s 33
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 33
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 33
+    br IL_c41
+  IL_c42:
+    pop
+    ldstr "ok:"
+    ldloc.s 31
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c41:
+    stloc.s 32
+    ldloc.s 32
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c44
+    pop
+    ldloc.s 32
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 33
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 34
+    ldloc.s 34
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 34
+    ldc.i4.1
+    ldloc.s 33
+    stelem.ref
+    ldloc.s 34
+    br IL_c43
+  IL_c44:
+    pop
+    ldloc.s 32
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 33
+    ldstr "12abc"
+    call object AwsumMain::__parseInt32(object)
+    stloc.s 34
+    ldloc.s 34
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c46
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 36
+    ldloc.s 36
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 36
+    ldc.i4.1
+    ldstr "err"
+    stelem.ref
+    ldloc.s 36
+    br IL_c45
+  IL_c46:
+    pop
+    ldstr "ok:"
+    ldloc.s 34
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+  IL_c45:
+    stloc.s 35
+    ldloc.s 35
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c48
+    pop
+    ldloc.s 35
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 36
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 37
+    ldloc.s 37
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 37
+    ldc.i4.1
+    ldloc.s 36
+    stelem.ref
+    ldloc.s 37
+    br IL_c47
+  IL_c48:
+    pop
+    ldloc.s 35
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 36
+    ldloc.3
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 37
+    ldloc.s 37
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c50
+    pop
+    ldloc.s 37
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 38
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 39
+    ldloc.s 39
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 39
+    ldc.i4.1
+    ldloc.s 38
+    stelem.ref
+    ldloc.s 39
+    br IL_c49
+  IL_c50:
+    pop
+    ldloc.s 37
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 38
+    ldloc.s 38
+    ldloc.s 6
+    call object AwsumMain::__concat(object, object)
+    stloc.s 39
+    ldloc.s 39
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c52
+    pop
+    ldloc.s 39
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 40
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 41
+    ldloc.s 41
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 41
+    ldc.i4.1
+    ldloc.s 40
+    stelem.ref
+    ldloc.s 41
+    br IL_c51
+  IL_c52:
+    pop
+    ldloc.s 39
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 40
+    ldloc.s 40
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 41
+    ldloc.s 41
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c54
+    pop
+    ldloc.s 41
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 42
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 43
+    ldloc.s 43
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 43
+    ldc.i4.1
+    ldloc.s 42
+    stelem.ref
+    ldloc.s 43
+    br IL_c53
+  IL_c54:
+    pop
+    ldloc.s 41
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 42
+    ldloc.s 42
+    ldloc.s 9
+    call object AwsumMain::__concat(object, object)
+    stloc.s 43
+    ldloc.s 43
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c56
+    pop
+    ldloc.s 43
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 44
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 45
+    ldloc.s 45
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 45
+    ldc.i4.1
+    ldloc.s 44
+    stelem.ref
+    ldloc.s 45
+    br IL_c55
+  IL_c56:
+    pop
+    ldloc.s 43
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 44
+    ldloc.s 44
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 45
+    ldloc.s 45
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c58
+    pop
+    ldloc.s 45
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 46
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 47
+    ldloc.s 47
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 47
+    ldc.i4.1
+    ldloc.s 46
+    stelem.ref
+    ldloc.s 47
+    br IL_c57
+  IL_c58:
+    pop
+    ldloc.s 45
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 46
+    ldloc.s 46
+    ldloc.s 12
+    call object AwsumMain::__concat(object, object)
+    stloc.s 47
+    ldloc.s 47
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c60
+    pop
+    ldloc.s 47
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 48
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 49
+    ldloc.s 49
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 49
+    ldc.i4.1
+    ldloc.s 48
+    stelem.ref
+    ldloc.s 49
+    br IL_c59
+  IL_c60:
+    pop
+    ldloc.s 47
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 48
+    ldloc.s 48
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 49
+    ldloc.s 49
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c62
+    pop
+    ldloc.s 49
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 50
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 51
+    ldloc.s 51
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 51
+    ldc.i4.1
+    ldloc.s 50
+    stelem.ref
+    ldloc.s 51
+    br IL_c61
+  IL_c62:
+    pop
+    ldloc.s 49
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 50
+    ldloc.s 50
+    ldloc.s 15
+    call object AwsumMain::__concat(object, object)
+    stloc.s 51
+    ldloc.s 51
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c64
+    pop
+    ldloc.s 51
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 52
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 53
+    ldloc.s 53
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 53
+    ldc.i4.1
+    ldloc.s 52
+    stelem.ref
+    ldloc.s 53
+    br IL_c63
+  IL_c64:
+    pop
+    ldloc.s 51
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 52
+    ldloc.s 52
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 53
+    ldloc.s 53
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c66
+    pop
+    ldloc.s 53
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 54
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 55
+    ldloc.s 55
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 55
+    ldc.i4.1
+    ldloc.s 54
+    stelem.ref
+    ldloc.s 55
+    br IL_c65
+  IL_c66:
+    pop
+    ldloc.s 53
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 54
+    ldloc.s 54
+    ldloc.s 18
+    call object AwsumMain::__concat(object, object)
+    stloc.s 55
+    ldloc.s 55
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c68
+    pop
+    ldloc.s 55
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 56
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 57
+    ldloc.s 57
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 57
+    ldc.i4.1
+    ldloc.s 56
+    stelem.ref
+    ldloc.s 57
+    br IL_c67
+  IL_c68:
+    pop
+    ldloc.s 55
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 56
+    ldloc.s 56
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 57
+    ldloc.s 57
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c70
+    pop
+    ldloc.s 57
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 58
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 59
+    ldloc.s 59
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 59
+    ldc.i4.1
+    ldloc.s 58
+    stelem.ref
+    ldloc.s 59
+    br IL_c69
+  IL_c70:
+    pop
+    ldloc.s 57
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 58
+    ldloc.s 58
+    ldloc.s 21
+    call object AwsumMain::__concat(object, object)
+    stloc.s 59
+    ldloc.s 59
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c72
+    pop
+    ldloc.s 59
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 60
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 61
+    ldloc.s 61
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 61
+    ldc.i4.1
+    ldloc.s 60
+    stelem.ref
+    ldloc.s 61
+    br IL_c71
+  IL_c72:
+    pop
+    ldloc.s 59
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 60
+    ldloc.s 60
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 61
+    ldloc.s 61
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c74
+    pop
+    ldloc.s 61
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 62
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 63
+    ldloc.s 63
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 63
+    ldc.i4.1
+    ldloc.s 62
+    stelem.ref
+    ldloc.s 63
+    br IL_c73
+  IL_c74:
+    pop
+    ldloc.s 61
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 62
+    ldloc.s 62
+    ldloc.s 24
+    call object AwsumMain::__concat(object, object)
+    stloc.s 63
+    ldloc.s 63
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c76
+    pop
+    ldloc.s 63
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 64
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 65
+    ldloc.s 65
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 65
+    ldc.i4.1
+    ldloc.s 64
+    stelem.ref
+    ldloc.s 65
+    br IL_c75
+  IL_c76:
+    pop
+    ldloc.s 63
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 64
+    ldloc.s 64
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 65
+    ldloc.s 65
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c78
+    pop
+    ldloc.s 65
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 66
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 67
+    ldloc.s 67
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 67
+    ldc.i4.1
+    ldloc.s 66
+    stelem.ref
+    ldloc.s 67
+    br IL_c77
+  IL_c78:
+    pop
+    ldloc.s 65
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 66
+    ldloc.s 66
+    ldloc.s 27
+    call object AwsumMain::__concat(object, object)
+    stloc.s 67
+    ldloc.s 67
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c80
+    pop
+    ldloc.s 67
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 68
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 69
+    ldloc.s 69
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 69
+    ldc.i4.1
+    ldloc.s 68
+    stelem.ref
+    ldloc.s 69
+    br IL_c79
+  IL_c80:
+    pop
+    ldloc.s 67
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 68
+    ldloc.s 68
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 69
+    ldloc.s 69
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c82
+    pop
+    ldloc.s 69
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 70
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 71
+    ldloc.s 71
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 71
+    ldc.i4.1
+    ldloc.s 70
+    stelem.ref
+    ldloc.s 71
+    br IL_c81
+  IL_c82:
+    pop
+    ldloc.s 69
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 70
+    ldloc.s 70
+    ldloc.s 30
+    call object AwsumMain::__concat(object, object)
+    stloc.s 71
+    ldloc.s 71
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c84
+    pop
+    ldloc.s 71
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 72
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 73
+    ldloc.s 73
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 73
+    ldc.i4.1
+    ldloc.s 72
+    stelem.ref
+    ldloc.s 73
+    br IL_c83
+  IL_c84:
+    pop
+    ldloc.s 71
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 72
+    ldloc.s 72
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 73
+    ldloc.s 73
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c86
+    pop
+    ldloc.s 73
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 74
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 75
+    ldloc.s 75
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 75
+    ldc.i4.1
+    ldloc.s 74
+    stelem.ref
+    ldloc.s 75
+    br IL_c85
+  IL_c86:
+    pop
+    ldloc.s 73
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 74
+    ldloc.s 74
+    ldloc.s 33
+    call object AwsumMain::__concat(object, object)
+    stloc.s 75
+    ldloc.s 75
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c88
+    pop
+    ldloc.s 75
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 76
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 77
+    ldloc.s 77
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 77
+    ldc.i4.1
+    ldloc.s 76
+    stelem.ref
+    ldloc.s 77
+    br IL_c87
+  IL_c88:
+    pop
+    ldloc.s 75
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 76
+    ldloc.s 76
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    stloc.s 77
+    ldloc.s 77
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c90
+    pop
+    ldloc.s 77
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 78
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 79
+    ldloc.s 79
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 79
+    ldc.i4.1
+    ldloc.s 78
+    stelem.ref
+    ldloc.s 79
+    br IL_c89
+  IL_c90:
+    pop
+    ldloc.s 77
+    ldc.i4.1
+    ldelem.ref
+    stloc.s 78
+    ldloc.s 78
+    ldloc.s 36
+    call object AwsumMain::__concat(object, object)
+  IL_c89:
+  IL_c87:
+  IL_c85:
+  IL_c83:
+  IL_c81:
+  IL_c79:
+  IL_c77:
+  IL_c75:
+  IL_c73:
+  IL_c71:
+  IL_c69:
+  IL_c67:
+  IL_c65:
+  IL_c63:
+  IL_c61:
+  IL_c59:
+  IL_c57:
+  IL_c55:
+  IL_c53:
+  IL_c51:
+  IL_c49:
+  IL_c47:
+  IL_c43:
+  IL_c39:
+  IL_c35:
+  IL_c31:
+  IL_c27:
+  IL_c23:
+  IL_c19:
+  IL_c15:
+  IL_c11:
+  IL_c7:
     stloc.1
+    br IL_c0
+  IL_c0:
+    ldloc.1
+    castclass object[]
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    dup
+    ldc.i4.3
+    bne.un IL_c92
+    pop
     ldc.i4.3
     newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
+    stloc.3
+    ldloc.3
     ldc.i4.0
     ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.2
-    ldc.i4.1
-    ldloc.1
-    stelem.ref
-    ldloc.2
-    ldc.i4.2
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldc.i4.5
-    box [System.Runtime]System.Int32
-    stelem.ref
     ldloc.3
     ldc.i4.1
-    ldc.i4.1
+    ldstr "STRING_TOO_LONG"
+    stelem.ref
+    ldloc.3
+    ldc.i4.2
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     stloc.s 4
     ldloc.s 4
     ldc.i4.0
+    ldc.i4.5
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.s 5
+    ldloc.s 5
+    ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 5
     stelem.ref
     ldloc.s 4
     stelem.ref
     ldloc.3
+    br IL_c91
+  IL_c92:
+    pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.7
+    box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.2
-  IL_c0:
+    ldloc.3
+    ldc.i4.1
+    ldloc.1
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
+    stelem.ref
+    ldloc.3
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    stloc.s 4
+    ldloc.s 4
+    ldc.i4.0
+    ldc.i4.5
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 4
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.s 5
+    ldloc.s 5
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.s 5
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+  IL_c91:
+  IL_c1:
     ret
   }
 

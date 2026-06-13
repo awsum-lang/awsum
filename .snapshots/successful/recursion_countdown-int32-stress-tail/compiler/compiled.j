@@ -164,12 +164,10 @@ L_eq_i32_ne:
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
-  .limit locals 7
+  .limit locals 5
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
@@ -178,50 +176,26 @@ L_tco0:
   iload_2
   iconst_5
   if_icmpne L_tarm1
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aconst_null
-  astore 4
-  aload_3
-  aconst_null
-  astore_3
   areturn
 L_tarm1:
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aload_1
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  astore_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_2
   aaload
-  astore 4
-  aload_3
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  checkcast [Ljava/lang/Object;
-  astore 5
-  aload 5
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore 6
-  aload 4
   aconst_null
-  astore 4
-  aconst_null
-  astore_3
+  astore_1
   astore_0
   goto L_tco0
-.end method
-
-
-.method static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 1
-  .limit locals 1
-  ldc "UnderflowError"
-  areturn
 .end method
 
 
@@ -302,61 +276,37 @@ L_tarm4:
 .end method
 
 
-.method static v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
+.method static v_main()Ljava/lang/Object;
+  .limit stack 10
   .limit locals 4
+  ldc 100000
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
+  astore_0
   aload_0
   checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  istore_2
-  iload_2
+  istore_1
+  iload_1
   iconst_3
   if_icmpne L_arm6
-  aload_1
-  iconst_1
-  aaload
-  astore_3
   ldc "left: "
-  aload_3
-  invokestatic AwsumMain/v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  ldc "UnderflowError"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join5
 L_arm6:
-  aload_1
+  ldc "right: "
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  ldc "right: "
-  aload_3
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_join5:
-  areturn
-.end method
-
-
-.method static v_main()Ljava/lang/Object;
-  .limit stack 4
-  .limit locals 0
-  ldc 100000
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
-  .limit locals 4
-  aload_0
   checkcast [Ljava/lang/Object;
   astore_1
   aload_1
@@ -368,9 +318,7 @@ L_join5:
   iload_2
   iconst_3
   if_icmpne L_arm8
-  aload_1
-  iconst_1
-  aaload
+  aconst_null
   astore_3
   iconst_3
   anewarray java/lang/Object

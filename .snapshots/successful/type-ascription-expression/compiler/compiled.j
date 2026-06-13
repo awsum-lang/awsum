@@ -85,62 +85,12 @@ L_concat_too_long:
   areturn
 .end method
 
-.method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
-  .limit locals 3
-  aload_0
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_1
-  iload_1
-  ldc -2147483648
-  if_icmpne L_pred_ok
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 17
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  astore_2
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_3
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_2
-  aastore
-  areturn
-L_pred_ok:
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_4
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  iload_1
-  iconst_1
-  isub
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  areturn
-.end method
-
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
-  .limit locals 7
+  .limit locals 5
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
@@ -149,50 +99,26 @@ L_tco0:
   iload_2
   iconst_5
   if_icmpne L_tarm1
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aconst_null
-  astore 4
-  aload_3
-  aconst_null
-  astore_3
   areturn
 L_tarm1:
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aload_1
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  astore_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_2
   aaload
-  astore 4
-  aload_3
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  checkcast [Ljava/lang/Object;
-  astore 5
-  aload 5
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore 6
-  aload 4
   aconst_null
-  astore 4
-  aconst_null
-  astore_3
+  astore_1
   astore_0
   goto L_tco0
-.end method
-
-
-.method static v_identity(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 1
-  .limit locals 1
-  aload_0
-  areturn
 .end method
 
 
@@ -208,11 +134,10 @@ L_tarm1:
 
 
 .method static v_throughHof()Ljava/lang/Object;
-  .limit stack 3
+  .limit stack 2
   .limit locals 0
   bipush 10
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_identity(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   areturn
@@ -220,37 +145,12 @@ L_tarm1:
 
 
 .method static v_ascribedCall()Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 3
-  iconst_5
+  .limit stack 2
+  .limit locals 0
+  iconst_4
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/__predInt32(Ljava/lang/Object;)Ljava/lang/Object;
-  checkcast [Ljava/lang/Object;
-  astore_0
-  aload_0
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_1
-  iload_1
-  iconst_3
-  if_icmpne L_arm3
-  aload_0
-  iconst_1
-  aaload
-  astore_2
-  ldc "FAIL"
-  goto L_join2
-L_arm3:
-  aload_0
-  iconst_1
-  aaload
-  astore_2
-  aload_2
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
-L_join2:
   areturn
 .end method
 
@@ -271,7 +171,7 @@ L_join2:
   istore_1
   iload_1
   iconst_3
-  if_icmpne L_arm5
+  if_icmpne L_arm3
   aload_0
   iconst_1
   aaload
@@ -287,8 +187,8 @@ L_join2:
   iconst_1
   aload_2
   aastore
-  goto L_join4
-L_arm5:
+  goto L_join2
+L_arm3:
   aload_0
   iconst_1
   aaload
@@ -306,7 +206,7 @@ L_arm5:
   istore 4
   iload 4
   iconst_3
-  if_icmpne L_arm7
+  if_icmpne L_arm5
   aload_3
   iconst_1
   aaload
@@ -322,8 +222,8 @@ L_arm5:
   iconst_1
   aload 5
   aastore
-  goto L_join6
-L_arm7:
+  goto L_join4
+L_arm5:
   aload_3
   iconst_1
   aaload
@@ -341,7 +241,7 @@ L_arm7:
   istore 7
   iload 7
   iconst_3
-  if_icmpne L_arm9
+  if_icmpne L_arm7
   aload 6
   iconst_1
   aaload
@@ -357,8 +257,8 @@ L_arm7:
   iconst_1
   aload 8
   aastore
-  goto L_join8
-L_arm9:
+  goto L_join6
+L_arm7:
   aload 6
   iconst_1
   aaload
@@ -366,9 +266,9 @@ L_arm9:
   aload 8
   invokestatic AwsumMain/v_ascribedCall()Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_join8:
 L_join6:
 L_join4:
+L_join2:
   areturn
 .end method
 
@@ -387,10 +287,8 @@ L_join4:
   istore_1
   iload_1
   iconst_3
-  if_icmpne L_arm11
-  aload_0
-  iconst_1
-  aaload
+  if_icmpne L_arm9
+  aconst_null
   astore_2
   iconst_3
   anewarray java/lang/Object
@@ -423,8 +321,8 @@ L_join4:
   aastore
   aastore
   aastore
-  goto L_join10
-L_arm11:
+  goto L_join8
+L_arm9:
   aload_0
   iconst_1
   aaload
@@ -460,7 +358,7 @@ L_arm11:
   aastore
   aastore
   aastore
-L_join10:
+L_join8:
   areturn
 .end method
 

@@ -107,7 +107,14 @@ goExpr topNames = go
       CLoop b -> CLoop <$> go env b
       CContinue xs -> CContinue <$> traverse (go env) xs
       CDrop k x b -> CDrop k (ref env x) <$> go env b
-      CReuse x t fs -> CReuse (ref env x) t <$> traverse (go env) fs
+      CReuse rm x t fs -> CReuse rm (ref env x) t <$> traverse (go env) fs
+      CLet x rhs body -> do
+        rhs' <- go env rhs
+        (x', env') <- renameBinder topNames env x
+        CLet x' rhs' <$> go env' body
+      CProj x i -> pure (CProj (ref env x) i)
+      CJoin {} -> error "UniquifyLocals: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "UniquifyLocals: CJump is minted by Awsum.Simplify, which runs later"
     goAlt env (t, vs, b) = do
       (vs', env') <- renameBinders topNames env vs
       (t,vs',) <$> go env' b
@@ -136,4 +143,8 @@ allNames = \case
       CLoop b -> exprNames b
       CContinue xs -> foldMap exprNames xs
       CDrop _ x b -> Set.insert x (exprNames b)
-      CReuse x _ fs -> Set.insert x (foldMap exprNames fs)
+      CReuse _ x _ fs -> Set.insert x (foldMap exprNames fs)
+      CLet x rhs body -> Set.insert x (exprNames rhs <> exprNames body)
+      CProj x _ -> Set.singleton x
+      CJoin {} -> error "UniquifyLocals: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "UniquifyLocals: CJump is minted by Awsum.Simplify, which runs later"

@@ -1,11 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-bytesToHexStringNoPrefix:
-  param           bytes                           count=1
+  let             $inl0$eff                       count=0
 
 $cps$bytesToHexStringNoPrefix:
   param           bytes                           count=2
@@ -18,19 +16,10 @@ $apply$bytesToHexStringNoPrefix:
   param           $x                              count=1
   case-pattern    $pk_16                          count=0
   case-pattern    b                               count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$a                         count=0
 
-$lam$12:
-  param           b                               count=1
-  param           restHex                         count=1
-
-$let$13:
-  param           bytes                           count=1
-  case-pattern    _e                              count=0
-  case-pattern    hex                             count=0
-
-$df$bindEither$0:
-  param           x                               count=1
-  param           $df$bindEither$0$cap1$0         count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
+main:
+  case-pattern    $inl3$_e                        count=0
+  case-pattern    $inl4$hex                       count=1
 

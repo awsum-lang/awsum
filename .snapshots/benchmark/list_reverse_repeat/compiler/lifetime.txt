@@ -1,0 +1,40 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+$cps$repeat:
+  param           n                               count=2
+  param           value                           count=0
+  param           $k                              count=2
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+$apply$repeat:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    value                           count=0
+
+revInto:
+  param           acc                             count=1
+  param           lst                             count=2
+  case-pattern    h                               count=0
+  case-pattern    t                               count=0
+
+revN:
+  param           times                           count=2
+  param           lst                             count=2
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+sumList:
+  param           lst                             count=2
+  param           acc                             count=3
+  case-pattern    x                               count=0
+  case-pattern    xs                              count=0
+  case-pattern    _e                              count=0
+  case-pattern    next                            count=0
+

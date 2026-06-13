@@ -67,7 +67,13 @@ buildCallGraph (CoreProgram ds) =
       CLoop b -> calls b
       CContinue xs -> foldMap calls xs
       CDrop _ _ b -> calls b
-      CReuse _ _ fs -> foldMap calls fs
+      CReuse _ _ _ fs -> foldMap calls fs
+      CLet _ rhs body -> calls rhs <> calls body
+      -- The join name is a label, not a top-level reference — only the
+      -- sub-expressions contribute edges.
+      CJoin _ _ body inner -> calls body <> calls inner
+      CJump _ args -> foldMap calls args
+      CProj _ _ -> mempty
       CString _ -> mempty
       CIntLit _ _ -> mempty
       CBuiltIn _ -> mempty
@@ -98,7 +104,14 @@ hasNonTailSelfCall f = inTail
       CLoop b -> inTail b
       CContinue xs -> any inNonTail xs
       CDrop _ _ b -> inTail b
-      CReuse _ _ fs -> any inNonTail fs
+      CReuse _ _ _ fs -> any inNonTail fs
+      CLet _ rhs body -> inNonTail rhs || inTail body
+      -- Control transfers from the inner expression's jump tails into the
+      -- join body, so both are tail iff the 'CJoin' is; jump arguments are
+      -- ordinary non-tail operands.
+      CJoin _ _ body inner -> inTail body || inTail inner
+      CJump _ args -> any inNonTail args
+      CProj _ _ -> False
       CVar _ -> False
       CString _ -> False
       CIntLit _ _ -> False
@@ -114,7 +127,10 @@ hasNonTailSelfCall f = inTail
       CLoop b -> inNonTail b
       CContinue xs -> any inNonTail xs
       CDrop _ _ b -> inNonTail b
-      CReuse _ _ fs -> any inNonTail fs
+      CReuse _ _ _ fs -> any inNonTail fs
+      CLet _ rhs body -> inNonTail rhs || inNonTail body
+      CJoin _ _ body inner -> inNonTail body || inNonTail inner
+      CJump _ args -> any inNonTail args
       _ -> False
 
 -- | Any call to @f@ anywhere in this sub-expression (tail or not).
@@ -131,4 +147,7 @@ containsSelfCall f = go
       CCon _ fs -> any go fs
       CLoop b -> go b
       CContinue xs -> any go xs
+      CLet _ rhs body -> go rhs || go body
+      CJoin _ _ body inner -> go body || go inner
+      CJump _ args -> any go args
       _ -> False

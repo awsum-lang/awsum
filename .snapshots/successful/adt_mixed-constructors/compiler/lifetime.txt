@@ -1,21 +1,32 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-showToken:
-  param           token                           count=1
-  case-pattern    w                               count=0
-  case-pattern    n                               count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_8                         count=1
+  let             $inl3$token                     count=0
+  join-param      $inl16$scrut                    count=2
+  case-pattern    $inl13$__w0                     count=0
+  case-pattern    $inl14$s                        count=0
+  case-pattern    $inl1$w                         count=0
+  case-pattern    $inl2$n                         count=0
+  case-pattern    $do_e_8                         count=0
   case-pattern    a                               count=1
+  let             $inl6$token                     count=0
+  case-pattern    $inl4$w                         count=0
+  case-pattern    $inl5$n                         count=0
   case-pattern    $do_e_7                         count=1
   case-pattern    b                               count=1
+  let             $inl9$token                     count=0
+  case-pattern    $inl7$w                         count=0
+  case-pattern    $inl8$n                         count=0
   case-pattern    $do_e_6                         count=1
   case-pattern    c                               count=1
+  let             $inl12$token                    count=0
+  case-pattern    $inl10$w                        count=0
+  case-pattern    $inl11$n                        count=0
   case-pattern    $do_e_5                         count=1
   case-pattern    d                               count=1
   case-pattern    $do_e_4                         count=1
@@ -28,9 +39,4 @@ main:
   case-pattern    abcsc                           count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    abcscd                          count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
 

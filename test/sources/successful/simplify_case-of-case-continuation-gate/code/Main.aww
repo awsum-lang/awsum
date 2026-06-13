@@ -1,0 +1,31 @@
+{- Case-of-case fusion must not duplicate a continuation-carrying outer arm:
+   in a `do`-chain every bind's outer case holds the whole rest of the chain
+   in its Right arm, and a static resolution of the inner Left arm would copy
+   it while the join body retains a second copy — doubling the program per
+   bind level (the int32_parse 2^12 blowup). The duplication gate prices the
+   join-body copy in and demotes the oversized arm, so the binds of this
+   chain do not fuse and its Core stays linear; the only join minted is the
+   final dispatch (its arms are two small prints), which the first bind
+   legally fuses with. -}
+
+import IO.Stdout
+
+render : Either ParseError Int32 -> Either StringTooLong String
+render r = case r of
+  Left _ -> Right "err"
+  Right v -> "ok:" ++ showInt32 v
+
+main : IO Never Unit
+main =
+  let res : Either StringTooLong String = (do
+        a <- render (parseInt32 "41")
+        b <- render (parseInt32 "x")
+        c <- render (parseInt32 "43")
+        d <- render (parseInt32 "44")
+        s0 <- a ++ b
+        s1 <- s0 ++ c
+        s2 <- s1 ++ d
+        pureEither s2)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

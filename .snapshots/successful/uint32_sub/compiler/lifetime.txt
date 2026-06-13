@@ -1,26 +1,37 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-showUnderflowError:
-  param           $wild0                          count=0
-
-render:
-  param           r                               count=1
-  case-pattern    e                               count=0
-  case-pattern    v                               count=0
+  let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $do_e_11                        count=1
+  let             $inl3$r                         count=0
+  join-param      $inl19$scrut                    count=2
+  case-pattern    $inl16$__w0                     count=0
+  case-pattern    $inl17$s                        count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$v                         count=0
+  case-pattern    $do_e_11                        count=0
   case-pattern    a                               count=1
+  let             $inl6$r                         count=0
+  case-pattern    $inl4$e                         count=0
+  case-pattern    $inl5$v                         count=0
   case-pattern    $do_e_10                        count=1
   case-pattern    b                               count=1
+  let             $inl9$r                         count=0
+  case-pattern    $inl7$e                         count=0
+  case-pattern    $inl8$v                         count=0
   case-pattern    $do_e_9                         count=1
   case-pattern    c                               count=1
+  let             $inl12$r                        count=0
+  case-pattern    $inl10$e                        count=0
+  case-pattern    $inl11$v                        count=0
   case-pattern    $do_e_8                         count=1
   case-pattern    d                               count=1
+  let             $inl15$r                        count=0
+  case-pattern    $inl13$e                        count=0
+  case-pattern    $inl14$v                        count=0
   case-pattern    $do_e_7                         count=1
   case-pattern    e                               count=1
   case-pattern    $do_e_6                         count=1
@@ -37,9 +48,4 @@ main:
   case-pattern    s5                              count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    s6                              count=1
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
 

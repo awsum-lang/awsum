@@ -1,0 +1,50 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+make:
+  param           n                               count=2
+  case-pattern    _u                              count=0
+  case-pattern    m                               count=0
+
+eat:
+  param           k                               count=2
+  param           q                               count=1
+  case-pattern    _u2                             count=0
+  case-pattern    j                               count=0
+
+spin:
+  param           c                               count=2
+  param           q2                              count=4
+  case-pattern    _u3                             count=0
+  case-pattern    m2                              count=0
+  case-pattern    x3                              count=0
+  case-pattern    y3                              count=0
+  case-pattern    s3                              count=0
+
+main:
+  case-pattern    $inl9$p                         count=4
+  case-pattern    $inl10$x                        count=0
+  case-pattern    $inl11$y                        count=0
+  case-pattern    $inl12$_s                       count=0
+
+$cps$$df$andThenIO$0:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    $inl5$p                         count=0
+  case-pattern    $inl6$x                         count=0
+  case-pattern    $inl7$y                         count=0
+  case-pattern    $inl8$_s                        count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_28                          count=0
+  case-pattern    s                               count=0
+

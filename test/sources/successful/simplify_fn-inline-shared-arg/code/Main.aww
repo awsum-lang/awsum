@@ -1,0 +1,14 @@
+{- A parameter used twice with a non-variable argument: inlining shares the
+   argument through a `CLet` (evaluated once, never duplicated) — the first
+   producer of the node, so this also pins the `CLet` lowering on all five
+   backends. The seed is runtime so nothing folds away. -}
+
+import IO.Stdout
+
+double : UInt32 -> String
+double n = case addUInt32 n n of
+  Left _o -> "OVERFLOW"
+  Right d -> showUInt32 d
+
+main : IO Never Unit
+main = IO.Stdout.print (double (lengthUtf8Bytes (showInt32 (-123456))))

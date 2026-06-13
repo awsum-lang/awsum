@@ -1,24 +1,7 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-$lam$13:
-  param           k                               count=1
-  param           n                               count=1
-
-$lam$14:
-  param           m                               count=1
-
-$df$applyOnce$0:
-  param           x                               count=1
-  param           $df$applyOnce$0$cap0$0          count=1
-
-$df$poly$1:
-
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=1
+  let             $inl0$eff                       count=0
 

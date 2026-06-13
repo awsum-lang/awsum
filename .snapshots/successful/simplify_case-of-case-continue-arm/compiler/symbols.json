@@ -1,0 +1,1 @@
+[{"kind":"function","name":"go","range":{"startLine":11,"startCol":1,"endLine":18,"endCol":21},"selectionRange":{"startLine":11,"startCol":1,"endLine":11,"endCol":3},"children":[]},{"kind":"constant","name":"main","range":{"startLine":20,"startCol":1,"endLine":21,"endCol":35},"selectionRange":{"startLine":20,"startCol":1,"endLine":20,"endCol":5},"children":[]}]

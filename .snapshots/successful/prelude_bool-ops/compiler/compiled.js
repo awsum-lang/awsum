@@ -9,116 +9,32 @@
   const __concat = (a, b) =>
     a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showBool = v_b => {
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 1: {
-          return "True";
-        }
-        case 2: {
-          return "False";
-        }
-      }
-    }
-  };
-
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
   };
 
-  const v_or = (v_a, v_b) => {
-    {
-      const __s = v_a;
-      switch (__s[0]) {
-        case 1: {
-          return [1];
-        }
-        case 2: {
-          return v_b;
-        }
-      }
-    }
-  };
-
-  const v_not = v_b => {
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 1: {
-          return [2];
-        }
-        case 2: {
-          return [1];
-        }
-      }
-    }
-  };
-
-  const v_and = (v_a, v_b) => {
-    {
-      const __s = v_a;
-      switch (__s[0]) {
-        case 1: {
-          return v_b;
-        }
-        case 2: {
-          return [2];
-        }
-      }
-    }
-  };
-
-  const v__let_13 = v_res => {
-    {
-      const __s = v_res;
+  const main = (() => {
+    let v__inl10_scrut;
+    $join9: {
+      const __s = __concat("False", "True");
       switch (__s[0]) {
         case 3: {
-          const v___w0 = __s[1];
           return [7, "STRING_TOO_LONG", [5, [0]]];
         }
         case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
-        }
-      }
-    }
-  };
-
-  const main = v__let_13(
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          const v__do_e_3 = s[1];
-          return [3, v__do_e_3];
-        }
-        case 4: {
-          const v_s0 = s[1];
-          return (s => {
+          const v_s0 = __s[1];
+          v__inl10_scrut = (s => {
             switch (s[0]) {
               case 3: {
                 const v__do_e_2 = s[1];
@@ -126,36 +42,74 @@
               }
               case 4: {
                 const v_s1 = s[1];
-                return (s => {
-                  switch (s[0]) {
+                {
+                  const __s = __concat(v_s1, "True");
+                  switch (__s[0]) {
                     case 3: {
-                      const v__do_e_1 = s[1];
+                      const v__do_e_1 = __s[1];
                       return [3, v__do_e_1];
                     }
                     case 4: {
-                      const v_s2 = s[1];
-                      return (s => {
-                        switch (s[0]) {
+                      const v_s2 = __s[1];
+                      {
+                        const __s = __concat(v_s2, "False");
+                        switch (__s[0]) {
                           case 3: {
-                            const v__do_e_0 = s[1];
+                            const v__do_e_0 = __s[1];
                             return [3, v__do_e_0];
                           }
                           case 4: {
-                            const v_s3 = s[1];
-                            return __concat(v_s3, v_showBool(v_or([1], [2])));
+                            const v_s3 = __s[1];
+                            return __concat(v_s3, "True");
                           }
                         }
-                      })(__concat(v_s2, v_showBool(v_or([2], [2]))));
+                      }
                     }
                   }
-                })(__concat(v_s1, v_showBool(v_and([1], [1]))));
+                }
               }
             }
-          })(__concat(v_s0, v_showBool(v_and([1], [2]))));
+          })(
+            __concat(
+              v_s0,
+              (v__inl1_a =>
+                (() => {
+                  let v__inl8_scrut;
+                  $join7: {
+                    switch (v__inl1_a[0]) {
+                      case 1: {
+                        return "False";
+                      }
+                      case 2: {
+                        v__inl8_scrut = v__inl1_a;
+                        break $join7;
+                      }
+                    }
+                  }
+                  switch (v__inl8_scrut[0]) {
+                    case 1: {
+                      return "True";
+                    }
+                    case 2: {
+                      return "False";
+                    }
+                  }
+                })())([1])
+            )
+          );
+          break $join9;
         }
       }
-    })(__concat(v_showBool(v_not([1])), v_showBool(v_not([2]))))
-  );
+    }
+    switch (v__inl10_scrut[0]) {
+      case 3: {
+        return [7, "STRING_TOO_LONG", [5, [0]]];
+      }
+      case 4: {
+        return [7, v__inl10_scrut[1], [5, [0]]];
+      }
+    }
+  })();
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

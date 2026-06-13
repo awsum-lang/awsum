@@ -1,0 +1,16 @@
+{- Regression for the case-of-known-constructor substitution gate: a binder
+   used more than once only substitutes a duplicable field (a plain variable),
+   never a computed one — `showInt32 7` here — because substituting would run
+   the computation at every use site (and allocate a fresh cell each time on
+   LLVM/WASM). The Core snapshot pins the gate: the case over
+   `Just (showInt32 7)` stays, its field computed once and read through the
+   binder `s`. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (case Just (showInt32 (7 : Int32)) of
+  Nothing -> "nothing"
+  Just s -> case s ++ s of
+    Left _e -> "too long"
+    Right d -> d)

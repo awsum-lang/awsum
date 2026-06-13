@@ -9,8 +9,11 @@ module Awsum.RunBackend
     allBackends,
     backendName,
     CompiledArtifacts (..),
+    SimplifyMode (..),
     compileFromText,
+    compileFromTextWith,
     compileFromFile,
+    compileFromFileWith,
     runOn,
     runOnAll,
     runOnStdin,
@@ -31,20 +34,22 @@ import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLi
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
-import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgramWith)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
 import Awsum.Program (ProgramType (..))
 import Common.File
 import Control.Concurrent.Async (async, concurrently, wait)
-import Control.Exception (IOException, try)
+import Control.Exception (IOException, bracket, try)
 import Data.ByteString qualified as BS
+import Data.Text qualified as T
 import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO (hClose, hSetBinaryMode)
 import System.IO.Temp (createTempDirectory, getCanonicalTemporaryDirectory, withSystemTempDirectory)
-import System.Process (CreateProcess (..), StdStream (..), createProcess, proc, readProcessWithExitCode, waitForProcess)
+import System.Process (CreateProcess (..), StdStream (..), cleanupProcess, createProcess, proc, readProcessWithExitCode, waitForProcess)
+import System.Timeout (timeout)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Backend enum
@@ -58,6 +63,26 @@ allBackends = universe
 
 backendName :: Backend -> Text
 backendName = show
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Time limit
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Hard ceiling on one harness compile and on one backend process run.
+--   Corpus programs are sized to finish in seconds even with the whole
+--   suite loading the machine, so hitting it never means "slow test": it
+--   means a diverging program (most often a miscompiled loop) or a
+--   non-terminating compiler pass, and either must fail its item by name
+--   instead of hanging the suite. An hspec-level per-item timeout could
+--   not do this job — the compiles and runs happen inside 'beforeAll'
+--   hooks shared by a whole group, and only this layer knows which
+--   backend's process is stuck.
+timeLimitMicros :: Int
+timeLimitMicros = 60 * 1000 * 1000
+
+-- | The limit as failure messages spell it.
+timeLimitText :: Text
+timeLimitText = show (timeLimitMicros `div` 1000000) <> "s"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Compiled artifacts
@@ -103,40 +128,83 @@ data CompiledArtifacts = CompiledArtifacts
 --   it here (rather than inside 'runLLVM') means QuickCheck's N inputs
 --   per property cost one @clang@, not N.
 compileFromText :: Text -> IO CompiledArtifacts
-compileFromText src = do
-  let ast = case parseProgram src of
-        Left e -> error $ "parse failed" <> e
-        Right x -> x
-      (ptags, core) = case elaborateLowerProgram ProgramCli (withPrelude ast) of
-        Left err -> error $ "elaborate failed" <> show err
-        Right (_warns, pt, x) -> (pt, x)
-      -- A per-target JVM refusal (method over the 65535-byte ceiling) is a
-      -- test bug here, like a parse/elaborate failure — the shared harness
-      -- assumes all five backends compile. Programs that exercise the
-      -- refusal call 'assembleJVM' directly in their own spec.
-      jvmBytes = case assembleJVM ptags core of
-        Left e -> error ("assembleJVM refused this program: " <> renderJvmLimitExceeded e)
-        Right b -> b
-  -- Binary built from the host-native variant — only that one can actually
-  -- be linked and run by the host's clang. Snapshot tests pull text for
-  -- other hosts via the 'caLLVM' field, which is a closure over 'core'.
-  llvmBinPath <- compileLLVMBin (codegenLLVM llvmHostFromSystem ptags core)
-  pure
-    CompiledArtifacts
-      { caLLVM = \host -> codegenLLVM host ptags core,
-        caLLVMBinPath = llvmBinPath,
-        caJVMBytes = jvmBytes,
-        caCLRBytes = assembleCLR ptags core,
-        caWASMBytes = assembleWASM ptags core,
-        caJS = codegenJS ProgramCli ptags core,
-        caCore = core,
-        caJVMText = codegenJVM ptags core,
-        caCLRText = codegenCLR ptags core,
-        caWASMText = codegenWASM ptags core
-      }
+compileFromText = compileFromTextWith SimplifyOn
+
+-- | 'compileFromText' with the 'Awsum.Simplify' pass switchable. The
+--   differential layers ('Awsum.NoSimplifySpec', the property suite's
+--   no-simplify twin) compile through 'SimplifyOff' and assert the same
+--   runtime stdout as the 'SimplifyOn' artifacts — the pass is an
+--   optimisation, never a semantic step, and this switch is what keeps
+--   that claim measured rather than assumed.
+--
+--   The body runs under 'timeLimitMicros', and every backend's artifact is
+--   forced before the limit is lifted: the @clang@ step forces the
+--   elaborated Core in full (the host IR is rendered from it), and the
+--   'evaluateWHNF' below forces the four other codegens — the record
+--   fields are lazy, and a diverging assembler walk would otherwise escape
+--   the limit as a thunk and hang the suite at first use instead of
+--   failing the compiling item by name.
+compileFromTextWith :: SimplifyMode -> Text -> IO CompiledArtifacts
+compileFromTextWith mode src = do
+  mArtifacts <- timeout timeLimitMicros $ do
+    let ast = case parseProgram src of
+          Left e -> error $ "parse failed" <> e
+          Right x -> x
+        (ptags, core) = case elaborateLowerProgramWith mode ProgramCli (withPrelude ast) of
+          Left err -> error $ "elaborate failed" <> show err
+          Right (_warns, pt, x) -> (pt, x)
+        -- A per-target JVM refusal (method over the 65535-byte ceiling) is a
+        -- test bug here, like a parse/elaborate failure — the shared harness
+        -- assumes all five backends compile. Programs that exercise the
+        -- refusal call 'assembleJVM' directly in their own spec.
+        jvmBytes = case assembleJVM ptags core of
+          Left e -> error ("assembleJVM refused this program: " <> renderJvmLimitExceeded e)
+          Right b -> b
+        clrBytes = assembleCLR ptags core
+        wasmBytes = assembleWASM ptags core
+        jsText = codegenJS ProgramCli ptags core
+        jvmText = codegenJVM ptags core
+        clrText = codegenCLR ptags core
+        wasmText = codegenWASM ptags core
+    -- Binary built from the host-native variant — only that one can actually
+    -- be linked and run by the host's clang. Snapshot tests pull text for
+    -- other hosts via the 'caLLVM' field, which is a closure over 'core'.
+    llvmBinPath <- compileLLVMBin (codegenLLVM llvmHostFromSystem ptags core)
+    _ <-
+      evaluateWHNF
+        $ BS.length jvmBytes
+        + BS.length clrBytes
+        + BS.length wasmBytes
+        + T.length jsText
+        + T.length jvmText
+        + T.length clrText
+        + T.length wasmText
+    pure
+      CompiledArtifacts
+        { caLLVM = \host -> codegenLLVM host ptags core,
+          caLLVMBinPath = llvmBinPath,
+          caJVMBytes = jvmBytes,
+          caCLRBytes = clrBytes,
+          caWASMBytes = wasmBytes,
+          caJS = jsText,
+          caCore = core,
+          caJVMText = jvmText,
+          caCLRText = clrText,
+          caWASMText = wasmText
+        }
+  case mArtifacts of
+    Just artifacts -> pure artifacts
+    Nothing ->
+      error
+        $ "compile did not finish within "
+        <> timeLimitText
+        <> " — a compiler pass likely diverges on this program"
 
 compileFromFile :: FilePath -> IO CompiledArtifacts
-compileFromFile path = compileFromText =<< readFileTextUtf8 path
+compileFromFile = compileFromFileWith SimplifyOn
+
+compileFromFileWith :: SimplifyMode -> FilePath -> IO CompiledArtifacts
+compileFromFileWith mode path = compileFromTextWith mode =<< readFileTextUtf8 path
 
 -- | Compile LLVM IR text to a native binary via @clang -O2@ and return
 --   the binary's path. The binary lives in a leaked temp dir under the
@@ -211,14 +279,23 @@ runOnAll ca input = do
       (JS, jsO)
     ]
 
+-- | Spawn @cmd args@ with an empty stdin and capture stdout. 'Left'
+--   covers every way the run can fail to produce usable output: the
+--   process not starting, exiting non-zero, or blowing 'timeLimitMicros'
+--   — on expiry 'timeout' unwinds 'readProcessWithExitCode', whose
+--   cleanup terminates the child, so the item fails with the backend's
+--   process named and the suite moves on.
+runProcArgv :: Text -> FilePath -> [String] -> IO (Either Text Text)
+runProcArgv label cmd args = do
+  eRes <- try @IOException (timeout timeLimitMicros (readProcessWithExitCode cmd args ""))
+  pure $ case eRes of
+    Left ex -> Left ("failed to start " <> label <> ": " <> show ex)
+    Right Nothing -> Left (label <> " timed out after " <> timeLimitText <> " — the program likely diverges")
+    Right (Just (ExitSuccess, out, _)) -> Right (toText out)
+    Right (Just (ExitFailure _, _, err)) -> Left (label <> " exited with non-zero status:\n" <> toText err)
+
 runLLVM :: FilePath -> Text -> IO (Either Text Text)
-runLLVM binFile input = do
-  eRun <- try @IOException (readProcessWithExitCode binFile [toString input] "")
-  case eRun of
-    Left ex -> pure (Left ("failed to run binary: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _, err) ->
-      pure (Left ("binary exited with non-zero status:\n" <> toText err))
+runLLVM binFile input = runProcArgv "binary" binFile [toString input]
 
 runJVM :: ByteString -> Text -> IO (Either Text Text)
 runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -229,12 +306,7 @@ runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   -- Stdout side is handled by the 'System.setOut' prologue baked into
   -- emitted 'main'. Keep these flags in sync with awsum/Main.hs's
   -- 'awsum run -t jvm' so the test harness mirrors what users get.
-  eRes <- try @IOException (readProcessWithExitCode "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start java: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("java exited with non-zero status:\n" <> toText err))
+  runProcArgv "java" "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input]
 
 runCLR :: ByteString -> Text -> IO (Either Text Text)
 runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -242,34 +314,19 @@ runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
       rcFile = dir </> "AwsumMain.runtimeconfig.json"
   writeFileBS dllFile dllBytes
   writeFileText rcFile runtimeConfigJson
-  eRes <- try @IOException (readProcessWithExitCode "dotnet" [dllFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start dotnet: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("dotnet exited with non-zero status:\n" <> toText err))
+  runProcArgv "dotnet" "dotnet" [dllFile, toString input]
 
 runWASM :: ByteString -> Text -> IO (Either Text Text)
 runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let wasmFile = dir </> "out.wasm"
   writeFileBS wasmFile wasmBytes
-  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("wasmtime exited with non-zero status:\n" <> toText err))
+  runProcArgv "wasmtime" "wasmtime" [wasmFile, toString input]
 
 runJs :: Text -> Text -> IO (Either Text Text)
 runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
   let tempFile = dir </> "out.js"
   writeFileText tempFile code
-  eRes <- try @IOException (readProcessWithExitCode "node" [toString tempFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start node: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("node exited with non-zero status:\n" <> toText err))
+  runProcArgv "node" "node" [toString tempFile, toString input]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Per-backend runners — stdin input variant (property tests)
@@ -289,34 +346,46 @@ runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
 --   pipe-buffer's worth of bytes (64 KiB on Linux, often less on
 --   other hosts) doesn't deadlock waiting for us to drain it before
 --   we finish sending input.
+--
+--   The whole exchange runs under 'timeLimitMicros'; on expiry the
+--   'bracket''s 'cleanupProcess' terminates the child and closes the
+--   pipes (which also lets the reader threads finish), so a diverging
+--   program becomes a named failure instead of a hang.
 runProcStdinBytes :: FilePath -> [String] -> ByteString -> IO (Either Text Text)
 runProcStdinBytes cmd args input = do
-  eRes <- try @IOException $ do
-    (Just hin, Just hout, Just herr, ph) <-
-      createProcess
-        (proc cmd args)
-          { std_in = CreatePipe,
-            std_out = CreatePipe,
-            std_err = CreatePipe
-          }
-    hSetBinaryMode hin True
-    hSetBinaryMode hout True
-    hSetBinaryMode herr True
-    writeAsync <- async $ do
-      BS.hPut hin input
-      hClose hin
-    outAsync <- async (BS.hGetContents hout)
-    errAsync <- async (BS.hGetContents herr)
-    outBs <- wait outAsync
-    errBs <- wait errAsync
-    wait writeAsync
-    ec <- waitForProcess ph
-    pure (ec, outBs, errBs)
-  case eRes of
-    Left ex -> pure (Left ("failed to start " <> toText cmd <> ": " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (decodeUtf8 out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left (toText cmd <> " exited with non-zero status:\n" <> decodeUtf8 err))
+  eRes <-
+    try @IOException
+      $ timeout timeLimitMicros
+      $ bracket
+        ( createProcess
+            (proc cmd args)
+              { std_in = CreatePipe,
+                std_out = CreatePipe,
+                std_err = CreatePipe
+              }
+        )
+        cleanupProcess
+      $ \case
+        (Just hin, Just hout, Just herr, ph) -> do
+          hSetBinaryMode hin True
+          hSetBinaryMode hout True
+          hSetBinaryMode herr True
+          writeAsync <- async $ do
+            BS.hPut hin input
+            hClose hin
+          outAsync <- async (BS.hGetContents hout)
+          errAsync <- async (BS.hGetContents herr)
+          outBs <- wait outAsync
+          errBs <- wait errAsync
+          wait writeAsync
+          ec <- waitForProcess ph
+          pure (ec, outBs, errBs)
+        _ -> error "runProcStdinBytes: CreatePipe produced no handle"
+  pure $ case eRes of
+    Left ex -> Left ("failed to start " <> toText cmd <> ": " <> show ex)
+    Right Nothing -> Left (toText cmd <> " timed out after " <> timeLimitText <> " — the program likely diverges")
+    Right (Just (ExitSuccess, out, _)) -> Right (decodeUtf8 out)
+    Right (Just (ExitFailure _, _out, err)) -> Left (toText cmd <> " exited with non-zero status:\n" <> decodeUtf8 err)
 
 -- | Feed the input as UTF-8 bytes; the 'ByteString' variant
 --   'runOnStdinBytes' takes raw bytes for tests that need malformed input.

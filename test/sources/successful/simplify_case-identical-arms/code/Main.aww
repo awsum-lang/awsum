@@ -1,0 +1,19 @@
+{- Identical arms across a nominal dispatch and a row dispatch both
+   collapse, dropping the runtime scrutinee computation with the case. -}
+
+import IO.Stdout
+
+pick : (UInt32 | String) -> String
+pick x = case x of
+  (_n : UInt32) -> "either way"
+  (_s : String) -> "either way"
+
+flagged : String -> String
+flagged s = case eqUInt32 (lengthUtf8Bytes s) 0 of
+  True -> "fl"
+  False -> "fl"
+
+main : IO Never Unit
+main = case flagged "q" ++ pick 7 of
+  Left _e -> IO.Stdout.print "TOO_LONG"
+  Right r -> IO.Stdout.print r

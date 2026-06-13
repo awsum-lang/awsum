@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,50 +15,44 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl4$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl4$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ,
                         ( 10
                         , [ "cont" ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "io"
-                                ( CContinue
-                                    [ CCall
-                                        ( CVar "$apply1" )
-                                        [ CVar "cont"
-                                        , CCall
-                                            ( CBuiltIn "internalStdinReadAllBytes" ) []
-                                        ]
-                                    ]
-                                )
+                        , CDrop DropFreeUnchecked "io"
+                            ( CContinue
+                                [ CLet "$inl5$$arg0"
+                                    ( CCall
+                                        ( CBuiltIn "internalStdinReadAllBytes" ) []
+                                    )
+                                    ( CDrop DropFreeUnchecked "$inl5$$arg0"
+                                        ( CCall
+                                            ( CVar "$cps$$scc$$apply1_$df$$lam$2$4" )
+                                            [ CCon 17
+                                                [ CProj "io" 1
+                                                , CVar "$inl5$$arg0"
+                                                ]
+                                            , CCon 23 []
+                                            ]
+                                        )
+                                    )
+                                ]
                             )
                         )
                     ]
                 )
-            )
-        , CFunDef "bytesToHexStringNoPrefix" [ "bytes" ]
-            ( CCall
-                ( CVar "$cps$bytesToHexStringNoPrefix" )
-                [ CVar "bytes"
-                , CCon 19 []
-                ]
             )
         , CFunDef "$cps$bytesToHexStringNoPrefix"
             [ "bytes"
@@ -89,7 +82,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "rest"
-                                        , CReuse "bytes" 20
+                                        , CReuse ReuseGuarded "bytes" 20
                                             [ CVar "$k"
                                             , CVar "b"
                                             ]
@@ -119,20 +112,30 @@ CoreProgram
                             [ "$pk_20"
                             , "b"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_20"
-                            ( CDrop DropFreeUnchecked "b"
-                                ( CDrop DropFreeUnchecked "$k"
-                                    ( CDrop DropFreeUnchecked "$x"
-                                        ( CContinue
-                                            [ CVar "$pk_20"
+                        , CDrop DropFreeUnchecked "$k"
+                            ( CDrop DropFreeUnchecked "$x"
+                                ( CContinue
+                                    [ CProj "$k" 1
+                                    , CCase
+                                        ( CVar "$x" )
+                                        [
+                                            ( 3
+                                            , [ "$inl0$e" ]
+                                            , CVar "$x"
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "$inl1$a" ]
                                             , CCall
-                                                ( CVar "$df$bindEither$0" )
-                                                [ CVar "$x"
-                                                , CVar "b"
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "byteToHexStringNoPrefix" )
+                                                    [ CProj "$k" 2 ]
+                                                , CProj "$x" 1
                                                 ]
-                                            ]
-                                        )
-                                    )
+                                            )
+                                        ]
+                                    ]
                                 )
                             )
                         )
@@ -141,88 +144,9 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$df$andThenIO$1" )
+                ( CVar "$cps$$df$andThenIO$1" )
                 [ CCon 10
                     [ CCon 16 [] ]
-                ]
-            )
-        , CFunDef "$lam$12"
-            [ "b"
-            , "restHex"
-            ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CCall
-                    ( CBuiltIn "byteToHexStringNoPrefix" )
-                    [ CVar "b" ]
-                , CVar "restHex"
-                ]
-            )
-        , CFunDef "$lam$13" [ "bytes" ]
-            ( CCase
-                ( CCall
-                    ( CVar "bytesToHexStringNoPrefix" )
-                    [ CVar "bytes" ]
-                )
-                [
-                    ( 3
-                    , [ "_e" ]
-                    , CDrop DropFreeUnchecked "_e"
-                        ( CCon 7
-                            [ CString "TOO_LONG"
-                            , CCon 5
-                                [ CCon 0 [] ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "hex" ]
-                    , CDrop DropFreeUnchecked "hex"
-                        ( CCon 7
-                            [ CVar "hex"
-                            , CCon 5
-                                [ CCon 0 [] ]
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$io_stdinReadAllBytes_cont" [ "bytes" ]
-            ( CCon 5
-                [ CVar "bytes" ]
-            )
-        , CFunDef "$df$bindEither$0"
-            [ "x"
-            , "$df$bindEither$0$cap1$0"
-            ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CVar "e" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "$lam$12" )
-                            [ CVar "$df$bindEither$0$cap1$0"
-                            , CVar "a"
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$andThenIO$1" [ "io" ]
-            ( CCall
-                ( CVar "$cps$$df$andThenIO$1" )
-                [ CVar "io"
                 , CCon 21 []
                 ]
             )
@@ -236,15 +160,38 @@ CoreProgram
                     [
                         ( 5
                         , [ "a" ]
-                        , CDrop DropFreeUnchecked "a"
-                            ( CCall
-                                ( CVar "$apply$$df$andThenIO$1" )
-                                [ CVar "$k"
-                                , CCall
-                                    ( CVar "$lam$13" )
-                                    [ CVar "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$1" )
+                            [ CVar "$k"
+                            , CCase
+                                ( CCall
+                                    ( CVar "$cps$bytesToHexStringNoPrefix" )
+                                    [ CProj "io" 1
+                                    , CCon 19 []
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$inl2$_e" ]
+                                    , CCon 7
+                                        [ CString "TOO_LONG"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl3$hex" ]
+                                    , CDrop DropFreeUnchecked "$inl3$hex"
+                                        ( CCon 7
+                                            [ CVar "$inl3$hex"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        )
+                                    )
                                 ]
-                            )
+                            ]
                         )
                     ,
                         ( 7
@@ -257,7 +204,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 22
+                                        , CReuse ReuseGuarded "io" 22
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -306,7 +253,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
                                         [ CVar "$pk_22"
-                                        , CReuse "$k" 7
+                                        , CReuse ReuseUnique "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
                                             ]
@@ -317,13 +264,6 @@ CoreProgram
                         )
                     ]
                 )
-            )
-        , CFunDef "$scc$$apply1_$df$$lam$2$4" [ "$args" ]
-            ( CCall
-                ( CVar "$cps$$scc$$apply1_$df$$lam$2$4" )
-                [ CVar "$args"
-                , CCon 23 []
-                ]
             )
         , CFunDef "$cps$$scc$$apply1_$df$$lam$2$4"
             [ "$args"
@@ -345,16 +285,14 @@ CoreProgram
                                     [
                                         ( 15
                                         , [ "$cap15_0" ]
-                                        , CDrop DropFreeUnchecked "$cap15_0"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CContinue
-                                                    [ CReuse "$args" 18
-                                                        [ CVar "$cap15_0"
-                                                        , CVar "$arg0"
-                                                        ]
-                                                    , CVar "$k"
+                                        , CDrop DropFreeUnchecked "$k"
+                                            ( CContinue
+                                                [ CReuse ReuseUnique "$args" 18
+                                                    [ CProj "$cl" 1
+                                                    , CVar "$arg0"
                                                     ]
-                                                )
+                                                , CVar "$k"
+                                                ]
                                             )
                                         )
                                     ,
@@ -363,8 +301,7 @@ CoreProgram
                                         , CCall
                                             ( CVar "$apply$$scc$$apply1_$df$$lam$2$4" )
                                             [ CVar "$k"
-                                            , CCall
-                                                ( CVar "$io_stdinReadAllBytes_cont" )
+                                            , CCon 5
                                                 [ CVar "$arg0" ]
                                             ]
                                         )
@@ -382,7 +319,7 @@ CoreProgram
                             ( CDrop DropFreeUnchecked "bytes"
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
-                                        [ CReuse "$args" 17
+                                        [ CReuse ReuseUnique "$args" 17
                                             [ CVar "cont"
                                             , CVar "bytes"
                                             ]
@@ -411,33 +348,21 @@ CoreProgram
                     ,
                         ( 24
                         , [ "$pk_24" ]
-                        , CDrop DropFreeUnchecked "$pk_24"
-                            ( CDrop DropFreeUnchecked "$k"
-                                ( CDrop DropFreeUnchecked "$x"
-                                    ( CContinue
-                                        [ CVar "$pk_24"
-                                        , CCall
-                                            ( CVar "$df$andThenIO$1" )
-                                            [ CVar "$x" ]
+                        , CDrop DropFreeUnchecked "$k"
+                            ( CDrop DropFreeUnchecked "$x"
+                                ( CContinue
+                                    [ CProj "$k" 1
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$1" )
+                                        [ CVar "$x"
+                                        , CCon 21 []
                                         ]
-                                    )
+                                    ]
                                 )
                             )
                         )
                     ]
                 )
-            )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCall
-                ( CVar "$scc$$apply1_$df$$lam$2$4" )
-                [ CCon 17
-                    [ CVar "$cl"
-                    , CVar "$arg0"
-                    ]
-                ]
             )
         ]
     }

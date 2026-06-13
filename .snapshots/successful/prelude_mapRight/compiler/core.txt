@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,22 +15,16 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
@@ -42,168 +35,61 @@ CoreProgram
             ( CCon 4
                 [ CIntLit 10 TInt32 ]
             )
-        , CValDef "bad"
-            ( CCon 3
-                [ CCon 24 [] ]
-            )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$17" )
-                [ CCall
-                    ( CVar "$df$mapRight$0" )
-                    [ CVar "ok" ]
-                ]
-            )
-        , CFunDef "$let$13" [ "msg" ]
-            ( CCase
-                ( CVar "msg" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
-                            [ CString "STRING_TOO_LONG"
-                            , CCon 5
-                                [ CCon 0 [] ]
+            ( CLet "$inl19$mappedOk"
+                ( CVar "ok" )
+                ( CDrop DropFreeUnchecked "$inl19$mappedOk"
+                    ( CJoin "$join13" [ "$inl14$scrut" ]
+                        ( CCase
+                            ( CVar "$inl14$scrut" )
+                            [
+                                ( 3
+                                , [ "$inl15$__w0" ]
+                                , CCon 7
+                                    [ CString "STRING_TOO_LONG"
+                                    , CCon 5
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl16$s" ]
+                                , CCon 7
+                                    [ CProj "$inl14$scrut" 1
+                                    , CCon 5
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
+                            ]
+                        )
+                        ( CCase
+                            ( CVar "$inl19$mappedOk" )
+                            [
+                                ( 3
+                                , [ "$inl17$__p0" ]
+                                , CCon 7
+                                    [ CString "ok-Err"
+                                    , CCon 5
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl18$n" ]
+                                , CJump "$join13"
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "ok-Right "
+                                        , CCall
+                                            ( CBuiltIn "showInt32" )
+                                            [ CProj "$inl19$mappedOk" 1 ]
+                                        ]
+                                    ]
+                                )
                             ]
                         )
                     )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$lam$14" [ "n" ]
-            ( CVar "n" )
-        , CFunDef "$let$15"
-            [ "mappedOk"
-            , "mappedBad"
-            ]
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCase
-                    ( CVar "mappedOk" )
-                    [
-                        ( 3
-                        , [ "__p0" ]
-                        , CDrop DropFreeUnchecked "__p0"
-                            ( CCase
-                                ( CVar "__p0" )
-                                [
-                                    ( 24
-                                    , []
-                                    , CCon 4
-                                        [ CString "ok-Err" ]
-                                    )
-                                ]
-                            )
-                        )
-                    ,
-                        ( 4
-                        , [ "n" ]
-                        , CDrop DropFreeUnchecked "n"
-                            ( CCase
-                                ( CVar "mappedBad" )
-                                [
-                                    ( 3
-                                    , [ "__p0" ]
-                                    , CDrop DropFreeUnchecked "__p0"
-                                        ( CCase
-                                            ( CVar "__p0" )
-                                            [
-                                                ( 24
-                                                , []
-                                                , CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CString "ok-Right "
-                                                    , CCall
-                                                        ( CBuiltIn "showInt32" )
-                                                        [ CVar "n" ]
-                                                    ]
-                                                )
-                                            ]
-                                        )
-                                    )
-                                ,
-                                    ( 4
-                                    , [ "_m" ]
-                                    , CDrop DropFreeUnchecked "_m"
-                                        ( CCon 4
-                                            [ CString "bad-Right" ]
-                                        )
-                                    )
-                                ]
-                            )
-                        )
-                    ]
-                ]
-            )
-        , CFunDef "$lam$16" [ "n" ]
-            ( CVar "n" )
-        , CFunDef "$let$17" [ "mappedOk" ]
-            ( CCall
-                ( CVar "$let$15" )
-                [ CVar "mappedOk"
-                , CCall
-                    ( CVar "$df$mapRight$1" )
-                    [ CVar "bad" ]
-                ]
-            )
-        , CFunDef "$df$mapRight$0" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CVar "e" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CCall
-                                ( CVar "$lam$16" )
-                                [ CVar "a" ]
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$mapRight$1" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CVar "e" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CCall
-                                ( CVar "$lam$14" )
-                                [ CVar "a" ]
-                            ]
-                        )
-                    )
-                ]
+                )
             )
         ]
     }

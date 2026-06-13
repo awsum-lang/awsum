@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,244 +15,103 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CLet "$inl25$__input"
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CString "answer="
+                    , CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CIntLit 30 TInt32 ]
+                    ]
+                )
+                ( CDrop DropFreeUnchecked "$inl25$__input"
+                    ( CCase
+                        ( CCase
+                            ( CVar "$inl25$__input" )
+                            [
+                                ( 3
+                                , [ "$inl26$__f0" ]
+                                , CCon 3
+                                    [ CRow 589989748
+                                        ( CProj "$inl25$__input" 1 )
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl27$__f0" ]
+                                , CVar "$inl25$__input"
+                                )
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "e" ]
+                            , CJoin "$join31" [ "$inl32$scrut" ]
+                                ( CCase
+                                    ( CVar "$inl32$scrut" )
                                     [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
+                                        ( 3
+                                        , [ "__w0" ]
+                                        , CCon 7
+                                            [ CString "STRING_TOO_LONG"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "out" ]
+                                        , CCon 7
+                                            [ CProj "$inl32$scrut" 1
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                                ( CRowCase
+                                    ( CVar "e" )
+                                    [
+                                        ( 589989748
+                                        , "$inl28$__rw"
+                                        , CCon 7
+                                            [ CString "STRING_TOO_LONG"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
                                         )
                                     ]
                                 )
                             )
-                        )
-                    ]
-                )
-            )
-        , CFunDef "step1" [ "n" ]
-            ( CCase
-                ( CCall
-                    ( CBuiltIn "addInt32" )
-                    [ CVar "n"
-                    , CIntLit 10 TInt32
-                    ]
-                )
-                [
-                    ( 3
-                    , [ "_e" ]
-                    , CDrop DropFreeUnchecked "_e"
-                        ( CCon 3
-                            [ CString "overflow" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "m" ]
-                    , CDrop DropFreeUnchecked "m"
-                        ( CCon 4
-                            [ CVar "m" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "step2" [ "n" ]
-            ( CCase
-                ( CCall
-                    ( CBuiltIn "mulInt32" )
-                    [ CVar "n"
-                    , CIntLit 2 TInt32
-                    ]
-                )
-                [
-                    ( 3
-                    , [ "_e" ]
-                    , CDrop DropFreeUnchecked "_e"
-                        ( CCon 3
-                            [ CString "overflow" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "m" ]
-                    , CDrop DropFreeUnchecked "m"
-                        ( CCon 4
-                            [ CVar "m" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "run" [ "start" ]
-            ( CCase
-                ( CCall
-                    ( CVar "step1" )
-                    [ CVar "start" ]
-                )
-                [
-                    ( 3
-                    , [ "$do_e_1" ]
-                    , CDrop DropFreeUnchecked "$do_e_1"
-                        ( CCon 3
-                            [ CRow 1615808600
-                                ( CVar "$do_e_1" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "$let$14" )
-                            [ CVar "a"
-                            , CString "answer="
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "renderErr" [ "e" ]
-            ( CRowCase
-                ( CVar "e" )
-                [
-                    ( 589989748
-                    , "__rw"
-                    , CDrop DropFreeUnchecked "__rw"
-                        ( CCase
-                            ( CVar "__rw" )
-                            [
-                                ( 19
-                                , []
-                                , CCon 4
-                                    [ CString "STRING_TOO_LONG" ]
-                                )
-                            ]
-                        )
-                    )
-                ,
-                    ( 1615808600
-                    , "s"
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "err: "
-                            , CVar "s"
-                            ]
-                        )
-                    )
-                ]
-            )
-        , CValDef "main"
-            ( CCase
-                ( CCall
-                    ( CVar "run" )
-                    [ CIntLit 5 TInt32 ]
-                )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CCase
-                        ( CCall
-                            ( CVar "renderErr" )
-                            [ CVar "e" ]
-                        )
-                        [
-                            ( 3
-                            , [ "__w0" ]
-                            , CCon 7
-                                [ CString "STRING_TOO_LONG"
-                                , CCon 5
-                                    [ CCon 0 [] ]
-                                ]
-                            )
                         ,
                             ( 4
-                            , [ "out" ]
+                            , [ "s" ]
                             , CCon 7
-                                [ CVar "out"
+                                [ CVar "s"
                                 , CCon 5
                                     [ CCon 0 [] ]
                                 ]
                             )
                         ]
                     )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
-                    )
-                ]
-            )
-        , CFunDef "$lift$13" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CRow 589989748
-                                ( CVar "__f0" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$let$14"
-            [ "a"
-            , "prefix"
-            ]
-            ( CCase
-                ( CCall
-                    ( CVar "step2" )
-                    [ CVar "a" ]
                 )
-                [
-                    ( 3
-                    , [ "$do_e_0" ]
-                    , CDrop DropFreeUnchecked "$do_e_0"
-                        ( CCon 3
-                            [ CRow 1615808600
-                                ( CVar "$do_e_0" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "b" ]
-                    , CDrop DropFreeUnchecked "b"
-                        ( CCall
-                            ( CVar "$lift$13" )
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "prefix"
-                                , CCall
-                                    ( CBuiltIn "showInt32" )
-                                    [ CVar "b" ]
-                                ]
-                            ]
-                        )
-                    )
-                ]
             )
         ]
     }

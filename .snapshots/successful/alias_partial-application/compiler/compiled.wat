@@ -6,15 +6,14 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
   (import "wasi_snapshot_preview1" "fd_read" (func $fd_read (param i32 i32 i32 i32) (result i32)))
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 137))
+  (global $heap (mut i32) (i32.const 110))
   (global $__wl_buf (mut i32) (i32.const 0))
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00RESULT")
-  (data (i32.const 110) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00ignored")
-  (table 3 funcref)
-  (elem (i32.const 0) $v_const $v_runIO $v_partial)
+  (table 1 funcref)
+  (elem (i32.const 0) $v_runIO)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -405,19 +404,7 @@
     i32.add
     global.set 2)
 
-  (func $v_const (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-      local.get 0
-      local.set 2
-      local.get 1
-      call 9
-      local.get 2
-    end)
-
   (func $v_runIO (param i32) (result i32)
-    (local i32)
     (local i32)
     (local i32)
     (local i32)
@@ -426,74 +413,43 @@
     (local i32)
     loop (result i32)
       local.get 0
-      local.set 1
-      local.get 1
       i32.load
       i32.const 5
       i32.eq
       if (result i32)
-        local.get 1
-        i32.load offset=4
-        local.set 2
-        local.get 2
-        call 8
         block (result i32)
-          local.get 2
+          local.get 0
+          i32.load offset=4
+          local.tee 6
+          call 8
+          local.get 6
           local.set 5
           local.get 0
           call 9
           local.get 5
         end
       else
-        local.get 1
+        local.get 0
         i32.load offset=4
-        local.set 2
-        local.get 2
-        call 8
-        local.get 1
-        i32.load offset=8
-        local.set 3
-        local.get 3
-        call 8
-        local.get 2
         local.tee 6
         call 8
         local.get 6
         call 6
-        local.tee 7
-        local.set 1
-        local.get 3
-        local.set 4
-        local.get 4
+        local.set 3
+        local.get 0
+        i32.load offset=8
+        local.tee 6
         call 8
-        local.get 7
-        call 9
+        local.get 6
+        local.set 4
         local.get 0
         call 9
         local.get 3
-        call 9
-        local.get 2
         call 9
         local.get 4
         local.set 0
         br 1
       end
-    end)
-
-  (func $v_partial (param i32) (result i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-      i32.const 96
-      local.get 0
-      local.tee 2
-      call 8
-      local.get 2
-      call 11
-      local.set 1
-      local.get 0
-      call 9
-      local.get 1
     end)
 
   (func $v_main (result i32)
@@ -510,8 +466,7 @@
     i32.const 7
     i32.store
     local.get 0
-    i32.const 122
-    call 13
+    i32.const 96
     i32.store offset=4
     local.get 0
     i32.const 8
@@ -536,7 +491,7 @@
     local.get 0)
 
   (func $_start
-    call 14
     call 12
+    call 11
     drop)
 )

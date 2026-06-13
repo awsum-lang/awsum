@@ -1,14 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-showUnderflowError:
-  param           $wild0                          count=0
-
-countDown:
-  param           n                               count=1
+  let             $inl0$eff                       count=0
 
 $cps$countDown:
   param           n                               count=3
@@ -17,7 +12,7 @@ $cps$countDown:
   case-pattern    m                               count=0
 
 $apply$countDown:
-  param           $k                              count=1
+  param           $k                              count=2
   param           $x                              count=4
   case-pattern    $pk_21                          count=0
   case-pattern    n                               count=0
@@ -25,21 +20,16 @@ $apply$countDown:
   case-pattern    s                               count=0
   case-pattern    e                               count=0
   case-pattern    s0                              count=0
+  let             $inl3$__input                   count=0
+  case-pattern    $inl1$__f0                      count=0
+  case-pattern    $inl2$__f0                      count=0
 
-showResult:
-  param           r                               count=1
-  case-pattern    e                               count=0
-  row-case        __rw                            count=0
-  row-case        u                               count=0
-  case-pattern    s                               count=0
-
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$let$14:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
+main:
+  let             $inl8$r                         count=0
+  case-pattern    $inl4$e                         count=0
+  row-case        $inl5$__rw                      count=0
+  row-case        $inl6$u                         count=0
+  case-pattern    $inl7$s                         count=0
+  case-pattern    $inl9$__w0                      count=0
+  case-pattern    $inl10$s                        count=1
 

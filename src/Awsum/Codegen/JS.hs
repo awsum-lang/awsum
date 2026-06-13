@@ -39,6 +39,7 @@ module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Codegen.JS.Syntax
+import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Program (ProgramType (..))
@@ -490,13 +491,23 @@ cliFooter =
 --   is a plain value.
 declStmt :: CDecl -> JsStmt
 declStmt = \case
-  CFunDef nm args (CLoop body) -> SConst (mangle nm) (EArrow (map mangle args) [SWhileTrue (stmtBody args body)])
-  CFunDef nm args body -> SConst (mangle nm) (EArrow (map mangle args) (stmtBody args body))
-  CValDef nm rhs -> SConst (mangle nm) (exprE rhs)
+  CFunDef nm args (CLoop body) -> SConst (mangle nm) (EArrow (map mangle args) [SWhileTrue (stmtBody Map.empty args body)])
+  CFunDef nm args body -> SConst (mangle nm) (EArrow (map mangle args) (stmtBody Map.empty args body))
+  CValDef nm rhs -> SConst (mangle nm) (exprE Map.empty rhs)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Statement-form bodies (tail position)
 -- ════════════════════════════════════════════════════════════════════════════
+
+-- | A 'CJoin' registered by the tail traversal: its JS label, its parameter
+--   names (the assignment targets of every 'CJump' to it), and the @pending@
+--   depth at the node — a jump nulls only what was dropped after that point;
+--   the rest stays for the join body's own tails.
+data JoinTarget = JoinTarget
+  { jtLabel :: Text,
+    jtParams :: [Name],
+    jtPendingBase :: Int
+  }
 
 -- | Emit a function body in tail position as a list of statements. Threads a
 --   @pending@ stack of 'CDrop'-named parameters, drained at every terminator:
@@ -505,92 +516,246 @@ declStmt = \case
 --   a param a 'CContinue' rebinds needs no null (the rebind is the snip, and
 --   nothing allocates between). 'CDrop' on a 'CCase' arm-binder is a no-op:
 --   those are @const@, block-scoped, and collected when the arm closes.
-stmtBody :: [Name] -> CExpr -> [JsStmt]
-stmtBody params = go []
+--
+--   A 'CJoin' declares one uninitialised @let@ slot per parameter (at the
+--   node, not a prologue — a @let@ in a loop body is a fresh per-iteration
+--   binding, not stack growth), wraps its inner expression in a labelled
+--   block and lays the join body right after it. Inner value tails @return@
+--   (and 'CContinue' arms @continue@) past the body; a 'CJump' assigns the
+--   slots directly — the parameters are in scope only inside the body, so
+--   a jump argument cannot read them and the 'CContinue' temp-snapshot
+--   discipline is unnecessary — nulls the parameters dropped since the node
+--   (the jumping arm's deaths; the body still runs inside this function, so
+--   they would stay GC roots through it) and @break@s to the label. The
+--   body is emitted without the join's own registration: a self-jump is
+--   illegal in Core, and an unregistered jump fails loudly here rather than
+--   as a SyntaxError from Node.
+stmtBody :: Map Name [Name] -> [Name] -> CExpr -> [JsStmt]
+stmtBody apv0 params = go apv0 Map.empty []
   where
-    go :: [Name] -> CExpr -> [JsStmt]
-    go pending = \case
+    -- @apv@ — arm-pattern-by-scrut: the binders of the innermost enclosing
+    -- case arm per scrutinee name, consulted by the 'CReuse' store
+    -- schedule ('Awsum.Codegen.ReuseSchedule').
+    go :: Map Name [Name] -> Map Name JoinTarget -> [Name] -> CExpr -> [JsStmt]
+    go apv joins pending = \case
+      -- Parallel assignment: every new value must read the /previous/
+      -- iteration's parameters. The rebind is scheduled like a parallel
+      -- copy. A parameter passed through unchanged needs no statement and
+      -- never conflicts (its old and new value coincide). Of the rest,
+      -- parameter k is assignable while no *remaining* argument reads it —
+      -- picking the lowest assignable index each round keeps an
+      -- already-valid parameter order untouched and otherwise reorders the
+      -- direct assignments (an argument may read its own parameter: a JS
+      -- assignment evaluates its right side before the store). The check
+      -- also guarantees each argument is evaluated before any parameter it
+      -- reads is overwritten: a parameter read by a remaining argument is
+      -- not assignable. What survives is a genuine cycle — a swap — and
+      -- only those parameters snapshot through @__t@ consts; their
+      -- arguments read only still-unassigned parameters, so the direct
+      -- prefix cannot have clobbered them. Reordering also reorders
+      -- argument evaluation, which is sound only when no sibling argument
+      -- can observe it. An effectful argument (not produced today — the
+      -- platform primitives live only in @runIO@, whose rebind argument is
+      -- a projection) falls back to the order-preserving full snapshot. A
+      -- 'CReuse' is observable more narrowly — it overwrites the cell its
+      -- binder names, so only a sibling mentioning that same binder can
+      -- see the difference — and constrains exactly that pair: a
+      -- cell-conflicting pair must keep its source evaluation order, an
+      -- extra edge in the same greedy schedule. A pair the slot rule or
+      -- this edge cannot order lands in the remainder together, and the
+      -- temps evaluate in source order — which is how the @$apply@
+      -- dispatchers' projection-then-reuse pair (the one shape where the
+      -- reorder hands the next iteration a clobbered field) comes out
+      -- snapshotted while an unrelated reuse stays a direct assignment.
+      -- 'binderUsedIn' is the same read predicate binder elision uses.
       CContinue newArgs ->
-        let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
-            decls = [SConst t (exprE a) | (t, a) <- zip temps newArgs]
-            assigns = [SExpr (EAssign (EVar (mangle p)) (EVar t)) | (p, t) <- zip params temps]
-         in decls <> assigns <> [SContinue]
+        let paramAt k = fromMaybe (error "JS codegen: CContinue arity differs from the parameter list (Tco invariant)") (params !!? k)
+            argAt k = fromMaybe (error "JS codegen: CContinue arity differs from the parameter list (Tco invariant)") (newArgs !!? k)
+            selfPass k = argAt k == CVar (paramAt k)
+            readsP j k = binderUsedIn (paramAt k) (argAt j)
+            cellConflict j k =
+              any (\n -> binderUsedIn n (argAt k)) (reusedBinders (argAt j))
+                || any (\n -> binderUsedIn n (argAt j)) (reusedBinders (argAt k))
+            schedule done remaining =
+              case [k | k <- remaining, all (\j -> j == k || (not (readsP j k) && (j > k || not (cellConflict j k)))) remaining] of
+                (k : _) -> schedule (done <> [k]) (filter (/= k) remaining)
+                [] -> (done, remaining)
+            (direct, cyclic) =
+              if any effectfulIn newArgs
+                then ([], [0 .. length newArgs - 1])
+                else schedule [] [k | k <- [0 .. length newArgs - 1], not (selfPass k)]
+            directAssigns = [SExpr (EAssign (EVar (mangle (paramAt k))) (exprE apv (argAt k))) | k <- direct]
+            temps = [(k, "__t" <> show k) | k <- cyclic]
+            decls = [SConst t (exprE apv (argAt k)) | (k, t) <- temps]
+            assigns = [SExpr (EAssign (EVar (mangle (paramAt k))) (EVar t)) | (k, t) <- temps]
+         in directAssigns <> decls <> assigns <> [SContinue]
       CCase scrut alts ->
-        [SBlock (SConst "__s" (exprE scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (map (stmtAlt pending) alts)])]
+        switchOn apv scrut (\scrutE -> map (stmtAlt apv (scrutName scrut) scrutE joins pending) alts)
       CRowCase scrut alts ->
-        [SBlock (SConst "__s" (exprE scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (map (stmtRowAlt pending) alts)])]
-      CDrop _ n body -> go (n : pending) body
+        switchOn apv scrut (\scrutE -> map (stmtRowAlt apv scrutE joins pending) alts)
+      CDrop _ n body -> go apv joins (n : pending) body
+      -- A let in tail position binds a block-scoped @const@ and the body
+      -- continues the statement spine (so arm-tail returns, continues and
+      -- pending drops all flow through unchanged).
+      CLet x rhs body -> SConst (mangle x) (exprE apv rhs) : go apv joins pending body
+      CJoin j ps body inner ->
+        let target = JoinTarget {jtLabel = joinLabel j, jtParams = ps, jtPendingBase = length pending}
+            slots = [SLet (mangle p) Nothing | p <- ps]
+            -- A lone block (the usual case dispatch) splices into the
+            -- labelled block — same scope, no doubled braces.
+            innerStmts = case go apv (Map.insert j target joins) pending inner of
+              [SBlock ss] -> ss
+              ss -> ss
+         in slots <> (SLabeled (jtLabel target) innerStmts : go apv joins pending body)
+      CJump j args ->
+        let JoinTarget label ps base =
+              Map.findWithDefault
+                (error "JS codegen: CJump to a join not registered by an enclosing CJoin (Core invariant: jumps appear only in the tail positions of their join's inner expression)")
+                j
+                joins
+            assigns = [SExpr (EAssign (EVar (mangle p)) (exprE apv a)) | (p, a) <- zip ps args]
+            dead = filter (`elem` params) (take (length pending - base) pending)
+            nulls = [SExpr (EAssign (EVar (mangle n)) ENull) | n <- dead]
+         in assigns <> nulls <> [SBreak label]
       e ->
         let paramPending = filter (`elem` params) pending
          in if null paramPending
-              then [SReturn (exprE e)]
-              else [SBlock (SConst "__d" (exprE e) : [SExpr (EAssign (EVar (mangle n)) ENull) | n <- paramPending] <> [SReturn (EVar "__d")])]
+              then [SReturn (exprE apv e)]
+              else [SBlock (SConst "__d" (exprE apv e) : [SExpr (EAssign (EVar (mangle n)) ENull) | n <- paramPending] <> [SReturn (EVar "__d")])]
 
-    stmtAlt :: [Name] -> (Int, [Name], CExpr) -> (Integer, [JsStmt])
-    stmtAlt pending (tag, vars, body) =
-      let binds = [SConst (mangle v) (EIndex (EVar "__s") (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..]]
-       in (toInteger tag, binds <> go pending body)
+    -- Dispatch head of a statement-form case. The scrutinee must be
+    -- evaluated exactly once, so in general it lands in a block-scoped
+    -- @__s@ (the block exists solely to scope it). A scrutinee that is
+    -- already a variable needs no alias: a JS binding is a reference, so
+    -- @__s@ and the variable name the same cell at every read — dispatch
+    -- and field reads go through the variable directly.
+    scrutName :: CExpr -> Maybe Name
+    scrutName = \case
+      CVar n -> Just n
+      _ -> Nothing
 
-    stmtRowAlt :: [Name] -> (Word32, Name, CExpr) -> (Integer, [JsStmt])
-    stmtRowAlt pending (tag, var, body) =
-      (toInteger tag, SConst (mangle var) (EIndex (EVar "__s") (ENum 1)) : go pending body)
+    switchOn :: Map Name [Name] -> CExpr -> (JsExpr -> [(Integer, [JsStmt])]) -> [JsStmt]
+    switchOn _ (CVar n) mkCases = let scrutE = EVar (mangle n) in [SSwitch (EIndex scrutE (ENum 0)) (mkCases scrutE)]
+    switchOn apv scrut mkCases = [SBlock (SConst "__s" (exprE apv scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (mkCases (EVar "__s"))])]
+
+    stmtAlt :: Map Name [Name] -> Maybe Name -> JsExpr -> Map Name JoinTarget -> [Name] -> (Int, [Name], CExpr) -> (Integer, [JsStmt])
+    stmtAlt apv mScrut scrutE joins pending (tag, vars, body) =
+      let apv' = maybe apv (\n -> Map.insert n vars apv) mScrut
+          elided = maybe Set.empty (\n -> reuseSlotElided (const True) n vars body) mScrut
+          binds = [SConst (mangle v) (EIndex scrutE (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..], binderUsedIn v body, not (Set.member v elided)]
+       in (toInteger tag, binds <> go apv' joins pending body)
+
+    stmtRowAlt :: Map Name [Name] -> JsExpr -> Map Name JoinTarget -> [Name] -> (Word32, Name, CExpr) -> (Integer, [JsStmt])
+    stmtRowAlt apv scrutE joins pending (tag, var, body) =
+      let binds = [SConst (mangle var) (EIndex scrutE (ENum 1)) | binderUsedIn var body]
+       in (toInteger tag, binds <> go apv joins pending body)
+
+-- | A join point's JS label: the Core name itself — the minted @$join<k>@ is
+--   a valid JS identifier (@$@ included), labels live in a namespace separate
+--   from variables, and join names are globally unique, so two labels in one
+--   function cannot collide. Sanitised like 'mangle' (sans prefix) so any
+--   future name shape still renders as a valid label.
+joinLabel :: Name -> Text
+joinLabel = T.map (\c -> if Char.isAlphaNum c || c == '_' || c == '$' then c else '_')
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression-form
 -- ════════════════════════════════════════════════════════════════════════════
 
-exprE :: CExpr -> JsExpr
-exprE = \case
+exprE :: Map Name [Name] -> CExpr -> JsExpr
+exprE apv = \case
   CString s -> EStr s
   CVar n -> EVar (mangle n)
   CIntLit n TInt32 -> i32 (ENum n)
   CIntLit n TUInt8 -> u8 (ENum n)
   CIntLit n TUInt32 -> u32 (ENum n)
   CBuiltIn n -> error ("JS codegen: CBuiltIn '" <> n <> "' in term position (invariant: only in CCall callee)")
-  CCon tag fields -> EArray (ENum (toInteger tag) : map exprE fields)
-  CRow tag v -> EArray [ENum (toInteger tag), exprE v]
-  CDrop _ _ body -> exprE body
-  CReuse n tag fields ->
+  CCon tag fields -> EArray (ENum (toInteger tag) : map (exprE apv) fields)
+  CRow tag v -> EArray [ENum (toInteger tag), exprE apv v]
+  CDrop _ _ body -> exprE apv body
+  -- A guarded reuse cannot mutate here: the cell may be shared (the caller
+  -- can retain the structure) and there is no refcount header to check, so
+  -- it lowers as the allocation it replaced. Only a 'ReuseUnique' cell — an
+  -- Scc pack / Cps continuation, loop-private by construction — mutates.
+  CReuse ReuseGuarded _ tag fields -> exprE apv (CCon tag fields)
+  CReuse ReuseUnique n tag fields ->
+    -- Stores in dependency order ('Awsum.Codegen.ReuseSchedule'): the
+    -- acyclic permutation part reads the old slots straight off the cell,
+    -- a cycle reads its one extracted binder, unrelated fields evaluate as
+    -- ever. The arm extraction above skips binders the schedule reads off
+    -- the cell ('reuseSlotElided'), which is what returns the inline look.
     let v = mangle n
         tagStore = EAssign (EIndex (EVar v) (ENum 0)) (ENum (toInteger tag))
-        fieldStores = [EAssign (EIndex (EVar v) (ENum (toInteger i))) (exprE fld) | (fld, i) <- zip fields [1 :: Int ..]]
-     in ESeq (tagStore : fieldStores <> [EVar v])
-  CCase scrut alts -> exprCall (map exprAlt alts) scrut
+        (stores, _breakers) = scheduleReuse (Map.findWithDefault [] n apv) fields
+        fieldAt i = fromMaybe (error "JS codegen: CReuse store schedule slot out of range") (fields !!? (i - 1))
+        storeE = \case
+          StoreFromSlot dst src -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (EIndex (EVar v) (ENum (toInteger src)))
+          StoreFromBinder dst b -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (EVar (mangle b))
+          StoreExtern dst -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (exprE apv (fieldAt dst))
+     in ESeq (tagStore : map storeE stores <> [EVar v])
+  CCase scrut alts -> exprCall (map (exprAlt (exprScrutName scrut)) alts) scrut
   CRowCase scrut alts -> exprCall (map exprRowAlt alts) scrut
-  CCall f xs -> callExpr f xs
+  CCall f xs -> callExpr apv f xs
   CLoop _ -> error "JS codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
   CContinue _ -> error "JS codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
+  -- A let in expression position is the beta-redex it desugars from:
+  -- @((x) => body)(rhs)@ — same shape as the expression-position case.
+  CLet x rhs body -> ECall (EArrow [mangle x] [SReturn (exprE apv body)]) [exprE apv rhs]
+  CProj n slot -> EIndex (EVar (mangle n)) (ENum (toInteger slot))
+  -- An expression-position join is self-contained (every jump inside
+  -- targets a join registered inside — a jump out of a value position is
+  -- ruled out in Core), so the statement-form lowering runs inside an
+  -- immediately-invoked arrow, the same shape as the expression-position
+  -- case: value tails @return@ past the join body, jumps @break@ to it.
+  e@CJoin {} -> ECall (EArrow [] (stmtBody apv [] e)) []
+  CJump {} -> error "JS codegen: CJump outside the tail positions of its join's inner expression (Core invariant)"
   where
     -- An expression-position case dispatches through an immediately-invoked
     -- arrow whose @switch@ arms @return@ directly: @((s) => { switch (s[0]) {
-    -- … } })(scrut)@.
+    -- … } })(scrut)@. The arms are the arrow's tail, so their bodies run
+    -- through the statement walk ('stmtBody' with no parameters): a leaf
+    -- value @return@s as before, while a nested case (or join) continues
+    -- the statement spine inside the same arrow instead of opening another
+    -- immediately-invoked one — one arrow per case /tree/, not per case.
+    -- Bounding the syntactic depth is load-bearing, not cosmetic: V8
+    -- recurses while parsing, and a 300-level dispatch chain at one more
+    -- nesting step per level overflows its parser stack (@RangeError@
+    -- before a single statement runs).
     exprCall :: [(Integer, [JsStmt])] -> CExpr -> JsExpr
     exprCall cases scrut =
-      ECall (EArrow ["s"] [SSwitch (EIndex (EVar "s") (ENum 0)) cases]) [exprE scrut]
+      ECall (EArrow ["s"] [SSwitch (EIndex (EVar "s") (ENum 0)) cases]) [exprE apv scrut]
 
-    exprAlt :: (Int, [Name], CExpr) -> (Integer, [JsStmt])
-    exprAlt (tag, vars, body) =
-      let binds = [SConst (mangle v) (EIndex (EVar "s") (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..]]
-       in (toInteger tag, binds <> [SReturn (exprE body)])
+    exprScrutName :: CExpr -> Maybe Name
+    exprScrutName = \case
+      CVar n -> Just n
+      _ -> Nothing
+
+    exprAlt :: Maybe Name -> (Int, [Name], CExpr) -> (Integer, [JsStmt])
+    exprAlt mScrut (tag, vars, body) =
+      let apv' = maybe apv (\n -> Map.insert n vars apv) mScrut
+          elided = maybe Set.empty (\n -> reuseSlotElided (const True) n vars body) mScrut
+          binds = [SConst (mangle v) (EIndex (EVar "s") (ENum (toInteger i))) | (v, i) <- zip vars [1 :: Int ..], binderUsedIn v body, not (Set.member v elided)]
+       in (toInteger tag, binds <> stmtBody apv' [] body)
 
     exprRowAlt :: (Word32, Name, CExpr) -> (Integer, [JsStmt])
     exprRowAlt (tag, var, body) =
-      (toInteger tag, [SConst (mangle var) (EIndex (EVar "s") (ENum 1)), SReturn (exprE body)])
+      let binds = [SConst (mangle var) (EIndex (EVar "s") (ENum 1)) | binderUsedIn var body]
+       in (toInteger tag, binds <> stmtBody apv [] body)
 
 -- | A 'CCall'. A 'CBuiltIn' callee dispatches to its runtime helper (or an
 --   inlined form); any other callee is an ordinary application.
-callExpr :: CExpr -> [CExpr] -> JsExpr
-callExpr f xs = case f of
+callExpr :: Map Name [Name] -> CExpr -> [CExpr] -> JsExpr
+callExpr apv f xs = case f of
   CBuiltIn "internalStdoutPrint" -> unary "__print"
   CBuiltIn "internalGetArgs" -> nullaryCall "__getArgs"
   CBuiltIn "internalStdinReadAllString" -> nullaryCall "__stdinReadAll"
   CBuiltIn "internalStdinReadAllBytes" -> nullaryCall "__stdinReadAllBytes"
   CBuiltIn name
     | name `elem` ["showInt32", "showUInt8", "showUInt32"] -> case xs of
-        [x] -> ECall (EVar "String") [exprE x]
+        [x] -> ECall (EVar "String") [exprE apv x]
         _ -> arityError name
   CBuiltIn "byteToHexStringNoPrefix" -> case xs of
-    [x] -> ECall (EMember (ECall (EMember (exprE x) "toString") [ENum 16]) "padStart") [ENum 2, EStr "0"]
+    [x] -> ECall (EMember (ECall (EMember (exprE apv x) "toString") [ENum 16]) "padStart") [ENum 2, EStr "0"]
     _ -> arityError "byteToHexStringNoPrefix"
   CBuiltIn "predInt32" -> unary "__predInt32"
   CBuiltIn "predUInt8" -> unary "__predUInt8"
@@ -610,7 +775,7 @@ callExpr f xs = case f of
   CBuiltIn name
     | name `elem` ["lengthCodePoints", "lengthUtf16CodeUnits", "lengthUtf8Bytes"] -> unary (helperFor name)
   CBuiltIn n -> error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
-  _ -> ECall (exprE f) (map exprE xs)
+  _ -> ECall (exprE apv f) (map (exprE apv) xs)
   where
     -- 'CBuiltIn' name → its '__'-prefixed runtime helper.
     helperFor :: Text -> Text
@@ -626,12 +791,12 @@ callExpr f xs = case f of
 
     unary :: Text -> JsExpr
     unary fn = case xs of
-      [x] -> ECall (EVar fn) [exprE x]
+      [x] -> ECall (EVar fn) [exprE apv x]
       _ -> error (fn <> ": arity mismatch")
 
     binary :: Text -> JsExpr
     binary fn = case xs of
-      [a, b] -> ECall (EVar fn) [exprE a, exprE b]
+      [a, b] -> ECall (EVar fn) [exprE apv a, exprE apv b]
       _ -> error (fn <> ": arity mismatch")
 
 -- | Name mangling: keep @main@ unchanged (needed by the runner); otherwise

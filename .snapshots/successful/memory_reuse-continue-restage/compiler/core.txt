@@ -1,0 +1,177 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "loop"
+            [ "fuel"
+            , "xs"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "fuel"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCase
+                            ( CVar "acc" )
+                            [
+                                ( 24
+                                , []
+                                , CString "N"
+                                )
+                            ,
+                                ( 25
+                                ,
+                                    [ "$inl1$h"
+                                    , "$inl2$_t"
+                                    ]
+                                , CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CProj "acc" 1 ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CVar "xs" )
+                            [
+                                ( 24
+                                , []
+                                , CCase
+                                    ( CVar "acc" )
+                                    [
+                                        ( 24
+                                        , []
+                                        , CString "N"
+                                        )
+                                    ,
+                                        ( 25
+                                        ,
+                                            [ "$inl4$h"
+                                            , "$inl5$_t"
+                                            ]
+                                        , CCall
+                                            ( CBuiltIn "showInt32" )
+                                            [ CProj "acc" 1 ]
+                                        )
+                                    ]
+                                )
+                            ,
+                                ( 25
+                                ,
+                                    [ "_h"
+                                    , "t"
+                                    ]
+                                , CDrop DropFreeUnchecked "t"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "predInt32" )
+                                            [ CVar "fuel" ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "_e" ]
+                                            , CCase
+                                                ( CVar "acc" )
+                                                [
+                                                    ( 24
+                                                    , []
+                                                    , CString "N"
+                                                    )
+                                                ,
+                                                    ( 25
+                                                    ,
+                                                        [ "$inl7$h"
+                                                        , "$inl8$_t"
+                                                        ]
+                                                    , CCall
+                                                        ( CBuiltIn "showInt32" )
+                                                        [ CProj "acc" 1 ]
+                                                    )
+                                                ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "f2" ]
+                                            , CDrop DropFreeUnchecked "f2"
+                                                ( CDrop DropFreeUnchecked "fuel"
+                                                    ( CDrop DropFreeUnchecked "xs"
+                                                        ( CDrop DropFreeUnchecked "acc"
+                                                            ( CContinue
+                                                                [ CVar "f2"
+                                                                , CCon 25
+                                                                    [ CIntLit 7 TInt32
+                                                                    , CVar "t"
+                                                                    ]
+                                                                , CVar "xs"
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CVar "loop" )
+                    [ CIntLit 1 TInt32
+                    , CCon 25
+                        [ CIntLit 1 TInt32
+                        , CCon 25
+                            [ CIntLit 2 TInt32
+                            , CCon 24 []
+                            ]
+                        ]
+                    , CCon 24 []
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

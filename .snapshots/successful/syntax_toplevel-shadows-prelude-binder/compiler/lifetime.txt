@@ -1,40 +1,17 @@
-pureIO:
-  param           x$u0                            count=1
-
-failIO:
-  param           e                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-eitherToIO:
-  param           x$u1                            count=1
-  case-pattern    e                               count=0
-  case-pattern    a$u1                            count=0
-
-x:
-  param           n                               count=1
-
-a:
-  param           n                               count=1
-
-$lam$13:
-  param           _e                              count=0
-
-$lam$14:
-  param           w                               count=1
-
-$lam$15:
-  param           v                               count=1
-
-$lift$19:
-  param           __input                         count=1
+main:
+  let             $inl9$x$u1                      count=0
+  case-pattern    $inl7$e                         count=0
+  case-pattern    $inl8$a$u1                      count=0
 
 $cps$$lift$19:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -47,11 +24,8 @@ $apply$$lift$19:
   case-pattern    $pk_9                           count=0
   case-pattern    __f0                            count=0
 
-$df$handleErrorIO$0:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$0:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a$u0                            count=0
   case-pattern    e                               count=0
@@ -64,11 +38,8 @@ $apply$$df$handleErrorIO$0:
   case-pattern    $pk_11                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$0$andThenIO$4:
-  param           io                              count=1
-
 $cps$$df$$rowmono$0$andThenIO$4:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a$u2                            count=0
   case-pattern    e                               count=0
@@ -81,13 +52,13 @@ $apply$$df$$rowmono$0$andThenIO$4:
   case-pattern    $pk_13                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$1$andThenIO$8:
-  param           io                              count=1
-
 $cps$$df$$rowmono$1$andThenIO$8:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a$u3                            count=0
+  let             $inl4$x$u1                      count=0
+  case-pattern    $inl5$e                         count=0
+  case-pattern    $inl6$a$u1                      count=0
   case-pattern    e                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0

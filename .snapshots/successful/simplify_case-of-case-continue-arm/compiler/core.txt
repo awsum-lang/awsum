@@ -1,0 +1,114 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "go" [ "n" ]
+            ( CLoop
+                ( CJoin "$join1" [ "$inl2$scrut" ]
+                    ( CCase
+                        ( CVar "$inl2$scrut" )
+                        [
+                            ( 1
+                            , []
+                            , CCall
+                                ( CBuiltIn "showUInt32" )
+                                [ CVar "n" ]
+                            )
+                        ,
+                            ( 2
+                            , []
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "subUInt32" )
+                                    [ CVar "n"
+                                    , CIntLit 1 TUInt32
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "_e" ]
+                                    , CString "E"
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "m" ]
+                                    , CDrop DropFreeUnchecked "m"
+                                        ( CDrop DropFreeUnchecked "n"
+                                            ( CContinue
+                                                [ CVar "m" ]
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                    ( CCase
+                        ( CCall
+                            ( CBuiltIn "eqUInt32" )
+                            [ CVar "n"
+                            , CIntLit 0 TUInt32
+                            ]
+                        )
+                        [
+                            ( 1
+                            , []
+                            , CCall
+                                ( CBuiltIn "showUInt32" )
+                                [ CVar "n" ]
+                            )
+                        ,
+                            ( 2
+                            , []
+                            , CJump "$join1"
+                                [ CCall
+                                    ( CBuiltIn "eqUInt32" )
+                                    [ CVar "n"
+                                    , CIntLit 1 TUInt32
+                                    ]
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CVar "go" )
+                    [ CIntLit 100000 TUInt32 ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

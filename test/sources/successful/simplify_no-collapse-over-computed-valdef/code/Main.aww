@@ -1,0 +1,16 @@
+{- The case-over-constant collapse registers only constant trees. A top-level
+   value whose field carries computation (`lengthUtf8Bytes` is never
+   const-folded) is not registered: on JVM/CLR/JS the value is evaluated once
+   at startup, and substituting the field would re-run the computation at
+   every collapse site. The Core snapshot pins the gate — `main` keeps its
+   `CCase` over `computed`. -}
+
+import IO.Stdout
+
+computed : Maybe UInt32
+computed = Just (lengthUtf8Bytes "abc")
+
+main : IO Never Unit
+main = IO.Stdout.print (case computed of
+  Nothing -> "nothing"
+  Just n -> showUInt32 n)

@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,80 +15,67 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "double" [ "n" ]
-            ( CCall
-                ( CBuiltIn "addInt32" )
-                [ CVar "n"
-                , CVar "n"
-                ]
-            )
-        , CFunDef "triple" [ "n" ]
-            ( CCase
-                ( CCall
-                    ( CBuiltIn "addInt32" )
-                    [ CVar "n"
-                    , CVar "n"
-                    ]
-                )
-                [
-                    ( 3
-                    , [ "$do_e_0" ]
-                    , CDrop DropFreeUnchecked "$do_e_0"
-                        ( CCon 3
-                            [ CVar "$do_e_0" ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "m" ]
-                    , CDrop DropFreeUnchecked "m"
-                        ( CCall
-                            ( CBuiltIn "addInt32" )
-                            [ CVar "m"
-                            , CVar "n"
-                            ]
-                        )
-                    )
-                ]
-            )
         , CFunDef "callBox"
             [ "b"
             , "x"
             ]
             ( CCase
-                ( CVar "b" )
+                ( CProj "b" 1 )
                 [
-                    ( 24
-                    , [ "f" ]
-                    , CDrop DropFreeUnchecked "f"
+                    ( 25
+                    , []
+                    , CCall
+                        ( CBuiltIn "addInt32" )
+                        [ CVar "x"
+                        , CVar "x"
+                        ]
+                    )
+                ,
+                    ( 26
+                    , []
+                    , CCase
                         ( CCall
-                            ( CVar "$apply1" )
-                            [ CVar "f"
+                            ( CBuiltIn "addInt32" )
+                            [ CVar "x"
                             , CVar "x"
                             ]
                         )
+                        [
+                            ( 3
+                            , [ "$inl3$$do_e_0" ]
+                            , CDrop DropFreeUnchecked "$inl3$$do_e_0"
+                                ( CCon 3
+                                    [ CVar "$inl3$$do_e_0" ]
+                                )
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl4$m" ]
+                            , CDrop DropFreeUnchecked "$inl4$m"
+                                ( CCall
+                                    ( CBuiltIn "addInt32" )
+                                    [ CVar "$inl4$m"
+                                    , CVar "x"
+                                    ]
+                                )
+                            )
+                        ]
                     )
                 ]
             )
@@ -148,16 +134,34 @@ CoreProgram
                                 ,
                                     ( 4
                                     , [ "ds" ]
-                                    , CCall
-                                        ( CVar "$lift$13" )
-                                        [ CCall
+                                    , CLet "$inl7$__input"
+                                        ( CCall
                                             ( CBuiltIn "concatString" )
                                             [ CVar "ds"
                                             , CCall
                                                 ( CBuiltIn "showInt32" )
                                                 [ CVar "t" ]
                                             ]
-                                        ]
+                                        )
+                                        ( CDrop DropFreeUnchecked "$inl7$__input"
+                                            ( CCase
+                                                ( CVar "$inl7$__input" )
+                                                [
+                                                    ( 3
+                                                    , [ "$inl5$__f0" ]
+                                                    , CCon 3
+                                                        [ CRow 589989748
+                                                            ( CProj "$inl7$__input" 1 )
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "$inl6$__f0" ]
+                                                    , CVar "$inl7$__input"
+                                                    )
+                                                ]
+                                            )
+                                        )
                                     )
                                 ]
                             )
@@ -185,51 +189,6 @@ CoreProgram
                         , CCon 5
                             [ CCon 0 [] ]
                         ]
-                    )
-                ]
-            )
-        , CFunDef "$lift$13" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 3
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 3
-                            [ CRow 589989748
-                                ( CVar "__f0" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 4
-                            [ CVar "__f0" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" )
-                [
-                    ( 25
-                    , []
-                    , CCall
-                        ( CVar "double" )
-                        [ CVar "$arg0" ]
-                    )
-                ,
-                    ( 26
-                    , []
-                    , CCall
-                        ( CVar "triple" )
-                        [ CVar "$arg0" ]
                     )
                 ]
             )

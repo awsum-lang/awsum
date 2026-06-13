@@ -1,0 +1,76 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCase
+                    ( CCon 12
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CIntLit 7 TInt32 ]
+                        ]
+                    )
+                    [
+                        ( 11
+                        , []
+                        , CString "nothing"
+                        )
+                    ,
+                        ( 12
+                        , [ "s" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s"
+                                , CVar "s"
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CString "too long"
+                                )
+                            ,
+                                ( 4
+                                , [ "d" ]
+                                , CVar "d"
+                                )
+                            ]
+                        )
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

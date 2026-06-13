@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,135 +15,120 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "colorName" [ "c" ]
-            ( CCase
-                ( CVar "c" )
-                [
-                    ( 24
-                    , []
-                    , CString "red"
-                    )
-                ,
-                    ( 25
-                    , []
-                    , CString "green"
-                    )
-                ]
-            )
-        , CFunDef "showBoxedColor" [ "bc" ]
-            ( CCase
-                ( CVar "bc" )
-                [
-                    ( 27
-                    , [ "c" ]
-                    , CDrop DropFreeUnchecked "c"
-                        ( CCall
-                            ( CVar "colorName" )
-                            [ CVar "c" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "showResult" [ "r" ]
-            ( CCase
-                ( CVar "r" )
-                [
-                    ( 28
-                    , [ "box" ]
-                    , CDrop DropFreeUnchecked "box"
-                        ( CCall
-                            ( CVar "showBoxedColor" )
-                            [ CVar "box" ]
-                        )
-                    )
-                ]
-            )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCase
+            ( CJoin "$join7" [ "$inl8$scrut" ]
+                ( CCase
+                    ( CVar "$inl8$scrut" )
+                    [
+                        ( 3
+                        , [ "$inl5$__w0" ]
+                        , CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ,
+                        ( 4
+                        , [ "$inl6$s" ]
+                        , CCon 7
+                            [ CProj "$inl8$scrut" 1
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ]
+                )
+                ( CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CVar "showBoxedColor" )
-                            [ CCon 27
+                        [ CLet "$inl2$bc"
+                            ( CCon 27
                                 [ CCon 24 [] ]
-                            ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl2$bc"
+                                ( CCase
+                                    ( CProj "$inl2$bc" 1 )
+                                    [
+                                        ( 24
+                                        , []
+                                        , CString "red"
+                                        )
+                                    ,
+                                        ( 25
+                                        , []
+                                        , CString "green"
+                                        )
+                                    ]
+                                )
+                            )
                         , CString " "
                         ]
                     )
                     [
                         ( 3
                         , [ "$do_e_0" ]
-                        , CCon 3
-                            [ CVar "$do_e_0" ]
-                        )
-                    ,
-                        ( 4
-                        , [ "s0" ]
-                        , CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "s0"
-                            , CCall
-                                ( CVar "showResult" )
-                                [ CCon 28
-                                    [ CCon 27
-                                        [ CCon 25 [] ]
-                                    ]
-                                ]
-                            ]
-                        )
-                    ]
-                ]
-            )
-        , CFunDef "$let$13" [ "res" ]
-            ( CCase
-                ( CVar "res" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
+                        , CCon 7
                             [ CString "STRING_TOO_LONG"
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
                         )
-                    )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
+                    ,
+                        ( 4
+                        , [ "s0" ]
+                        , CJump "$join7"
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CLet "$inl4$r"
+                                    ( CCon 28
+                                        [ CCon 27
+                                            [ CCon 25 [] ]
+                                        ]
+                                    )
+                                    ( CDrop DropFreeUnchecked "$inl4$r"
+                                        ( CLet "$inl3$bc"
+                                            ( CProj "$inl4$r" 1 )
+                                            ( CDrop DropFreeUnchecked "$inl3$bc"
+                                                ( CCase
+                                                    ( CProj "$inl3$bc" 1 )
+                                                    [
+                                                        ( 24
+                                                        , []
+                                                        , CString "red"
+                                                        )
+                                                    ,
+                                                        ( 25
+                                                        , []
+                                                        , CString "green"
+                                                        )
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
                             ]
                         )
-                    )
-                ]
+                    ]
+                )
             )
         ]
     }

@@ -13,8 +13,8 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00|")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
-  (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_wrap $v__lam_13)
+  (table 1 funcref)
+  (elem (i32.const 0) $v_runIO)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -654,56 +654,40 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
-      local.set 1
-      local.get 1
       i32.load
       i32.const 5
       i32.eq
       if (result i32)
-        local.get 1
-        i32.load offset=4
-        local.set 2
-        local.get 2
-        call 12
         block (result i32)
-          local.get 2
+          local.get 0
+          i32.load offset=4
+          local.tee 6
+          call 12
+          local.get 6
           local.set 5
           local.get 0
           call 13
           local.get 5
         end
       else
-        local.get 1
+        local.get 0
         i32.load offset=4
-        local.set 2
-        local.get 2
-        call 12
-        local.get 1
-        i32.load offset=8
-        local.set 3
-        local.get 3
-        call 12
-        local.get 2
         local.tee 6
         call 12
         local.get 6
         call 8
-        local.tee 7
-        local.set 1
-        local.get 3
-        local.set 4
-        local.get 4
+        local.set 3
+        local.get 0
+        i32.load offset=8
+        local.tee 6
         call 12
-        local.get 7
-        call 13
+        local.get 6
+        local.set 4
         local.get 0
         call 13
         local.get 3
-        call 13
-        local.get 2
         call 13
         local.get 4
         local.set 0
@@ -727,20 +711,13 @@
     (local i32)
     (local i32)
     call 16
-    call 10
-    call 20
-    call 20)
+    call 10)
 
   (func $v_viaLambda (result i32)
     (local i32)
     (local i32)
     call 16
-    call 23)
-
-  (func $v_wrap (param i32) (result i32)
-    (local i32)
-    (local i32)
-    local.get 0)
+    call 10)
 
   (func $v_joined (result i32)
     (local i32)
@@ -891,18 +868,13 @@
     (local i32)
     (local i32)
     (local i32)
-    call 21
+    call 20
     local.set 3
     local.get 3
     i32.load
     i32.const 3
     i32.eq
     if (result i32)
-      local.get 3
-      i32.load offset=4
-      local.set 4
-      local.get 4
-      call 12
       i32.const 12
       i32.const 2
       call 11
@@ -976,23 +948,8 @@
       local.get 0
     end)
 
-  (func $v__lam_13 (param i32) (result i32)
-    (local i32)
-    (local i32)
-    block (result i32)
-      local.get 0
-      local.tee 2
-      call 12
-      local.get 2
-      call 10
-      local.set 1
-      local.get 0
-      call 13
-      local.get 1
-    end)
-
   (func $_start
-    call 22
+    call 21
     call 15
     drop)
 )

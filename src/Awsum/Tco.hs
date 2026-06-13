@@ -52,4 +52,12 @@ rewriteTail fn = go
             alts' = [(tag, v, body') | (tag, v, (body', _)) <- results]
             anyChanged = any (\(_, _, (_, c)) -> c) results
          in (CRowCase scrut alts', anyChanged)
+      -- A 'CLet' in tail position has @body@ as its tail; @rhs@ is non-tail
+      -- (a self-call there must stay a 'CCall', not become a 'CContinue'),
+      -- so only @body@ is rewritten. Matches the tail/non-tail split
+      -- documented on 'CLet' in "Awsum.Core". (No pass emits 'CLet' before
+      -- 'Awsum.Tco' today; this keeps the traversal honest for that step.)
+      CLet x rhs body ->
+        let (body', changed) = go body
+         in (CLet x rhs body', changed)
       other -> (other, False)

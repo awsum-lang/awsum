@@ -212,7 +212,11 @@ transformExpr env = go
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> traverse go xs
       CDrop k n b -> CDrop k n <$> go b
-      CReuse n t fs -> CReuse n t <$> traverse go fs
+      CReuse rm n t fs -> CReuse rm n t <$> traverse go fs
+      CLet x rhs body -> CLet x <$> go rhs <*> go body
+      CProj n i -> pure (CProj n i)
+      CJoin {} -> error "Defunctionalize: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "Defunctionalize: CJump is minted by Awsum.Simplify, which runs later"
       CCall callee args -> transformCall env callee args
 
 -- | Transform a 'CCall'. Three shapes matter:

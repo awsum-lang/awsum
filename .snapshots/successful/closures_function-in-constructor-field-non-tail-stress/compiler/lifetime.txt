@@ -1,15 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-identity:
-  param           n                               count=1
-
-countWithBox:
-  param           b                               count=1
-  param           n                               count=1
+  let             $inl0$eff                       count=0
 
 $cps$countWithBox:
   param           b                               count=0
@@ -20,18 +14,11 @@ $cps$countWithBox:
 
 $apply$countWithBox:
   param           $k                              count=1
-  param           $x                              count=4
+  param           $x                              count=1
   case-pattern    $pk_27                          count=0
   case-pattern    b                               count=0
-  case-pattern    e                               count=0
-  case-pattern    v                               count=0
-  case-pattern    f                               count=0
 
 main:
   case-pattern    _e                              count=0
   case-pattern    v                               count=1
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=1
 

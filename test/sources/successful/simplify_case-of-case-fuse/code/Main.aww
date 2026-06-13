@@ -1,0 +1,19 @@
+{- `Awsum.Simplify` fuses a case whose scrutinee is another case
+   (case-of-case): every inner arm here is a literal constructor, so the
+   outer case resolves statically per arm and each tower level re-collapses
+   to a single case — no join point is minted. The runtime seed keeps the
+   scrutinee from constant-folding away entirely. The Core snapshot pins the
+   rewrite: one `CCase` over the seed, no nesting, no `$join`. -}
+
+import IO.Stdout
+
+chain : Bool -> Bool
+chain b = and (and (and b True) True) True
+
+label : Bool -> String
+label b = case chain b of
+  True -> "T"
+  False -> "F"
+
+main : IO Never Unit
+main = IO.Stdout.print (label (eqUInt32 (lengthUtf8Bytes "ab") 2))

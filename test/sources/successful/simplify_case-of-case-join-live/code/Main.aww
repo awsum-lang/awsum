@@ -1,0 +1,19 @@
+{- Case-of-case fusion where the outer case's arms reference an enclosing
+   binder: the join body's live set is non-empty, so the expansion adapter
+   prepends the binder as a `$join` parameter and every jump site passes it.
+   On the reference-counted backends this is the leak/use-after-free
+   sensitive shape — the binder must stay live through the jump and flow
+   through the call boundary with the standard inc/dec discipline. The Core
+   snapshot pins the `CJoin` with the free name in its body. -}
+
+import IO.Stdout
+
+describe : String -> String
+describe s = case (case eqUInt32 (lengthUtf8Bytes s) 0 of
+    True -> False
+    False -> eqUInt32 (lengthUtf8Bytes s) 3) of
+  True -> s
+  False -> "other"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe "abc")

@@ -126,7 +126,6 @@ done:
 @.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [15 x i8]} { i32 0, i32 0, i32 0, i32 15, i32 15, [15 x i8] c"STRING_TOO_LONG" }
 @.str.1 = private unnamed_addr constant {i32, i32, i32, i32, i32, [6 x i8]} { i32 0, i32 0, i32 0, i32 6, i32 6, [6 x i8] c"ok-Err" }
 @.str.2 = private unnamed_addr constant {i32, i32, i32, i32, i32, [9 x i8]} { i32 0, i32 0, i32 0, i32 9, i32 9, [9 x i8] c"ok-Right " }
-@.str.3 = private unnamed_addr constant {i32, i32, i32, i32, i32, [9 x i8]} { i32 0, i32 0, i32 0, i32 9, i32 9, [9 x i8] c"bad-Right" }
 
 define internal ptr @__concat(ptr %a, ptr %b) {
   %ba = load i32, ptr %a
@@ -231,30 +230,19 @@ tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   call void @__inc_ref(ptr %t14)
-  %t15 = getelementptr ptr, ptr %t4, i32 2
-  %t16 = load ptr, ptr %t15
-  call void @__inc_ref(ptr %t16)
-  call void @__inc_ref(ptr %t14)
-  %t17 = call ptr @__print(ptr %t14)
-  %t18 = getelementptr ptr, ptr %t17, i32 0
-  %t19 = load ptr, ptr %t18
-  %t20 = ptrtoint ptr %t19 to i64
-  switch i64 %t20, label %tco.case.default.21 [ i64 0, label %tco.case.arm.0.22 ]
-tco.case.arm.0.22:
-  call void @__inc_ref(ptr %t16)
-  call void @__free_recursive(ptr %t17)
+  %t15 = call ptr @__print(ptr %t14)
+  %t16 = getelementptr ptr, ptr %t4, i32 2
+  %t17 = load ptr, ptr %t16
+  call void @__inc_ref(ptr %t17)
   call void @__free_recursive(ptr %t4)
-  call void @__free_recursive(ptr %t16)
-  call void @__free_recursive(ptr %t14)
-  store ptr %t16, ptr %t3
+  call void @__free_recursive(ptr %t15)
+  store ptr %t17, ptr %t3
   br label %tco.loop.0
-tco.case.default.21:
-  unreachable
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t23 = load ptr, ptr %t2
-  ret ptr %t23
+  %t18 = load ptr, ptr %t2
+  ret ptr %t18
 }
 
 define internal ptr @v_ok() {
@@ -269,272 +257,110 @@ define internal ptr @v_ok() {
   ret ptr %t0
 }
 
-define internal ptr @v_bad() {
-  %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 3 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 24 to ptr
-  %t5 = getelementptr ptr, ptr %t3, i32 0
-  store ptr %t4, ptr %t5
-  %t6 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t3, ptr %t6
-  ret ptr %t0
-}
-
 define internal ptr @v_main() {
+  %v__inl14_scrut.jslot = alloca ptr
   %t0 = call ptr @v_ok()
-  %t1 = call ptr @v__df_mapRight_0(ptr %t0)
-  %t2 = call ptr @v__let_17(ptr %t1)
-  ret ptr %t2
-}
-
-define internal ptr @v__let_13(ptr %v_msg) {
-  %t0 = getelementptr ptr, ptr %v_msg, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.19 ]
-case.arm.3.4:
-  %t5 = getelementptr ptr, ptr %v_msg, i32 1
-  %t6 = load ptr, ptr %t5
-  call void @__inc_ref(ptr %t6)
-  %t7 = call ptr @__alloc(i64 24, i32 2)
-  %t8 = inttoptr i64 7 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = getelementptr ptr, ptr %t7, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr %t10
-  %t11 = call ptr @__alloc(i64 16, i32 1)
-  %t12 = inttoptr i64 5 to ptr
-  %t13 = getelementptr ptr, ptr %t11, i32 0
-  store ptr %t12, ptr %t13
-  %t14 = call ptr @__alloc(i64 8, i32 0)
-  %t15 = inttoptr i64 0 to ptr
-  %t16 = getelementptr ptr, ptr %t14, i32 0
-  store ptr %t15, ptr %t16
-  %t17 = getelementptr ptr, ptr %t11, i32 1
-  store ptr %t14, ptr %t17
-  %t18 = getelementptr ptr, ptr %t7, i32 2
-  store ptr %t11, ptr %t18
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v_msg)
-  ret ptr %t7
-case.arm.4.19:
-  %t20 = getelementptr ptr, ptr %v_msg, i32 1
-  %t21 = load ptr, ptr %t20
-  call void @__inc_ref(ptr %t21)
-  %t22 = call ptr @__alloc(i64 24, i32 2)
-  %t23 = inttoptr i64 7 to ptr
-  %t24 = getelementptr ptr, ptr %t22, i32 0
-  store ptr %t23, ptr %t24
-  call void @__inc_ref(ptr %t21)
-  %t25 = getelementptr ptr, ptr %t22, i32 1
-  store ptr %t21, ptr %t25
-  %t26 = call ptr @__alloc(i64 16, i32 1)
-  %t27 = inttoptr i64 5 to ptr
-  %t28 = getelementptr ptr, ptr %t26, i32 0
-  store ptr %t27, ptr %t28
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 0 to ptr
-  %t31 = getelementptr ptr, ptr %t29, i32 0
-  store ptr %t30, ptr %t31
-  %t32 = getelementptr ptr, ptr %t26, i32 1
-  store ptr %t29, ptr %t32
-  %t33 = getelementptr ptr, ptr %t22, i32 2
-  store ptr %t26, ptr %t33
-  call void @__free_recursive(ptr %t21)
-  call void @__free_recursive(ptr %v_msg)
-  ret ptr %t22
-case.default.3:
+  %t3 = getelementptr ptr, ptr %t0, i32 0
+  %t4 = load ptr, ptr %t3
+  %t5 = ptrtoint ptr %t4 to i64
+  switch i64 %t5, label %join.case.default.6 [ i64 3, label %join.case.arm.3.7 i64 4, label %join.case.arm.4.21 ]
+join.case.arm.3.7:
+  %t8 = call ptr @__alloc(i64 24, i32 2)
+  %t9 = inttoptr i64 7 to ptr
+  %t10 = getelementptr ptr, ptr %t8, i32 0
+  store ptr %t9, ptr %t10
+  %t11 = getelementptr ptr, ptr %t8, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t11
+  %t12 = call ptr @__alloc(i64 16, i32 1)
+  %t13 = inttoptr i64 5 to ptr
+  %t14 = getelementptr ptr, ptr %t12, i32 0
+  store ptr %t13, ptr %t14
+  %t15 = call ptr @__alloc(i64 8, i32 0)
+  %t16 = inttoptr i64 0 to ptr
+  %t17 = getelementptr ptr, ptr %t15, i32 0
+  store ptr %t16, ptr %t17
+  %t18 = getelementptr ptr, ptr %t12, i32 1
+  store ptr %t15, ptr %t18
+  %t19 = getelementptr ptr, ptr %t8, i32 2
+  store ptr %t12, ptr %t19
+  br label %join.val.20
+join.val.20:
+  br label %join.after.2
+join.case.arm.4.21:
+  %t22 = getelementptr ptr, ptr %t0, i32 1
+  %t23 = load ptr, ptr %t22
+  call void @__inc_ref(ptr %t23)
+  %t24 = call ptr @__showInt32(ptr %t23)
+  %t25 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t24)
+  store ptr %t25, ptr %v__inl14_scrut.jslot
+  br label %join.1
+join.case.default.6:
   unreachable
-}
-
-define internal ptr @v__lam_14(ptr %v_n) {
-  ret ptr %v_n
-}
-
-define internal ptr @v__let_15(ptr %v_mappedOk, ptr %v_mappedBad) {
-  %t0 = getelementptr ptr, ptr %v_mappedOk, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.5 i64 4, label %case.arm.4.21 ]
-case.arm.3.5:
-  %t7 = getelementptr ptr, ptr %v_mappedOk, i32 1
-  %t8 = load ptr, ptr %t7
-  call void @__inc_ref(ptr %t8)
-  %t9 = getelementptr ptr, ptr %t8, i32 0
-  %t10 = load ptr, ptr %t9
-  %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %case.default.12 [ i64 24, label %case.arm.24.14 ]
-case.arm.24.14:
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 4 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = getelementptr ptr, ptr %t16, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t19
-  br label %case.end.24.15
-case.end.24.15:
-  br label %case.join.13
-case.default.12:
-  unreachable
-case.join.13:
-  %t20 = phi ptr [ %t16, %case.end.24.15 ]
-  call void @__free_recursive(ptr %t8)
-  br label %case.end.3.6
-case.end.3.6:
-  br label %case.join.4
-case.arm.4.21:
-  %t23 = getelementptr ptr, ptr %v_mappedOk, i32 1
-  %t24 = load ptr, ptr %t23
-  call void @__inc_ref(ptr %t24)
-  %t25 = getelementptr ptr, ptr %v_mappedBad, i32 0
-  %t26 = load ptr, ptr %t25
-  %t27 = ptrtoint ptr %t26 to i64
-  switch i64 %t27, label %case.default.28 [ i64 3, label %case.arm.3.30 i64 4, label %case.arm.4.44 ]
-case.arm.3.30:
-  %t32 = getelementptr ptr, ptr %v_mappedBad, i32 1
-  %t33 = load ptr, ptr %t32
-  call void @__inc_ref(ptr %t33)
-  %t34 = getelementptr ptr, ptr %t33, i32 0
-  %t35 = load ptr, ptr %t34
-  %t36 = ptrtoint ptr %t35 to i64
-  switch i64 %t36, label %case.default.37 [ i64 24, label %case.arm.24.39 ]
-case.arm.24.39:
-  call void @__inc_ref(ptr %t24)
-  %t41 = call ptr @__showInt32(ptr %t24)
-  %t42 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t41)
-  br label %case.end.24.40
-case.end.24.40:
-  br label %case.join.38
-case.default.37:
-  unreachable
-case.join.38:
-  %t43 = phi ptr [ %t42, %case.end.24.40 ]
-  call void @__free_recursive(ptr %t33)
-  br label %case.end.3.31
-case.end.3.31:
-  br label %case.join.29
-case.arm.4.44:
-  %t46 = getelementptr ptr, ptr %v_mappedBad, i32 1
-  %t47 = load ptr, ptr %t46
-  call void @__inc_ref(ptr %t47)
-  %t48 = call ptr @__alloc(i64 16, i32 1)
-  %t49 = inttoptr i64 4 to ptr
+join.1:
+  %t26 = load ptr, ptr %v__inl14_scrut.jslot
+  %t27 = getelementptr ptr, ptr %t26, i32 0
+  %t28 = load ptr, ptr %t27
+  %t29 = ptrtoint ptr %t28 to i64
+  switch i64 %t29, label %case.default.30 [ i64 3, label %case.arm.3.32 i64 4, label %case.arm.4.46 ]
+case.arm.3.32:
+  %t34 = call ptr @__alloc(i64 24, i32 2)
+  %t35 = inttoptr i64 7 to ptr
+  %t36 = getelementptr ptr, ptr %t34, i32 0
+  store ptr %t35, ptr %t36
+  %t37 = getelementptr ptr, ptr %t34, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr %t37
+  %t38 = call ptr @__alloc(i64 16, i32 1)
+  %t39 = inttoptr i64 5 to ptr
+  %t40 = getelementptr ptr, ptr %t38, i32 0
+  store ptr %t39, ptr %t40
+  %t41 = call ptr @__alloc(i64 8, i32 0)
+  %t42 = inttoptr i64 0 to ptr
+  %t43 = getelementptr ptr, ptr %t41, i32 0
+  store ptr %t42, ptr %t43
+  %t44 = getelementptr ptr, ptr %t38, i32 1
+  store ptr %t41, ptr %t44
+  %t45 = getelementptr ptr, ptr %t34, i32 2
+  store ptr %t38, ptr %t45
+  br label %case.end.3.33
+case.end.3.33:
+  br label %case.join.31
+case.arm.4.46:
+  %t48 = call ptr @__alloc(i64 24, i32 2)
+  %t49 = inttoptr i64 7 to ptr
   %t50 = getelementptr ptr, ptr %t48, i32 0
   store ptr %t49, ptr %t50
-  %t51 = getelementptr ptr, ptr %t48, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.3, i64 12), ptr %t51
-  call void @__free_recursive(ptr %t47)
-  br label %case.end.4.45
-case.end.4.45:
-  br label %case.join.29
-case.default.28:
+  %t51 = getelementptr ptr, ptr %t26, i32 1
+  %t52 = load ptr, ptr %t51
+  call void @__inc_ref(ptr %t52)
+  %t53 = getelementptr ptr, ptr %t48, i32 1
+  store ptr %t52, ptr %t53
+  %t54 = call ptr @__alloc(i64 16, i32 1)
+  %t55 = inttoptr i64 5 to ptr
+  %t56 = getelementptr ptr, ptr %t54, i32 0
+  store ptr %t55, ptr %t56
+  %t57 = call ptr @__alloc(i64 8, i32 0)
+  %t58 = inttoptr i64 0 to ptr
+  %t59 = getelementptr ptr, ptr %t57, i32 0
+  store ptr %t58, ptr %t59
+  %t60 = getelementptr ptr, ptr %t54, i32 1
+  store ptr %t57, ptr %t60
+  %t61 = getelementptr ptr, ptr %t48, i32 2
+  store ptr %t54, ptr %t61
+  br label %case.end.4.47
+case.end.4.47:
+  br label %case.join.31
+case.default.30:
   unreachable
-case.join.29:
-  %t52 = phi ptr [ %t43, %case.end.3.31 ], [ %t48, %case.end.4.45 ]
-  call void @__free_recursive(ptr %t24)
-  br label %case.end.4.22
-case.end.4.22:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t53 = phi ptr [ %t20, %case.end.3.6 ], [ %t52, %case.end.4.22 ]
-  %t54 = call ptr @v__let_13(ptr %t53)
-  call void @__free_recursive(ptr %v_mappedOk)
-  call void @__free_recursive(ptr %v_mappedBad)
-  ret ptr %t54
-}
-
-define internal ptr @v__lam_16(ptr %v_n) {
-  ret ptr %v_n
-}
-
-define internal ptr @v__let_17(ptr %v_mappedOk) {
-  call void @__inc_ref(ptr %v_mappedOk)
-  %t0 = call ptr @v_bad()
-  %t1 = call ptr @v__df_mapRight_1(ptr %t0)
-  %t2 = call ptr @v__let_15(ptr %v_mappedOk, ptr %t1)
-  call void @__free_recursive(ptr %v_mappedOk)
-  ret ptr %t2
-}
-
-define internal ptr @v__df_mapRight_0(ptr %v_x) {
-  %t0 = getelementptr ptr, ptr %v_x, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.11 ]
-case.arm.3.4:
-  %t5 = getelementptr ptr, ptr %v_x, i32 1
-  %t6 = load ptr, ptr %t5
-  call void @__inc_ref(ptr %t6)
-  %t7 = call ptr @__alloc(i64 16, i32 1)
-  %t8 = inttoptr i64 3 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  call void @__inc_ref(ptr %t6)
-  %t10 = getelementptr ptr, ptr %t7, i32 1
-  store ptr %t6, ptr %t10
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v_x)
-  ret ptr %t7
-case.arm.4.11:
-  %t12 = getelementptr ptr, ptr %v_x, i32 1
-  %t13 = load ptr, ptr %t12
-  call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @__alloc(i64 16, i32 1)
-  %t15 = inttoptr i64 4 to ptr
-  %t16 = getelementptr ptr, ptr %t14, i32 0
-  store ptr %t15, ptr %t16
-  call void @__inc_ref(ptr %t13)
-  %t17 = call ptr @v__lam_16(ptr %t13)
-  %t18 = getelementptr ptr, ptr %t14, i32 1
-  store ptr %t17, ptr %t18
-  call void @__free_recursive(ptr %t13)
-  call void @__free_recursive(ptr %v_x)
-  ret ptr %t14
-case.default.3:
-  unreachable
-}
-
-define internal ptr @v__df_mapRight_1(ptr %v_x) {
-  %t0 = getelementptr ptr, ptr %v_x, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.4 i64 4, label %case.arm.4.11 ]
-case.arm.3.4:
-  %t5 = getelementptr ptr, ptr %v_x, i32 1
-  %t6 = load ptr, ptr %t5
-  call void @__inc_ref(ptr %t6)
-  %t7 = call ptr @__alloc(i64 16, i32 1)
-  %t8 = inttoptr i64 3 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  call void @__inc_ref(ptr %t6)
-  %t10 = getelementptr ptr, ptr %t7, i32 1
-  store ptr %t6, ptr %t10
-  call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v_x)
-  ret ptr %t7
-case.arm.4.11:
-  %t12 = getelementptr ptr, ptr %v_x, i32 1
-  %t13 = load ptr, ptr %t12
-  call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @__alloc(i64 16, i32 1)
-  %t15 = inttoptr i64 4 to ptr
-  %t16 = getelementptr ptr, ptr %t14, i32 0
-  store ptr %t15, ptr %t16
-  call void @__inc_ref(ptr %t13)
-  %t17 = call ptr @v__lam_14(ptr %t13)
-  %t18 = getelementptr ptr, ptr %t14, i32 1
-  store ptr %t17, ptr %t18
-  call void @__free_recursive(ptr %t13)
-  call void @__free_recursive(ptr %v_x)
-  ret ptr %t14
-case.default.3:
-  unreachable
+case.join.31:
+  %t62 = phi ptr [ %t34, %case.end.3.33 ], [ %t48, %case.end.4.47 ]
+  call void @__free_recursive(ptr %t26)
+  br label %join.end.63
+join.end.63:
+  br label %join.after.2
+join.after.2:
+  %t64 = phi ptr [ %t8, %join.val.20 ], [ %t62, %join.end.63 ]
+  call void @__free_recursive(ptr %t0)
+  ret ptr %t64
 }
 
 declare i32 @_setmode(i32, i32)

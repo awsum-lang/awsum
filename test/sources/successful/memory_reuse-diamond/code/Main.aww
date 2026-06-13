@@ -1,0 +1,39 @@
+{- Attack form: diamond sharing inside one structure — both children of
+   every node are the same subtree (`mk2 m (Node acc … acc)`). A
+   consuming left-spine walk reaches each shared cell through one arm
+   while the other arm still holds it; the cells are user data
+   (ReuseGuarded), so the walk may not retag them in place. The second
+   print reads through the right arm after the walk — corruption of the
+   shared child would surface in stdout. -}
+
+import IO.Stdout
+
+type Tree = Leaf | Node Tree String Tree
+
+sumLeft : Tree -> Tree -> Tree
+sumLeft t acc = case t of
+  Leaf -> acc
+  Node l v r -> sumLeft l (Node acc v Leaf)
+
+topV : Tree -> String
+topV t2 = case t2 of
+  Leaf -> "L"
+  Node _l3 v3 _r3 -> v3
+
+rightV : Tree -> String
+rightV t4 = case t4 of
+  Leaf -> "L"
+  Node _l5 _v5 r5 -> topV r5
+
+mk2 : Int32 -> Tree -> Tree
+mk2 n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _u -> acc
+    Right m -> mk2 m (Node acc (showInt32 n) acc)
+
+main : IO Never Unit
+main =
+  let s = mk2 2 Leaf
+   in IO.Stdout.print (topV (sumLeft s Leaf))
+        |> andThenIO (\_u2 -> IO.Stdout.print (rightV s))

@@ -1,0 +1,21 @@
+{- A helper over the always-inline size bound with two call sites: it must
+   NOT inline — core.txt keeps the `describe` definition and both calls.
+   Pins the size heuristic from the conservative side. -}
+
+import IO.Stdout
+
+describe : UInt32 -> String
+describe n = case eqUInt32 n 0 of
+  True -> "zero"
+  False -> case eqUInt32 n 1 of
+    True -> "one"
+    False -> case eqUInt32 n 2 of
+      True -> "two"
+      False -> case eqUInt32 n 11 of
+        True -> "eleven"
+        False -> showUInt32 n
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2000000000))))
+    |> andThenIO (\_u -> IO.Stdout.print (describe (lengthUtf8Bytes "ab")))

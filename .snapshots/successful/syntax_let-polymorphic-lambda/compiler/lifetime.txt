@@ -1,33 +1,18 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-showTri:
-  param           t                               count=1
-
-threeTypes:
-  param           n                               count=1
-  param           s                               count=1
-  param           b                               count=1
-
-$lam$13:
-  param           x                               count=1
-
-$let$15:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$df$$let$14$0:
-  param           b                               count=1
-  param           n                               count=1
-  param           s                               count=1
-  case-pattern    $do_e_2                         count=0
-  case-pattern    s0                              count=0
-  case-pattern    $do_e_1                         count=0
-  case-pattern    s1                              count=0
-  case-pattern    $do_e_0                         count=0
-  case-pattern    s2                              count=0
+main:
+  join-param      $inl16$scrut                    count=2
+  case-pattern    $inl13$__w0                     count=0
+  case-pattern    $inl14$s                        count=0
+  case-pattern    $inl7$$do_e_2                   count=0
+  case-pattern    $inl8$s0                        count=1
+  case-pattern    $inl9$$do_e_1                   count=1
+  case-pattern    $inl10$s1                       count=1
+  case-pattern    $inl11$$do_e_0                  count=1
+  case-pattern    $inl12$s2                       count=1
 

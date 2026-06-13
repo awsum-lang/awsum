@@ -1,27 +1,24 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-add3:
-  param           a                               count=1
-  param           _b                              count=0
-  param           _c                              count=0
-
-$let$13:
-  param           h                               count=1
-
-$let$14:
-  param           g                               count=1
-
-$df$identity$0:
-
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=3
-  case-pattern    $cap8_0                         count=0
-  case-pattern    $cap8_1                         count=0
-  case-pattern    $cap9_0                         count=0
+main:
+  let             $inl17$$cl                      count=0
+  let             $inl18$$arg0                    count=0
+  case-pattern    $inl14$$cap8_0                  count=0
+  case-pattern    $inl15$$cap8_1                  count=0
+  case-pattern    $inl16$$cap9_0                  count=0
+  let             $inl28$g                        count=0
+  let             $inl19$$arg0                    count=0
+  case-pattern    $inl20$$cap8_0                  count=0
+  case-pattern    $inl21$$cap8_1                  count=0
+  case-pattern    $inl22$$cap9_0                  count=0
+  let             $inl23$h                        count=0
+  let             $inl24$$arg0                    count=0
+  case-pattern    $inl25$$cap8_0                  count=0
+  case-pattern    $inl26$$cap8_1                  count=0
+  case-pattern    $inl27$$cap9_0                  count=0
 

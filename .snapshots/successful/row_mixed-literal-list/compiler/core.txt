@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,34 +15,21 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
-            )
-        , CFunDef "sumRow" [ "xs" ]
-            ( CCall
-                ( CVar "$cps$sumRow" )
-                [ CVar "xs"
-                , CCon 15 []
-                ]
             )
         , CFunDef "$cps$sumRow"
             [ "xs"
@@ -74,30 +60,26 @@ CoreProgram
                                     [
                                         ( 1615808600
                                         , "_s"
-                                        , CDrop DropFreeUnchecked "_s"
-                                            ( CDrop DropFreeUnchecked "xs"
-                                                ( CDrop DropFreeUnchecked "$k"
-                                                    ( CContinue
-                                                        [ CVar "t"
-                                                        , CVar "$k"
-                                                        ]
-                                                    )
+                                        , CDrop DropFreeUnchecked "xs"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CVar "t"
+                                                    , CVar "$k"
+                                                    ]
                                                 )
                                             )
                                         )
                                     ,
                                         ( 2711245919
                                         , "n"
-                                        , CDrop DropFreeUnchecked "n"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CContinue
-                                                    [ CVar "t"
-                                                    , CReuse "xs" 16
-                                                        [ CVar "$k"
-                                                        , CVar "n"
-                                                        ]
+                                        , CDrop DropFreeUnchecked "$k"
+                                            ( CContinue
+                                                [ CVar "t"
+                                                , CReuse ReuseGuarded "xs" 16
+                                                    [ CVar "$k"
+                                                    , CProj "h" 1
                                                     ]
-                                                )
+                                                ]
                                             )
                                         )
                                     ]
@@ -126,44 +108,40 @@ CoreProgram
                             , "n"
                             ]
                         , CDrop DropFreeUnchecked "$pk_16"
-                            ( CDrop DropFreeUnchecked "n"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "addInt32" )
-                                        [ CVar "n"
-                                        , CVar "$x"
-                                        ]
-                                    )
-                                    [
-                                        ( 3
-                                        , [ "_e" ]
-                                        , CDrop DropFreeUnchecked "_e"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CDrop DropFreeUnchecked "$x"
-                                                    ( CContinue
-                                                        [ CVar "$pk_16"
-                                                        , CIntLit 0 TInt32
-                                                        ]
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ,
-                                        ( 4
-                                        , [ "r" ]
-                                        , CDrop DropFreeUnchecked "r"
-                                            ( CDrop DropFreeUnchecked "$k"
-                                                ( CDrop DropFreeUnchecked "$x"
-                                                    ( CContinue
-                                                        [ CVar "$pk_16"
-                                                        , CVar "r"
-                                                        ]
-                                                    )
-                                                )
-                                            )
-                                        )
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "addInt32" )
+                                    [ CProj "$k" 2
+                                    , CVar "$x"
                                     ]
                                 )
+                                [
+                                    ( 3
+                                    , [ "_e" ]
+                                    , CDrop DropFreeUnchecked "$k"
+                                        ( CDrop DropFreeUnchecked "$x"
+                                            ( CContinue
+                                                [ CVar "$pk_16"
+                                                , CIntLit 0 TInt32
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "r" ]
+                                    , CDrop DropFreeUnchecked "r"
+                                        ( CDrop DropFreeUnchecked "$k"
+                                            ( CDrop DropFreeUnchecked "$x"
+                                                ( CContinue
+                                                    [ CVar "$pk_16"
+                                                    , CVar "r"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
                             )
                         )
                     ]
@@ -197,8 +175,10 @@ CoreProgram
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
-                        ( CVar "sumRow" )
-                        [ CVar "mixed" ]
+                        ( CVar "$cps$sumRow" )
+                        [ CVar "mixed"
+                        , CCon 15 []
+                        ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]

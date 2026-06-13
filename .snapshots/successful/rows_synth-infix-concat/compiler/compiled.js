@@ -15,27 +15,14 @@
 
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
@@ -68,10 +55,8 @@
                       }
                       case 4: {
                         const v_s2 = __s[1];
-                        const __t0 = v_m;
-                        const __t1 = v_s2;
-                        v_n = __t0;
-                        v_s = __t1;
+                        v_n = v_m;
+                        v_s = v_s2;
                         continue;
                       }
                     }
@@ -89,21 +74,16 @@
     switch (s[0]) {
       case 3: {
         const v_e = s[1];
-        return (s => {
-          switch (s[0]) {
-            case 589989748: {
-              const v__t = s[1];
-              return [7, "string-too-long", [5, [0]]];
-            }
-            case 3768445577: {
-              const v__u = s[1];
-              return [7, "underflow", [5, [0]]];
-            }
+        switch (v_e[0]) {
+          case 589989748: {
+            return [7, "string-too-long", [5, [0]]];
           }
-        })(v_e);
+          case 3768445577: {
+            return [7, "underflow", [5, [0]]];
+          }
+        }
       }
       case 4: {
-        const v__s = s[1];
         return [7, "done", [5, [0]]];
       }
     }

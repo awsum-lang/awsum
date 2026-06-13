@@ -1,0 +1,20 @@
+{- A helper too big for the always-inline bound but called exactly once:
+   the single-site rule inlines it and the definition falls to the
+   tree-shake. The seed value is runtime (string built-ins never
+   const-fold), so the inlined chain executes at run time. -}
+
+import IO.Stdout
+
+describe : UInt32 -> String
+describe n = case eqUInt32 n 0 of
+  True -> "zero"
+  False -> case eqUInt32 n 1 of
+    True -> "one"
+    False -> case eqUInt32 n 2 of
+      True -> "two"
+      False -> case eqUInt32 n 11 of
+        True -> "eleven"
+        False -> showUInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2000000000))))

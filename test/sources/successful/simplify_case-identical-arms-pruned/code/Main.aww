@@ -1,0 +1,23 @@
+{- The flow-sensitive dead-arm pruning composes with the collapse: Blue is
+   never constructed, so lowering shake removes its arm before Simplify
+   runs, and the two survivors are identical — the dispatch decides
+   nothing. With the fusion folding pick through, the whole program pins
+   to printing the constant. -}
+
+import IO.Stdout
+
+type Color = Red | Green | Blue
+
+pick : Bool -> Color
+pick b = case b of
+  True -> Red
+  False -> Green
+
+render : Color -> String
+render c = case c of
+  Red -> "vis"
+  Green -> "vis"
+  Blue -> "invis"
+
+main : IO Never Unit
+main = IO.Stdout.print (render (pick (eqUInt32 (lengthUtf8Bytes "zz") 2)))

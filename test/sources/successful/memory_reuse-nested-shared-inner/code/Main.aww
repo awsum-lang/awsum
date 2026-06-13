@@ -1,0 +1,40 @@
+{- Attack form: nested reuse with a shared inner cell under a linear
+   outer one. The pack built at the call site is fresh (its reuse is
+   reachable), but the list threaded through it is retained by the
+   caller — the inner cell's rewrite must not fire while xs is alive.
+   On LLVM/WASM the outer check may pass and the inner check must then
+   fail (the deferred-field ordering keeps the inner check meaningful on
+   both branches); the managed backends allocate both. The second print
+   reads the retained list after the loop. -}
+
+import IO.Stdout
+
+type Stack = Empty | Push String Stack
+
+type Pack = Pack Stack Stack
+
+rev : Pack -> Stack
+rev pk = case pk of
+  Pack st acc2 -> case st of
+    Empty -> acc2
+    Push s rest -> rev (Pack rest (Push s acc2))
+
+second : Stack -> String
+second st2 = case st2 of
+  Empty -> "E"
+  Push _s2 r -> case r of
+    Empty -> "e"
+    Push s3 _r2 -> s3
+
+mk : Int32 -> Stack -> Stack
+mk n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _u -> acc
+    Right m -> mk m (Push (showInt32 n) acc)
+
+main : IO Never Unit
+main =
+  let xs = mk 3 Empty
+   in IO.Stdout.print (second (rev (Pack xs Empty)))
+        |> andThenIO (\_u2 -> IO.Stdout.print (second xs))

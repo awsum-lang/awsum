@@ -1,17 +1,7 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-captureFn:
-  param           k                               count=1
-
-$lam$13:
-  param           k                               count=1
-  param           _n                              count=0
-
-$df$apply$0:
-  param           x                               count=1
-  param           $df$apply$0$cap0$0              count=1
+  let             $inl0$eff                       count=0
 
