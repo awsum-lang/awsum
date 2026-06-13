@@ -735,7 +735,7 @@ Also practical: if we generated C and mandated "use Clang", we'd go through LLVM
 
 **Generic type variables in signatures**: MemberRef signatures for `Invoke` on generic Func TypeSpec instantiations use `ELEMENT_TYPE_VAR` (0x13) for type parameters, not concrete `object` types. This is required by the CLR metadata specification.
 
-**Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL. The compiler generates a fixed template targeting .NET 9.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions.
+**Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL — `awsum build -t clr -o X.dll` writes it next to `X.dll`, `awsum run -t clr` writes it into the temp run dir, so a by-hand run only needs to keep the two together. The compiler generates a fixed template targeting .NET 9.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions, and `"System.GC.Server": true`: awsum programs allocate a heap object per Core cell, so Server GC's parallel per-core heaps clear that allocation churn faster than the workstation GC's single heap. Output is identical either way; only GC throughput changes.
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode, used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` and `awsum run -t clr`.
 

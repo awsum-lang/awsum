@@ -462,6 +462,9 @@ runJsStdin code input = withSystemTempDirectory "awsum" $ \dir -> do
   writeFileText tempFile code
   runProcStdinBytes "node" [tempFile] input
 
+-- | CLR runtime config for the test harness. Enables Server GC for the same
+--   reason as the awsum/Main.hs and bench/Bench.hs copies it mirrors; keep all
+--   three in sync.
 runtimeConfigJson :: Text
 runtimeConfigJson =
   "{\n\
@@ -471,6 +474,9 @@ runtimeConfigJson =
   \      \"name\": \"Microsoft.NETCore.App\",\n\
   \      \"version\": \"9.0.0\"\n\
   \    },\n\
-  \    \"rollForward\": \"LatestMajor\"\n\
+  \    \"rollForward\": \"LatestMajor\",\n\
+  \    \"configProperties\": {\n\
+  \      \"System.GC.Server\": true\n\
+  \    }\n\
   \  }\n\
   \}\n"

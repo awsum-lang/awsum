@@ -2,10 +2,10 @@ benchmark: poly_list_reverse_repeat
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 2.26 (2.22–2.73)         16.2 (16.2–16.2)
-JVM      ok                 0.41 (0.40–0.43)      788.0 (771.9–796.0)
-CLR      ok                 3.75 (3.74–3.81)      102.5 (102.5–102.6)
-WASM     ok                 1.76 (1.75–1.79)         19.8 (19.7–19.8)
-JS       ok                 0.63 (0.63–0.64)      210.7 (210.1–210.7)
+LLVM     ok                 2.19 (2.16–2.53)         16.2 (16.2–16.2)
+JVM      ok                 0.38 (0.38–0.40)      796.0 (788.0–804.2)
+CLR      ok                 0.86 (0.86–0.86)      617.8 (617.8–617.8)
+WASM     ok                 1.72 (1.71–1.74)         19.8 (19.7–19.8)
+JS       ok                 0.63 (0.62–0.69)      213.3 (210.6–213.7)
 
 stdout: 100000
