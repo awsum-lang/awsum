@@ -19,7 +19,7 @@
 -- construction.
 module Awsum.PropertySpec (spec) where
 
-import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAllStdin, runOnAllStdinBytes)
+import Awsum.RunBackend (Backend, CompiledArtifacts, SimplifyMode (..), compileFromFile, compileFromFileWith, compileFromText, compileFromTextWith, runOnAllStdinBytes)
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import Numeric (showHex)
@@ -75,8 +75,8 @@ spec = describe "Property tests"
     runIO (pruneOrphanTestDirs propertyRoot)
     forM_ properties $ \(SomeProperty p) ->
       describe (toString p.propName) $ do
-        artifacts <- runIO (compileFromFile (propertySourceFile p.propSourceDir))
-        prop "holds on every backend" (runProperty artifacts p)
+        arts <- runIO (compileBothModes (propertySourceFile p.propSourceDir))
+        prop "holds on every backend" (runProperty arts p)
     -- Byte-level stdin properties — these feed arbitrary 'ByteString's a
     -- 'Text' could not hold, so they sit outside the 'Property a' record.
     byteStdinProperty "readAllBytes-roundtrip" "readallbytes-roundtrip" hexOf
@@ -88,6 +88,27 @@ spec = describe "Property tests"
     -- The random stdin inputs stay under the 4096-byte initial read buffer, so
     -- the grow path (and the buffer free on grow) is otherwise unexercised.
     stdinGrowPathReclaimed
+    -- Const-fold differential: literals live in the generated *source*, so
+    -- 'Awsum.Simplify' evaluates them at compile time — unlike every property
+    -- above, whose inputs arrive at runtime and never fold.
+    constFoldDifferentialSpec
+    -- Function-inlining differential: generated helper chains exercising
+    -- every argument-binding shape of the inliner, seeded with a runtime
+    -- value so the inlined code actually executes on the SimplifyOn leg.
+    fnInlineDifferentialSpec
+    -- Case-of-case differential: generated boolean towers over a runtime
+    -- seed — fusion collapses them (and mints joins on the mixed-arm legs)
+    -- on the SimplifyOn leg, while the Off leg dispatches every level at
+    -- runtime; both must match the Haskell oracle.
+    caseOfCaseDifferentialSpec
+    -- Reuse-sharing differential: generated sharing topologies (retained /
+    -- linear / same-cell-twice / top-level-definition / diamond) fed
+    -- through a reuse-shaped consuming loop, with the retained parts read
+    -- back *after* the loop — the probe that makes an in-place overwrite
+    -- of a still-reachable cell visible in stdout. Both Simplify modes ×
+    -- five backends against the Haskell oracle ('Awsum.Lifetime' and
+    -- 'Awsum.Reuse' run on the Off leg too, so raw shapes are covered).
+    reuseSharingDifferentialSpec
 
 -- | A property whose input is raw stdin bytes (possibly malformed UTF-8):
 --   generate a byte sequence, feed it to every backend, and assert all five
@@ -97,11 +118,11 @@ spec = describe "Property tests"
 byteStdinProperty :: Text -> FilePath -> (ByteString -> Text) -> Spec
 byteStdinProperty name dir oracle =
   describe (toString name) $ do
-    artifacts <- runIO (compileFromFile (propertySourceFile dir))
+    arts <- runIO (compileBothModes (propertySourceFile dir))
     prop "holds on every backend"
       $ forAll genStdinBytes
       $ \bs -> ioProperty $ do
-        results <- runOnAllStdinBytes artifacts bs
+        results <- runBothStdinBytes arts bs
         let expected = oracle bs
         pure
           $ counterexample (toString (formatFailure (hexOf bs) expected results))
@@ -117,11 +138,11 @@ byteStdinProperty name dir oracle =
 leadingBomPreserved :: Spec
 leadingBomPreserved =
   describe "readAllString-leading-BOM" $ do
-    artifacts <- runIO (compileFromFile (propertySourceFile "readallstring-strict-decode"))
+    arts <- runIO (compileBothModes (propertySourceFile "readallstring-strict-decode"))
     it "keeps a leading UTF-8 BOM on every backend" $ do
       let input = BS.pack [0xEF, 0xBB, 0xBF] <> encodeUtf8 ("hi" :: Text)
           expected = expectedStrictDecode input
-      results <- runOnAllStdinBytes artifacts input
+      results <- runBothStdinBytes arts input
       unless (T.isPrefixOf "\xFEFF" expected)
         $ expectationFailure "strict oracle dropped the BOM — regression test is mis-set-up"
       unless (allMatch expected results)
@@ -136,11 +157,11 @@ leadingBomPreserved =
 stdinGrowPathReclaimed :: Spec
 stdinGrowPathReclaimed =
   describe "readAllString-grow-path" $ do
-    artifacts <- runIO (compileFromFile (propertySourceFile "readallstring-strict-decode"))
+    arts <- runIO (compileBothModes (propertySourceFile "readallstring-strict-decode"))
     it "decodes a >8 KiB stream (forces buffer growth) on every backend" $ do
       let input = BS.replicate 9000 0x61 -- 9000 'a': valid UTF-8, two grows (4096 -> 8192 -> 16384)
           expected = expectedStrictDecode input
-      results <- runOnAllStdinBytes artifacts input
+      results <- runBothStdinBytes arts input
       unless (allMatch expected results)
         $ expectationFailure (toString (formatFailure "9000 x 0x61" expected results))
 
@@ -168,26 +189,46 @@ expectedStrictDecode bs = case decodeUtf8' bs of
   Right t -> t
   Left _ -> "INVALID_UTF8"
 
-runProperty :: (Show a) => CompiledArtifacts -> Property a -> QC.Property
-runProperty artifacts p =
+-- | Compile one property source in both pipeline modes: the shipped
+--   'SimplifyOn' artifacts plus a 'SimplifyOff' twin. Every property runs
+--   each generated input through both (see 'runBothStdinBytes'), so an
+--   'Awsum.Simplify' rewrite that bends behaviour uniformly across the
+--   five backends still has to disagree with the Haskell oracle.
+compileBothModes :: FilePath -> IO (CompiledArtifacts, CompiledArtifacts)
+compileBothModes path =
+  (,) <$> compileFromFile path <*> compileFromFileWith SimplifyOff path
+
+-- | Feed one input to all five backends in both pipeline modes — ten
+--   results, labelled @Backend@ / @Backend [no-simplify]@.
+runBothStdinBytes :: (CompiledArtifacts, CompiledArtifacts) -> ByteString -> IO [(Text, Either Text Text)]
+runBothStdinBytes (artsOn, artsOff) input = do
+  rOn <- runOnAllStdinBytes artsOn input
+  rOff <- runOnAllStdinBytes artsOff input
+  pure (labelled "" rOn <> labelled " [no-simplify]" rOff)
+  where
+    labelled :: Text -> [(Backend, Either Text Text)] -> [(Text, Either Text Text)]
+    labelled suffix = map (\(b, r) -> (show b <> suffix, r))
+
+runProperty :: (Show a) => (CompiledArtifacts, CompiledArtifacts) -> Property a -> QC.Property
+runProperty arts p =
   forAll p.propGen $ \a -> ioProperty $ do
     let input = p.propEncode a
         expected = p.propExpectedOutput a
-    results <- runOnAllStdin artifacts input
+    results <- runBothStdinBytes arts (encodeUtf8 input)
     pure
       $ counterexample (toString (formatFailure input expected results))
       $ allMatch expected results
 
-allMatch :: Text -> [(Backend, Either Text Text)] -> Bool
+allMatch :: Text -> [(Text, Either Text Text)] -> Bool
 allMatch expected = all $ \(_, r) -> case r of
   Right out -> out == expected
   Left _ -> False
 
-formatFailure :: Text -> Text -> [(Backend, Either Text Text)] -> Text
+formatFailure :: Text -> Text -> [(Text, Either Text Text)] -> Text
 formatFailure input expected results =
   unlines
     $ ["input:    " <> show input, "expected: " <> show expected, "results:"]
-    <> ["  " <> show b <> ": " <> formatRaw r | (b, r) <- results]
+    <> ["  " <> b <> ": " <> formatRaw r | (b, r) <- results]
   where
     formatRaw :: Either Text Text -> Text
     formatRaw (Right o)
@@ -1470,3 +1511,772 @@ deMorganProp =
       propExpectedOutput = \(BoolPair (a, b)) ->
         boolPrint (not (a && b)) <> boolPrint (not a || not b)
     }
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Const-fold differential (fold == runtime)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Every property above feeds its operands through argv/stdin, so they reach
+-- the runtime helpers as runtime values and 'Awsum.Simplify' has nothing to
+-- fold. This one generates the *program*: the operands are source literals,
+-- which the 'SimplifyOn' compile evaluates at compile time ('constFold' +
+-- case-of-known-constructor) while the 'SimplifyOff' twin routes the very
+-- same literals to the runtime helpers. Both runs, on all five backends,
+-- must print the marker string the Haskell oracle computes — so
+-- @fold == haskell@ and @runtime == haskell@, hence @fold == runtime@,
+-- including the exact overflow/underflow outcome of every operation.
+--
+-- One generated program carries one instance of every (operation, outcome)
+-- pair — overflow, underflow and in-range operands are each constructed
+-- directly (no rejection sampling), so every helper's every branch is
+-- exercised in every QuickCheck iteration, with random magnitudes.
+
+-- | One case of the generated program: a built-in applied to literal
+--   operands, the arm shape the program scrutinises its result with, and
+--   the stdout marker the Haskell oracle expects.
+data FoldCaseV = FoldCaseV
+  { fcvOp :: Text,
+    fcvArgs :: [Integer],
+    fcvArm :: FoldArmStyle,
+    fcvExpected :: Text
+  }
+  deriving stock (Show)
+
+-- | How the generated program scrutinises one result.
+data FoldArmStyle
+  = -- | @Either@ whose @Left@ carries the @(UnderflowError | OverflowError)@
+    --   row (signed add\/sub\/mul): the arm row-cases into \"U\" \/ \"O\";
+    --   @Right v@ prints the named show function of @v@.
+    FoldArmRow Text
+  | -- | @Either@ whose @Left@ is a bare single-error constructor: the arm
+    --   prints the given marker; @Right v@ prints the named show function.
+    FoldArmLeft Text Text
+  | -- | @Bool@ result: \"T\" \/ \"F\".
+    FoldArmBool
+  deriving stock (Show)
+
+i32Lo, i32Hi, u8Hi, u32Hi :: Integer
+i32Lo = -2147483648
+i32Hi = 2147483647
+u8Hi = 255
+u32Hi = 4294967295
+
+-- | All cases of one generated program: one instance per (operation,
+--   outcome). 41 cases — 3 outcomes × 3 signed ops, 2 × 12 unsigned-op
+--   directions, boundary + random for the seven unary ops, forced-equal +
+--   random pair for the three equalities.
+genFoldCases :: Gen [FoldCaseV]
+genFoldCases =
+  concat
+    <$> sequence
+      [ int32ArithCases "addInt32" (+) genAddOk,
+        int32ArithCases "subInt32" (-) genSubOk,
+        int32ArithCases "mulInt32" (*) genMulOk,
+        unsignedAdd "addUInt8" "showUInt8" u8Hi,
+        unsignedSub "subUInt8" "showUInt8" u8Hi,
+        unsignedMul "mulUInt8" "showUInt8" u8Hi,
+        unsignedAdd "addUInt32" "showUInt32" u32Hi,
+        unsignedSub "subUInt32" "showUInt32" u32Hi,
+        unsignedMul "mulUInt32" "showUInt32" u32Hi,
+        unaryCases "negInt32" "showInt32" "O" i32Lo (i32Lo, i32Hi) (\a -> if a == i32Lo then "O" else show (negate a)),
+        unaryCases "succInt32" "showInt32" "O" i32Hi (i32Lo, i32Hi) (\a -> if a == i32Hi then "O" else show (a + 1)),
+        unaryCases "predInt32" "showInt32" "U" i32Lo (i32Lo, i32Hi) (\a -> if a == i32Lo then "U" else show (a - 1)),
+        unaryCases "succUInt8" "showUInt8" "O" u8Hi (0, u8Hi) (\a -> if a == u8Hi then "O" else show (a + 1)),
+        unaryCases "predUInt8" "showUInt8" "U" 0 (0, u8Hi) (\a -> if a == 0 then "U" else show (a - 1)),
+        unaryCases "succUInt32" "showUInt32" "O" u32Hi (0, u32Hi) (\a -> if a == u32Hi then "O" else show (a + 1)),
+        unaryCases "predUInt32" "showUInt32" "U" 0 (0, u32Hi) (\a -> if a == 0 then "U" else show (a - 1)),
+        eqCases "eqInt32" (i32Lo, i32Hi),
+        eqCases "eqUInt8" (0, u8Hi),
+        eqCases "eqUInt32" (0, u32Hi)
+      ]
+  where
+    -- Signed Int32 add/sub/mul: three outcomes each. Overflow/underflow
+    -- operands are constructed per operation; the in-range generator is the
+    -- operation's NoOverflow* construction.
+    int32ArithCases name f genOk = do
+      ovf <- case name of
+        "subInt32" -> do
+          a <- chooseInteger (0, i32Hi)
+          b <- chooseInteger (i32Lo, a - i32Hi - 1)
+          pure (a, b)
+        "mulInt32" -> do
+          a <- chooseInteger (2, i32Hi)
+          b <- chooseInteger (i32Hi `div` a + 1, i32Hi)
+          pure (a, b)
+        _ -> do
+          a <- chooseInteger (1, i32Hi)
+          b <- chooseInteger (i32Hi - a + 1, i32Hi)
+          pure (a, b)
+      unf <- case name of
+        "subInt32" -> do
+          a <- chooseInteger (i32Lo, -2)
+          b <- chooseInteger (a - i32Lo + 1, i32Hi)
+          pure (a, b)
+        "mulInt32" -> do
+          a <- chooseInteger (2, i32Hi)
+          b <- chooseInteger (i32Lo, i32Lo `div` a - 1)
+          pure (a, b)
+        _ -> do
+          a <- chooseInteger (i32Lo, -1)
+          b <- chooseInteger (i32Lo, i32Lo - a - 1)
+          pure (a, b)
+      ok <- genOk
+      pure [mk name f ab | ab <- [ovf, unf, ok]]
+      where
+        mk n g (a, b) = FoldCaseV n [a, b] (FoldArmRow "showInt32") (oracle (g a b))
+        oracle r
+          | r > i32Hi = "O"
+          | r < i32Lo = "U"
+          | otherwise = show r
+    genAddOk = do
+      a <- chooseInteger (i32Lo, i32Hi)
+      b <- chooseInteger (max i32Lo (i32Lo - a), min i32Hi (i32Hi - a))
+      pure (a, b)
+    genSubOk = do
+      a <- chooseInteger (i32Lo, i32Hi)
+      b <- chooseInteger (max i32Lo (a - i32Hi), min i32Hi (a - i32Lo))
+      pure (a, b)
+    genMulOk = do
+      a <- chooseInteger (i32Lo, i32Hi)
+      let bound = if a == 0 then i32Hi else i32Hi `div` abs a
+      b <- chooseInteger (negate bound, bound)
+      pure (a, b)
+    -- Unsigned add / mul: two outcomes each (overflow is the only failure).
+    unsignedAdd name showFn hi = do
+      ovf <- do
+        a <- chooseInteger (1, hi)
+        b <- chooseInteger (hi - a + 1, hi)
+        pure (a, b)
+      ok <- do
+        a <- chooseInteger (0, hi)
+        b <- chooseInteger (0, hi - a)
+        pure (a, b)
+      pure [mkOverflowing name showFn hi (+) ab | ab <- [ovf, ok]]
+    unsignedMul name showFn hi = do
+      ovf <- do
+        a <- chooseInteger (2, hi)
+        b <- chooseInteger (hi `div` a + 1, hi)
+        pure (a, b)
+      ok <- do
+        a <- chooseInteger (0, hi)
+        b <- chooseInteger (0, if a == 0 then hi else hi `div` a)
+        pure (a, b)
+      pure [mkOverflowing name showFn hi (*) ab | ab <- [ovf, ok]]
+    mkOverflowing name showFn hi f (a, b) =
+      FoldCaseV name [a, b] (FoldArmLeft "O" showFn) (if f a b > hi then "O" else show (f a b))
+    -- Unsigned sub: two outcomes (underflow is the only failure).
+    unsignedSub name showFn hi = do
+      unf <- do
+        a <- chooseInteger (0, hi - 1)
+        b <- chooseInteger (a + 1, hi)
+        pure (a, b)
+      ok <- do
+        a <- chooseInteger (0, hi)
+        b <- chooseInteger (0, a)
+        pure (a, b)
+      pure [mk ab | ab <- [unf, ok]]
+      where
+        mk (a, b) = FoldCaseV name [a, b] (FoldArmLeft "U" showFn) (if a < b then "U" else show (a - b))
+    -- Unary succ/pred/neg: the boundary value (the op's only failure) plus a
+    -- uniform draw from the full domain.
+    unaryCases name showFn marker boundary (lo, hi) oracle = do
+      x <- chooseInteger (lo, hi)
+      pure [mk boundary, mk x]
+      where
+        mk a = FoldCaseV name [a] (FoldArmLeft marker showFn) (oracle a)
+    -- Equality: a forced-equal pair (uniform sampling almost never produces
+    -- one) plus an independent pair.
+    eqCases name (lo, hi) = do
+      a1 <- chooseInteger (lo, hi)
+      a2 <- chooseInteger (lo, hi)
+      b2 <- chooseInteger (lo, hi)
+      pure
+        [ FoldCaseV name [a1, a1] FoldArmBool "T",
+          FoldCaseV name [a2, b2] FoldArmBool (if a2 == b2 then "T" else "F")
+        ]
+
+-- | Render the generated cases as one Awsum program: a @String@ definition
+--   per case plus a @main@ chain printing them \";\"-separated. Every binder
+--   name carries the case index — the module-wide no-shadowing rule demands
+--   distinct names across all definitions.
+renderFoldProgram :: [FoldCaseV] -> Text
+renderFoldProgram cs =
+  unlines
+    ( ["import IO.Stdout", ""]
+        <> concatMap defLines (zip [(0 :: Int) ..] cs)
+        <> mainLines
+    )
+  where
+    defLines (i, FoldCaseV op args arm _) =
+      [ "c" <> show i <> " : String",
+        "c" <> show i <> " = case " <> op <> " " <> unwords (map lit args) <> " of"
+      ]
+        <> armLines i arm
+        <> [""]
+    lit n = if n < 0 then "(" <> show n <> ")" else show n
+    armLines i = \case
+      FoldArmRow showFn ->
+        [ "  Left e" <> show i <> " -> case e" <> show i <> " of",
+          "    (_u" <> show i <> " : UnderflowError) -> \"U\"",
+          "    (_o" <> show i <> " : OverflowError) -> \"O\"",
+          "  Right v" <> show i <> " -> " <> showFn <> " v" <> show i
+        ]
+      FoldArmLeft marker showFn ->
+        [ "  Left _e" <> show i <> " -> \"" <> marker <> "\"",
+          "  Right v" <> show i <> " -> " <> showFn <> " v" <> show i
+        ]
+      FoldArmBool ->
+        [ "  True -> \"T\"",
+          "  False -> \"F\""
+        ]
+    mainLines =
+      [ "main : IO Never Unit",
+        "main = IO.Stdout.print c0"
+      ]
+        <> concat
+          [ [ "  |> andThenIO (\\_s" <> show i <> " -> IO.Stdout.print \";\")",
+              "  |> andThenIO (\\_p" <> show i <> " -> IO.Stdout.print c" <> show i <> ")"
+            ]
+          | i <- [1 .. length cs - 1]
+          ]
+
+constFoldDifferentialSpec :: Spec
+constFoldDifferentialSpec =
+  describe "constFold-differential"
+    -- Each iteration compiles the generated program twice (On + Off, five
+    -- backends each) — far costlier than the run-only properties above, and
+    -- one iteration already exercises every (operation, outcome) pair.
+    $ modifyMaxSuccess (const 10)
+    $ prop "folded literal arithmetic matches the runtime helpers on every backend"
+    $ forAll genFoldCases
+    $ \cs -> ioProperty $ do
+      let src = renderFoldProgram cs
+          expected = T.intercalate ";" (map fcvExpected cs)
+      arts <- (,) <$> compileFromText src <*> compileFromTextWith SimplifyOff src
+      results <- runBothStdinBytes arts ""
+      pure
+        $ counterexample (toString (formatFailure src expected results))
+        $ allMatch expected results
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Function-inlining differential
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | One step of a generated helper chain, each exercising one
+--   argument-binding shape of the inliner ('Awsum.Simplify'):
+--
+--     * 'InlPick' — a constructor wrapped and immediately projected
+--       (known-projection + case-of-known-constructor cascade); fst keeps
+--       the running value, snd replaces it with the step constant — a slot
+--       swap in the projection is observable either way;
+--     * 'InlDup' — a parameter used twice (binder occurrence counting);
+--     * 'InlDrop' — a parameter never used (its argument is dropped
+--       unevaluated);
+--     * 'InlShare' — a multi-use parameter whose argument is a non-variable
+--       expression (an inlined helper call), which the inliner must share
+--       through a 'CLet' — the node's only producer, so this leg also runs
+--       the 'CLet' lowering on every backend.
+--
+--   The chain seed is @lengthUtf8Bytes (showInt32 k)@ — string built-ins
+--   never const-fold, so the value is a runtime one and the inlined code
+--   path actually executes on the SimplifyOn leg (literal seeds would fold
+--   the whole chain into a string constant). Constants stay ≤ 1000 and the
+--   seed ≤ 11, so no checked add can overflow and the Haskell oracle is the
+--   plain formula.
+data InlStep
+  = InlPick Bool Integer
+  | InlDup Integer
+  | InlDrop Integer
+  | InlShare Integer Integer
+  deriving stock (Show)
+
+genInlChain :: Gen (Integer, [InlStep])
+genInlChain = do
+  seedK <- chooseInteger (-2147483648, 2147483647)
+  n <- QC.chooseInt (3, 6)
+  steps <- replicateM n step
+  pure (seedK, steps)
+  where
+    smallK = chooseInteger (0, 1000)
+    step =
+      QC.oneof
+        [ InlPick <$> arbitrary <*> smallK,
+          InlDup <$> smallK,
+          InlDrop <$> smallK,
+          InlShare <$> smallK <*> smallK
+        ]
+
+-- | The chain's value, computed independently of the compiler.
+inlOracle :: Integer -> [InlStep] -> Integer
+inlOracle seedK = foldl' apply (toInteger (T.length (show seedK)))
+  where
+    apply x = \case
+      InlPick keepFst c -> if keepFst then x else c
+      InlDup c -> x + x + c
+      InlDrop _ -> x
+      InlShare c c2 -> let y = x + c in y + y + c2
+
+-- | Render the chain as one Awsum program: helpers per step (names carry
+--   the step index — module-wide no-shadowing), a @let@-chain threading the
+--   running value, and a @main@ printing the final @showUInt32@.
+renderInlProgram :: Integer -> [InlStep] -> Text
+renderInlProgram seedK steps =
+  unlines
+    ( [ "import IO.Stdout",
+        "",
+        "seed : UInt32",
+        "seed = lengthUtf8Bytes (showInt32 " <> lit seedK <> ")",
+        ""
+      ]
+        <> concatMap helperLines (zip [(1 :: Int) ..] steps)
+        <> resultLines
+        <> [ "",
+             "main : IO Never Unit",
+             "main = IO.Stdout.print result"
+           ]
+    )
+  where
+    lit n = if n < 0 then "(" <> show n <> ")" else show n
+    sVar i = "s" <> show (i :: Int)
+    checkedAddBody fnIx a b kTail tailVar =
+      [ "  case addUInt32 " <> a <> " " <> b <> " of",
+        "    Left _l" <> fnIx <> " -> 0",
+        "    Right r" <> fnIx <> " -> case addUInt32 r" <> fnIx <> " " <> kTail <> " of",
+        "      Left _m" <> fnIx <> " -> 0",
+        "      Right " <> tailVar <> fnIx <> " -> " <> tailVar <> fnIx
+      ]
+    helperLines (i, st) = case st of
+      InlPick keepFst k ->
+        let ix = show i
+            (px, py, ret) = if keepFst then ("x" <> ix, "_y" <> ix, "x" <> ix) else ("_x" <> ix, "y" <> ix, "y" <> ix)
+         in [ "mk" <> ix <> " : UInt32 -> Tuple2 UInt32 UInt32",
+              "mk" <> ix <> " a" <> ix <> " = Tuple2 a" <> ix <> " " <> lit k,
+              "",
+              "get" <> ix <> " : Tuple2 UInt32 UInt32 -> UInt32",
+              "get" <> ix <> " p" <> ix <> " = case p" <> ix <> " of",
+              "  Tuple2 " <> px <> " " <> py <> " -> " <> ret,
+              ""
+            ]
+      InlDup k ->
+        let ix = show i
+         in ["dup" <> ix <> " : UInt32 -> UInt32", "dup" <> ix <> " n" <> ix <> " ="]
+              <> checkedAddBody ix ("n" <> ix) ("n" <> ix) (lit k) "t"
+              <> [""]
+      InlDrop _ ->
+        let ix = show i
+         in [ "gate" <> ix <> " : UInt32 -> UInt32 -> UInt32",
+              "gate" <> ix <> " _g" <> ix <> " w" <> ix <> " = w" <> ix,
+              ""
+            ]
+      InlShare k k2 ->
+        let ix = show i
+         in ["shr" <> ix <> " : UInt32 -> UInt32", "shr" <> ix <> " n" <> ix <> " ="]
+              <> checkedAddBody ix ("n" <> ix) ("n" <> ix) (lit k2) "t"
+              <> [ "",
+                   "bump" <> ix <> " : UInt32 -> UInt32",
+                   "bump" <> ix <> " q" <> ix <> " = case addUInt32 q" <> ix <> " " <> lit k <> " of",
+                   "  Left _b" <> ix <> " -> 0",
+                   "  Right u" <> ix <> " -> u" <> ix,
+                   ""
+                 ]
+    stepExpr i st prev = case st of
+      InlPick _ _ -> "get" <> show i <> " (mk" <> show i <> " " <> prev <> ")"
+      InlDup _ -> "dup" <> show i <> " " <> prev
+      InlDrop k -> "gate" <> show i <> " " <> lit k <> " " <> prev
+      InlShare _ _ -> "shr" <> show i <> " (bump" <> show i <> " " <> prev <> ")"
+    resultLines =
+      [ "result : String",
+        "result =",
+        "  let " <> sVar 0 <> " = seed"
+      ]
+        <> [ "   in let " <> sVar i <> " = " <> stepExpr i st (sVar (i - 1))
+           | (i, st) <- zip [1 ..] steps
+           ]
+        <> ["   in showUInt32 " <> sVar (length steps)]
+
+fnInlineDifferentialSpec :: Spec
+fnInlineDifferentialSpec =
+  describe "fnInline-differential"
+    -- Two compiles per iteration (On + Off, five backends each), like the
+    -- const-fold differential; one iteration runs every step shape drawn.
+    $ modifyMaxSuccess (const 10)
+    $ prop "inlined helper chains match the call-boundary semantics on every backend"
+    $ forAll genInlChain
+    $ \(seedK, steps) -> ioProperty $ do
+      let src = renderInlProgram seedK steps
+          expected = show (inlOracle seedK steps)
+      arts <- (,) <$> compileFromText src <*> compileFromTextWith SimplifyOff src
+      results <- runBothStdinBytes arts ""
+      pure
+        $ counterexample (toString (formatFailure src expected results))
+        $ allMatch expected results
+
+-- | One step of the case-of-case differential's boolean tower. 'CocAnd' /
+--   'CocOr' / 'CocNot' compose the prelude combinators — after inlining,
+--   each is one more case layered over the previous result, which the
+--   fusion re-collapses level by level ('CocOr True' is the shared-arm
+--   shape: both inner arms select the same outer arm). 'CocMix' routes the
+--   value through a helper whose @True@ arm carries a runtime computation —
+--   the inner case then has one literal and one computation arm, so the
+--   fusion mints a join point and the lifted @$join@ path runs on every
+--   backend.
+--
+--   The seed is @eqUInt32 (lengthUtf8Bytes (showInt32 k)) 2@ — a runtime
+--   'Bool' (string built-ins never const-fold), so the fused dispatch
+--   actually executes on the SimplifyOn leg instead of folding away.
+data CocStep
+  = CocAnd Bool
+  | CocOr Bool
+  | CocNot
+  | CocMix Integer
+  deriving stock (Show)
+
+-- | How the tower's value reaches @main@. 'CocPlain' prints it from the
+--   value chain directly — residual joins sit in expression position.
+--   'CocLoop' threads it through a TCO'd countdown loop whose dispatch is
+--   itself a case-of-case with a loop-back outer arm — the minted join's
+--   body carries a 'CContinue' and runs once per iteration, the shape the
+--   fusion gate excluded until every backend lowered the node natively.
+data CocForm = CocPlain | CocLoop
+  deriving stock (Show)
+
+genCocChain :: Gen (Integer, [CocStep], CocForm)
+genCocChain = do
+  seedK <- chooseInteger (-2147483648, 2147483647)
+  n <- QC.chooseInt (3, 7)
+  steps <- replicateM n step
+  form <- QC.elements [CocPlain, CocLoop]
+  pure (seedK, steps, form)
+  where
+    step =
+      QC.oneof
+        [ CocAnd <$> arbitrary,
+          CocOr <$> arbitrary,
+          pure CocNot,
+          CocMix <$> chooseInteger (-2147483648, 2147483647)
+        ]
+
+-- | The tower's value, computed independently of the compiler.
+cocOracle :: Integer -> [CocStep] -> Bool
+cocOracle seedK = foldl' apply (lenOf seedK == 2)
+  where
+    lenOf :: Integer -> Int
+    lenOf n = T.length (show n)
+    apply x = \case
+      CocAnd l -> x && l
+      CocOr l -> x || l
+      CocNot -> not x
+      CocMix k -> x && (lenOf k == 3)
+
+-- | Render the tower as one Awsum program: a @mix@ helper per 'CocMix'
+--   step (names carry the step index — module-wide no-shadowing) and a
+--   @let@-chain threading the running 'Bool'. 'CocPlain' ends the chain
+--   in a case printing @"T"@ / @"F"@; 'CocLoop' binds the chain as a
+--   @tower@ value, pre-renders the answer, and reaches it through a
+--   countdown loop whose dispatch fuses into a join with a loop-back arm
+--   in its body (the inner @True@ resolves statically against the small
+--   case-free @answer@, the comparison arm jumps, and the outer @False@
+--   arm's recursion — a 'CContinue' after TCO — rides along in the body).
+renderCocProgram :: Integer -> [CocStep] -> CocForm -> Text
+renderCocProgram seedK steps form =
+  unlines
+    ( [ "import IO.Stdout",
+        "",
+        "seed : Bool",
+        "seed = eqUInt32 (lengthUtf8Bytes (showInt32 " <> lit seedK <> ")) 2",
+        ""
+      ]
+        <> concatMap helperLines (zip [(1 :: Int) ..] steps)
+        <> formLines
+    )
+  where
+    lit n = if n < 0 then "(" <> show n <> ")" else show n
+    boolLit b = if b then "True" else "False"
+    sVar i = "s" <> show (i :: Int)
+    helperLines (i, st) = case st of
+      CocMix k ->
+        let ix = show (i :: Int)
+         in [ "mix" <> ix <> " : Bool -> Bool",
+              "mix" <> ix <> " b" <> ix <> " = case b" <> ix <> " of",
+              "  True -> eqUInt32 (lengthUtf8Bytes (showInt32 " <> lit k <> ")) 3",
+              "  False -> False",
+              ""
+            ]
+      _ -> []
+    stepExpr i st prev = case st of
+      CocAnd l -> "and " <> prev <> " " <> boolLit l
+      CocOr l -> "or " <> prev <> " " <> boolLit l
+      CocNot -> "not " <> prev
+      CocMix _ -> "and (mix" <> show (i :: Int) <> " " <> prev <> ") True"
+    chainLines name final =
+      [ name <> " =",
+        "  let " <> sVar 0 <> " = seed"
+      ]
+        <> [ "   in let " <> sVar i <> " = " <> stepExpr i st (sVar (i - 1))
+           | (i, st) <- zip [1 ..] steps
+           ]
+        <> ["   in " <> final]
+    formLines = case form of
+      CocPlain ->
+        ("result : String" : chainLines "result" caseTF)
+          <> [ "",
+               "main : IO Never Unit",
+               "main = IO.Stdout.print result"
+             ]
+        where
+          caseTF =
+            "case "
+              <> sVar (length steps)
+              <> " of\n        True -> \"T\"\n        False -> \"F\""
+      CocLoop ->
+        ("tower : Bool" : chainLines "tower" (sVar (length steps)))
+          <> [ "",
+               "answer : String",
+               "answer = case tower of",
+               "  True -> \"T\"",
+               "  False -> \"F\"",
+               "",
+               "spin : UInt32 -> String",
+               "spin n = case (case eqUInt32 n 0 of",
+               "    True -> True",
+               "    False -> eqUInt32 n 1) of",
+               "  True -> answer",
+               "  False -> (case subUInt32 n 1 of",
+               "    Left _e -> \"E\"",
+               "    Right m -> spin m)",
+               "",
+               "main : IO Never Unit",
+               "main = IO.Stdout.print (spin 1000)"
+             ]
+
+caseOfCaseDifferentialSpec :: Spec
+caseOfCaseDifferentialSpec =
+  describe "caseOfCase-differential"
+    -- Two compiles per iteration (On + Off, five backends each), like the
+    -- inlining differential; the tower shapes vary per draw.
+    $ modifyMaxSuccess (const 10)
+    $ prop "fused boolean towers match the per-level dispatch on every backend"
+    $ forAll genCocChain
+    $ \(seedK, steps, form) -> ioProperty $ do
+      let src = renderCocProgram seedK steps form
+          expected = if cocOracle seedK steps then "T" else "F"
+      arts <- (,) <$> compileFromText src <*> compileFromTextWith SimplifyOff src
+      results <- runBothStdinBytes arts ""
+      pure
+        $ counterexample (toString (formatFailure src expected results))
+        $ allMatch expected results
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Reuse-sharing differential
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | One generated sharing topology. Every shape feeds a structure through
+--   a consuming, reuse-shaped loop and (except 'RsLinear') reads a
+--   retained part *after* the loop, fusing both reads into stdout — the
+--   probe that makes an in-place overwrite of a still-reachable cell
+--   visible. The cells are user data ('ReuseGuarded'), so the loop may
+--   mutate only what the runtime uniqueness check proves unshared
+--   (LLVM/WASM) and nothing at all on the managed backends.
+--
+--     * 'RsRetained' — the classic caller-retained alias: @let xs@ is
+--       reversed, then read again.
+--     * 'RsLinear' — no retention: the only soundness obligation is the
+--       reversed value itself (and the reuse is free to fire).
+--     * 'RsArgTwice' — the same cell reaches one call through both
+--       parameters; the first is consumed, the second read after.
+--     * 'RsValDef' — a top-level definition (computed once at startup on
+--       the managed backends, a fresh getter cell per reference on
+--       LLVM/WASM) flows into the consuming loop and is read again.
+--     * 'RsDiamond' — both children of every tree node are the same
+--       subtree; a consuming left-spine walk runs while the right arms
+--       still reach every shared cell.
+data RsShape = RsRetained | RsLinear | RsArgTwice | RsValDef | RsDiamond
+  deriving stock (Show)
+
+genRsCase :: Gen (RsShape, Int, Int)
+genRsCase = do
+  shape <- QC.elements [RsRetained, RsLinear, RsArgTwice, RsValDef, RsDiamond]
+  len <- QC.chooseInt (1, 4)
+  probeIx <- QC.chooseInt (1, 2)
+  pure (shape, len, probeIx)
+
+-- | The list the generated @mk@ builds: @mk n Empty@ pushes
+--   @showInt32 n@ first, so the final head is @"1"@.
+rsMkList :: Int -> [Text]
+rsMkList n = map show [1 .. n]
+
+-- | The generated probe: element 1 (head) or element 2, with the same
+--   miss markers the rendered helper prints.
+rsProbe :: Int -> [Text] -> Text
+rsProbe 1 = \case
+  [] -> "E"
+  (x : _) -> x
+rsProbe _ = \case
+  [] -> "E"
+  [_] -> "e"
+  (_ : y : _) -> y
+
+-- | Haskell mirror of the diamond program's tree functions.
+data RsTree = RsLeaf | RsNode RsTree Text RsTree
+
+rsMkTree :: Int -> RsTree -> RsTree
+rsMkTree n acc
+  | n <= 0 = acc
+  | otherwise = rsMkTree (n - 1) (RsNode acc (show n) acc)
+
+rsSumLeft :: RsTree -> RsTree -> RsTree
+rsSumLeft RsLeaf acc = acc
+rsSumLeft (RsNode l v _) acc = rsSumLeft l (RsNode acc v RsLeaf)
+
+rsTopV :: RsTree -> Text
+rsTopV RsLeaf = "L"
+rsTopV (RsNode _ v _) = v
+
+rsRightV :: RsTree -> Text
+rsRightV RsLeaf = "L"
+rsRightV (RsNode _ _ r) = rsTopV r
+
+rsOracle :: RsShape -> Int -> Int -> Text
+rsOracle shape len probeIx =
+  let l = rsMkList len
+      p = rsProbe probeIx
+   in case shape of
+        RsRetained -> p (reverse l) <> p l
+        RsLinear -> p (reverse l)
+        RsArgTwice -> p (reverse l) <> p l
+        RsValDef -> p (reverse l) <> p l
+        RsDiamond ->
+          let s = rsMkTree len RsLeaf
+           in rsTopV (rsSumLeft s RsLeaf) <> rsRightV s
+
+-- | Render the topology as one Awsum program. The list/tree contents
+--   come from @showInt32@ of the loop counter — runtime values, so
+--   nothing folds at compile time; the loops themselves are recursive
+--   and never inline.
+renderRsProgram :: RsShape -> Int -> Int -> Text
+renderRsProgram shape len probeIx =
+  unlines (["import IO.Stdout", ""] <> body)
+  where
+    lenT = show len
+    probeLines =
+      case probeIx of
+        1 ->
+          [ "probe : Stack -> String",
+            "probe st = case st of",
+            "  Empty -> \"E\"",
+            "  Push s2 _r -> s2",
+            ""
+          ]
+        _ ->
+          [ "probe : Stack -> String",
+            "probe st = case st of",
+            "  Empty -> \"E\"",
+            "  Push _s2 r -> case r of",
+            "    Empty -> \"e\"",
+            "    Push s3 _r2 -> s3",
+            ""
+          ]
+    stackLines =
+      [ "type Stack = Empty | Push String Stack",
+        "",
+        "mk : Int32 -> Stack -> Stack",
+        "mk n acc = case eqInt32 n 0 of",
+        "  True -> acc",
+        "  False -> case predInt32 n of",
+        "    Left _u -> acc",
+        "    Right m -> mk m (Push (showInt32 n) acc)",
+        "",
+        "revInto2 : Stack -> Stack -> Stack",
+        "revInto2 lst acc2 = case lst of",
+        "  Empty -> acc2",
+        "  Push s rest -> revInto2 rest (Push s acc2)",
+        ""
+      ]
+        <> probeLines
+    body = case shape of
+      RsRetained ->
+        stackLines
+          <> [ "main : IO Never Unit",
+               "main =",
+               "  let xs = mk " <> lenT <> " Empty",
+               "   in IO.Stdout.print (probe (revInto2 xs Empty))",
+               "        |> andThenIO (\\_u2 -> IO.Stdout.print (probe xs))"
+             ]
+      RsLinear ->
+        stackLines
+          <> [ "main : IO Never Unit",
+               "main = IO.Stdout.print (probe (revInto2 (mk " <> lenT <> " Empty) Empty))"
+             ]
+      RsArgTwice ->
+        stackLines
+          <> [ "both : Stack -> Stack -> String",
+               "both a b =",
+               "  let x = probe (revInto2 a Empty)",
+               "   in let y = probe b",
+               "       in case x ++ y of",
+               "            Left _e -> \"L\"",
+               "            Right z -> z",
+               "",
+               "main : IO Never Unit",
+               "main =",
+               "  let xs = mk " <> lenT <> " Empty",
+               "   in IO.Stdout.print (both xs xs)"
+             ]
+      RsValDef ->
+        stackLines
+          <> [ "topDef : Stack",
+               "topDef = mk " <> lenT <> " Empty",
+               "",
+               "main : IO Never Unit",
+               "main =",
+               "  IO.Stdout.print (probe (revInto2 topDef Empty))",
+               "    |> andThenIO (\\_u2 -> IO.Stdout.print (probe topDef))"
+             ]
+      RsDiamond ->
+        [ "type Tree = Leaf | Node Tree String Tree",
+          "",
+          "mk2 : Int32 -> Tree -> Tree",
+          "mk2 n acc = case eqInt32 n 0 of",
+          "  True -> acc",
+          "  False -> case predInt32 n of",
+          "    Left _u -> acc",
+          "    Right m -> mk2 m (Node acc (showInt32 n) acc)",
+          "",
+          "sumLeft : Tree -> Tree -> Tree",
+          "sumLeft t acc = case t of",
+          "  Leaf -> acc",
+          "  Node l v r -> sumLeft l (Node acc v Leaf)",
+          "",
+          "topV : Tree -> String",
+          "topV t2 = case t2 of",
+          "  Leaf -> \"L\"",
+          "  Node _l3 v3 _r3 -> v3",
+          "",
+          "rightV : Tree -> String",
+          "rightV t4 = case t4 of",
+          "  Leaf -> \"L\"",
+          "  Node _l5 _v5 r5 -> topV r5",
+          "",
+          "main : IO Never Unit",
+          "main =",
+          "  let s = mk2 " <> lenT <> " Leaf",
+          "   in IO.Stdout.print (topV (sumLeft s Leaf))",
+          "        |> andThenIO (\\_u2 -> IO.Stdout.print (rightV s))"
+        ]
+
+reuseSharingDifferentialSpec :: Spec
+reuseSharingDifferentialSpec =
+  describe "reuseSharing-differential"
+    -- Two compiles per iteration (On + Off, five backends each), like the
+    -- inlining differential.
+    $ modifyMaxSuccess (const 10)
+    $ prop "consuming loops never mutate a still-reachable cell on any backend"
+    $ forAll genRsCase
+    $ \(shape, len, probeIx) -> ioProperty $ do
+      let src = renderRsProgram shape len probeIx
+          expected = rsOracle shape len probeIx
+      arts <- (,) <$> compileFromText src <*> compileFromTextWith SimplifyOff src
+      results <- runBothStdinBytes arts ""
+      pure
+        $ counterexample (toString (formatFailure src expected results))
+        $ allMatch expected results

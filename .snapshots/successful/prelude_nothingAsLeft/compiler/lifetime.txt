@@ -1,55 +1,36 @@
-pureEither:
-  param           x                               count=1
-
-nothingAsLeft:
-  param           e                               count=1
-  param           m                               count=1
-  case-pattern    a                               count=0
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-headList:
-  param           xs                              count=1
-  case-pattern    h                               count=0
-  case-pattern    _t                              count=0
-
-show:
-  param           r                               count=1
-  case-pattern    __p0                            count=0
-  case-pattern    s                               count=0
-
-$let$13:
-  param           msg                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$let$14:
-  param           fromJust                        count=1
-  param           fromNothing                     count=1
-  param           chained                         count=1
-  case-pattern    $do_e_6                         count=0
-  case-pattern    a                               count=0
-  case-pattern    $do_e_5                         count=0
-  case-pattern    b                               count=0
-  case-pattern    $do_e_4                         count=0
-  case-pattern    c                               count=0
-  case-pattern    $do_e_3                         count=0
-  case-pattern    sep                             count=0
-  case-pattern    $do_e_2                         count=0
-  case-pattern    s1                              count=0
-  case-pattern    $do_e_1                         count=0
-  case-pattern    s2                              count=0
-
-$let$15:
-  param           fromNothing                     count=1
-  param           fromJust                        count=1
-  case-pattern    $do_e_0                         count=0
-  case-pattern    h                               count=0
-
-$let$16:
-  param           fromNothing                     count=1
+main:
+  let             $inl97$fromNothing              count=0
+  let             $inl70$fromJust                 count=0
+  let             $inl71$xs                       count=0
+  case-pattern    $inl72$h                        count=0
+  case-pattern    $inl73$_t                       count=0
+  let             $inl74$chained                  count=0
+  join-param      $inl76$scrut                    count=2
+  case-pattern    $inl77$__w0                     count=0
+  case-pattern    $inl78$s                        count=0
+  case-pattern    $inl79$__p0                     count=0
+  case-pattern    $inl80$s                        count=0
+  case-pattern    $inl81$$do_e_6                  count=0
+  case-pattern    $inl82$a                        count=1
+  case-pattern    $inl83$__p0                     count=0
+  case-pattern    $inl84$s                        count=0
+  case-pattern    $inl85$$do_e_5                  count=1
+  case-pattern    $inl86$b                        count=1
+  case-pattern    $inl87$__p0                     count=0
+  case-pattern    $inl88$s                        count=0
+  case-pattern    $inl89$$do_e_4                  count=1
+  case-pattern    $inl90$c                        count=1
+  case-pattern    $inl91$$do_e_3                  count=1
+  case-pattern    $inl92$sep                      count=1
+  case-pattern    $inl93$$do_e_2                  count=1
+  case-pattern    $inl94$s1                       count=1
+  case-pattern    $inl95$$do_e_1                  count=1
+  case-pattern    $inl96$s2                       count=1
 

@@ -11,8 +11,8 @@
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
-  (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v_firstZero)
+  (table 1 funcref)
+  (elem (i32.const 0) $v_runIO)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -555,122 +555,44 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
-      local.set 1
-      local.get 1
       i32.load
       i32.const 5
       i32.eq
       if (result i32)
-        local.get 1
-        i32.load offset=4
-        local.set 2
-        local.get 2
-        call 11
         block (result i32)
-          local.get 2
+          local.get 0
+          i32.load offset=4
+          local.tee 6
+          call 11
+          local.get 6
           local.set 5
           local.get 0
           call 12
           local.get 5
         end
       else
-        local.get 1
+        local.get 0
         i32.load offset=4
-        local.set 2
-        local.get 2
-        call 11
-        local.get 1
-        i32.load offset=8
-        local.set 3
-        local.get 3
-        call 11
-        local.get 2
         local.tee 6
         call 11
         local.get 6
         call 7
-        local.tee 7
-        local.set 1
-        local.get 3
-        local.set 4
-        local.get 4
+        local.set 3
+        local.get 0
+        i32.load offset=8
+        local.tee 6
         call 11
-        local.get 7
-        call 12
+        local.get 6
+        local.set 4
         local.get 0
         call 12
         local.get 3
-        call 12
-        local.get 2
         call 12
         local.get 4
         local.set 0
         br 1
-      end
-    end)
-
-  (func $v_firstZero (param i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    local.set 1
-    local.get 1
-    i32.load
-    i32.const 11
-    i32.eq
-    if (result i32)
-      block (result i32)
-        i32.const 0
-        call 8
-        local.set 4
-        local.get 0
-        call 12
-        local.get 4
-      end
-    else
-      local.get 1
-      i32.load offset=4
-      local.set 2
-      local.get 2
-      call 11
-      local.get 2
-      local.set 1
-      local.get 1
-      i32.load
-      i32.const 11
-      i32.eq
-      if (result i32)
-        block (result i32)
-          i32.const 0
-          call 8
-          local.set 4
-          local.get 2
-          call 12
-          local.get 0
-          call 12
-          local.get 4
-        end
-      else
-        local.get 1
-        i32.load offset=4
-        local.set 3
-        local.get 3
-        call 11
-        block (result i32)
-          local.get 3
-          local.set 4
-          local.get 2
-          call 12
-          local.get 0
-          call 12
-          local.get 4
-        end
       end
     end)
 
@@ -688,15 +610,8 @@
     i32.const 7
     i32.store
     local.get 0
-    i32.const 4
     i32.const 0
-    call 10
-    local.set 1
-    local.get 1
-    i32.const 11
-    i32.store
-    local.get 1
-    call 15
+    call 8
     call 9
     i32.store offset=4
     local.get 0
@@ -722,7 +637,7 @@
     local.get 0)
 
   (func $_start
-    call 16
+    call 15
     call 14
     drop)
 )

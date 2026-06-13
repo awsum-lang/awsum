@@ -9,6 +9,7 @@
 module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Type' (..), noSpan)
@@ -889,61 +890,123 @@ data ECtx = ECtx
     -- declare them as 'Object' (positional default) and fail
     -- verification.
     cUninitSlots :: Set Int,
-    -- | Method-global slot-type info for the unified 'emitExprI' frame
-    -- builder: which slot indices ever serve as a 'CCase' @arrSlot@
-    -- (@Object[]@) and which as a @tagSlot@ (@int@). Computed once per
-    -- method by 'buildSlotKinds' and constant across the whole body, so
-    -- each 'Label''s absolute 'Frame' can be typed inline at emit time, with
-    -- no post-pass: a slot is @Object[]@ if it is /ever/ an arr slot in the
-    -- method, @int@ if a tag slot, else @Object@ (the global-union rule).
+    -- | /Live/ slot-type info for the unified 'emitExprI' frame builder:
+    -- the slot indices serving as a 'CCase' @arrSlot@ (@Object[]@) or
+    -- @tagSlot@ (@int@) in the cases /enclosing the current emission
+    -- point/. Each case emitter adds its own pair for the extent of its
+    -- arms (and frames), so a 'Label''s absolute 'Frame' is typed from
+    -- exactly the regions whose reads are still ahead. A completed
+    -- sibling subtree's slots revert to the @Object@ default — its stale
+    -- @Object[]@ content is assignable to @Object@, and nothing reads it
+    -- again — where a method-global union would declare the dead kind and
+    -- contradict a path that has since re-stored the index with a plain
+    -- binder (two subtrees may give one index different roles; observed
+    -- when function inlining first produced a deep scrutinee whose
+    -- spilled call-arg case landed on the enclosing case's bind region).
     cArrSlots :: Set Int,
-    cTagSlots :: Set Int
+    cTagSlots :: Set Int,
+    -- | Method-global slot for each 'CLet' binder and each 'CJoin'
+    -- parameter, assigned by 'namedSlotAssignments' into a dedicated region
+    -- between the parameters and the structural slots. A named binder cannot
+    -- share an index with the structural allocation: indices there are typed
+    -- by the global-union rule above, and a binder's plain @Object@ at an
+    -- index some /other/ subtree uses as an @arrSlot@ would poison every
+    -- frame in the binder's scope. The region keeps the global typing exact:
+    -- named slots are @Object@ everywhere, @top@ (via 'cUninitSlots') before
+    -- their store — for a join parameter that means @top@ throughout the
+    -- join's inner expression (the stores sit just before each jump's
+    -- @goto@) and @Object@ from the join-body label on (every incoming edge
+    -- has stored it).
+    cNamedSlots :: Map Text Int,
+    -- | The binders of the innermost enclosing case arm per (in-place
+    -- 'CVar') scrutinee name — the slot map the 'CReuse' store schedule
+    -- reads ('Awsum.Codegen.ReuseSchedule').
+    cArmPatternByScrut :: Map Text [Text],
+    -- | Join points in scope: name → (body label, parameters, 'pending'
+    -- depth at the node — a tail-mode jump nulls only what was dropped
+    -- after that point; the rest stays for the join body's own terminals).
+    cJoinTargets :: Map Text (LabelId, [Text], Int)
   }
 
+-- | Structural slots a case head consumes: the @arrSlot@ copy — unless the
+-- scrutinee is dispatched in place (a 'CVar' naming a local or parameter,
+-- not a global) — plus the @tagSlot@ — unless the case is single-arm, where
+-- no compare reads a tag and none is extracted. Must mirror 'caseHeadI',
+-- which emits these slots.
+caseHeadSlots :: Set Text -> Set Text -> CExpr -> Int -> Int
+caseHeadSlots valDefs funDefs scrut nAlts =
+  let inPlace = case scrut of
+        CVar n -> not (Set.member n valDefs || Set.member n funDefs)
+        _ -> False
+   in (if inPlace then 0 else 1) + (if nAlts == 1 then 0 else 1)
+
 -- | Number of *additional* local slots a body needs beyond its
--- parameters — sums the additive nesting of 'CCase' (1 array slot +
+-- parameters — sums the additive nesting of 'CCase' ('caseHeadSlots' +
 -- max-binding count per level) and propagates through subexpressions.
 -- Mirrors the slot allocation in 'emitExprI' / 'emitTailBinI'. Used to
 -- fill the @max_locals@ field of the Code attribute (JVM Spec §4.7.3);
 -- hardcoding 256 there caused @ClassFormatError: bad type array size@
 -- on programs whose StackMapTable referenced a slot index ≥ 256.
-exprMaxLocals :: CExpr -> Int
-exprMaxLocals = \case
-  -- 'CCase' burns 2 slots per level (arrSlot for the @Object[]@,
-  -- tagSlot for the unboxed @int@ tag) plus @maxBindings@ binding
-  -- slots reserved across every arm — see 'emitExprI' / 'emitTailCase'
-  -- comments for why bindings are sized to the widest arm.
-  CCase _ alts ->
-    let thisLevel = 2 + foldl' max 0 [length vs | (_, vs, _) <- alts]
-        armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
-     in thisLevel + armMax
-  CRowCase _ alts ->
-    -- Same shape as a 'CCase' with one binder per arm (the row's
-    -- value), so two slots (scrutinee + unboxed tag) plus the binding.
-    let thisLevel = 3 :: Int
-        armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
-     in thisLevel + armMax
-  CRow _ v -> exprMaxLocals v
-  CCall f xs ->
-    -- A 'CCase' nested in an argument position would push StackMapTable
-    -- frames whose declared (empty) stack disagrees with the verifier-
-    -- derived stack (which still holds prior args). 'emitExprI' / 'CCall'
-    -- routes each argument through a fresh local when this happens —
-    -- 'length xs' slots — plus one more for the function value on the
-    -- indirect-call path. Conservative: charge @length xs + 1@ whenever
-    -- either side has a case, since 'exprMaxLocals' has no context to
-    -- distinguish the direct and indirect paths.
-    let save =
-          if exprContainsCase f || any exprContainsCase xs
-            then length xs + 1
-            else 0
-     in save + foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
-  CCon _ fields -> foldl' max 0 (map exprMaxLocals fields)
-  CLoop b -> exprMaxLocals b
-  CContinue xs -> foldl' max 0 (map exprMaxLocals xs)
-  CDrop _ _ b -> exprMaxLocals b
-  CReuse _ _ fs -> foldl' max 0 (map exprMaxLocals fs)
-  _ -> 0
+exprMaxLocals :: Set Text -> Set Text -> CExpr -> Int
+exprMaxLocals valDefs funDefs = go
+  where
+    go = \case
+      -- 'CCase' burns 'caseHeadSlots' slots per level (the @Object[]@ copy
+      -- when the scrutinee isn't in place, the unboxed @int@ tag when arms
+      -- compare) plus @maxBindings@ binding
+      -- slots reserved across every arm — see 'emitExprI' / 'emitTailCase'
+      -- comments for why bindings are sized to the widest arm. The
+      -- scrutinee evaluates /before/ the arrSlot is taken, on the same
+      -- base — its (dead-afterwards) demand overlaps rather than adds,
+      -- so the level takes the max of the two.
+      CCase scrut alts ->
+        let thisLevel = caseHeadSlots valDefs funDefs scrut (length alts) + foldl' max 0 [length vs | (_, vs, _) <- alts]
+            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
+         in max (go scrut) (thisLevel + armMax)
+      CRowCase scrut alts ->
+        -- Same shape as a 'CCase' with one binder per arm (the row's
+        -- value): the head slots plus the binding.
+        let thisLevel = caseHeadSlots valDefs funDefs scrut (length alts) + 1
+            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
+         in max (go scrut) (thisLevel + armMax)
+      CRow _ v -> (if noMultiArmCase v then 0 else 1) + go v
+      CCall f xs ->
+        -- A 'CCase' nested in an argument position would push StackMapTable
+        -- frames whose declared (empty) stack disagrees with the verifier-
+        -- derived stack (which still holds prior args). 'emitExprI' / 'CCall'
+        -- routes each argument through a fresh local when this happens —
+        -- 'length xs' slots — plus one more for the function value on the
+        -- indirect-call path. Conservative: charge @length xs + 1@ whenever
+        -- either side has a case, since 'exprMaxLocals' has no context to
+        -- distinguish the direct and indirect paths.
+        let save =
+              if exprContainsCase f || any exprContainsCase xs
+                then length xs + 1
+                else 0
+         in save + foldl' max 0 (go f : map go xs)
+      -- A multi-arm-case field routes the whole cell through save locals
+      -- ('emitCellI') — charge one per field, like the 'CCall' arm above.
+      CCon _ fields ->
+        let save = if all noMultiArmCase fields then 0 else length fields
+         in save + foldl' max 0 (map go fields)
+      CLoop b -> go b
+      CContinue xs ->
+        let save = if all noMultiArmCase xs then 0 else length xs
+         in save + foldl' max 0 (map go xs)
+      CDrop _ _ b -> go b
+      CReuse _ _ _ fs ->
+        let save = if all noMultiArmCase fs then 0 else length fs
+         in save + foldl' max 0 (map go fs)
+      -- The binder lives in the dedicated named region, charged per method as
+      -- @nNamed@ in 'declJvmMethod' — only the structural demand counts here.
+      CLet _ rhs b -> max (go rhs) (go b)
+      -- A join's parameters live in the named region too; the node itself takes
+      -- no structural slot — inner and body each run on the node's base.
+      CJoin _ _ body inner -> max (go body) (go inner)
+      -- Jump arguments evaluate one at a time, each stored straight into its
+      -- parameter slot — no save region.
+      CJump _ args -> foldl' max 0 (map go args)
+      _ -> 0
 
 -- | Does the expression contain a 'CCase' (or 'CRowCase') anywhere?
 -- 'CCall' (and any other multi-sub-expr emitter that leaves prior
@@ -954,42 +1017,53 @@ exprContainsCase :: CExpr -> Bool
 exprContainsCase = \case
   CCase {} -> True
   CRowCase {} -> True
+  -- A join point carries StackMapTable frames of its own (its labels), so
+  -- every empty-stack routing that applies to a multi-arm case applies to
+  -- it — even to a degenerate one whose dispatch collapsed away.
+  CJoin {} -> True
+  CJump _ args -> any exprContainsCase args
   CRow _ v -> exprContainsCase v
   CCall f xs -> exprContainsCase f || any exprContainsCase xs
   CCon _ fs -> any exprContainsCase fs
   CDrop _ _ b -> exprContainsCase b
-  CReuse _ _ fs -> any exprContainsCase fs
+  CReuse _ _ _ fs -> any exprContainsCase fs
   CLoop b -> exprContainsCase b
   CContinue xs -> any exprContainsCase xs
+  CLet _ rhs b -> exprContainsCase rhs || exprContainsCase b
   _ -> False
 
 -- | Gate for a non-tail 'declJvmMethod' clause: which expressions 'emitExprI'
 --   accepts as a method body / value. A /multi-arm/ 'CCase' / 'CRowCase' is
 --   accepted in any /stack-empty/ position — the body, a case-arm body, a case
---   scrutinee, a 'CDrop' body — and in a 'CCall' argument (handled by
---   'emitArgsViaLocalsI'); a /single-arm/ case (frame-free) is accepted
---   anywhere via 'noMultiArmCase', including a 'CCon' / 'CReuse' field or a
---   'CRow' value (non-empty-stack positions a multi-arm case cannot occupy).
---   'CLoop' is the tail form, gated separately by 'emitTailIOk'. The cases this
---   returns 'False' for never arise — the lowering keeps multi-arm cases out of
---   non-empty-stack positions (verified: a strict probe found zero
---   fall-through to 'declJvmMethod''s error guards across the whole corpus).
+--   scrutinee, a 'CDrop' body — and in every position that spills to save
+--   locals first: a 'CCall' argument ('emitArgsViaLocalsI') and a 'CCon' /
+--   'CReuse' field or 'CRow' value ('emitCellI'). A /single-arm/ case
+--   (frame-free) is accepted anywhere via 'noMultiArmCase'. 'CLoop' is the
+--   tail form, gated separately by 'emitTailIOk'. The only remaining 'False'
+--   shape is a multi-arm case in a callee position, which cannot arise:
+--   'Awsum.LowerClosures' routes any function-valued case through the
+--   @$applyN@ dispatcher, moving the case into an argument.
 emitIOk :: CExpr -> Bool
 emitIOk = \case
   CCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitIOk b) alts
   CRowCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitIOk b) alts
-  -- Cell fields / row values are emitted at a non-empty operand stack, so a
-  -- multi-arm case (whose frames declare an empty stack) cannot appear there —
-  -- but a single-arm case carries no frames, so it is fine. 'noMultiArmCase'
-  -- allows single-arm/branch-free, excludes multi-arm.
-  CRow _ v -> noMultiArmCase v
-  CCon _ fs -> all noMultiArmCase fs
-  CReuse _ _ fs -> all noMultiArmCase fs
+  -- Cell fields holding a multi-arm case route through save-locals in
+  -- 'emitCellI' (same discipline as call args), so any emittable expression
+  -- is accepted; branch-free fields keep the inline dup/aastore shape.
+  CRow _ v -> emitIOk v
+  CCon _ fs -> all emitIOk fs
+  CReuse _ _ _ fs -> all emitIOk fs
   -- Cases in arguments are handled (save-to-locals via 'emitArgsViaLocalsI');
   -- 'f' is a builtin or known function (the indirect MethodHandle path is dead
   -- after LowerClosures), so it carries no case.
   CCall f xs -> not (exprContainsCase f) && all emitIOk xs
   CDrop _ _ b -> emitIOk b
+  CLet _ rhs b -> emitIOk rhs && emitIOk b
+  -- The gates police stack discipline only; a jump's positional legality
+  -- (tail of its join's inner) is the emitters' loud-error job, exactly as
+  -- for 'CLoop' / 'CContinue' placement.
+  CJoin _ _ body inner -> emitIOk body && emitIOk inner
+  CJump _ args -> all emitIOk args
   CLoop _ -> False
   CContinue _ -> False
   _ -> True
@@ -1003,67 +1077,39 @@ noMultiArmCase :: CExpr -> Bool
 noMultiArmCase = \case
   CCase s alts -> length alts <= 1 && noMultiArmCase s && all (\(_, _, b) -> noMultiArmCase b) alts
   CRowCase s alts -> length alts <= 1 && noMultiArmCase s && all (\(_, _, b) -> noMultiArmCase b) alts
+  -- A join point's labels carry frames that assume an empty operand stack,
+  -- exactly like a multi-arm case's — it cannot sit in a non-empty-stack
+  -- position regardless of its inner dispatch's shape.
+  CJoin {} -> False
+  CJump {} -> False
   CRow _ v -> noMultiArmCase v
   CCall f xs -> noMultiArmCase f && all noMultiArmCase xs
   CCon _ fs -> all noMultiArmCase fs
-  CReuse _ _ fs -> all noMultiArmCase fs
+  CReuse _ _ _ fs -> all noMultiArmCase fs
   CDrop _ _ b -> noMultiArmCase b
   CLoop b -> noMultiArmCase b
   CContinue xs -> all noMultiArmCase xs
+  CLet _ rhs b -> noMultiArmCase rhs && noMultiArmCase b
   _ -> True
 
 -- | Gate for the TCO 'declJvmMethod' clause (@CFunDef _ _ (CLoop body)@):
 --   which loop bodies 'emitTailBinI' accepts. Tail position recurses into arm
---   bodies (each self-terminating); 'CContinue' args allow only single-arm
---   ('noMultiArmCase') cases, since they are evaluated straight onto the stack
---   with no save-to-locals on the continue path (and 'exprMaxLocals' reserves
---   no save slots there); a value tail and a case scrutinee are ordinary
---   'emitIOk' expressions.
+--   bodies (each self-terminating); 'CContinue' args spill through save
+--   locals when one holds a multi-arm case ('emitContinue'), so they are
+--   ordinary 'emitIOk' expressions — as are a value tail and a case
+--   scrutinee.
 emitTailIOk :: CExpr -> Bool
 emitTailIOk = \case
-  CContinue xs -> all noMultiArmCase xs
+  CContinue xs -> all emitIOk xs
   CCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitTailIOk b) alts
   CRowCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitTailIOk b) alts
   CDrop _ _ b -> emitTailIOk b
+  CLet _ rhs b -> emitIOk rhs && emitTailIOk b
+  -- Inner and body continue the tail walk (their arms may continue the
+  -- loop, return, or jump); jump arguments are ordinary value expressions.
+  CJoin _ _ body inner -> emitTailIOk body && emitTailIOk inner
+  CJump _ args -> all emitIOk args
   other -> emitIOk other
-
--- | Method-global slot kinds for the unified frame builder: the set of slot
---   indices that ever serve as a 'CCase' @arrSlot@ (verifier type @Object[]@)
---   and the set that serve as a @tagSlot@ (@int@). Threads @next@ (the running
---   'cNextLocal') exactly as the emitter allocates — @arrSlot = next@,
---   @tagSlot = next+1@, bindings from @next+2@, arms continue past the widest
---   arm's bindings — so each 'Label' frame can be typed inline at emit time,
---   so each 'Label' frame can be typed inline at emit time (a slot is
---   @Object[]@ if ever an arr slot, @int@ if a tag slot). Slots in neither set
---   are params or pattern bindings (→ @Object@).
-buildSlotKinds :: Int -> CExpr -> (Set Int, Set Int)
-buildSlotKinds next = \case
-  CCase scrut alts ->
-    let arrSlot = next
-        tagSlot = next + 1
-        bindSlotStart = tagSlot + 1
-        maxBindings = foldl' max 0 [length vs | (_, vs, _) <- alts]
-        next' = bindSlotStart + maxBindings
-        armKinds = map (\(_, _, b) -> buildSlotKinds next' b) alts
-        (arrs, tags) = unionPairs (buildSlotKinds next scrut : armKinds)
-     in (Set.insert arrSlot arrs, Set.insert tagSlot tags)
-  CRowCase scrut alts -> buildSlotKinds next (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-  CRow _ v -> buildSlotKinds next v
-  CCall f xs ->
-    -- When an arg contains a case, 'emitArgsViaLocalsI' reserves @length xs@
-    -- save slots at @next@ and emits each arg with 'cNextLocal' advanced past
-    -- them — mirror that so a nested case's arr/tag slots land at the right
-    -- index. Save slots themselves hold Object arg values (not arr/tag).
-    let argsNext = if any exprContainsCase xs then next + length xs else next
-     in unionPairs (buildSlotKinds next f : map (buildSlotKinds argsNext) xs)
-  CCon _ fs -> unionPairs (map (buildSlotKinds next) fs)
-  CReuse _ _ fs -> unionPairs (map (buildSlotKinds next) fs)
-  CDrop _ _ b -> buildSlotKinds next b
-  CLoop b -> buildSlotKinds next b
-  CContinue xs -> unionPairs (map (buildSlotKinds next) xs)
-  _ -> (Set.empty, Set.empty)
-  where
-    unionPairs ps = (Set.unions (map fst ps), Set.unions (map snd ps))
 
 -- | Maximum operand-stack depth a body ever reaches. Mirrors the
 -- emission shape: 'CCon' uses a dup/stelem chain so each nesting
@@ -1078,13 +1124,20 @@ exprMaxStack = \case
   CIntLit _ _ -> 1
   CBuiltIn _ -> 1
   CVar _ -> 1
+  -- rhs evaluates on the current base and is popped by the @astore@; the
+  -- body then evaluates on the same base.
+  CLet _ rhs b -> max (exprMaxStack rhs) (exprMaxStack b)
+  CProj _ _ -> 2 -- aload base; pushint slot; checkcast; aaload — peak 2
   CCon _ fields ->
     -- Per-field emission shape is @dup; iconst i; <field>; aastore@,
     -- so the array + index already pin two slots on the stack across
     -- the field's evaluation, and a third slot is pushed by the dup
     -- itself before the index — peak per level is 3 + max field depth.
     -- The tag store @dup; iconst 0; iconst tag; invokestatic
-    -- Integer.valueOf; aastore@ peaks at 4 independently.
+    -- Integer.valueOf; aastore@ peaks at 4 independently. The
+    -- save-locals path ('emitCellI' on a multi-arm-case field) peaks
+    -- lower — each field on an empty stack, then aload chains of 4 —
+    -- so this bound covers both shapes.
     let maxFld = foldl' max 0 (map exprMaxStack fields)
      in max 4 (3 + maxFld)
   CCase scrut alts ->
@@ -1115,50 +1168,76 @@ exprMaxStack = \case
         nXs = length xs
         seqArgs base = foldl' max base [base + i + d | (i, d) <- zip [0 :: Int ..] argDepths]
      in max fD (max (seqArgs 1) (nXs + 1))
-  CLoop b -> exprMaxStack b
+  -- A value tail under a 'CDrop' drains the pending drops /after/ the
+  -- value is on the stack — each drain pushes an @aconst_null@ on top of
+  -- it ('emitTailBinI'), so the loop's floor is 2 even when the body's own
+  -- peak is 1.
+  CLoop b -> max 2 (exprMaxStack b)
+  -- Args stack left-to-right; the save-locals path ('emitContinue' on a
+  -- multi-arm-case arg) peaks lower — each arg on an empty stack, then n
+  -- aloads — and n ≤ (n-1) + depth of the last arg, so this bound covers
+  -- both shapes. The pending-drop drain at the terminator pushes one
+  -- @aconst_null@ on top of the n parked args — the @n + 1@ floor; without
+  -- it a continue whose own peak is exactly n under-declares and the
+  -- verifier rejects the method (@Operand stack overflow@ — a three-arg
+  -- swap loop whose dropped case binder drains over the parked args).
   CContinue xs ->
     let argDepths = map exprMaxStack xs
-     in foldl' max 0 [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
+     in foldl' max (length xs + 1) [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
   -- Liveness annotation; codegen-transparent (no extra stack slots).
   -- Stack budget == wrapped body's.
   CDrop _ _ b -> exprMaxStack b
   -- Cell reuse. On the JVM it falls through to 'CCon' (fresh
   -- alloc), so stack budget matches an equivalent 'CCon tag fs'.
-  CReuse _ tag fs -> exprMaxStack (CCon tag fs)
+  CReuse _ _ tag fs -> exprMaxStack (CCon tag fs)
+  -- Inner and body both start on an empty stack (the node is gated to
+  -- stack-empty positions like a multi-arm case); the after-label merge
+  -- holds the one result value.
+  CJoin _ _ body inner -> max 1 (max (exprMaxStack body) (exprMaxStack inner))
+  -- Each jump argument evaluates on an empty stack and is stored before the
+  -- next starts; the peak is the deepest single argument.
+  CJump _ args -> foldl' max 1 (map exprMaxStack args)
 
 -- | Build the 'JvmMethod' for one user declaration — the single source
 --   consumed by both 'mkDecl' (→ classfile bytes via 'assembleMethod') and
 --   the text renderer (→ Jasmin via 'renderMethod'). Every form routes
---   through the unified 'emitExprI' / 'emitTailBinI'; the 'emitIOk' /
---   'emitTailIOk' gates are total over the lowering's output (a multi-arm
---   case never reaches a non-empty-stack position — confirmed by a strict
---   probe finding zero fall-through across the whole test corpus), so the
---   fallbacks are unreachable guards that fail loudly rather than miscompile.
+--   through the unified 'emitExprI' / 'emitTailBinI'; every position that
+--   cannot host a multi-arm case's frames spills to save locals first (call
+--   args, cell fields, continue args), so the 'emitIOk' / 'emitTailIOk' gates are total over
+--   the lowering's output and the fallbacks are unreachable guards that fail
+--   loudly rather than miscompile. (The cell-field spill exists because the
+--   gate /was/ reachable: @IO.Stdout.print (case x of …)@ lowers the case
+--   into an 'IOStdoutPrint' cell field — the lazy-IO lowering puts user
+--   expressions into constructor fields, so any branchy argument to an IO
+--   platform built-in lands there.)
 declJvmMethod :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM JvmMethod
 declJvmMethod valDefs funDefs arities = \case
   -- TCO loop. The entry 'Label' (offset 0) is the 'CContinue' goto target and
   -- carries the signature-derived frame ([Object × nParams], empty stack).
   CFunDef nm args (CLoop body) | emitTailIOk body -> do
     loopLbl <- freshLabel "L_tco"
-    let (arrSlots, tagSlots) = buildSlotKinds (length args) body
-        ctx = mkCtx (Map.fromList (zip args [0 ..])) (length args) arrSlots tagSlots
+    let namedSlots = namedSlotAssignments (length args) body
+        next0 = length args + Map.size namedSlots
+        ctx = mkCtx (Map.fromList (zip args [0 ..])) next0 namedSlots
         loopFrame = Frame (replicate (length args) (VObject objectClassRef)) []
     bodyI <- emitTailBinI ctx args loopLbl body
-    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (Label loopLbl (Just loopFrame) : bodyI))
+    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (Map.size namedSlots) (Label loopLbl (Just loopFrame) : bodyI))
   CFunDef nm args body | emitIOk body -> do
-    let (arrSlots, tagSlots) = buildSlotKinds (length args) body
-        ctx = mkCtx (Map.fromList (zip args [0 ..])) (length args) arrSlots tagSlots
+    let namedSlots = namedSlotAssignments (length args) body
+        next0 = length args + Map.size namedSlots
+        ctx = mkCtx (Map.fromList (zip args [0 ..])) next0 namedSlots
     instrs <- emitExprI ctx body
-    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (instrs <> [AReturn]))
+    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (Map.size namedSlots) (instrs <> [AReturn]))
   CValDef nm rhs | emitIOk rhs -> do
-    let (arrSlots, tagSlots) = buildSlotKinds 0 rhs
-        ctx = mkCtx Map.empty 0 arrSlots tagSlots
+    let namedSlots = namedSlotAssignments 0 rhs
+        next0 = Map.size namedSlots
+        ctx = mkCtx Map.empty next0 namedSlots
     instrs <- emitExprI ctx rhs
-    pure (userMethod (mangle nm) "()Ljava/lang/Object;" rhs 0 (instrs <> [AReturn]))
+    pure (userMethod (mangle nm) "()Ljava/lang/Object;" rhs 0 (Map.size namedSlots) (instrs <> [AReturn]))
   CFunDef nm _ _ -> error ("JVM: unified emitter gate missed function " <> nm)
   CValDef nm _ -> error ("JVM: unified emitter gate missed value " <> nm)
   where
-    mkCtx params next arrSlots tagSlots =
+    mkCtx params next namedSlots =
       ECtx
         { cParams = params,
           cLocals = Map.empty,
@@ -1166,19 +1245,64 @@ declJvmMethod valDefs funDefs arities = \case
           cFunDefs = funDefs,
           cArities = arities,
           cNextLocal = next,
-          cUninitSlots = Set.empty,
-          cArrSlots = arrSlots,
-          cTagSlots = tagSlots
+          -- Every named slot starts life unwritten: any frame materialising
+          -- before the binder's 'Astore' on a given path must declare @top@
+          -- there. 'emitLetBindI' removes a let's slot for the binder's
+          -- scope; the join emitters remove a join's parameter slots for the
+          -- body.
+          cUninitSlots = Set.fromList (Map.elems namedSlots),
+          -- Case regions register themselves as emission enters them.
+          cArrSlots = Set.empty,
+          cTagSlots = Set.empty,
+          cNamedSlots = namedSlots,
+          cArmPatternByScrut = Map.empty,
+          cJoinTargets = Map.empty
         }
-    userMethod name desc body nParams instrs =
+    userMethod name desc body nParams nLets instrs =
       JvmMethod
         { jmName = name,
           jmDesc = desc,
           jmPublic = False,
           jmMaxStack = max 1 (exprMaxStack body),
-          jmMaxLocals = nParams + exprMaxLocals body,
+          jmMaxLocals = nParams + nLets + exprMaxLocals valDefs funDefs body,
           jmBody = instrs
         }
+
+-- | Method-global slot for every named binder — each 'CLet' binder and each
+--   'CJoin' parameter — in walk order, starting at @base@ (right after the
+--   parameters; the structural region starts past them). Binder names are
+--   unique within a declaration — the simplifier freshens every name it
+--   mints — and the slot map relies on it.
+namedSlotAssignments :: Int -> CExpr -> Map Text Int
+namedSlotAssignments base e =
+  let names = namedBinders e
+      m = Map.fromList (zip names [base ..])
+   in if Map.size m == length names
+        then m
+        else error "JVM namedSlotAssignments: duplicate named binders in one declaration"
+  where
+    namedBinders :: CExpr -> [Text]
+    namedBinders = go
+    go = \case
+      CLet x rhs b -> go rhs <> (x : go b)
+      -- Like a let, the binders precede their scope (the body); the inner
+      -- expression's own binders come first, mirroring a let's rhs.
+      CJoin _ ps b i -> go i <> ps <> go b
+      CJump _ args -> concatMap go args
+      CCall f xs -> go f <> concatMap go xs
+      CCon _ fs -> concatMap go fs
+      CRow _ v -> go v
+      CCase s alts -> go s <> concatMap (\(_, _, b) -> go b) alts
+      CRowCase s alts -> go s <> concatMap (\(_, _, b) -> go b) alts
+      CLoop b -> go b
+      CContinue xs -> concatMap go xs
+      CDrop _ _ b -> go b
+      CReuse _ _ _ fs -> concatMap go fs
+      CVar _ -> []
+      CProj _ _ -> []
+      CString _ -> []
+      CIntLit _ _ -> []
+      CBuiltIn _ -> []
 
 -- | The user-declaration 'JvmMethod's for a program, in order. The text
 --   renderer ('Awsum.Codegen.JVM') projects these with 'renderMethod' and the
@@ -1228,61 +1352,171 @@ emitExprI ctx = \case
         error ("emitExprI: function-as-value (MethodHandle) for " <> n <> " — unreachable after LowerClosures")
     | otherwise -> pure [AconstNull]
   CBuiltIn _ -> pure [AconstNull] -- dispatched from CCall; bare CBuiltIn is unreachable
+  CLet x rhs body -> do
+    (bindI, ctx') <- emitLetBindI ctx x rhs
+    bodyI <- emitExprI ctx' body
+    pure (bindI <> bodyI)
+  CProj n slot -> do
+    base <- emitExprI ctx (CVar n)
+    pure (base <> [CheckCast objectArrayRef, PushInt slot, Aaload])
   CIntLit n _ ->
     pure [LoadInt32 (fromInteger n :: Int32), InvokeStatic integerValueOfRef]
   CCon tag fields -> emitCellI ctx [PushInt (1 + length fields), ANewArray objectClassRef] (fromIntegral tag) fields
-  -- In-place cell reuse: aload the existing Object[] and overwrite its slots,
-  -- no fresh anewarray. Managed heap → no refcount branch (memory-management.md).
-  CReuse n tag fields -> do
+  -- A guarded reuse cannot mutate here: the cell may be shared (the caller
+  -- can retain the structure) and the managed heap has no refcount header
+  -- to check, so it lowers as the allocation it replaced. Only
+  -- 'ReuseUnique' — an Scc pack / Cps continuation, loop-private by
+  -- construction — overwrites the existing Object[] in place
+  -- (memory-management.md).
+  CReuse ReuseGuarded _ tag fields -> emitExprI ctx (CCon tag fields)
+  CReuse ReuseUnique n tag fields -> do
     let slot = case Map.lookup n ctx.cLocals of
           Just s -> s
           Nothing -> case Map.lookup n ctx.cParams of
             Just s -> s
             Nothing -> error ("emitExprI: CReuse on unknown binder " <> n)
-    emitCellI ctx [Aload slot, CheckCast objectArrayRef] (fromIntegral tag) fields
+        cellA = [Aload slot, CheckCast objectArrayRef]
+        armVars = Map.findWithDefault [] n ctx.cArmPatternByScrut
+        (stores, _breakers) = scheduleReuse armVars fields
+        fieldAt i = fromMaybe (error "JVM: CReuse store schedule slot out of range") (fields !!? (i - 1))
+        externs = [fieldAt dst | StoreExtern dst <- stores]
+    if all noMultiArmCase externs
+      then do
+        -- Stores in dependency order ('Awsum.Codegen.ReuseSchedule'): the
+        -- acyclic permutation part reads the old slots straight off the
+        -- cell, a cycle reads its one extracted binder, unrelated fields
+        -- evaluate inline (gated branch-free above — a multi-arm case
+        -- cannot run on a parked operand stack). Arm extraction skips the
+        -- binders the schedule reads off the cell ('reuseSlotElided').
+        let tagI = cellA <> [PushInt 0, LoadInt32 (fromIntegral tag), InvokeStatic integerValueOfRef, AAStore]
+            storeI = \case
+              StoreFromSlot dst src ->
+                pure (cellA <> [PushInt dst] <> cellA <> [PushInt src, Aaload, AAStore])
+              StoreFromBinder dst b ->
+                let bslot = case Map.lookup b ctx.cLocals of
+                      Just s -> s
+                      Nothing -> error ("JVM: CReuse cycle breaker has no extracted slot: " <> b)
+                 in pure (cellA <> [PushInt dst, Aload bslot, AAStore])
+              StoreExtern dst -> do
+                fI <- emitExprI ctx (fieldAt dst)
+                pure (cellA <> [PushInt dst] <> fI <> [AAStore])
+        storeIs <- traverse storeI stores
+        pure (tagI <> concat storeIs <> cellA)
+      else
+        -- A branchy extern needs the save-locals discipline; the
+        -- unscheduled path reads every binder, and 'reuseSlotElided'
+        -- excludes nodes like this one, so extraction agrees.
+        emitCellI ctx cellA (fromIntegral tag) fields
   CCall f xs -> emitCallI ctx f xs
   CRow tag v -> emitExprI ctx (CCon (fromIntegral tag) [v])
   CDrop _ _ body -> emitExprI ctx body
   -- Single-arm case: exhaustive over one constructor, so no @if_icmpne@, no
-  -- join, no branch targets — hence no StackMapTable. The tag is still
-  -- extracted and stored (dead, but it keeps the slot allocation in step with
-  -- 'exprMaxLocals' / 'buildSlotKinds', which charge a tag slot per case),
-  -- then the fields are bound and the body runs.
+  -- join, no branch targets — hence no StackMapTable. No compare reads a
+  -- tag, so none is extracted ('caseHeadI'); the fields are bound and the
+  -- body runs.
   CCase scrut [(_, vars, body)] -> emitSingleArmCaseI ctx scrut vars body
   CCase scrut alts | not (null alts) -> emitMultiArmCaseI ctx scrut alts
   CCase {} -> error "emitExprI: empty CCase (uninhabited scrutinee) — the gates should exclude it"
   CRowCase scrut alts -> emitExprI ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CLoop _ -> error "emitExprI: CLoop reached (non-tail position)"
   CContinue _ -> error "emitExprI: CContinue reached (non-tail position)"
+  CJoin j ps body inner -> emitJoinExprI ctx j ps body inner
+  CJump j _ -> error ("JVM codegen: CJump to " <> j <> " in non-tail position — jumps live only in tail positions of their join's inner expression")
 
--- | A single-arm 'CCase' / 'CRowCase' (one constructor, exhaustive): unbox the
---   scrutinee @Object[]@, extract the boxed tag (dead — kept for slot-count
---   parity with 'exprMaxLocals'), bind each field, then the body. No branches.
-emitSingleArmCaseI :: ECtx -> CExpr -> [Text] -> CExpr -> AsmM [JvmInstr]
-emitSingleArmCaseI ctx scrut vars body = do
-  scrutI <- emitExprI ctx scrut
-  let arrSlot = ctx.cNextLocal
-      tagSlot = arrSlot + 1
-      bindSlotStart = tagSlot + 1
-      bindings = zip vars [bindSlotStart ..]
+-- | Bind a 'CLet': evaluate the rhs (during which the binder's slot is
+--   still in 'cUninitSlots', so any frame inside the rhs declares it @top@),
+--   store it into the binder's dedicated slot ('cLetSlots'), and return the
+--   context for the body — binder in scope, slot no longer uninitialised.
+--   Works at any operand-stack depth: the rhs adds one value, the @astore@
+--   pops it. Shared by 'emitExprI' and 'emitTailBinI'.
+emitLetBindI :: ECtx -> Text -> CExpr -> AsmM ([JvmInstr], ECtx)
+emitLetBindI ctx x rhs = do
+  let slot = case Map.lookup x ctx.cNamedSlots of
+        Just s -> s
+        Nothing -> error ("JVM emitLetBindI: no let slot for binder " <> x)
       ctx' =
         ctx
-          { cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings,
-            cNextLocal = bindSlotStart + length vars
+          { cLocals = Map.insert x slot ctx.cLocals,
+            cUninitSlots = Set.delete slot ctx.cUninitSlots
           }
-      extractAndStore =
-        [ CheckCast objectArrayRef,
-          Astore arrSlot,
-          Aload arrSlot,
-          PushInt 0,
-          Aaload,
-          CheckCast integerClassRef,
-          InvokeVirtual (MethodRef "java/lang/Integer" "intValue" "()I"),
-          Istore tagSlot
-        ]
-      bindCode = concatMap (\((_, slot), i) -> [Aload arrSlot, PushInt i, Aaload, Astore slot]) (zip bindings [1 :: Int ..])
+  rhsI <- emitExprI ctx rhs
+  pure (rhsI <> [Astore slot], ctx')
+
+-- | The in-place load of a case scrutinee that is already a named local or
+--   parameter: load + @checkcast@, the same shape as 'CProj'. The slot's type
+--   in every frame stays the positional @Object@ — the cast re-derives
+--   @Object[]@ on the stack at each read, so no 'cArrSlots' registration is
+--   needed. 'Nothing' for anything that must evaluate into an @arrSlot@
+--   copy — calls, constructions, and a 'CVar' naming a 'CValDef' (a getter
+--   call). Must mirror 'caseHeadSlots', which charges the head slots in
+--   'exprMaxLocals'.
+scrutInPlaceLoad :: ECtx -> CExpr -> Maybe [JvmInstr]
+scrutInPlaceLoad ctx = \case
+  CVar n
+    | Just slot <- Map.lookup n ctx.cLocals -> Just [Aload slot, CheckCast objectArrayRef]
+    | Just slot <- Map.lookup n ctx.cParams -> Just [Aload slot, CheckCast objectArrayRef]
+    | n `Set.member` ctx.cValDefs || n `Set.member` ctx.cFunDefs -> Nothing
+    | otherwise -> error ("JVM Assemble: case scrutinee names unknown binder: " <> show n)
+  _ -> Nothing
+
+-- | Dispatch head of a 'CCase' / 'CRowCase': the head instructions, the
+--   per-read scrutinee-array load for arm bindings, the tag slot (read by
+--   each arm compare; 'Nothing' for a single-arm case — no compare reads a
+--   tag, so none is extracted and no slot is taken), the first binding
+--   slot, and the region-registered context for frames. An in-place
+--   scrutinee ('scrutInPlaceLoad') is re-loaded per read and skips the
+--   @arrSlot@ copy. Must mirror 'caseHeadSlots', which charges these slots
+--   in 'exprMaxLocals'.
+caseHeadI :: ECtx -> CExpr -> Int -> AsmM ([JvmInstr], [JvmInstr], Maybe Int, Int, ECtx)
+caseHeadI ctx scrut nAlts = do
+  (arrHead, loadScrut, afterArr, ctxArr) <- case scrutInPlaceLoad ctx scrut of
+    Just load -> pure ([], load, ctx.cNextLocal, ctx)
+    Nothing -> do
+      scrutI <- emitExprI ctx scrut
+      let arrSlot = ctx.cNextLocal
+      pure
+        ( scrutI <> [CheckCast objectArrayRef, Astore arrSlot],
+          [Aload arrSlot],
+          arrSlot + 1,
+          -- No frames of its own when single-arm, but a frame inside an arm
+          -- body covers this region and must type it (see 'cArrSlots').
+          ctx {cArrSlots = Set.insert arrSlot ctx.cArrSlots}
+        )
+  if nAlts == 1
+    then pure (arrHead, loadScrut, Nothing, afterArr, ctxArr)
+    else do
+      let tagSlot = afterArr
+          regCtx = ctxArr {cTagSlots = Set.insert tagSlot ctxArr.cTagSlots}
+          tagHead =
+            loadScrut
+              <> [ PushInt 0,
+                   Aaload,
+                   CheckCast integerClassRef,
+                   InvokeVirtual (MethodRef "java/lang/Integer" "intValue" "()I"),
+                   Istore tagSlot
+                 ]
+      pure (arrHead <> tagHead, loadScrut, Just tagSlot, tagSlot + 1, regCtx)
+
+-- | A single-arm 'CCase' / 'CRowCase' (one constructor, exhaustive): bind
+--   each field, then the body. No branches, no tag read; an in-place
+--   scrutinee makes the head disappear entirely.
+emitSingleArmCaseI :: ECtx -> CExpr -> [Text] -> CExpr -> AsmM [JvmInstr]
+emitSingleArmCaseI ctx scrut vars body = do
+  (headI, loadScrut, _noTag, bindSlotStart, regCtx) <- caseHeadI ctx scrut 1
+  let next' = bindSlotStart + length vars
+      (stored, regCtx') = bindRegion (armElidedFor scrut) regCtx bindSlotStart next' [(0, vars, body)]
+      bindings = zip vars [bindSlotStart ..]
+      ctx' =
+        armPatternCtx
+          scrut
+          vars
+          regCtx'
+            { cLocals = foldl' (\m (v, s) -> Map.insert v s m) regCtx'.cLocals bindings,
+              cNextLocal = next'
+            }
+      bindCode = armBindStores (armElidedFor scrut vars body) stored loadScrut bindSlotStart next' vars body
   bodyI <- emitExprI ctx' body
-  pure $ scrutI <> extractAndStore <> bindCode <> bodyI
+  pure $ headI <> bindCode <> bodyI
 
 -- | The verifier type of local slot @i@ at a branch target, from the method-
 --   global slot kinds: an uninitialised save slot is @top@, a 'CCase' arr slot
@@ -1306,6 +1540,65 @@ frameAtI ctx nLocals isJoin =
       frStack = [VObject objectClassRef | isJoin]
     }
 
+-- | A case's shared bind region @[bindSlotStart .. next' - 1]@, split by
+--   whether any arm actually extracts into the slot ('binderUsedIn' its own
+--   body). The dead complement — slots only ever null-filled — is registered
+--   in 'cUninitSlots' for the arms' subtree, so every frame in scope types
+--   them @top@ and no store is needed to satisfy it: a slot no arm writes
+--   can never hold a stale reference. Slots some arm does extract keep the
+--   null-store in the arms that don't ('armBindStores') — the frames type
+--   the whole region @Object@, and a previous loop iteration may have parked
+--   a since-dead reference there that the null releases for the GC.
+
+-- | The per-arm elision for one case: binders the 'CReuse' store schedule
+--   reads straight off the cell ('reuseSlotElided', gated by
+--   'noMultiArmCase' on extern fields — a branchy extern routes the node
+--   through the unscheduled save-locals path, which reads every binder).
+--   Only an in-place 'CVar' scrutinee qualifies; 'Awsum.Reuse' rewrites no
+--   other shape.
+armElidedFor :: CExpr -> [Text] -> CExpr -> Set Text
+armElidedFor scrut vs b = case scrut of
+  CVar nm -> reuseSlotElided noMultiArmCase nm vs b
+  _ -> Set.empty
+
+-- | Register the matched arm's binders for the scheduled 'CReuse'
+--   lowering inside the arm body.
+armPatternCtx :: CExpr -> [Text] -> ECtx -> ECtx
+armPatternCtx scrut vs c = case scrut of
+  CVar nm -> c {cArmPatternByScrut = Map.insert nm vs c.cArmPatternByScrut}
+  _ -> c
+
+bindRegion :: ([Text] -> CExpr -> Set Text) -> ECtx -> Int -> Int -> [(Int, [Text], CExpr)] -> (Set Int, ECtx)
+bindRegion armElided regCtx bindSlotStart next' sorted =
+  let stored =
+        Set.fromList
+          [ slot
+          | (_, vs, b) <- sorted,
+            let el = armElided vs b,
+            (v, slot) <- zip vs [bindSlotStart ..],
+            binderUsedIn v b,
+            not (Set.member v el)
+          ]
+      dead = Set.fromList [bindSlotStart .. next' - 1] `Set.difference` stored
+   in (stored, regCtx {cUninitSlots = regCtx.cUninitSlots `Set.union` dead})
+
+-- | One arm's entry stores over the shared bind region: extract the binders
+--   the arm reads, null the stored-elsewhere slots it doesn't (its own
+--   unread binders and the padding up to the widest sibling), skip the dead
+--   ones ('bindRegion').
+armBindStores :: Set Text -> Set Int -> [JvmInstr] -> Int -> Int -> [Text] -> CExpr -> [JvmInstr]
+armBindStores elided stored loadScrut bindSlotStart next' vars body =
+  concatMap bindOne (zip (zip vars [bindSlotStart ..]) [1 :: Int ..]) <> padCode
+  where
+    bindOne ((v, slot), i)
+      | binderUsedIn v body, not (Set.member v elided) = loadScrut <> [PushInt i, Aaload, Astore slot]
+      | slot `Set.member` stored = [AconstNull, Astore slot]
+      | otherwise = []
+    padCode =
+      concatMap
+        (\slot -> [AconstNull, Astore slot])
+        (filter (`Set.member` stored) [bindSlotStart + length vars .. next' - 1])
+
 -- | Multi-arm 'CCase' (≥2 arms): an @if_icmpne@ chain where each arm extracts
 --   its bindings (padded to the widest arm so the join frame is consistent),
 --   runs its body, and @goto@s the join; the last arm falls through. Each arm
@@ -1314,35 +1607,23 @@ frameAtI ctx nLocals isJoin =
 --   the @if_icmpne@ offsets and StackMapTable end-to-end.
 emitMultiArmCaseI :: ECtx -> CExpr -> [(Int, [Text], CExpr)] -> AsmM [JvmInstr]
 emitMultiArmCaseI ctx scrut alts = do
-  scrutI <- emitExprI ctx scrut
+  (headI, loadScrut, mTagSlot, bindSlotStart, regCtx) <- caseHeadI ctx scrut (length alts)
   let sorted = sortWith (\(t, _, _) -> t) alts
-      arrSlot = ctx.cNextLocal
-      tagSlot = arrSlot + 1
-      bindSlotStart = tagSlot + 1
+      tagSlot = fromMaybe (error "JVM caseHeadI: no tag slot for a multi-arm chain") mTagSlot
       maxBindings = foldl' max 0 [length vs | (_, vs, _) <- sorted]
       next' = bindSlotStart + maxBindings
       n = length sorted
-      extractAndStore =
-        [ CheckCast objectArrayRef,
-          Astore arrSlot,
-          Aload arrSlot,
-          PushInt 0,
-          Aaload,
-          CheckCast integerClassRef,
-          InvokeVirtual (MethodRef "java/lang/Integer" "intValue" "()I"),
-          Istore tagSlot
-        ]
-      ifFrame = frameAtI ctx bindSlotStart False
-      joinFrame = frameAtI ctx next' True
+      (stored, regCtx') = bindRegion (armElidedFor scrut) regCtx bindSlotStart next' sorted
+      ifFrame = frameAtI regCtx' bindSlotStart False
+      joinFrame = frameAtI regCtx' next' True
   joinLbl <- freshLabel "L_join"
   armLbls <- replicateM (n - 1) (freshLabel "L_arm") -- labels for arms 1..n-1
   armBodies <- forM sorted $ \(tag, vars, body) -> do
     let bindings = zip vars [bindSlotStart ..]
-        ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings, cNextLocal = next'}
-        bindCode = concatMap (\((_, slot), j) -> [Aload arrSlot, PushInt j, Aaload, Astore slot]) (zip bindings [1 :: Int ..])
-        padCode = concatMap (\slot -> [AconstNull, Astore slot]) [bindSlotStart + length vars .. next' - 1]
+        ctx' = armPatternCtx scrut vars (regCtx' {cLocals = foldl' (\m (v, s) -> Map.insert v s m) regCtx'.cLocals bindings, cNextLocal = next'})
+        bindCode = armBindStores (armElidedFor scrut vars body) stored loadScrut bindSlotStart next' vars body
     bodyI <- emitExprI ctx' body
-    pure (tag, bindCode <> padCode <> bodyI)
+    pure (tag, bindCode <> bodyI)
   -- Per arm: an optional preceding label (the @if_icmpne@ landing site from
   -- the previous arm; none for arm 0) and an optional next-arm target (the
   -- @if_icmpne@ destination; none for the last arm, which falls through).
@@ -1354,37 +1635,180 @@ emitMultiArmCaseI ctx scrut alts = do
           <> armCode
           <> maybe [] (const [Goto joinLbl]) nextLbl
       chainCode = concatMap buildArm (zip armBodies (zip preLabels nextTargets))
-  pure $ scrutI <> extractAndStore <> chainCode <> [Label joinLbl (Just joinFrame)]
+  pure $ headI <> chainCode <> [Label joinLbl (Just joinFrame)]
+
+-- | The slot of a 'CJoin' parameter in the named region ('cNamedSlots').
+namedSlotOf :: ECtx -> Text -> Int
+namedSlotOf ctx p =
+  fromMaybe
+    (error ("JVM: no named slot for join parameter " <> p))
+    (Map.lookup p ctx.cNamedSlots)
+
+-- | Expression-position 'CJoin' (a non-loop function body, a 'CValDef'
+--   right-hand side, or — via the save-locals routing — a call argument or
+--   cell field): the value-producing form. Layout is flat: the inner
+--   expression's value arms push their result and @goto@ the after label,
+--   its jump arms store the join parameters and @goto@ the body label; the
+--   body (an ordinary 'emitExprI' value) sits between the two labels and
+--   falls through to the after label, which carries the one-item-stack
+--   frame — the same merge shape as a multi-arm case's join label.
+--
+--   Frames: the body label's frame types the parameters @Object@ (every
+--   incoming edge has stored them — 'cUninitSlots' minus the parameter
+--   slots); the after label's frame keeps them @top@ (a value arm reaches
+--   it without storing them, and @Object@ from the body edge widens to
+--   @top@). Both describe the node's extent ('cNextLocal') — the inner
+--   case's own region is dead past its dispatch, and when the body's tail
+--   is itself a multi-arm case whose join label lands on the after label's
+--   byte, the assembler's same-offset dedup keeps this narrower frame.
+--
+--   Jumps appear only at arm roots of the inner case (under the 'CDrop'
+--   wrappers 'Awsum.Lifetime' adds — transparent here, the JVM drops
+--   nothing in expression position; the case itself may sit under 'CLet'
+--   bindings floated out of its scrutinee): anything deeper is a jump in
+--   non-tail position, which the node's invariant excludes and the
+--   'emitExprI' arm rejects loudly. Jump arguments evaluate one at a time,
+--   each stored straight into its parameter slot — the parameters are in
+--   scope only inside the body, so an argument cannot read them and the
+--   'CContinue' parallel-assignment two-step is unnecessary; each argument
+--   starts on an empty stack, so a multi-arm case inside one needs no
+--   save-locals routing.
+emitJoinExprI :: ECtx -> Text -> [Text] -> CExpr -> CExpr -> AsmM [JvmInstr]
+emitJoinExprI ctx j ps body inner = do
+  bodyLbl <- freshLabel "L_jbody"
+  afterLbl <- freshLabel "L_jafter"
+  let psSlots = map (namedSlotOf ctx) ps
+      ctxJ = ctx {cJoinTargets = Map.insert j (bodyLbl, ps, 0) ctx.cJoinTargets}
+      ctxB =
+        ctx
+          { cLocals = foldl' (\m (p, s) -> Map.insert p s m) ctx.cLocals (zip ps psSlots),
+            cUninitSlots = flipfoldl' Set.delete ctx.cUninitSlots psSlots
+          }
+      bodyFrame = frameAtI ctxB ctx.cNextLocal False
+      afterFrame = frameAtI ctx ctx.cNextLocal True
+  innerI <- goInner ctxJ afterLbl inner
+  bodyI <- emitExprI ctxB body
+  pure (innerI <> [Label bodyLbl (Just bodyFrame)] <> bodyI <> [Label afterLbl (Just afterFrame)])
+  where
+    -- The inner expression: a case — possibly under 'CLet' bindings floated
+    -- out of its scrutinee and the 'CDrop' wrappers 'Awsum.Lifetime' places
+    -- around those binders (transparent here, managed heap) — whose arms
+    -- either jump or produce bypass values; or a degenerate root (the
+    -- dispatch collapsed away after the fusion), which takes the same two
+    -- routes without the chain.
+    goInner :: ECtx -> LabelId -> CExpr -> AsmM [JvmInstr]
+    goInner ctxJ afterLbl = \case
+      CLet x rhs b -> do
+        (bindI, ctx') <- emitLetBindI ctxJ x rhs
+        bodyI <- goInner ctx' afterLbl b
+        pure (bindI <> bodyI)
+      CDrop _ _ b -> goInner ctxJ afterLbl b
+      CCase scrut alts -> goInnerCase ctxJ afterLbl scrut alts
+      CRowCase scrut alts ->
+        goInnerCase ctxJ afterLbl scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      other -> armRoute ctxJ afterLbl other
+    -- The dispatch chain of the inner case: the same @if_icmpne@ ladder as
+    -- 'emitMultiArmCaseI' (bindings padded to the widest arm — a frame
+    -- inside a later sibling's body covers the whole bind region), except
+    -- every arm ends in its own @goto@ (value → after, jump → body), so
+    -- there is no fall-through join.
+    goInnerCase :: ECtx -> LabelId -> CExpr -> [(Int, [Text], CExpr)] -> AsmM [JvmInstr]
+    goInnerCase ctxJ afterLbl scrut alts = do
+      (headI, loadScrut, mTagSlot, bindSlotStart, regCtx) <- caseHeadI ctxJ scrut (length alts)
+      let sorted = sortWith (\(t, _, _) -> t) alts
+          tagSlot = fromMaybe (error "JVM caseHeadI: no tag slot for a multi-arm chain") mTagSlot
+          maxBindings = foldl' max 0 [length vs | (_, vs, _) <- sorted]
+          next' = bindSlotStart + maxBindings
+          n = length sorted
+          (stored, regCtx') = bindRegion (armElidedFor scrut) regCtx bindSlotStart next' sorted
+          ifFrame = frameAtI regCtx' bindSlotStart False
+      armLbls <- replicateM (n - 1) (freshLabel "L_jarm")
+      armChunks <- forM sorted $ \(tag, vars, b) -> do
+        let bindings = zip vars [bindSlotStart ..]
+            ctx' = armPatternCtx scrut vars (regCtx' {cLocals = foldl' (\m (v, s) -> Map.insert v s m) regCtx'.cLocals bindings, cNextLocal = next'})
+            bindCode = armBindStores (armElidedFor scrut vars b) stored loadScrut bindSlotStart next' vars b
+        routeI <- armRoute ctx' afterLbl b
+        pure (tag, bindCode <> routeI)
+      let preLabels = Nothing : map Just armLbls
+          nextTargets = map Just armLbls <> [Nothing]
+          buildArm ((tag, armCode), (preLbl, nextLbl)) =
+            maybe [] (\l -> [Label l (Just ifFrame)]) preLbl
+              <> maybe [] (\l -> [Iload tagSlot, LoadInt32 (fromIntegral tag), IfICmpNe l]) nextLbl
+              <> armCode
+          chainCode = concatMap buildArm (zip armChunks (zip preLabels nextTargets))
+      pure (headI <> chainCode)
+    -- One inner-arm body: a jump (under its transparent drop wrappers)
+    -- stores its arguments and branches to the join body; anything else is
+    -- an ordinary value that trampolines to the after label.
+    armRoute :: ECtx -> LabelId -> CExpr -> AsmM [JvmInstr]
+    armRoute ctxA afterLbl b0 = case peelDrops b0 of
+      CJump j' args
+        | Just (lbl, tps, _) <- Map.lookup j' ctxA.cJoinTargets -> do
+            argStores <- forM (zip args tps) $ \(a, p) -> do
+              ai <- emitExprI ctxA a
+              pure (ai <> [Astore (namedSlotOf ctxA p)])
+            pure (concat argStores <> [Goto lbl])
+      CJump j' _ -> error ("JVM codegen: CJump to unknown join " <> j' <> " (pipeline bug)")
+      _ -> do
+        valI <- emitExprI ctxA b0
+        pure (valI <> [Goto afterLbl])
+    peelDrops :: CExpr -> CExpr
+    peelDrops = \case
+      CDrop _ _ b -> peelDrops b
+      e -> e
 
 -- | Shared cell builder for 'CCon' / 'CReuse': @<allocOrLoad>@ leaves the
 --   @Object[]@ on the stack, then store the boxed tag at [0] and each field at
 --   [1..]. Per-field shape is a dup/iconst/aastore chain.
+--
+--   When a field contains a /multi-arm/ case, its StackMapTable frames would
+--   declare an empty operand stack while the cell ref (and dup'd index) still
+--   sit there — so every field is first evaluated into a save local
+--   ('saveExprsToLocalsI', the same discipline 'emitArgsViaLocalsI' applies to
+--   call args) and the cell is then built from the locals. Field evaluation
+--   order is unchanged (left-to-right); only the alloc moves after it, which
+--   is unobservable — Core is pure, effects are data. The branch-free path
+--   keeps the inline shape so existing output is untouched.
 emitCellI :: ECtx -> [JvmInstr] -> Int32 -> [CExpr] -> AsmM [JvmInstr]
-emitCellI ctx alloc tag fields = do
-  fieldCode <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
-    fldInstrs <- emitExprI ctx fld
-    pure ([Dup, PushInt i] <> fldInstrs <> [AAStore])
-  pure $ alloc <> [Dup, PushInt 0, LoadInt32 tag, InvokeStatic integerValueOfRef, AAStore] <> concat fieldCode
+emitCellI ctx alloc tag fields
+  | all noMultiArmCase fields = do
+      fieldCode <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+        fldInstrs <- emitExprI ctx fld
+        pure ([Dup, PushInt i] <> fldInstrs <> [AAStore])
+      pure $ alloc <> tagStore <> concat fieldCode
+  | otherwise = do
+      (saves, slots) <- saveExprsToLocalsI ctx fields
+      pure $ saves <> alloc <> tagStore <> concat [[Dup, PushInt i, Aload s, AAStore] | (s, i) <- zip slots [1 :: Int ..]]
+  where
+    tagStore = [Dup, PushInt 0, LoadInt32 tag, InvokeStatic integerValueOfRef, AAStore]
+
+-- | Evaluate each expression with an empty operand stack into a fresh save
+--   local; returns the save code and the slot per expression. Save slot
+--   @i = cNextLocal + i@; each expression is emitted with 'cNextLocal'
+--   advanced past all save slots and the not-yet-stored save slots
+--   ('save_i' onward) added to 'cUninitSlots' so a nested case's frames type
+--   them @top@ via 'slotVTypeI'. Shared by 'emitArgsViaLocalsI' (call args)
+--   and 'emitCellI' (cell fields holding a multi-arm case).
+saveExprsToLocalsI :: ECtx -> [CExpr] -> AsmM ([JvmInstr], [Int])
+saveExprsToLocalsI ctx exprs = do
+  let firstSlot = ctx.cNextLocal
+      n = length exprs
+  chunks <- forM (zip exprs [0 ..]) $ \(e, i) -> do
+    let slot = firstSlot + i
+        uninitForExpr = Set.fromList [firstSlot + j | j <- [i .. n - 1]] `Set.union` ctx.cUninitSlots
+        ctx' = ctx {cNextLocal = firstSlot + n, cUninitSlots = uninitForExpr}
+    ei <- emitExprI ctx' e
+    pure (ei <> [Astore slot])
+  pure (concat chunks, [firstSlot .. firstSlot + n - 1])
 
 -- | Evaluate each arg with an empty operand stack by saving every arg into a
---   fresh local, then load them all back in order ready for the call. Used
---   when any arg contains a 'CCase'
---   (its frames declare an empty stack, which prior args on the stack would
---   contradict). Save slot @i = cNextLocal + i@; each arg is emitted with
---   'cNextLocal' advanced past all save slots and the not-yet-stored save slots
---   ('save_i' onward) added to 'cUninitSlots' so the case frames type them
---   @top@ via 'slotVTypeI'.
+--   fresh local ('saveExprsToLocalsI'), then load them all back in order ready
+--   for the call. Used when any arg contains a 'CCase' (its frames declare an
+--   empty stack, which prior args on the stack would contradict).
 emitArgsViaLocalsI :: ECtx -> [CExpr] -> AsmM [JvmInstr]
 emitArgsViaLocalsI ctx args = do
-  let firstSlot = ctx.cNextLocal
-      nArgs = length args
-  argChunks <- forM (zip args [0 ..]) $ \(arg, i) -> do
-    let slot = firstSlot + i
-        uninitForArg = Set.fromList [firstSlot + j | j <- [i .. nArgs - 1]] `Set.union` ctx.cUninitSlots
-        ctx' = ctx {cNextLocal = firstSlot + nArgs, cUninitSlots = uninitForArg}
-    ai <- emitExprI ctx' arg
-    pure (ai <> [Astore slot])
-  pure $ concat argChunks <> [Aload (firstSlot + i) | i <- [0 .. nArgs - 1]]
+  (saves, slots) <- saveExprsToLocalsI ctx args
+  pure $ saves <> map Aload slots
 
 -- | 'CCall' dispatch for the unified emitter: every prelude built-in becomes an
 --   @invokestatic@ to its @AwsumMain.__helper@, direct calls to known functions
@@ -1510,9 +1934,61 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
       CCase scrut alts -> emitTailCase ctx pending scrut alts
       CRowCase scrut alts -> emitTailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
       CDrop _ n body -> goTop ctx (n : pending) body
+      CLet x rhs body -> do
+        (bindI, ctx') <- emitLetBindI ctx x rhs
+        bodyI <- goTop ctx' pending body
+        pure (bindI <> bodyI)
+      -- Native join point: the inner expression continues the tail walk with
+      -- the target registered (its jumps store the parameter slots and
+      -- @goto@ the body label; its value tails @areturn@ and its 'CContinue'
+      -- arms @goto@ the loop entry, both past the body); the body follows
+      -- the label, emitted with the parameters in scope — their slots leave
+      -- 'cUninitSlots', since every edge into the label has stored them.
+      -- Whatever was pending at the node stays pending for the body: those
+      -- binders wrap the whole join and die at its terminals.
+      CJoin j ps body inner -> do
+        bodyLbl <- freshLabel "L_jbody"
+        let psSlots = map (namedSlotOf ctx) ps
+            ctxJ = ctx {cJoinTargets = Map.insert j (bodyLbl, ps, length pending) ctx.cJoinTargets}
+            ctxB =
+              ctx
+                { cLocals = foldl' (\m (p, s) -> Map.insert p s m) ctx.cLocals (zip ps psSlots),
+                  cUninitSlots = flipfoldl' Set.delete ctx.cUninitSlots psSlots
+                }
+            bodyFrame = frameAtI ctxB ctx.cNextLocal False
+        innerI <- goTop ctxJ pending inner
+        bodyI <- goTop ctxB pending body
+        pure (innerI <> [Label bodyLbl (Just bodyFrame)] <> bodyI)
+      -- Mirror of 'CContinue', branching forward: evaluate each argument on
+      -- an empty stack straight into its parameter slot (the parameters are
+      -- not in scope inside the inner expression, so no argument can read
+      -- them — no parallel-assignment two-step, and a multi-arm case in an
+      -- argument needs no save-locals routing), null the parameter drops
+      -- accumulated since the node (the jumping arm's deaths; the body
+      -- still runs, so they would stay GC roots through it), and @goto@ the
+      -- body label. The base pending stays for the body's own terminals.
+      CJump j args
+        | Just (lbl, tps, base) <- Map.lookup j ctx.cJoinTargets -> do
+            argStores <- forM (zip args tps) $ \(a, p) -> do
+              ai <- emitExprI ctx a
+              pure (ai <> [Astore (namedSlotOf ctx p)])
+            let delta = take (length pending - base) pending
+            pure (concat argStores <> pendingDrops ctx delta <> [Goto lbl])
+      CJump j _ -> error ("JVM codegen: CJump to unknown join " <> j <> " (pipeline bug)")
       other -> emitTailValue ctx pending other
     emitContinue ctx pending newArgs = do
-      argsI <- concat <$> traverse (emitExprI ctx) newArgs -- gate keeps these case-free
+      -- A multi-arm case in an argument cannot evaluate while prior args sit
+      -- on the operand stack (its frames declare it empty) — route all args
+      -- through save locals first, like call args and cell fields. The
+      -- parallel-assignment discipline holds on both paths: every new value
+      -- is fully computed (on the stack or in locals) before the first
+      -- param slot is overwritten.
+      argsI <-
+        if all noMultiArmCase newArgs
+          then concat <$> traverse (emitExprI ctx) newArgs
+          else do
+            (saves, slots) <- saveExprsToLocalsI ctx newArgs
+            pure (saves <> map Aload slots)
       let paramSlots = [fromMaybe (error ("JVM Assemble: no param slot for " <> p)) (Map.lookup p ctx.cParams) | p <- params]
           astores = concatMap (\s -> [Astore s]) (reverse paramSlots)
           -- A param this 'CContinue' rebinds needs no null-out: the
@@ -1525,33 +2001,21 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
       ei <- emitExprI ctx expr
       pure $ ei <> pendingDrops ctx pending <> [AReturn]
     emitTailCase ctx pending scrut alts = do
-      scrutI <- emitExprI ctx scrut
+      (headI, loadScrut, mTagSlot, bindSlotStart, regCtx) <- caseHeadI ctx scrut (length alts)
       let sorted = sortWith (\(t, _, _) -> t) alts
-          arrSlot = ctx.cNextLocal
-          tagSlot = arrSlot + 1
-          bindSlotStart = tagSlot + 1
+          tagSlot = fromMaybe (error "JVM caseHeadI: no tag slot for a multi-arm chain") mTagSlot
           maxBindings = foldl' max 0 [length vs | (_, vs, _) <- sorted]
           next' = bindSlotStart + maxBindings
           n = length sorted
-          extractAndStore =
-            [ CheckCast objectArrayRef,
-              Astore arrSlot,
-              Aload arrSlot,
-              PushInt 0,
-              Aaload,
-              CheckCast integerClassRef,
-              InvokeVirtual (MethodRef "java/lang/Integer" "intValue" "()I"),
-              Istore tagSlot
-            ]
-          ifFrame = frameAtI ctx bindSlotStart False
+          (stored, regCtx') = bindRegion (armElidedFor scrut) regCtx bindSlotStart next' sorted
+          ifFrame = frameAtI regCtx' bindSlotStart False
       armLbls <- replicateM (n - 1) (freshLabel "L_tarm")
       armChunks <- forM sorted $ \(tag, vars, body) -> do
         let bindings = zip vars [bindSlotStart ..]
-            ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings, cNextLocal = next'}
-            bindCode = concatMap (\((_, slot), j) -> [Aload arrSlot, PushInt j, Aaload, Astore slot]) (zip bindings [1 :: Int ..])
-            padCode = concatMap (\slot -> [AconstNull, Astore slot]) [bindSlotStart + length vars .. next' - 1]
+            ctx' = armPatternCtx scrut vars (regCtx' {cLocals = foldl' (\m (v, s) -> Map.insert v s m) regCtx'.cLocals bindings, cNextLocal = next'})
+            bindCode = armBindStores (armElidedFor scrut vars body) stored loadScrut bindSlotStart next' vars body
         bodyI <- goTop ctx' pending body -- arm body is itself tail
-        pure (bindCode <> padCode <> bodyI, tag)
+        pure (bindCode <> bodyI, tag)
       let preLabels = Nothing : map Just armLbls
           nextTargets = map Just armLbls <> [Nothing]
           buildArm ((armCode, tag), (preLbl, nextLbl)) =
@@ -1559,7 +2023,7 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
               <> maybe [] (\l -> [Iload tagSlot, LoadInt32 (fromIntegral tag), IfICmpNe l]) nextLbl
               <> armCode -- self-terminating; no goto-join
           chainCode = concatMap buildArm (zip armChunks (zip preLabels nextTargets))
-      pure $ scrutI <> extractAndStore <> chainCode
+      pure $ headI <> chainCode
 
 mangle :: Text -> Text
 mangle t =

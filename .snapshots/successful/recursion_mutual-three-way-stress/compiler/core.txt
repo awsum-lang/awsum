@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,43 +15,35 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "showUnderflowError" [ "$wild0" ]
-            ( CString "UnderflowError" )
         , CValDef "main"
             ( CCase
                 ( CCall
-                    ( CVar "stepA" )
-                    [ CIntLit 1000000 TInt32 ]
+                    ( CVar "$scc$stepA_stepB_stepC" )
+                    [ CCon 8
+                        [ CIntLit 1000000 TInt32 ]
+                    ]
                 )
                 [
                     ( 3
                     , [ "e" ]
                     , CCon 7
-                        [ CCall
-                            ( CVar "showUnderflowError" )
-                            [ CVar "e" ]
+                        [ CString "UnderflowError"
                         , CCon 5
                             [ CCon 0 [] ]
                         ]
@@ -112,7 +103,7 @@ CoreProgram
                                             , [ "m" ]
                                             , CDrop DropFreeUnchecked "m"
                                                 ( CContinue
-                                                    [ CReuse "$args" 9
+                                                    [ CReuse ReuseUnique "$args" 9
                                                         [ CVar "m" ]
                                                     ]
                                                 )
@@ -160,7 +151,7 @@ CoreProgram
                                             , [ "m" ]
                                             , CDrop DropFreeUnchecked "m"
                                                 ( CContinue
-                                                    [ CReuse "$args" 10
+                                                    [ CReuse ReuseUnique "$args" 10
                                                         [ CVar "m" ]
                                                     ]
                                                 )
@@ -208,7 +199,7 @@ CoreProgram
                                             , [ "m" ]
                                             , CDrop DropFreeUnchecked "m"
                                                 ( CContinue
-                                                    [ CReuse "$args" 8
+                                                    [ CReuse ReuseUnique "$args" 8
                                                         [ CVar "m" ]
                                                     ]
                                                 )
@@ -220,13 +211,6 @@ CoreProgram
                         )
                     ]
                 )
-            )
-        , CFunDef "stepA" [ "n" ]
-            ( CCall
-                ( CVar "$scc$stepA_stepB_stepC" )
-                [ CCon 8
-                    [ CVar "n" ]
-                ]
             )
         ]
     }

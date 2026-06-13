@@ -9,6 +9,7 @@ import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
 import Awsum.JvmFarBranchSpec qualified
 import Awsum.JvmMethodLimitSpec qualified
+import Awsum.NoSimplifySpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
@@ -45,6 +46,7 @@ main = do
     Awsum.FormattingSnapshotsSpec.spec
     Awsum.ErrorSnapshotsSpec.spec
     Awsum.PropertySpec.spec
+    Awsum.NoSimplifySpec.spec
     Awsum.StringLiteralCapSpec.spec
     Awsum.JvmMethodLimitSpec.spec
     Awsum.JvmFarBranchSpec.spec

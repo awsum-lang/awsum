@@ -86,11 +86,10 @@
   .method private hidebysig static object v_runIO(object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3)
+    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -98,147 +97,107 @@
     ldc.i4.5
     bne.un IL_c0
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
+    call object AwsumMain::__print(object)
+    stloc.2
+    ldarg.0
+    castclass object[]
     ldc.i4.2
     ldelem.ref
-    stloc.2
-    ldloc.1
-    call object AwsumMain::__print(object)
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    pop
-    ldloc.2
     starg.s 0
     br IL_tco_loop
   }
 
 
-  .method private hidebysig static object v_zero() cil managed
+  .method private hidebysig static object v_main() cil managed
   {
-    .maxstack 1
-    ldc.i4.0
+    .maxstack 7
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_both(object,object) cil managed
-  {
-    .maxstack 3
-    call object AwsumMain::v_zero()
-    ldarg.0
-    ldarg.1
-    call object AwsumMain::v__df_apply_0(object, object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v_bothBody(object,object) cil managed
-  {
-    .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2)
-    ldarg.0
     callvirt instance string [System.Runtime]System.Object::ToString()
     ldstr "/"
     call object AwsumMain::__concat(object, object)
-    stloc.0
-    ldloc.0
+    stloc.1
+    ldloc.1
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
     ldc.i4.3
-    bne.un IL_c1
+    bne.un IL_c2
     pop
-    ldloc.0
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldc.i4.7
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.3
     ldc.i4.1
-    ldelem.ref
-    stloc.1
+    ldstr "STRING_TOO_LONG"
+    stelem.ref
+    ldloc.3
+    ldc.i4.2
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    stloc.2
-    ldloc.2
+    stloc.s 4
+    ldloc.s 4
     ldc.i4.0
-    ldc.i4.3
+    ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.2
+    ldloc.s 4
     ldc.i4.1
-    ldloc.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.s 5
+    ldloc.s 5
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.2
-    br IL_c0
-  IL_c1:
+    ldloc.s 5
+    stelem.ref
+    ldloc.s 4
+    stelem.ref
+    ldloc.3
+    br IL_c1
+  IL_c2:
     pop
-    ldloc.0
+    ldloc.1
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
-    ldarg.1
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-  IL_c0:
-    ret
-  }
-
-
-  .method private hidebysig static object v_main() cil managed
-  {
-    .maxstack 2
-    ldc.i4.s 11
-    box [System.Runtime]System.Int32
+    stloc.2
+    ldloc.2
     ldc.i4.s 22
     box [System.Runtime]System.Int32
-    call object AwsumMain::v_both(object, object)
-    call object AwsumMain::v__let_14(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__lam_13(object,object,object) cil managed
-  {
-    .maxstack 2
-    ldarg.0
-    ldarg.1
-    call object AwsumMain::v_bothBody(object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__let_14(object) cil managed
-  {
-    .maxstack 7
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
-    ldarg.0
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
     stloc.0
+    br IL_c0
+  IL_c0:
     ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
     dup
     ldc.i4.3
-    bne.un IL_c1
+    bne.un IL_c4
     pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.2
@@ -276,13 +235,9 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    br IL_c0
-  IL_c1:
+    br IL_c3
+  IL_c4:
     pop
-    ldloc.0
-    ldc.i4.1
-    ldelem.ref
-    stloc.1
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.2
@@ -293,7 +248,10 @@
     stelem.ref
     ldloc.2
     ldc.i4.1
-    ldloc.1
+    ldloc.0
+    castclass object[]
+    ldc.i4.1
+    ldelem.ref
     stelem.ref
     ldloc.2
     ldc.i4.2
@@ -320,18 +278,8 @@
     ldloc.3
     stelem.ref
     ldloc.2
-  IL_c0:
-    ret
-  }
-
-
-  .method private hidebysig static object v__df_apply_0(object,object,object) cil managed
-  {
-    .maxstack 3
-    ldarg.1
-    ldarg.2
-    ldarg.0
-    call object AwsumMain::v__lam_13(object, object, object)
+  IL_c3:
+  IL_c1:
     ret
   }
 

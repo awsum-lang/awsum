@@ -10,10 +10,15 @@
 --   benchmark indefinitely.
 --
 --   With @--snapshot@ it instead runs each backend @--runs@ times and
---   overwrites the per-backend median wall time + peak RSS to
---   @.snapshots\/benchmark\/<NAME>\/bench.txt@ — no threshold, no
---   pass\/fail. The measurement workflow is local and hardware-independent:
---   snapshot before a change, snapshot again after, read the @git diff@.
+--   overwrites @.benchmarks\/<NAME>\/bench.txt@ with the
+--   per-backend @median (min–max)@ of wall time + peak RSS — no
+--   threshold on the numbers. Every successful run's stdout is also
+--   compared against a cross-backend anchor: a deviation marks the
+--   row @mismatch@ and the process exits non-zero, so a backend whose
+--   behaviour changed can't hide in plausible-looking numbers. The
+--   measurement workflow is local and hardware-independent: snapshot
+--   before a change, snapshot again after, read the @git diff@ — the
+--   (min–max) band tells run-to-run noise from signal.
 --
 --   macOS-only at the moment (BSD @\/usr\/bin\/time@ output format,
 --   @gtimeout@ from Homebrew @coreutils@). Linux would need a small
@@ -26,7 +31,7 @@ import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram, PreludeTags)
-import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgramWith)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
 import Awsum.Program (ProgramType (..))
@@ -73,7 +78,7 @@ optionsParser =
             )
           <*> OA.switch
             ( OA.long "snapshot"
-                <> OA.help "Write the per-backend median to .snapshots/benchmark/<TEST>/bench.txt (overwrite, no threshold)"
+                <> OA.help "Write the per-backend median to .benchmarks/<TEST>/bench.txt (overwrite, no threshold)"
             )
           <*> OA.option
             OA.auto
@@ -117,20 +122,21 @@ data RunResult = RunResult
   }
 
 -- | Parse + lower a benchmark program to Core. Shared by the print and
---   snapshot drivers.
-loadCore :: Text -> IO (PreludeTags, CoreProgram)
-loadCore test = do
+--   snapshot drivers; the snapshot driver additionally loads a
+--   'SimplifyOff' variant for its differential stdout check.
+loadCore :: SimplifyMode -> Text -> IO (PreludeTags, CoreProgram)
+loadCore mode test = do
   let path = "test/sources/benchmark" </> toString test </> "code" </> "Main.aww"
   src <- readFileTextUtf8 path
   case parseProgram src of
     Left e -> error ("parse failed: " <> e)
-    Right ast -> case elaborateLowerProgram ProgramCli (withPrelude ast) of
+    Right ast -> case elaborateLowerProgramWith mode ProgramCli (withPrelude ast) of
       Left err -> error ("elaborate failed: " <> show err)
       Right (_warns, pt, core) -> pure (pt, core)
 
 runBench :: Options -> IO ()
 runBench opts = do
-  (ptags, core) <- loadCore opts.optTest
+  (ptags, core) <- loadCore SimplifyOn opts.optTest
   putTextLn $ "Benchmark: " <> opts.optTest
   putTextLn $ "Timeout:   " <> show opts.optTimeoutSecs <> "s"
   putTextLn ""
@@ -149,88 +155,184 @@ runBench opts = do
 -- Snapshot mode: median over N runs per backend, overwritten to a golden file
 -- ────────────────────────────────────────────────────────────────────────────
 
--- | Aggregated per-backend result over the N runs: a status plus the median
---   wall time and median peak RSS of the successful runs, and one captured
---   stdout for the behavioural anchor.
+-- | Aggregated per-backend result over the N runs: a status, the
+--   median \/ min \/ max wall time and peak RSS of the successful runs,
+--   and the first deviation from the cross-backend stdout anchor
+--   (run index + stdout) when there is one.
 data Agg = Agg
   { aggStatus :: !Text,
-    aggMedWallSec :: !(Maybe Double),
-    aggMedRssBytes :: !(Maybe Integer),
-    aggStdout :: !Text
+    aggWall :: !(Maybe (Stats Double)),
+    aggRss :: !(Maybe (Stats Integer)),
+    aggMismatch :: !(Maybe (Int, Text))
   }
 
--- | Run every backend @--runs@ times, take the per-backend median, and
---   overwrite @.snapshots/benchmark/<TEST>/bench.txt@. No threshold, no
---   pass/fail — the file is read through @git diff@ before/after a change.
+aggOk :: Agg -> Bool
+aggOk agg = aggStatus agg == "ok"
+
+-- | Run every backend @--runs@ times, aggregate per backend, and
+--   overwrite @.benchmarks/<TEST>/bench.txt@. No threshold on
+--   the numbers — the file is read through @git diff@ before/after a
+--   change — but behaviour is checked: any failed run, and any
+--   successful run whose stdout deviates from the cross-backend
+--   anchor, leaves a non-@ok@ status in the file and exits non-zero,
+--   so @just benchmark-snapshot@ stops loud instead of recording a
+--   plausible-looking lie.
 runSnapshot :: Options -> IO ()
 runSnapshot opts = do
-  (ptags, core) <- loadCore opts.optTest
+  (ptags, core) <- loadCore SimplifyOn opts.optTest
   putTextLn $ "Snapshot: " <> opts.optTest <> "  (median of " <> show opts.optRuns <> " runs/backend, timeout " <> show opts.optTimeoutSecs <> "s)"
   withSystemTempDirectory "awsum-bench" $ \dir -> do
     artifacts <- buildAllArtifacts dir ptags core
-    rows <- forM allBackends $ \b -> do
-      results <- replicateM opts.optRuns (runOne opts.optTimeoutSecs dir artifacts b)
-      let agg = aggregate results
-      putTextLn ("  " <> toText (printf "%-7s  %s" (show b :: String) (toString (aggStatus agg)) :: String))
-      pure (b, agg)
-    let outDir = ".snapshots" </> "benchmark" </> toString opts.optTest
+    let go anchor acc = \case
+          [] -> pure (reverse acc, anchor)
+          b : bs -> do
+            results <- replicateM opts.optRuns (runOne opts.optTimeoutSecs dir artifacts b)
+            let anchor' = anchor <|> (rrStdout <$> find ((== ExitSuccess) . rrExit) results)
+                agg = aggregate anchor' results
+            putTextLn ("  " <> toText (printf "%-7s  %s" (show b :: String) (toString (aggStatus agg)) :: String))
+            go anchor' ((b, agg) : acc) bs
+    (rows, anchor) <- go Nothing [] allBackends
+    -- Outside .snapshots/ deliberately: .snapshots holds what `just test`
+    -- regenerates, so a full reset there must not take the medians with
+    -- it. This tree is written only here, by explicit benchmark runs.
+    let outDir = ".benchmarks" </> toString opts.optTest
     createDirectoryIfMissing True outDir
     let outFile = outDir </> "bench.txt"
-    writeFileText outFile (renderSnapshot opts.optTest rows)
+    writeFileText outFile (renderSnapshot opts anchor rows)
     putTextLn $ "  wrote " <> toText outFile
+    -- Differential check: the same program compiled without the Simplify
+    -- pass must print the same stdout. One unmeasured run per backend
+    -- against the same cross-backend anchor; nothing of it is recorded —
+    -- bench.txt stays a SimplifyOn measurement, a deviation goes to
+    -- stderr and the exit code. Skipped when no anchor exists (every
+    -- measured run failed, so the rows above are already non-ok).
+    offBad <- case anchor of
+      Nothing -> pure []
+      Just a -> do
+        putTextLn "  no-simplify differential (one unmeasured run per backend):"
+        withSystemTempDirectory "awsum-bench-no-simplify" $ \offDir -> do
+          (ptagsOff, coreOff) <- loadCore SimplifyOff opts.optTest
+          artifactsOff <- buildAllArtifacts offDir ptagsOff coreOff
+          fmap catMaybes $ forM allBackends $ \b -> do
+            r <- runOne opts.optTimeoutSecs offDir artifactsOff b
+            let deviation = case rrExit r of
+                  ExitSuccess -> if rrStdout r == a then Nothing else Just (b, "stdout mismatch")
+                  ec -> Just (b, statusText ec)
+            putTextLn ("  " <> toText (printf "%-7s  %s" (show b :: String) (toString (maybe "ok" snd deviation)) :: String))
+            pure deviation
+    let bad = [b | (b, agg) <- rows, not (aggOk agg)]
+    unless (null bad && null offBad) $ do
+      unless (null bad)
+        $ TIO.hPutStrLn stderr
+        $ "  non-ok rows ("
+        <> T.intercalate ", " (map show bad)
+        <> ") — see "
+        <> toText outFile
+      unless (null offBad)
+        $ TIO.hPutStrLn stderr
+        $ "  no-simplify deviations: "
+        <> T.intercalate ", " [show b <> " (" <> d <> ")" | (b, d) <- offBad]
+      exitFailure
 
--- | Collapse the N runs of one backend into a status + medians. The median
---   uses only the successful runs; the status is the first non-success exit
---   (or @ok@ when every run succeeded).
-aggregate :: [RunResult] -> Agg
-aggregate rs =
+-- | Collapse the N runs of one backend into a status plus per-metric
+--   @median \/ min \/ max@ over the successful runs. A failed run
+--   (timeout, non-zero exit) sets the status to its kind with a
+--   @(failed\/total)@ count; otherwise a successful run whose stdout
+--   differs from the anchor sets @mismatch(deviating\/total)@ — the
+--   per-run cross-backend identical-stdout check. The anchor is the
+--   first successful run's stdout of the first backend that produced
+--   one, so the anchor backend's own later runs are checked against it
+--   too: cross-run nondeterminism surfaces the same way.
+aggregate :: Maybe Text -> [RunResult] -> Agg
+aggregate anchor rs =
   let oks = filter ((== ExitSuccess) . rrExit) rs
+      failures = filter ((/= ExitSuccess) . rrExit) rs
+      deviations =
+        [ (i, rrStdout r)
+        | a <- maybeToList anchor,
+          (i, r) <- zip [1 :: Int ..] rs,
+          rrExit r == ExitSuccess,
+          rrStdout r /= a
+        ]
+      count k = "(" <> show k <> "/" <> show (length rs) <> ")"
+      status = case (failures, deviations) of
+        (f : _, _) -> statusText (rrExit f) <> count (length failures)
+        ([], _ : _) -> "mismatch" <> count (length deviations)
+        ([], []) -> "ok"
    in Agg
-        { aggStatus = maybe "ok" (statusText . rrExit) (find ((/= ExitSuccess) . rrExit) rs),
-          aggMedWallSec = median (map rrWallSec oks),
-          aggMedRssBytes = median (mapMaybe rrPeakRssBytes oks),
-          aggStdout = maybe "" rrStdout (listToMaybe oks)
+        { aggStatus = status,
+          aggWall = stats (map rrWallSec oks),
+          aggRss = stats (mapMaybe rrPeakRssBytes oks),
+          aggMismatch = listToMaybe deviations
         }
 
--- | Median by sorting and taking the middle element. With an odd sample count
---   (the default @--runs@ is 5) this is the true median; with an even count it
---   is the upper-middle element.
-median :: (Ord a) => [a] -> Maybe a
-median xs = sortOn identity xs !!? (length xs `div` 2)
+-- | Per-metric aggregate over the successful runs: median by sorting
+--   and taking the middle element (an odd @--runs@ — the default 5 —
+--   gives the true median; an even count the upper-middle), plus the
+--   min and max bounding the run-to-run noise band.
+data Stats a = Stats
+  { stMed :: !a,
+    stMin :: !a,
+    stMax :: !a
+  }
 
--- | The golden file: a per-backend table of medians plus a short stdout anchor.
---   Benchmark programs are not in the Hspec suite, so the anchor is the only
---   guard that a change didn't alter their behaviour. Only the numbers vary
---   between runs — no hostname / CPU — so a before/after @git diff@ reads as
---   pure deltas.
-renderSnapshot :: Text -> [(Backend, Agg)] -> Text
-renderSnapshot test rows =
-  unlines $
-    [ "benchmark: " <> test,
-      "medians over several runs per backend (wall time, peak RSS); macOS",
-      "",
-      toText snapHeader
-    ]
-      <> map (uncurry snapRow) rows
-      <> ["", "stdout: " <> stdoutAnchor]
+type role Stats representational
+
+stats :: (Ord a) => [a] -> Maybe (Stats a)
+stats xs = case sortOn identity xs of
+  [] -> Nothing
+  sorted@(lo : _) ->
+    Stats
+      <$> sorted
+      !!? (length sorted `div` 2)
+      <*> Just lo
+      <*> viaNonEmpty last sorted
+
+-- | The golden file: a per-backend table of @median (min–max)@ cells
+--   plus a short stdout anchor. Behaviour is checked right here: every
+--   successful run of every backend is compared against the anchor,
+--   and a deviating backend renders a @mismatch@ status plus its own
+--   @stdout[…]@ line under the anchor. Compiler-side artifacts of
+--   benchmark programs are snapshotted by the Hspec suite
+--   (@.snapshots\/benchmark\/<NAME>\/compiler\/@); this file owns the
+--   runtime side. Only the numbers vary between healthy runs — no
+--   hostname \/ CPU — so a before\/after @git diff@ reads as pure
+--   deltas, and the (min–max) band separates run-to-run noise from a
+--   real shift.
+renderSnapshot :: Options -> Maybe Text -> [(Backend, Agg)] -> Text
+renderSnapshot opts anchor rows =
+  unlines
+    $ [ "benchmark: " <> opts.optTest,
+        "median (min–max) over " <> show opts.optRuns <> " runs per backend (wall time, peak RSS); timeout " <> show opts.optTimeoutSecs <> "s; macOS",
+        "",
+        toText snapHeader
+      ]
+    <> map (uncurry snapRow) rows
+    <> ["", "stdout: " <> anchorShown]
+    <> mismatchLines
   where
-    stdoutAnchor = case mapMaybe (nonEmpty' . shortStdout . aggStdout . snd) rows of
-      (s : _) -> s
-      [] -> "—"
-    nonEmpty' s = if T.null s then Nothing else Just s
+    anchorShown = case shortStdout <$> anchor of
+      Just s | not (T.null s) -> s
+      _ -> "—"
+    mismatchLines =
+      [ "stdout[" <> show b <> runSuffix i <> "]: " <> shortStdout s
+      | (b, agg) <- rows,
+        (i, s) <- maybeToList (aggMismatch agg)
+      ]
+    runSuffix i = if i == 1 then ("" :: Text) else ", run " <> show i
 
 snapHeader :: String
-snapHeader = printf "%-7s  %-10s  %9s  %14s" ("target" :: String) ("status" :: String) ("time(s)" :: String) ("peakMem(MiB)" :: String)
+snapHeader = printf "%-7s  %-13s  %20s  %23s" ("target" :: String) ("status" :: String) ("time(s)" :: String) ("peakMem(MiB)" :: String)
 
 snapRow :: Backend -> Agg -> Text
 snapRow b agg =
-  let wall = case aggMedWallSec agg of
-        Just t -> printf "%9.2f" t :: String
-        Nothing -> printf "%9s" ("—" :: String) :: String
-      rss = case aggMedRssBytes agg of
-        Just n -> printf "%14.1f" (fromIntegral n / mib :: Double) :: String
-        Nothing -> printf "%14s" ("—" :: String) :: String
-   in toText (printf "%-7s  %-10s  %s  %s" (show b :: String) (toString (aggStatus agg)) wall rss :: String)
+  let wall = case agg.aggWall of
+        Just s -> printf "%20s" (printf "%.2f (%.2f–%.2f)" s.stMed s.stMin s.stMax :: String) :: String
+        Nothing -> printf "%20s" ("—" :: String) :: String
+      rss = case agg.aggRss of
+        Just s -> printf "%23s" (printf "%.1f (%.1f–%.1f)" (toMiB s.stMed) (toMiB s.stMin) (toMiB s.stMax) :: String) :: String
+        Nothing -> printf "%23s" ("—" :: String) :: String
+   in toText (printf "%-7s  %-13s  %s  %s" (show b :: String) (toString (aggStatus agg)) wall rss :: String)
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Shared formatting helpers
@@ -250,6 +352,10 @@ shortStdout = T.take 40 . T.replace "\n" "⏎" . T.strip
 -- | Bytes → MiB divisor, shared by both formatters.
 mib :: Double
 mib = 1024 * 1024
+
+-- | Bytes → MiB, shared by both formatters.
+toMiB :: Integer -> Double
+toMiB n = fromIntegral n / mib
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Artifact production
@@ -378,7 +484,7 @@ formatRow b r =
   let st = toString (statusText (rrExit r)) :: String
       wall = printf "%9.2f" (rrWallSec r) :: String
       rss = case rrPeakRssBytes r of
-        Just n -> printf "%14.1f" (fromIntegral n / mib :: Double) :: String
+        Just n -> printf "%14.1f" (toMiB n) :: String
         Nothing -> printf "%14s" ("—" :: String) :: String
       head_ = printf "%-7s  %-12s  %s  %s  " (show b :: String) st wall rss :: String
    in toText head_ <> shortStdout (rrStdout r)

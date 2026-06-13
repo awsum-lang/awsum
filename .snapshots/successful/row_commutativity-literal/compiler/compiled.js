@@ -8,27 +8,14 @@
 
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
@@ -36,19 +23,7 @@
 
   const v_mk = [1615808600, "comm"];
 
-  const v_d = v_x => {
-    {
-      const __s = v_x;
-      switch (__s[0]) {
-        case 1615808600: {
-          const v_s = __s[1];
-          return v_s;
-        }
-      }
-    }
-  };
-
-  const main = [7, v_d(v_mk), [5, [0]]];
+  const main = [7, (v__inl1_x => v__inl1_x[1])(v_mk), [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

@@ -1,16 +1,7 @@
-and:
-  param           a                               count=1
-  param           b                               count=1
-
-showBool:
-  param           b                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-un:
-  param           x                               count=1
+  let             $inl0$eff                       count=0
 

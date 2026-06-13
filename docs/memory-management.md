@@ -100,7 +100,7 @@ The worklist itself grows on the heap with each cascade's max in-flight frontier
 
 ## Cell reuse
 
-[Awsum.Reuse.insertReuse](../src/Awsum/Reuse.hs) runs after `insertDrops` and recognises the canonical Lean 4-style pattern produced by `addContinueDrops` under a linear case-scrutinee:
+[Awsum.Reuse.insertReuse](../src/Awsum/Reuse.hs) runs after `insertDrops` and recognises the canonical Lean 4-style pattern of a scrut drop inside the arm of a linear case-scrutinee:
 
 ```
 CCase (CVar n) [..., (tag_in, [v1..vk], CDrop _ n inner), ...]
@@ -108,7 +108,18 @@ CCase (CVar n) [..., (tag_in, [v1..vk], CDrop _ n inner), ...]
 
 where `inner` contains a `CCon t fields` with `length fields == k` (matching the arm's pattern arity). Such a `CCon` is rewritten to `CReuse n t fields`, and the outer `CDrop n` is stripped. The pass distributes into nested `CCase` / `CRowCase` arms — each arm independently rewrites if its path contains a scrut drop; arms without it keep their original allocation. Per arm at most one `CCon` is rewritten (there is only one cell to give back).
 
-Backend lowering of `CReuse n t fields` is in-place mutation guarded by a runtime refcount check:
+`insertDrops` produces the in-arm scrut drop in two places. A **parameter** is dropped at every `CContinue` (`addContinueDrops`) — the original producer, covering the TCO'd loop whose argument pack is rebuilt each iteration. A **binder whose sole use is the scrutinee of an inner case on its scope's spine** (a case every execution reaches — one only some paths reach keeps the scope wrap, or the bypassing paths would leak the binder) has its drop sunk into that case's arms instead of wrapping its scope (`soleScrutineeUse` / `sinkScrutDrop` — the dec still fires after the chosen arm's value, the same point the scope wrap expressed). The second producer is what makes the continuation cells of `$scc$`-merged CPS functions reusable: the merged loop's case on `$args` binds the K-cell `$k`, the inner case on `$k` rebuilds a same-arity K-cell inside the pack rebuild, and both cells die there.
+
+The match is **innermost-first** (a constructor's fields are searched before the constructor itself): nested scrutinees' passes run before their enclosing case's, so an inner cell pairs with the inner reconstruction and leaves the enclosing cell to the enclosing scrut — with equal arities (a two-field pack carrying a two-field list cell, the `reverse` shape) the outermost-first order would let the inner pass steal the pack. The result is nested reuse, `CReuse n_outer t [", CReuse n_inner t' […]]`: a `mirror`/`reverse`-style hot loop rebuilds both its pack and its data cell in place and allocates nothing.
+
+For a binder-target the refcount accounting balances with no new elisions: the binder enters the arm at `rc = 2` (the parent cell's slot plus its extract-inc); the enclosing reuse's dec-old of that slot releases the parent's reference; the stripped sunk drop never decs — its `+1` *becomes* the reference the new holder's slot stores (a `CReuse` result is a fresh source, stored without inc). Arms where the reuse does not fire keep the sunk drop and free the binder exactly where the scope wrap would have.
+
+Every `CReuse` carries a `ReuseMode` — the uniqueness evidence the pass attaches by looking at the dying cell's constructor tag:
+
+- **`ReuseUnique`** — the tag was minted at or above the pre-Scc `nextFreshConTag` floor, so the cell is an Scc argument pack or a Cps continuation: created and consumed entirely inside the compiler-generated loop, never stored into user data, never visible to user code. No other holder can exist; every backend mutates in place unconditionally.
+- **`ReuseGuarded`** — a user-visible cell (a list node, a tree node, an IO step). The local drop only proves the *binder's* reference dies; the caller may retain the structure — Awsum is pure, so `let ys = reverse xs` keeps `xs` readable, and an unconditional in-place rewrite would corrupt it (observed: four backends printing `2e` against LLVM's `22` on an eight-line program, pinned by `memory_reuse-shared-retained`). LLVM and WASM mutate under a runtime uniqueness check with copy-on-write; the managed backends have no refcount header to check and lower the node as the allocation it replaced.
+
+On LLVM and WASM, the guarded lowering of `CReuse n t fields` is in-place mutation under the refcount check (a `ReuseUnique` cell takes the in-place sequence with no branch):
 
 - **`refcount == 1`** (uniquely owned): write `t` into slot 0 and the field values into slots 1..k of the existing cell at `n`. For each slot, dec the old value before overwriting; for each new `CVar` field source, inc; for each fresh source (`CCon`/`CCall`/`CIntLit`/`CString`) no inc (it brings its own `+1`). The cell's own refcount stays at 1. The pre-existing flag and shape header are left intact.
 
@@ -119,7 +130,9 @@ Backend lowering of `CReuse n t fields` is in-place mutation guarded by a runtim
 
 - **`refcount > 1`** (shared with another live holder): copy-on-write. Allocate a fresh cell of the right shape, write `t` and the fields into it, `__free_recursive` on `n` (which dec's its refcount, leaving the other holders intact). Every `CVar` field gets its own `__inc_ref` here unconditionally — the fresh cell takes its own reference, and the old cell stays alive at `rc-1` still holding its own references; the elisions above apply only to the in-place path.
 
-On JVM, CLR, and JS, `CReuse` lowers to plain field-overwrite of the existing array — `aastore` on JVM, `stelem.ref` on CLR, comma-expression `(n[0] = tag, n[1] = f₁, …, n)` on JS. There is no refcount header on managed-runtime heap blocks, so the runtime branch on uniqueness is absent.
+A field that itself contains a `CReuse` (the nested-reuse shape) is **not pre-evaluated** with the other fields on LLVM — it evaluates inside each branch, and only that ordering makes the nested uniqueness check meaningful. On the in-place path the enclosing cell's dec-old has already released the parent-slot reference to the nested target, so its `rc` is 1 exactly when nothing else holds it; on the copy path no dec has happened, the target still carries the parent-slot reference on top of its extract-inc, the nested check fails, and the nested reuse copies too — leaving the shared original intact. The nested target's `rc` is the same number in both worlds (the sharing lives one level up, on the enclosing cell), so pre-evaluating would mutate a cell the copy path still needs.
+
+On JVM, CLR, and JS, a `ReuseUnique` cell lowers to plain field-overwrite of the existing array — `aastore` on JVM, `stelem.ref` on CLR, comma-expression `(n[0] = tag, n[1] = f₁, …, n)` on JS. There is no refcount header on managed-runtime heap blocks, so no runtime branch is possible — which is exactly why a `ReuseGuarded` cell lowers there as the plain allocation it replaced (the host GC reclaims the dead original).
 
 ## Pipeline placement
 

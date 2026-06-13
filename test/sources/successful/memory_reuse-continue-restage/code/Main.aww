@@ -1,0 +1,20 @@
+import IO.Stdout
+
+type MyList = MyNil | MyCons Int32 MyList
+
+describe : MyList -> String
+describe acc = case acc of
+  MyNil -> "N"
+  MyCons h _t -> showInt32 h
+
+loop : Int32 -> MyList -> MyList -> String
+loop fuel xs acc = case eqInt32 fuel 0 of
+  True -> describe acc
+  False -> case xs of
+    MyNil -> describe acc
+    MyCons _h t -> case predInt32 fuel of
+      Left _e -> describe acc
+      Right f2 -> loop f2 (MyCons 7 t) xs
+
+main : IO Never Unit
+main = IO.Stdout.print (loop 1 (MyCons 1 (MyCons 2 MyNil)) MyNil)

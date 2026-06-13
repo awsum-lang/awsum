@@ -1,0 +1,28 @@
+{- `Awsum.Simplify` folds the integer equality built-ins over literal
+   operands straight to the `True` / `False` constructor, and the case over
+   the folded Bool collapses — the Core snapshot holds only the selected
+   string literals. -}
+
+import IO.Stdout
+
+eqI32True : String
+eqI32True = case eqInt32 (-1) (-1) of
+  True -> "T"
+  False -> "F"
+
+eqU8False : String
+eqU8False = case eqUInt8 3 4 of
+  True -> "T"
+  False -> "F"
+
+eqU32False : String
+eqU32False = case eqUInt32 0 4_294_967_295 of
+  True -> "T"
+  False -> "F"
+
+main : IO Never Unit
+main = IO.Stdout.print eqI32True
+  |> andThenIO (\_s1 -> IO.Stdout.print ";")
+  |> andThenIO (\_p1 -> IO.Stdout.print eqU8False)
+  |> andThenIO (\_s2 -> IO.Stdout.print ";")
+  |> andThenIO (\_p2 -> IO.Stdout.print eqU32False)

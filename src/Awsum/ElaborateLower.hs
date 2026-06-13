@@ -17,7 +17,7 @@
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
 --   • 'CBuiltIn' only appears in callee position of 'CCall'.
 --   • Unsupported qualified names fail fast with a clear error.
-module Awsum.ElaborateLower (elaborateLowerProgram) where
+module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborateLowerProgramWith) where
 
 import Awsum.BuiltIn (builtIns, lookupBuiltIn)
 import Awsum.Core
@@ -33,6 +33,7 @@ import Awsum.Prelude (preludeDefNames)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Reuse (insertReuse)
 import Awsum.Scc (sccMergeProgram)
+import Awsum.Simplify (simplifyProgram)
 import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
@@ -371,9 +372,16 @@ etaExpandBuiltInValues = goValue
       CDrop k n b ->
         let (b', ns) = goValue b
          in (CDrop k n b', ns)
-      CReuse n t fs ->
+      CReuse rm n t fs ->
         let (fs', ns) = unzipFold (map goValue fs)
-         in (CReuse n t fs', ns)
+         in (CReuse rm n t fs', ns)
+      CLet x rhs body ->
+        let (rhs', n1) = goValue rhs
+            (body', n2) = goValue body
+         in (CLet x rhs' body', n1 <> n2)
+      CProj n i -> (CProj n i, mempty)
+      CJoin {} -> error "ElaborateLower: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "ElaborateLower: CJump is minted by Awsum.Simplify, which runs later"
       e@(CVar _) -> (e, mempty)
       e@(CString _) -> (e, mempty)
       e@(CIntLit _ _) -> (e, mempty)
@@ -443,9 +451,6 @@ genBuiltInEtaWrappers progType names =
       TyArrow _ _ rest -> 1 + countArrows rest
       _ -> 0
 
--- | Check the surface program (types) and lower it to Core IR.
---   On success we return @(warnings, core)@: the Core program for codegen
---   plus any non-fatal warnings the typechecker collected.
 -- | Run a 'LowerM' computation, returning its result and the
 --   accumulated lifted helpers (in source order — they're appended
 --   to the user-decl list in the program pipeline).
@@ -454,8 +459,28 @@ runLowerM m = do
   (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
+-- | Whether the pipeline runs 'Awsum.Simplify'. 'SimplifyOff' is a
+--   test-only instrument: the compiler's differential gates compile a
+--   program both ways and assert identical runtime stdout, pinning
+--   @runtime(simplify(core)) == runtime(core)@ with the runtime itself
+--   as the oracle — and keeping every codegen exercised on raw,
+--   unsimplified Core shapes. No public entry point exposes it: the CLI
+--   and the LSP server go through 'elaborateLowerProgram', which is
+--   always 'SimplifyOn'.
+data SimplifyMode = SimplifyOn | SimplifyOff
+  deriving stock (Show, Eq)
+
+-- | Check the surface program (types) and lower it to Core IR.
+--   On success we return @(warnings, core)@: the Core program for codegen
+--   plus any non-fatal warnings the typechecker collected.
 elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], PreludeTags, CoreProgram)
-elaborateLowerProgram progType progIn = do
+elaborateLowerProgram = elaborateLowerProgramWith SimplifyOn
+
+-- | 'elaborateLowerProgram' with the 'Awsum.Simplify' pass switchable —
+--   the entry point of the test suites' and @awsum-bench@'s no-simplify
+--   differential runs.
+elaborateLowerProgramWith :: SimplifyMode -> ProgramType -> Program -> Either TypeError ([Warning], PreludeTags, CoreProgram)
+elaborateLowerProgramWith simplifyMode progType progIn = do
   -- 0) Pre-typecheck desugar: rewrite 'do' blocks into nested
   --    'bindEither' calls with 'ELam' continuations. Lambdas
   --    themselves are kept as 'ELam' nodes — the typechecker handles
@@ -595,6 +620,11 @@ elaborateLowerProgram progType progIn = do
   --    members that were only called from inside the SCC become dead.
   --    Re-run reachability from 'main' to prune them (and anything
   --    else that fell out of scope through the rewrite).
+  --    Every constructor tag from here up — Scc argument packs, Cps
+  --    continuation cells — names a cell that lives and dies inside the
+  --    compiler-generated loop machinery, never stored into user data.
+  --    'Awsum.Reuse' uses this floor as the 'ReuseUnique' evidence.
+  let mintedTagFloor = nextFreshConTag core''
   let sccMerged = treeShakeFromMain conInfo (sccMergeProgram core'')
   -- 8) CPS + defunctionalization for non-tail self-recursion. For each
   --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
@@ -643,7 +673,26 @@ elaborateLowerProgram progType progIn = do
   --    matching-arity 'CCon' inside 'inner' into 'CReuse'. Runs
   --    after 'insertDrops' so it can rely on the drop placement as
   --    a proxy for linear-use of the scrutinee.
-  pure (warnings, preludeTagsFromConInfo conInfo, insertReuse (insertDrops tcoed))
+  -- 11.5) Simplify (coexistence substrate; see docs/simplify.md): inline a
+  --    single-use case-arm binder into a 'CProj' of the (variable) scrutinee,
+  --    so the @const v = s[i]@ binding disappears and the field read happens
+  --    inline at the use; collapse a case over a literal constructor / row
+  --    injection (case-of-known-constructor) into the matching arm's body;
+  --    fold an integer built-in over literal operands into the value its
+  --    runtime helper would build (the 'PreludeTags' supply the constructor
+  --    tags of those cells, exactly as they do for the codegen helpers).
+  --    Runs after Tco and before Lifetime — never after Reuse (the memory
+  --    passes are the last word over the final shape), and never earlier:
+  --    the inline rule is sound only on the final Core shape (see
+  --    "Awsum.Simplify"). Tree-shake re-runs: collapsing a case can discard
+  --    a never-evaluated field holding the last call edge to a function.
+  --    'SimplifyOff' (test-only differential mode) skips the pass and its
+  --    re-shake — exactly the pipeline as it stood before Simplify landed.
+  let preludeTags = preludeTagsFromConInfo conInfo
+      simplified = case simplifyMode of
+        SimplifyOn -> treeShakeFromMain conInfo (simplifyProgram preludeTags tcoed)
+        SimplifyOff -> tcoed
+  pure (warnings, preludeTags, insertReuse mintedTagFloor (insertDrops simplified))
 
 -- | Translate a 'StackSafetyIssue' into a user-facing 'TypeError',
 -- recovering a source span from the corresponding 'Sig' in the surface
@@ -827,7 +876,11 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
       CLoop body -> CLoop (rewriteExpr body)
       CContinue args -> CContinue (map rewriteExpr args)
       CDrop k n body -> CDrop k n (rewriteExpr body)
-      CReuse n t fs -> CReuse n t (map rewriteExpr fs)
+      CReuse rm n t fs -> CReuse rm n t (map rewriteExpr fs)
+      CLet x rhs body -> CLet x (rewriteExpr rhs) (rewriteExpr body)
+      CJoin {} -> error "ElaborateLower: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "ElaborateLower: CJump is minted by Awsum.Simplify, which runs later"
+      e@CProj {} -> e
       e@CVar {} -> e
       e@CString {} -> e
       e@CIntLit {} -> e
@@ -997,7 +1050,7 @@ guardedTags cs rs = go
   where
     go = \case
       CCon t fs -> (Set.singleton t, mempty) <> foldMap go fs
-      CReuse _ t fs -> (Set.singleton t, mempty) <> foldMap go fs
+      CReuse _ _ t fs -> (Set.singleton t, mempty) <> foldMap go fs
       CRow t v -> (mempty, Set.singleton t) <> go v
       CCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t cs then go b else mempty) alts
       CRowCase s alts -> go s <> foldMap (\(t, _, b) -> if Set.member t rs then go b else mempty) alts
@@ -1005,6 +1058,10 @@ guardedTags cs rs = go
       CLoop b -> go b
       CContinue xs -> foldMap go xs
       CDrop _ _ b -> go b
+      CLet _ rhs body -> go rhs <> go body
+      CJoin _ _ body inner -> go body <> go inner
+      CJump _ args -> foldMap go args
+      CProj _ _ -> mempty
       CVar _ -> mempty
       CString _ -> mempty
       CIntLit _ _ -> mempty
@@ -1041,7 +1098,11 @@ pruneDeadArms conTags rowTags = go
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
       CDrop k n b -> CDrop k n (go b)
-      CReuse n t fs -> CReuse n t (map go fs)
+      CReuse rm n t fs -> CReuse rm n t (map go fs)
+      CLet x rhs body -> CLet x (go rhs) (go body)
+      CJoin j ps body inner -> CJoin j ps (go body) (go inner)
+      CJump j args -> CJump j (map go args)
+      e@(CProj _ _) -> e
       e@(CVar _) -> e
       e@(CString _) -> e
       e@(CIntLit _ _) -> e
@@ -1134,7 +1195,11 @@ saturateExpr am locals = go
       -- keeps the pattern match exhaustive.
       CDrop k n b -> CDrop k n <$> go b
       -- 'CReuse' is also produced after Tco; passthrough.
-      CReuse n t fs -> CReuse n t <$> traverse go fs
+      CReuse rm n t fs -> CReuse rm n t <$> traverse go fs
+      CLet x rhs body -> CLet x <$> go rhs <*> go body
+      CJoin {} -> error "Saturate: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "Saturate: CJump is minted by Awsum.Simplify, which runs later"
+      e@(CProj _ _) -> pure e
     goAlt (tag, vars, body) = do
       body' <- saturateExpr am (locals <> fromList vars) body
       pure (tag, vars, body')
@@ -1189,7 +1254,13 @@ freeVars = \case
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
   CDrop _ n b -> Set.delete n (freeVars b)
-  CReuse n _ fs -> Set.insert n (foldMap freeVars fs)
+  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
+  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
+  CProj n _ -> one n
+  -- The join name is a label, not a reference; the parameters scope over
+  -- the body only.
+  CJoin _ ps body inner -> (freeVars body `Set.difference` Set.fromList ps) <> freeVars inner
+  CJump _ args -> foldMap freeVars args
 
 -- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
 extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv

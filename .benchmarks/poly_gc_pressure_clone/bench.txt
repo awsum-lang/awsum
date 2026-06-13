@@ -1,0 +1,11 @@
+benchmark: poly_gc_pressure_clone
+median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
+
+target   status                      time(s)             peakMem(MiB)
+LLVM     ok                 8.38 (8.25–8.53)         16.2 (16.2–16.2)
+JVM      ok                 1.56 (1.52–1.61)   1109.7 (1101.7–1134.1)
+CLR      ok              28.54 (28.29–28.94)      106.4 (106.2–106.4)
+WASM     ok                 9.28 (9.21–9.35)         19.8 (19.7–19.9)
+JS       ok                 2.36 (2.33–2.38)      233.9 (231.3–234.3)
+
+stdout: 100000

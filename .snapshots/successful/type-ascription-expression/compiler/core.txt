@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,30 +15,22 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "identity" [ "x" ]
-            ( CVar "x" )
         , CValDef "direct"
             ( CCall
                 ( CBuiltIn "showInt32" )
@@ -48,30 +39,12 @@ CoreProgram
         , CValDef "throughHof"
             ( CCall
                 ( CBuiltIn "showInt32" )
-                [ CCall
-                    ( CVar "identity" )
-                    [ CIntLit 10 TInt32 ]
-                ]
+                [ CIntLit 10 TInt32 ]
             )
         , CValDef "ascribedCall"
-            ( CCase
-                ( CCall
-                    ( CBuiltIn "predInt32" )
-                    [ CIntLit 5 TInt32 ]
-                )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CString "FAIL"
-                    )
-                ,
-                    ( 4
-                    , [ "n" ]
-                    , CCall
-                        ( CBuiltIn "showInt32" )
-                        [ CVar "n" ]
-                    )
-                ]
+            ( CCall
+                ( CBuiltIn "showInt32" )
+                [ CIntLit 4 TInt32 ]
             )
         , CValDef "joined"
             ( CCase

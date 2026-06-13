@@ -1,23 +1,12 @@
-pureIO:
-  param           x                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-$lam$13:
-  param           _s                              count=0
-
-$bi$IO.Stdout.print:
-  param           $x0                             count=1
-
-$df$bindIO$0:
-  param           io                              count=1
+  let             $inl0$eff                       count=0
 
 $cps$$df$bindIO$0:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=1
   case-pattern    a                               count=0
   case-pattern    s                               count=0
@@ -28,9 +17,6 @@ $apply$$df$bindIO$0:
   param           $x                              count=1
   case-pattern    $pk_9                           count=0
   case-pattern    s                               count=0
-
-$df$mapIO$4:
-  param           io                              count=1
 
 $cps$$df$mapIO$4:
   param           io                              count=2

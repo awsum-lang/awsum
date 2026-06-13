@@ -32,11 +32,10 @@
   .method private hidebysig static object v_runIO(object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3)
+    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -44,31 +43,23 @@
     ldc.i4.5
     bne.un IL_c0
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
     ret
   IL_c0:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
+    call object AwsumMain::__print(object)
+    stloc.2
+    ldarg.0
+    castclass object[]
     ldc.i4.2
     ldelem.ref
-    stloc.2
-    ldloc.1
-    call object AwsumMain::__print(object)
-    stloc.3
-    ldloc.3
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    pop
-    ldloc.2
     starg.s 0
     br IL_tco_loop
   }
@@ -88,16 +79,28 @@
     stelem.ref
     ldloc.0
     ldc.i4.1
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     stloc.1
     ldloc.1
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v_parseExpr(object)
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    stloc.2
+    ldloc.2
+    ldc.i4.0
+    ldc.i4.s 25
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ldloc.2
+    stelem.ref
+    ldloc.1
+    call object AwsumMain::v__scc_parseBinary_parseExpr(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -132,11 +135,10 @@
   .method private hidebysig static object v__scc_parseBinary_parseExpr(object) cil managed
   {
     .maxstack 5
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
   IL_tco_loop:
     ldarg.0
-    stloc.0
-    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -144,17 +146,12 @@
     ldc.i4.s 26
     bne.un IL_c1
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.0
-    ldc.i4.2
-    ldelem.ref
     stloc.2
-    ldloc.1
-    stloc.3
-    ldloc.3
+    ldloc.2
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -169,36 +166,36 @@
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
+    stloc.3
+    ldloc.3
     ldc.i4.0
     ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 4
+    ldloc.3
     ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    stloc.s 5
-    ldloc.s 5
+    stloc.s 4
+    ldloc.s 4
     ldc.i4.0
     ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 5
-    stelem.ref
     ldloc.s 4
+    stelem.ref
+    ldloc.3
     starg.s 0
     br IL_tco_loop
   IL_c1:
     pop
-    ldloc.0
+    ldarg.0
+    castclass object[]
     ldc.i4.1
     ldelem.ref
-    stloc.1
-    ldloc.1
-    stloc.3
-    ldloc.3
+    stloc.0
+    ldloc.0
+    castclass object[]
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
@@ -213,46 +210,24 @@
     pop
     ldc.i4.3
     newarr [System.Runtime]System.Object
-    stloc.s 4
-    ldloc.s 4
+    stloc.2
+    ldloc.2
     ldc.i4.0
     ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 4
+    ldloc.2
     ldc.i4.1
-    ldloc.1
+    ldloc.0
     stelem.ref
-    ldloc.s 4
+    ldloc.2
     ldc.i4.2
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
-    ldloc.s 4
+    ldloc.2
     starg.s 0
     br IL_tco_loop
-  }
-
-
-  .method private hidebysig static object v_parseExpr(object) cil managed
-  {
-    .maxstack 3
-    .locals init (object[] V_0)
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    stloc.0
-    ldloc.0
-    ldc.i4.0
-    ldc.i4.s 27
-    box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.0
-    ldc.i4.1
-    ldarg.0
-    stelem.ref
-    ldloc.0
-    call object AwsumMain::v__scc_parseBinary_parseExpr(object)
-    ret
   }
 
   .method private hidebysig static void Main(string[]) cil managed

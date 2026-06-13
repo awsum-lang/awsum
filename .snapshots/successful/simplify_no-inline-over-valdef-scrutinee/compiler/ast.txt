@@ -1,0 +1,279 @@
+Program
+    { moduleComment = Just " Regression: `Awsum.Simplify` must not inline a single-use case-arm binder
+         into a `CProj` when the scrutinee is a top-level value definition.
+
+         On LLVM/WASM a `CValDef` reference lowers to a getter call that allocates a
+         fresh cell on every reference, so projecting the scrutinee (`CProj box 1`)
+         would re-invoke the getter: the case match and the projection would read two
+         different cells, and the second one leaks (never reclaimed). stdout is
+         identical across all five backends — the getter is deterministic — so the
+         snapshot and property suites cannot see the leak. The Core snapshot pins the
+         fix: `box` is matched and its field extracted with the getter called once,
+         and no `CProj` over `box` appears. A parameter scrutinee stays inlinable; a
+         value-definition scrutinee does not. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 16
+            , spanStartCol = 1
+            , spanEndLine = 16
+            , spanEndCol = 19
+            }
+        ) "box"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 16
+                , spanStartCol = 7
+                , spanEndLine = 16
+                , spanEndCol = 19
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 7
+                    , spanEndLine = 16
+                    , spanEndCol = 12
+                    }
+                ) "Maybe"
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 13
+                    , spanEndLine = 16
+                    , spanEndCol = 19
+                    }
+                ) "String"
+            )
+        ) Nothing Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 17
+                , spanStartCol = 1
+                , spanEndLine = 17
+                , spanEndCol = 15
+                }
+            ) "box" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 17
+                    , spanStartCol = 7
+                    , spanEndLine = 17
+                    , spanEndCol = 15
+                    }
+                )
+                ( ECon
+                    ( SrcSpan
+                        { spanStartLine = 17
+                        , spanStartCol = 7
+                        , spanEndLine = 17
+                        , spanEndCol = 12
+                        }
+                    ) "Just"
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 17
+                        , spanStartCol = 12
+                        , spanEndLine = 17
+                        , spanEndCol = 15
+                        }
+                    )
+                    ( LString "X" )
+                )
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 19
+                , spanStartCol = 1
+                , spanEndLine = 19
+                , spanEndCol = 14
+                }
+            ) "pick"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 19
+                    , spanStartCol = 8
+                    , spanEndLine = 19
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 20
+                , spanStartCol = 1
+                , spanEndLine = 22
+                , spanEndCol = 14
+                }
+            ) "pick" []
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 20
+                    , spanStartCol = 8
+                    , spanEndLine = 22
+                    , spanEndCol = 14
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 20
+                        , spanStartCol = 13
+                        , spanEndLine = 20
+                        , spanEndCol = 17
+                        }
+                    )
+                    ( QName [] "box" )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 21
+                            , spanStartCol = 3
+                            , spanEndLine = 21
+                            , spanEndCol = 10
+                            }
+                        ) "Nothing" []
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 21
+                            , spanStartCol = 14
+                            , spanEndLine = 21
+                            , spanEndCol = 20
+                            }
+                        )
+                        ( LString "none" )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 22
+                                , spanStartCol = 3
+                                , spanEndLine = 22
+                                , spanEndCol = 7
+                                }
+                            ) "Just"
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 22
+                                    , spanStartCol = 8
+                                    , spanEndLine = 22
+                                    , spanEndCol = 9
+                                    }
+                                ) "s"
+                            ]
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 22
+                                , spanStartCol = 13
+                                , spanEndLine = 22
+                                , spanEndCol = 14
+                                }
+                            )
+                            ( QName [] "s" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 24
+                , spanStartCol = 1
+                , spanEndLine = 24
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 24
+                    , spanStartCol = 8
+                    , spanEndLine = 24
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 24
+                        , spanStartCol = 8
+                        , spanEndLine = 24
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 24
+                            , spanStartCol = 8
+                            , spanEndLine = 24
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 24
+                            , spanStartCol = 11
+                            , spanEndLine = 24
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 24
+                        , spanStartCol = 17
+                        , spanEndLine = 24
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 25
+                , spanStartCol = 1
+                , spanEndLine = 25
+                , spanEndCol = 28
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 25
+                    , spanStartCol = 8
+                    , spanEndLine = 25
+                    , spanEndCol = 28
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 8
+                        , spanEndLine = 25
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 24
+                        , spanEndLine = 25
+                        , spanEndCol = 28
+                        }
+                    )
+                    ( QName [] "pick" )
+                )
+            ) Nothing Nothing
+        ]
+    }

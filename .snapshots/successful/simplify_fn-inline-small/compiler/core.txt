@@ -1,0 +1,159 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$andThenIO$0" )
+                [ CCon 7
+                    [ CCase
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "hello"
+                            , CString "!"
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "$inl5$_e" ]
+                            , CString "TOO_LONG"
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl6$t" ]
+                            , CVar "$inl6$t"
+                            )
+                        ]
+                    , CCon 5
+                        [ CCon 0 [] ]
+                    ]
+                , CCon 8 []
+                ]
+            )
+        , CFunDef "$cps$$df$andThenIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CCase
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "again"
+                                        , CString "!"
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "$inl3$_e" ]
+                                        , CString "TOO_LONG"
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "$inl4$t" ]
+                                        , CDrop DropFreeUnchecked "$inl4$t"
+                                            ( CVar "$inl4$t" )
+                                        )
+                                    ]
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 9
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 8
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 9
+                        ,
+                            [ "$pk_9"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_9"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_9"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

@@ -1,0 +1,19 @@
+{- Getter over a just-built pair: inlining substitutes the constructor into
+   the binding, known-projection takes the field, and the dead-let /
+   single-use cascade removes the cell — core.txt builds no Tuple2 for the
+   `chosen` path. Both fields are runtime values, so nothing folds. -}
+
+import IO.Stdout
+
+pairUp : UInt32 -> UInt32 -> Tuple2 UInt32 UInt32
+pairUp a b = Tuple2 a b
+
+firstOf : Tuple2 UInt32 UInt32 -> UInt32
+firstOf p = case p of
+  Tuple2 x _y -> x
+
+chosen : UInt32 -> UInt32 -> UInt32
+chosen a b = firstOf (pairUp a b)
+
+main : IO Never Unit
+main = IO.Stdout.print (showUInt32 (chosen (lengthUtf8Bytes "abc") (lengthUtf8Bytes "zz")))

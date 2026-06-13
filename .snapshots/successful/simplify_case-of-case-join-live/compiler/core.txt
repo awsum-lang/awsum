@@ -1,0 +1,90 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl5$s"
+                    ( CString "abc" )
+                    ( CDrop DropFreeUnchecked "$inl5$s"
+                        ( CJoin "$join3" [ "$inl4$scrut" ]
+                            ( CCase
+                                ( CVar "$inl4$scrut" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CVar "$inl5$s"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CString "other"
+                                    )
+                                ]
+                            )
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "eqUInt32" )
+                                    [ CCall
+                                        ( CBuiltIn "lengthUtf8Bytes" )
+                                        [ CVar "$inl5$s" ]
+                                    , CIntLit 0 TUInt32
+                                    ]
+                                )
+                                [
+                                    ( 1
+                                    , []
+                                    , CString "other"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CJump "$join3"
+                                        [ CCall
+                                            ( CBuiltIn "eqUInt32" )
+                                            [ CCall
+                                                ( CBuiltIn "lengthUtf8Bytes" )
+                                                [ CVar "$inl5$s" ]
+                                            , CIntLit 3 TUInt32
+                                            ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

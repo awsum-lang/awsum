@@ -9,199 +9,157 @@
   const __concat = (a, b) =>
     a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_show = v_r => {
-    {
-      const __s = v_r;
-      switch (__s[0]) {
-        case 3: {
-          const v___p0 = __s[1];
-          {
-            const __s = v___p0;
-            switch (__s[0]) {
-              case 24: {
-                return [4, "Left Missing"];
-              }
-            }
-          }
-        }
-        case 4: {
-          const v_s = __s[1];
-          return __concat("Right ", v_s);
-        }
-      }
-    }
-  };
-
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = (v__inl97_fromNothing =>
+    (v__inl70_fromJust =>
+      (v__inl74_chained =>
+        (() => {
+          let v__inl76_scrut;
+          $join75: {
+            const __s = (s => {
+              switch (s[0]) {
+                case 3: {
+                  return [4, "Left Missing"];
                 }
+                case 4: {
+                  return __concat("Right ", v__inl97_fromNothing[1]);
+                }
+              }
+            })(v__inl97_fromNothing);
+            switch (__s[0]) {
+              case 3: {
+                return [7, "STRING_TOO_LONG", [5, [0]]];
+              }
+              case 4: {
+                const v__inl82_a = __s[1];
+                v__inl76_scrut = (s => {
+                  switch (s[0]) {
+                    case 3: {
+                      const v__inl85__do_e_5 = s[1];
+                      return [3, v__inl85__do_e_5];
+                    }
+                    case 4: {
+                      const v__inl86_b = s[1];
+                      {
+                        const __s = (s => {
+                          switch (s[0]) {
+                            case 3: {
+                              return [4, "Left Missing"];
+                            }
+                            case 4: {
+                              return __concat("Right ", v__inl74_chained[1]);
+                            }
+                          }
+                        })(v__inl74_chained);
+                        switch (__s[0]) {
+                          case 3: {
+                            const v__inl89__do_e_4 = __s[1];
+                            return [3, v__inl89__do_e_4];
+                          }
+                          case 4: {
+                            const v__inl90_c = __s[1];
+                            {
+                              const __s = __concat(v__inl82_a, "|");
+                              switch (__s[0]) {
+                                case 3: {
+                                  const v__inl91__do_e_3 = __s[1];
+                                  return [3, v__inl91__do_e_3];
+                                }
+                                case 4: {
+                                  const v__inl92_sep = __s[1];
+                                  {
+                                    const __s = __concat(
+                                      v__inl92_sep,
+                                      v__inl86_b
+                                    );
+                                    switch (__s[0]) {
+                                      case 3: {
+                                        const v__inl93__do_e_2 = __s[1];
+                                        return [3, v__inl93__do_e_2];
+                                      }
+                                      case 4: {
+                                        const v__inl94_s1 = __s[1];
+                                        {
+                                          const __s = __concat(
+                                            v__inl94_s1,
+                                            "|"
+                                          );
+                                          switch (__s[0]) {
+                                            case 3: {
+                                              const v__inl95__do_e_1 = __s[1];
+                                              return [3, v__inl95__do_e_1];
+                                            }
+                                            case 4: {
+                                              const v__inl96_s2 = __s[1];
+                                              return __concat(
+                                                v__inl96_s2,
+                                                v__inl90_c
+                                              );
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                })(
+                  (s => {
+                    switch (s[0]) {
+                      case 3: {
+                        return [4, "Left Missing"];
+                      }
+                      case 4: {
+                        return __concat("Right ", v__inl70_fromJust[1]);
+                      }
+                    }
+                  })(v__inl70_fromJust)
+                );
+                break $join75;
               }
             }
           }
-        }
-      }
-    }
-  };
-
-  const v_pureEither = v_x => [4, v_x];
-
-  const v_nothingAsLeft = (v_e, v_m) => {
-    {
-      const __s = v_m;
-      switch (__s[0]) {
-        case 11: {
-          return [3, v_e];
-        }
-        case 12: {
-          const v_a = __s[1];
-          return [4, v_a];
-        }
-      }
-    }
-  };
-
-  const v_headList = v_xs => {
-    {
-      const __s = v_xs;
-      switch (__s[0]) {
-        case 13: {
-          return [11];
-        }
-        case 14: {
-          const v_h = __s[1];
-          const v__t = __s[2];
-          return [12, v_h];
-        }
-      }
-    }
-  };
-
-  const v__let_13 = v_msg => {
-    {
-      const __s = v_msg;
-      switch (__s[0]) {
-        case 3: {
-          const v___w0 = __s[1];
-          return [7, "STRING_TOO_LONG", [5, [0]]];
-        }
-        case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
-        }
-      }
-    }
-  };
-
-  const v__let_14 = (v_fromJust, v_fromNothing, v_chained) =>
-    v__let_13(
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            const v__do_e_6 = s[1];
-            return [3, v__do_e_6];
+          switch (v__inl76_scrut[0]) {
+            case 3: {
+              return [7, "STRING_TOO_LONG", [5, [0]]];
+            }
+            case 4: {
+              return [7, v__inl76_scrut[1], [5, [0]]];
+            }
           }
-          case 4: {
-            const v_a = s[1];
-            return (s => {
-              switch (s[0]) {
-                case 3: {
-                  const v__do_e_5 = s[1];
-                  return [3, v__do_e_5];
-                }
-                case 4: {
-                  const v_b = s[1];
-                  return (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        const v__do_e_4 = s[1];
-                        return [3, v__do_e_4];
-                      }
-                      case 4: {
-                        const v_c = s[1];
-                        return (s => {
-                          switch (s[0]) {
-                            case 3: {
-                              const v__do_e_3 = s[1];
-                              return [3, v__do_e_3];
-                            }
-                            case 4: {
-                              const v_sep = s[1];
-                              return (s => {
-                                switch (s[0]) {
-                                  case 3: {
-                                    const v__do_e_2 = s[1];
-                                    return [3, v__do_e_2];
-                                  }
-                                  case 4: {
-                                    const v_s1 = s[1];
-                                    return (s => {
-                                      switch (s[0]) {
-                                        case 3: {
-                                          const v__do_e_1 = s[1];
-                                          return [3, v__do_e_1];
-                                        }
-                                        case 4: {
-                                          const v_s2 = s[1];
-                                          return __concat(v_s2, v_c);
-                                        }
-                                      }
-                                    })(__concat(v_s1, "|"));
-                                  }
-                                }
-                              })(__concat(v_sep, v_b));
-                            }
-                          }
-                        })(__concat(v_a, "|"));
-                      }
-                    }
-                  })(v_show(v_chained));
-                }
+        })())(
+        (v__inl71_xs =>
+          (s => {
+            switch (s[0]) {
+              case 13: {
+                return [3, [24]];
               }
-            })(v_show(v_fromJust));
-          }
-        }
-      })(v_show(v_fromNothing))
-    );
-
-  const v__let_15 = (v_fromNothing, v_fromJust) =>
-    v__let_14(
-      v_fromJust,
-      v_fromNothing,
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            const v__do_e_0 = s[1];
-            return [3, v__do_e_0];
-          }
-          case 4: {
-            const v_h = s[1];
-            return v_pureEither(v_h);
-          }
-        }
-      })(v_nothingAsLeft([24], v_headList([14, "first", [14, "second", [13]]])))
-    );
-
-  const v__let_16 = v_fromNothing =>
-    v__let_15(v_fromNothing, v_nothingAsLeft([24], [12, "hi"]));
-
-  const main = v__let_16(v_nothingAsLeft([24], [11]));
+              case 14: {
+                return [4, v__inl71_xs[1]];
+              }
+            }
+          })(v__inl71_xs))([14, "first", [14, "second", [13]]])
+      ))([4, "hi"]))([3, [24]]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

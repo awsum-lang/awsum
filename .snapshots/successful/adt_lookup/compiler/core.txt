@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,104 +15,111 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "unwrap" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 24
-                    , [ "value" ]
-                    , CDrop DropFreeUnchecked "value"
-                        ( CVar "value" )
-                    )
-                ,
-                    ( 25
-                    , []
-                    , CString "not found"
-                    )
-                ]
-            )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCase
+            ( CJoin "$join7" [ "$inl8$scrut" ]
+                ( CCase
+                    ( CVar "$inl8$scrut" )
+                    [
+                        ( 3
+                        , [ "$inl5$__w0" ]
+                        , CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ,
+                        ( 4
+                        , [ "$inl6$s" ]
+                        , CCon 7
+                            [ CProj "$inl8$scrut" 1
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ]
+                )
+                ( CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CVar "unwrap" )
-                            [ CCon 24
+                        [ CLet "$inl2$x"
+                            ( CCon 24
                                 [ CString "hello" ]
-                            ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl2$x"
+                                ( CCase
+                                    ( CVar "$inl2$x" )
+                                    [
+                                        ( 24
+                                        , [ "$inl1$value" ]
+                                        , CProj "$inl2$x" 1
+                                        )
+                                    ,
+                                        ( 25
+                                        , []
+                                        , CString "not found"
+                                        )
+                                    ]
+                                )
+                            )
                         , CString ", "
                         ]
                     )
                     [
                         ( 3
                         , [ "$do_e_0" ]
-                        , CCon 3
-                            [ CVar "$do_e_0" ]
-                        )
-                    ,
-                        ( 4
-                        , [ "s0" ]
-                        , CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "s0"
-                            , CCall
-                                ( CVar "unwrap" )
-                                [ CCon 25 [] ]
-                            ]
-                        )
-                    ]
-                ]
-            )
-        , CFunDef "$let$13" [ "res" ]
-            ( CCase
-                ( CVar "res" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
+                        , CCon 7
                             [ CString "STRING_TOO_LONG"
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
                         )
-                    )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
+                    ,
+                        ( 4
+                        , [ "s0" ]
+                        , CJump "$join7"
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CLet "$inl4$x"
+                                    ( CCon 25 [] )
+                                    ( CDrop DropFreeUnchecked "$inl4$x"
+                                        ( CCase
+                                            ( CVar "$inl4$x" )
+                                            [
+                                                ( 24
+                                                , [ "$inl3$value" ]
+                                                , CProj "$inl4$x" 1
+                                                )
+                                            ,
+                                                ( 25
+                                                , []
+                                                , CString "not found"
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
                             ]
                         )
-                    )
-                ]
+                    ]
+                )
             )
         ]
     }

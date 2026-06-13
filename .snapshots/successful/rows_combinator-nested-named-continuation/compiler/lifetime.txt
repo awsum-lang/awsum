@@ -1,37 +1,25 @@
-pureEither:
-  param           x                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-inner:
-  param           _z                              count=0
+res:
+  let             $inl24$x                        count=0
+  case-pattern    $inl16$e                        count=0
+  case-pattern    $inl17$a                        count=0
+  let             $inl18$x                        count=0
+  case-pattern    $inl19$e                        count=0
+  case-pattern    $inl20$a                        count=0
+  let             $inl21$__input                  count=0
+  case-pattern    $inl22$__f0                     count=0
+  case-pattern    $inl23$__f0                     count=0
 
-describe:
-  param           r                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        _a                              count=0
-  row-case        _c                              count=0
-  case-pattern    v                               count=0
-
-$lam$13:
-  param           n                               count=1
-
-$lift$14:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$df$$rowmono$0$bindEither$0:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$1$bindEither$1:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
+main:
+  let             $inl29$r                        count=0
+  case-pattern    $inl25$__pa0                    count=0
+  row-case        $inl26$_a                       count=0
+  row-case        $inl27$_c                       count=0
+  case-pattern    $inl28$v                        count=0
 

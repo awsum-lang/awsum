@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,210 +15,147 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "greeting" [ "$wild0" ]
-            ( CString "hi" )
-        , CFunDef "unwrapBox" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 24
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CString "unwrapped" )
-                    )
-                ]
-            )
-        , CFunDef "unwrapBoxNamed" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 24
-                    , [ "_v" ]
-                    , CDrop DropFreeUnchecked "_v"
-                        ( CString "unwrapped-named" )
-                    )
-                ]
-            )
-        , CFunDef "showPair" [ "p" ]
-            ( CCase
-                ( CVar "p" )
-                [
-                    ( 25
-                    ,
-                        [ "__w0"
-                        , "__w1"
-                        ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CDrop DropFreeUnchecked "__w1"
-                            ( CString "paired" )
-                        )
-                    )
-                ]
-            )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCase
+            ( CJoin "$join3" [ "$inl4$scrut" ]
+                ( CCase
+                    ( CVar "$inl4$scrut" )
+                    [
+                        ( 3
+                        , [ "$inl1$__w0" ]
+                        , CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ,
+                        ( 4
+                        , [ "$inl2$s" ]
+                        , CCon 7
+                            [ CProj "$inl4$scrut" 1
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    ]
+                )
+                ( CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CVar "greeting" )
-                            [ CString "x" ]
+                        [ CString "hi"
                         , CString " "
                         ]
                     )
                     [
                         ( 3
                         , [ "$do_e_4" ]
-                        , CCon 3
-                            [ CVar "$do_e_4" ]
-                        )
-                    ,
-                        ( 4
-                        , [ "s0" ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CVar "unwrapBox" )
-                                    [ CCon 24
-                                        [ CString "a" ]
-                                    ]
-                                ]
-                            )
-                            [
-                                ( 3
-                                , [ "$do_e_3" ]
-                                , CCon 3
-                                    [ CVar "$do_e_3" ]
-                                )
-                            ,
-                                ( 4
-                                , [ "s1" ]
-                                , CCase
-                                    ( CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CString " "
-                                        ]
-                                    )
-                                    [
-                                        ( 3
-                                        , [ "$do_e_2" ]
-                                        , CCon 3
-                                            [ CVar "$do_e_2" ]
-                                        )
-                                    ,
-                                        ( 4
-                                        , [ "s2" ]
-                                        , CCase
-                                            ( CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "s2"
-                                                , CCall
-                                                    ( CVar "unwrapBoxNamed" )
-                                                    [ CCon 24
-                                                        [ CString "b" ]
-                                                    ]
-                                                ]
-                                            )
-                                            [
-                                                ( 3
-                                                , [ "$do_e_1" ]
-                                                , CCon 3
-                                                    [ CVar "$do_e_1" ]
-                                                )
-                                            ,
-                                                ( 4
-                                                , [ "s3" ]
-                                                , CCase
-                                                    ( CCall
-                                                        ( CBuiltIn "concatString" )
-                                                        [ CVar "s3"
-                                                        , CString " "
-                                                        ]
-                                                    )
-                                                    [
-                                                        ( 3
-                                                        , [ "$do_e_0" ]
-                                                        , CCon 3
-                                                            [ CVar "$do_e_0" ]
-                                                        )
-                                                    ,
-                                                        ( 4
-                                                        , [ "s4" ]
-                                                        , CCall
-                                                            ( CBuiltIn "concatString" )
-                                                            [ CVar "s4"
-                                                            , CCall
-                                                                ( CVar "showPair" )
-                                                                [ CCon 25
-                                                                    [ CString "l"
-                                                                    , CString "r"
-                                                                    ]
-                                                                ]
-                                                            ]
-                                                        )
-                                                    ]
-                                                )
-                                            ]
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ]
-            )
-        , CFunDef "$let$13" [ "res" ]
-            ( CCase
-                ( CVar "res" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
+                        , CCon 7
                             [ CString "STRING_TOO_LONG"
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
                         )
-                    )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
+                    ,
+                        ( 4
+                        , [ "s0" ]
+                        , CJump "$join3"
+                            [ CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s0"
+                                    , CString "unwrapped"
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_3" ]
+                                    , CCon 3
+                                        [ CVar "$do_e_3" ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "s1" ]
+                                    , CCase
+                                        ( CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s1"
+                                            , CString " "
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_2" ]
+                                            , CCon 3
+                                                [ CVar "$do_e_2" ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "s2" ]
+                                            , CCase
+                                                ( CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "s2"
+                                                    , CString "unwrapped-named"
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "$do_e_1" ]
+                                                    , CCon 3
+                                                        [ CVar "$do_e_1" ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "s3" ]
+                                                    , CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CVar "s3"
+                                                            , CString " "
+                                                            ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_0" ]
+                                                            , CCon 3
+                                                                [ CVar "$do_e_0" ]
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "s4" ]
+                                                            , CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CVar "s4"
+                                                                , CString "paired"
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
                             ]
                         )
-                    )
-                ]
+                    ]
+                )
             )
         ]
     }

@@ -1,15 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-identity:
-  param           x                               count=1
-
-ascribedCall:
-  case-pattern    __w0                            count=0
-  case-pattern    n                               count=1
+  let             $inl0$eff                       count=0
 
 joined:
   case-pattern    $do_e_2                         count=1

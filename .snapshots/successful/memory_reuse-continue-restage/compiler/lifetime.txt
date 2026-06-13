@@ -1,0 +1,22 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+loop:
+  param           fuel                            count=2
+  param           xs                              count=1
+  param           acc                             count=6
+  case-pattern    $inl1$h                         count=0
+  case-pattern    $inl2$_t                        count=0
+  case-pattern    $inl4$h                         count=0
+  case-pattern    $inl5$_t                        count=0
+  case-pattern    _h                              count=0
+  case-pattern    t                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    $inl7$h                         count=0
+  case-pattern    $inl8$_t                        count=0
+  case-pattern    f2                              count=0
+

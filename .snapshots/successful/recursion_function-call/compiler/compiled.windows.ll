@@ -160,30 +160,19 @@ tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   call void @__inc_ref(ptr %t14)
-  %t15 = getelementptr ptr, ptr %t4, i32 2
-  %t16 = load ptr, ptr %t15
-  call void @__inc_ref(ptr %t16)
-  call void @__inc_ref(ptr %t14)
-  %t17 = call ptr @__print(ptr %t14)
-  %t18 = getelementptr ptr, ptr %t17, i32 0
-  %t19 = load ptr, ptr %t18
-  %t20 = ptrtoint ptr %t19 to i64
-  switch i64 %t20, label %tco.case.default.21 [ i64 0, label %tco.case.arm.0.22 ]
-tco.case.arm.0.22:
-  call void @__inc_ref(ptr %t16)
-  call void @__free_recursive(ptr %t17)
+  %t15 = call ptr @__print(ptr %t14)
+  %t16 = getelementptr ptr, ptr %t4, i32 2
+  %t17 = load ptr, ptr %t16
+  call void @__inc_ref(ptr %t17)
   call void @__free_recursive(ptr %t4)
-  call void @__free_recursive(ptr %t16)
-  call void @__free_recursive(ptr %t14)
-  store ptr %t16, ptr %t3
+  call void @__free_recursive(ptr %t15)
+  store ptr %t17, ptr %t3
   br label %tco.loop.0
-tco.case.default.21:
-  unreachable
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t23 = load ptr, ptr %t2
-  ret ptr %t23
+  %t18 = load ptr, ptr %t2
+  ret ptr %t18
 }
 
 define internal ptr @v_advanceStep(ptr %v_x) {
@@ -197,58 +186,66 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 24, label %tco.case.arm.24.9 i64 25, label %tco.case.arm.25.22 i64 26, label %tco.case.arm.26.35 ]
+  switch i64 %t7, label %tco.case.default.8 [ i64 24, label %tco.case.arm.24.9 i64 25, label %tco.case.arm.25.24 i64 26, label %tco.case.arm.26.39 ]
 tco.case.arm.24.9:
-  %t10 = getelementptr i8, ptr %t4, i64 -8
-  %t11 = load i32, ptr %t10
-  %t12 = icmp eq i32 %t11, 1
-  br i1 %t12, label %reuse.in_place.13, label %reuse.copy.14
-reuse.in_place.13:
-  %t16 = inttoptr i64 25 to ptr
-  %t17 = getelementptr ptr, ptr %t4, i32 0
-  store ptr %t16, ptr %t17
-  br label %reuse.join.15
-reuse.copy.14:
-  %t18 = call ptr @__alloc(i64 8, i32 0)
-  %t19 = inttoptr i64 25 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
+  %t12 = getelementptr i8, ptr %t4, i64 -8
+  %t13 = load i32, ptr %t12
+  %t14 = icmp eq i32 %t13, 1
+  br i1 %t14, label %reuse.in_place.15, label %reuse.copy.16
+reuse.in_place.15:
+  %t10 = inttoptr i64 25 to ptr
+  %t11 = getelementptr ptr, ptr %t4, i32 0
+  store ptr %t10, ptr %t11
+  br label %reuse.in_place.end.18
+reuse.in_place.end.18:
+  br label %reuse.join.17
+reuse.copy.16:
+  %t20 = call ptr @__alloc(i64 8, i32 0)
+  %t21 = inttoptr i64 25 to ptr
+  %t22 = getelementptr ptr, ptr %t20, i32 0
+  store ptr %t21, ptr %t22
   call void @__free_recursive(ptr %t4)
-  br label %reuse.join.15
-reuse.join.15:
-  %t21 = phi ptr [ %t4, %reuse.in_place.13 ], [ %t18, %reuse.copy.14 ]
-  store ptr %t21, ptr %t3
+  br label %reuse.copy.end.19
+reuse.copy.end.19:
+  br label %reuse.join.17
+reuse.join.17:
+  %t23 = phi ptr [ %t4, %reuse.in_place.end.18 ], [ %t20, %reuse.copy.end.19 ]
+  store ptr %t23, ptr %t3
   br label %tco.loop.0
-tco.case.arm.25.22:
-  %t23 = getelementptr i8, ptr %t4, i64 -8
-  %t24 = load i32, ptr %t23
-  %t25 = icmp eq i32 %t24, 1
-  br i1 %t25, label %reuse.in_place.26, label %reuse.copy.27
-reuse.in_place.26:
-  %t29 = inttoptr i64 26 to ptr
-  %t30 = getelementptr ptr, ptr %t4, i32 0
-  store ptr %t29, ptr %t30
-  br label %reuse.join.28
-reuse.copy.27:
-  %t31 = call ptr @__alloc(i64 8, i32 0)
-  %t32 = inttoptr i64 26 to ptr
-  %t33 = getelementptr ptr, ptr %t31, i32 0
-  store ptr %t32, ptr %t33
+tco.case.arm.25.24:
+  %t27 = getelementptr i8, ptr %t4, i64 -8
+  %t28 = load i32, ptr %t27
+  %t29 = icmp eq i32 %t28, 1
+  br i1 %t29, label %reuse.in_place.30, label %reuse.copy.31
+reuse.in_place.30:
+  %t25 = inttoptr i64 26 to ptr
+  %t26 = getelementptr ptr, ptr %t4, i32 0
+  store ptr %t25, ptr %t26
+  br label %reuse.in_place.end.33
+reuse.in_place.end.33:
+  br label %reuse.join.32
+reuse.copy.31:
+  %t35 = call ptr @__alloc(i64 8, i32 0)
+  %t36 = inttoptr i64 26 to ptr
+  %t37 = getelementptr ptr, ptr %t35, i32 0
+  store ptr %t36, ptr %t37
   call void @__free_recursive(ptr %t4)
-  br label %reuse.join.28
-reuse.join.28:
-  %t34 = phi ptr [ %t4, %reuse.in_place.26 ], [ %t31, %reuse.copy.27 ]
-  store ptr %t34, ptr %t3
+  br label %reuse.copy.end.34
+reuse.copy.end.34:
+  br label %reuse.join.32
+reuse.join.32:
+  %t38 = phi ptr [ %t4, %reuse.in_place.end.33 ], [ %t35, %reuse.copy.end.34 ]
+  store ptr %t38, ptr %t3
   br label %tco.loop.0
-tco.case.arm.26.35:
+tco.case.arm.26.39:
   call void @__free_recursive(ptr %t4)
   store ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr %t2
   br label %tco.exit.1
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t36 = load ptr, ptr %t2
-  ret ptr %t36
+  %t40 = load ptr, ptr %t2
+  ret ptr %t40
 }
 
 define internal ptr @v_main() {

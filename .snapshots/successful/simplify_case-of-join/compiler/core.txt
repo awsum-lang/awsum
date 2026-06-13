@@ -1,0 +1,93 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "seed"
+            ( CCall
+                ( CBuiltIn "eqUInt32" )
+                [ CCall
+                    ( CBuiltIn "lengthUtf8Bytes" )
+                    [ CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CIntLit 42 TInt32 ]
+                    ]
+                , CIntLit 2 TUInt32
+                ]
+            )
+        , CValDef "result"
+            ( CLet "$inl2$s0"
+                ( CVar "seed" )
+                ( CDrop DropFreeUnchecked "$inl2$s0"
+                    ( CCase
+                        ( CCase
+                            ( CVar "$inl2$s0" )
+                            [
+                                ( 1
+                                , []
+                                , CCall
+                                    ( CBuiltIn "eqUInt32" )
+                                    [ CCall
+                                        ( CBuiltIn "lengthUtf8Bytes" )
+                                        [ CString "xyz" ]
+                                    , CIntLit 3 TUInt32
+                                    ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CVar "$inl2$s0"
+                                )
+                            ]
+                        )
+                        [
+                            ( 1
+                            , []
+                            , CString "F"
+                            )
+                        ,
+                            ( 2
+                            , []
+                            , CString "T"
+                            )
+                        ]
+                    )
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CVar "result"
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

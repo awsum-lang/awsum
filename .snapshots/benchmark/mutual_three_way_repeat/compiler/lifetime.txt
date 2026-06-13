@@ -1,0 +1,30 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+outerLoop:
+  param           k                               count=2
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+  case-pattern    e                               count=0
+  case-pattern    _v                              count=0
+
+main:
+  case-pattern    _e                              count=0
+  case-pattern    _v                              count=0
+
+$scc$stepA_stepB_stepC:
+  param           $args                           count=4
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+

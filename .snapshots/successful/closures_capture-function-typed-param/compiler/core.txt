@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,22 +15,16 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
@@ -42,55 +35,9 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
-                    [ CCall
-                        ( CVar "$df$poly$1" ) []
-                    ]
+                    [ CIntLit 5 TInt32 ]
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lam$13"
-            [ "k"
-            , "n"
-            ]
-            ( CCall
-                ( CVar "$apply1" )
-                [ CVar "k"
-                , CVar "n"
-                ]
-            )
-        , CFunDef "$lam$14" [ "m" ]
-            ( CVar "m" )
-        , CFunDef "$df$applyOnce$0"
-            [ "x"
-            , "$df$applyOnce$0$cap0$0"
-            ]
-            ( CCall
-                ( CVar "$lam$13" )
-                [ CVar "$df$applyOnce$0$cap0$0"
-                , CVar "x"
-                ]
-            )
-        , CFunDef "$df$poly$1" []
-            ( CCall
-                ( CVar "$df$applyOnce$0" )
-                [ CIntLit 5 TInt32
-                , CCon 8 []
-                ]
-            )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" )
-                [
-                    ( 8
-                    , []
-                    , CCall
-                        ( CVar "$lam$14" )
-                        [ CVar "$arg0" ]
-                    )
                 ]
             )
         ]

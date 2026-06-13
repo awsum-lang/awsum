@@ -1,19 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-dispatchInner:
-  param           x                               count=1
-  row-case        b                               count=0
-
-describeMaybe:
-  param           m                               count=1
-  case-pattern    inner                           count=0
-
-describeLst:
-  param           xs                              count=1
+  let             $inl0$eff                       count=0
 
 $cps$describeLst:
   param           xs                              count=2
@@ -23,22 +13,33 @@ $cps$describeLst:
 
 $apply$describeLst:
   param           $k                              count=1
-  param           $x                              count=3
+  param           $x                              count=2
   case-pattern    $pk_28                          count=0
   case-pattern    h                               count=0
   case-pattern    $do_e_0                         count=0
   case-pattern    rest                            count=0
-
-describeEither:
-  param           r                               count=1
-  case-pattern    _e                              count=0
-  case-pattern    m                               count=0
+  let             $inl6$x                         count=0
 
 summary:
+  let             $inl8$__input                   count=0
+  case-pattern    $inl7$__f0                      count=0
+  let             $inl11$m                        count=0
+  case-pattern    $inl9$inner                     count=0
+  let             $inl10$x                        count=0
   case-pattern    $do_e_6                         count=1
   case-pattern    a                               count=1
   case-pattern    $do_e_5                         count=1
   case-pattern    b                               count=1
+  let             $inl15$__input                  count=0
+  case-pattern    $inl12$__f0                     count=0
+  case-pattern    $inl13$__f0                     count=3
+  case-pattern    $inl14$__f0                     count=0
+  let             $inl21$r                        count=0
+  case-pattern    $inl16$_e                       count=0
+  case-pattern    $inl17$m                        count=0
+  let             $inl18$m                        count=0
+  case-pattern    $inl19$inner                    count=0
+  let             $inl20$x                        count=0
   case-pattern    $do_e_4                         count=1
   case-pattern    c                               count=1
   case-pattern    $do_e_3                         count=1
@@ -48,15 +49,12 @@ summary:
   case-pattern    $do_e_1                         count=1
   case-pattern    s2                              count=1
 
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-
-$lift$14:
-  param           __input                         count=1
+main:
+  case-pattern    $inl22$__w0                     count=0
+  case-pattern    $inl23$s                        count=1
 
 $cps$$lift$14:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=1
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
@@ -66,14 +64,4 @@ $apply$$lift$14:
   param           $x                              count=1
   case-pattern    $pk_30                          count=0
   case-pattern    __f0                            count=0
-
-$lift$15:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$let$16:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
 

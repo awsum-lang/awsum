@@ -1,8 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
 main:
   case-pattern    _e                              count=0
@@ -16,11 +17,7 @@ $scc$$apply1_$lam$13_a_b:
   case-pattern    n                               count=0
   case-pattern    e                               count=0
   case-pattern    m                               count=0
-  case-pattern    f                               count=0
   case-pattern    n                               count=0
   case-pattern    e                               count=0
   case-pattern    m                               count=0
-
-a:
-  param           n                               count=1
 

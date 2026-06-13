@@ -4,31 +4,43 @@ How the compiler test suite is structured, what each layer guarantees, and the w
 
 ## Layers
 
-The Hspec test suite has two complementary layers that share compile + run primitives via [test/Awsum/RunBackend.hs](../test/Awsum/RunBackend.hs) (`Backend`, `CompiledArtifacts`, `compileFromText`/`compileFromFile`, `runOn`, `runOnAll`).
+The Hspec test suite has three complementary layers that share compile + run primitives via [test/Awsum/RunBackend.hs](../test/Awsum/RunBackend.hs) (`Backend`, `CompiledArtifacts`, `compileFromText`/`compileFromFile`, `runOn`, `runOnAll`). Every harness compile and every backend process run is capped at 60 s (`timeLimitMicros` there): a diverging program or a non-terminating compiler pass fails its item by name instead of hanging the suite.
 
 ### Snapshot tests — `just test`
 
-Hspec + golden files. Each program in [test/sources/successful/](../test/sources/successful/)`<name>/code/Main.aww` generates snapshots for AST, Core IR, formatted source, per-backend codegen text (LLVM `.ll`, JVM `.j`, CLR `.il`, WASM `.wat`, JS), plus runtime stdout per stdin file. Cross-backend assertions guarantee LLVM/JVM/CLR/WASM/JS all produce **identical** stdout for the same input. To regenerate snapshots, delete the `.snapshots/` directory at the repo root and re-run `just test`.
+Hspec + golden files. Each program in [test/sources/successful/](../test/sources/successful/)`<name>/code/Main.aww` generates snapshots for AST, Core IR, formatted source, per-backend codegen text (LLVM `.ll`, JVM `.j`, CLR `.il`, WASM `.wat`, JS), plus runtime stdout per input file (`<name>/input/*.txt` — today each is delivered to the program as its single CLI argument; a program with no `input/` directory runs once, against `output/no-input.txt`). Cross-backend assertions guarantee LLVM/JVM/CLR/WASM/JS all produce **identical** stdout for the same input. To regenerate snapshots, delete the `.snapshots/` directory at the repo root and re-run `just test`.
 
 Error-program snapshots live alongside under [test/sources/errors/](../test/sources/errors/) and `.snapshots/errors/`.
 
-### Property tests — `just test-property` (~40s)
+### Property tests — `just test-property` (~2 min)
 
-Same five backends, but instead of one fixed input per program, QuickCheck generates N constructively-valid inputs; each is fed through every backend and compared against a value computed independently in Haskell. Catches "all backends agree but the answer is wrong" — the failure mode snapshot tests cannot see. Lives in [test/sources/property/](../test/sources/property/) (Awsum sources) and [test/Awsum/PropertySpec.hs](../test/Awsum/PropertySpec.hs) (generators + expected-output functions). Slow because it spawns 5 backend processes per generated case, so it's gated out of `just test`.
+Same five backends, but instead of one fixed input per program, QuickCheck generates N constructively-valid inputs; each is fed through every backend — in both pipeline modes, with and without the `Simplify` pass — and compared against a value computed independently in Haskell. Catches "all backends agree but the answer is wrong" — the failure mode snapshot tests cannot see. Lives in [test/sources/property/](../test/sources/property/) (Awsum sources) and [test/Awsum/PropertySpec.hs](../test/Awsum/PropertySpec.hs) (generators + expected-output functions). Slow because it spawns 10 backend processes per generated case (5 backends × 2 modes), so it's gated out of `just test`.
+
+### No-simplify differential — `just test-no-simplify`
+
+Every successful-corpus program compiled a second time with the `Simplify` pass disabled — a library-level, test-only switch; the `awsum` CLI has no such flag — and run on all five backends; each stdout must equal the committed output golden that `just test` records under the normal pipeline. The pair of suites asserts `runtime(simplify(core)) == runtime(core)` with the runtime itself as the oracle (a wrong Core rewrite makes all five backends agree on the same wrong answer, invisible to both snapshot layers), and keeps every codegen exercised on raw, unsimplified Core shapes. Never writes goldens — a missing golden means `just test` hasn't recorded the reference yet. Gated out of `just test` for the same reason the property layer is: one extra `clang` per program. Lives in [test/Awsum/NoSimplifySpec.hs](../test/Awsum/NoSimplifySpec.hs).
+
+### Benchmark snapshots — `just benchmark-snapshot`
+
+Performance golden files, one per program under [test/sources/benchmark/](../test/sources/benchmark/): `.benchmarks/<name>/bench.txt` records a per-backend `median (min–max)` of wall time and peak RSS (run count and timeout in the header), plus a stdout anchor cross-checked against every backend and run while measuring — a backend whose stdout deviates renders `mismatch` and the run exits non-zero. Snapshot mode also compiles the program without the `Simplify` pass and runs it once per backend (unmeasured) against the same anchor: `bench.txt` records only the normal pipeline, a no-simplify deviation goes to stderr and the exit code. The numbers are machine-local, so they are **not** asserted by `just test` or CI; the workflow is manual: snapshot, make the change, snapshot again, read the `git diff` — the (min–max) band separates run-to-run noise from a real shift. Compiler artifacts for the same programs (`.snapshots/benchmark/<name>/compiler/` — AST, Core, per-backend codegen text, lifetime analysis) **are** golden-tested by `just test`, so a bench delta is diagnosable from the committed IR diff. The split is physical: `.snapshots/` holds what `just test` regenerates and can be reset wholesale; `.benchmarks/` is written only by benchmark runs, so a snapshot reset cannot take the medians with it. macOS-only (BSD `/usr/bin/time -l`, `gtimeout` from coreutils).
 
 ## Commands
 
 ```bash
 just build          # Build with pedantic warnings
-just test           # Snapshot + error-program tests (excludes property tests)
-just test-property  # Property tests across all 5 backends (~40s)
+just test           # Snapshot + error-program tests (excludes the property and no-simplify suites)
+just test-property  # Property tests across all 5 backends, both pipeline modes (~2 min)
+just test-no-simplify    # Whole corpus without the Simplify pass vs committed stdout goldens
+just benchmark NAME      # One benchmark through every backend with timing + peak RSS (macOS)
+just benchmark-all       # Every benchmark in sequence, summary at the end
+just benchmark-snapshot  # Overwrite the per-benchmark median golden files
 just test-watch     # TDD watch mode (snapshot tests, file-watch)
 just build-watch    # Compiler-only watch mode
 just format-fix     # Autoformat Haskell with Ormolu
 just lint-check     # hlint (check only)
 just lint-fix       # hlint with auto-fix
 just clean          # Clean build artefacts (helps with weird HLS errors)
-just fix            # Full precommit: cyrillic-detect → format → lint → clean → build → test → test-property
+just fix            # Full precommit: cyrillic-detect → format → lint → clean → build → test → test-property → test-no-simplify
 just release        # Tag and push the version currently in package.yaml (after the prep PR is merged)
 ```
 
@@ -36,7 +48,7 @@ just release        # Tag and push the version currently in package.yaml (after 
 
 Any new functionality lands together with the tests that exercise it — snapshot tests for new language features or compiler passes, property tests for behaviour that has a generator-friendly input space.
 
-1. Run `just fix` — everything must pass (format, lint, build, snapshot tests, property tests).
+1. Run `just fix` — everything must pass (format, lint, build, snapshot tests, property tests, no-simplify differential).
 2. Run `stack install` so the global `awsum` binary picks up the change (the VSCode extension shells out to it).
 3. Add an entry under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md), grouped by Keep-a-Changelog section (`Added` / `Changed` / `Fixed` / `Removed`). One bullet per user-visible change. **If the changelog isn't updated, the feature isn't finished.** Infrastructure-only changes (CI, dev tooling, internal refactors) still get an entry so the next release notes are complete.
 

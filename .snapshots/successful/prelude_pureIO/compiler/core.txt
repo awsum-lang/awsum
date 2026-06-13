@@ -1,18 +1,13 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "pureIO" [ "x" ]
-            ( CCon 5
-                [ CVar "x" ]
-            )
-        , CFunDef "runIO" [ "io" ]
+        [ CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
                     ( CVar "io" )
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -20,22 +15,16 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
@@ -44,23 +33,9 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$df$bindIO$0" )
-                [ CCall
-                    ( CVar "pureIO" )
-                    [ CString "from pureIO" ]
-                ]
-            )
-        , CFunDef "$bi$IO.Stdout.print" [ "$x0" ]
-            ( CCon 7
-                [ CVar "$x0"
-                , CCon 5
-                    [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$df$bindIO$0" [ "io" ]
-            ( CCall
                 ( CVar "$cps$$df$bindIO$0" )
-                [ CVar "io"
+                [ CCon 5
+                    [ CString "from pureIO" ]
                 , CCon 8 []
                 ]
             )
@@ -74,15 +49,15 @@ CoreProgram
                     [
                         ( 5
                         , [ "a" ]
-                        , CDrop DropFreeUnchecked "a"
-                            ( CCall
-                                ( CVar "$apply$$df$bindIO$0" )
-                                [ CVar "$k"
-                                , CCall
-                                    ( CVar "$bi$IO.Stdout.print" )
-                                    [ CVar "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$bindIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CProj "io" 1
+                                , CCon 5
+                                    [ CCon 0 [] ]
                                 ]
-                            )
+                            ]
                         )
                     ,
                         ( 7
@@ -95,7 +70,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$k"
                                     ( CContinue
                                         [ CVar "next"
-                                        , CReuse "io" 9
+                                        , CReuse ReuseGuarded "io" 9
                                             [ CVar "$k"
                                             , CVar "s"
                                             ]
@@ -130,7 +105,7 @@ CoreProgram
                                 ( CDrop DropFreeUnchecked "$x"
                                     ( CContinue
                                         [ CVar "$pk_9"
-                                        , CReuse "$k" 7
+                                        , CReuse ReuseUnique "$k" 7
                                             [ CVar "s"
                                             , CVar "$x"
                                             ]

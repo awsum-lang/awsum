@@ -1,31 +1,22 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-opB:
-  param           n                               count=1
-
-$let$13:
-  param           msg                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$let$14:
-  param           chained                         count=1
-  case-pattern    __pa0                           count=0
-  row-case        _a                              count=0
-  row-case        _b                              count=0
-  case-pattern    n                               count=0
-
-$lift$15:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$df$$rowmono$0$bindEither$0:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
+main:
+  let             $inl11$x                        count=0
+  case-pattern    $inl6$e                         count=0
+  case-pattern    $inl7$a                         count=0
+  let             $inl8$__input                   count=0
+  case-pattern    $inl9$__f0                      count=0
+  case-pattern    $inl10$__f0                     count=0
+  let             $inl18$chained                  count=0
+  case-pattern    $inl12$__pa0                    count=0
+  row-case        $inl13$_a                       count=0
+  row-case        $inl14$_b                       count=0
+  case-pattern    $inl15$n                        count=0
+  case-pattern    $inl16$__w0                     count=0
+  case-pattern    $inl17$s                        count=1
 

@@ -1,0 +1,305 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "zero"
+            ( CIntLit 0 TInt32 )
+        , CFunDef "buildLeft"
+            [ "n"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CVar "zero"
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCon 4
+                            [ CVar "acc" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "e" ]
+                                , CDrop DropFreeUnchecked "e"
+                                    ( CCon 3
+                                        [ CVar "e" ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "acc"
+                                            ( CContinue
+                                                [ CVar "m"
+                                                , CCon 25
+                                                    [ CVar "acc"
+                                                    , CIntLit 1 TInt32
+                                                    , CCon 24 []
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "repeatSum"
+            [ "n"
+            , "t"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CVar "zero"
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CVar "acc"
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "t"
+                                            ( CDrop DropFreeUnchecked "acc"
+                                                ( CContinue
+                                                    [ CVar "m"
+                                                    , CVar "t"
+                                                    , CCall
+                                                        ( CVar "$scc$$apply$sumTree_$cps$sumTree" )
+                                                        [ CCon 29
+                                                            [ CVar "t"
+                                                            , CVar "zero"
+                                                            , CCon 26 []
+                                                            ]
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCase
+                ( CCall
+                    ( CVar "buildLeft" )
+                    [ CIntLit 10000 TInt32
+                    , CCon 24 []
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "_e" ]
+                    , CCon 7
+                        [ CString "UNDERFLOW"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 4
+                    , [ "t" ]
+                    , CCon 7
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CCall
+                                ( CVar "repeatSum" )
+                                [ CIntLit 1000 TInt32
+                                , CVar "t"
+                                , CVar "zero"
+                                ]
+                            ]
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$scc$$apply$sumTree_$cps$sumTree" [ "$args" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 28
+                        ,
+                            [ "$k"
+                            , "$x"
+                            ]
+                        , CDrop DropFreeUnchecked "$k"
+                            ( CDrop DropFreeUnchecked "$x"
+                                ( CCase
+                                    ( CVar "$k" )
+                                    [
+                                        ( 26
+                                        , []
+                                        , CVar "$x"
+                                        )
+                                    ,
+                                        ( 27
+                                        ,
+                                            [ "$pk_27"
+                                            , "r"
+                                            ]
+                                        , CDrop DropFreeUnchecked "$args"
+                                            ( CContinue
+                                                [ CCon 29
+                                                    [ CProj "$k" 2
+                                                    , CVar "$x"
+                                                    , CProj "$k" 1
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 29
+                        ,
+                            [ "t"
+                            , "acc"
+                            , "$k"
+                            ]
+                        , CDrop DropFreeUnchecked "acc"
+                            ( CDrop DropFreeUnchecked "$k"
+                                ( CCase
+                                    ( CVar "t" )
+                                    [
+                                        ( 24
+                                        , []
+                                        , CDrop DropFreeUnchecked "t"
+                                            ( CDrop DropFreeUnchecked "$args"
+                                                ( CContinue
+                                                    [ CCon 28
+                                                        [ CVar "$k"
+                                                        , CVar "acc"
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 25
+                                        ,
+                                            [ "l"
+                                            , "v"
+                                            , "r"
+                                            ]
+                                        , CDrop DropFreeUnchecked "l"
+                                            ( CDrop DropFreeUnchecked "v"
+                                                ( CDrop DropFreeUnchecked "r"
+                                                    ( CDrop DropFreeUnchecked "$args"
+                                                        ( CContinue
+                                                            [ CReuse ReuseGuarded "t" 29
+                                                                [ CVar "l"
+                                                                , CCase
+                                                                    ( CCall
+                                                                        ( CBuiltIn "addInt32" )
+                                                                        [ CVar "acc"
+                                                                        , CVar "v"
+                                                                        ]
+                                                                    )
+                                                                    [
+                                                                        ( 3
+                                                                        , [ "$inl1$_e" ]
+                                                                        , CIntLit 0 TInt32
+                                                                        )
+                                                                    ,
+                                                                        ( 4
+                                                                        , [ "$inl2$v" ]
+                                                                        , CDrop DropFreeUnchecked "$inl2$v"
+                                                                            ( CVar "$inl2$v" )
+                                                                        )
+                                                                    ]
+                                                                , CCon 27
+                                                                    [ CVar "$k"
+                                                                    , CVar "r"
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

@@ -1,18 +1,13 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "pureEither" [ "x" ]
-            ( CCon 4
-                [ CVar "x" ]
-            )
-        , CFunDef "runIO" [ "io" ]
+        [ CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
                     ( CVar "io" )
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -20,180 +15,81 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CValDef "oa"
-            ( CCon 4
-                [ CIntLit 10 TInt32 ]
-            )
-        , CValDef "ob"
-            ( CCon 4
-                [ CIntLit 20 TInt32 ]
-            )
         , CValDef "oc"
             ( CCon 3
                 [ CCon 26 [] ]
             )
         , CValDef "cNested"
-            ( CCall
-                ( CVar "$df$$rowmono$0$bindEither$0" )
-                [ CVar "oa" ]
-            )
-        , CFunDef "describe" [ "r" ]
-            ( CCase
-                ( CVar "r" )
-                [
-                    ( 3
-                    , [ "__pa0" ]
-                    , CDrop DropFreeUnchecked "__pa0"
-                        ( CRowCase
-                            ( CVar "__pa0" )
-                            [
-                                ( 332136403
-                                , "_a"
-                                , CDrop DropFreeUnchecked "_a"
-                                    ( CString "A" )
-                                )
-                            ,
-                                ( 348914022
-                                , "_b"
-                                , CDrop DropFreeUnchecked "_b"
-                                    ( CString "B" )
-                                )
-                            ,
-                                ( 365691641
-                                , "_c"
-                                , CDrop DropFreeUnchecked "_c"
-                                    ( CString "C" )
-                                )
-                            ]
-                        )
+            ( CLet "$inl17$x"
+                ( CVar "oc" )
+                ( CDrop DropFreeUnchecked "$inl17$x"
+                    ( CCase
+                        ( CVar "$inl17$x" )
+                        [
+                            ( 3
+                            , [ "$inl18$e" ]
+                            , CCon 3
+                                [ CRow 365691641
+                                    ( CProj "$inl17$x" 1 )
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "$inl19$a" ]
+                            , CCon 4
+                                [ CProj "$inl17$x" 1 ]
+                            )
+                        ]
                     )
-                ,
-                    ( 4
-                    , [ "n" ]
-                    , CDrop DropFreeUnchecked "n"
-                        ( CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
-                        )
-                    )
-                ]
+                )
             )
         , CValDef "main"
             ( CCon 7
-                [ CCall
-                    ( CVar "describe" )
-                    [ CVar "cNested" ]
+                [ CLet "$inl25$r"
+                    ( CVar "cNested" )
+                    ( CDrop DropFreeUnchecked "$inl25$r"
+                        ( CCase
+                            ( CVar "$inl25$r" )
+                            [
+                                ( 3
+                                , [ "$inl20$__pa0" ]
+                                , CRowCase
+                                    ( CProj "$inl25$r" 1 )
+                                    [
+                                        ( 365691641
+                                        , "$inl23$_c"
+                                        , CString "C"
+                                        )
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl24$n" ]
+                                , CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CProj "$inl25$r" 1 ]
+                                )
+                            ]
+                        )
+                    )
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lam$13" [ "c" ]
-            ( CCall
-                ( CVar "pureEither" )
-                [ CVar "c" ]
-            )
-        , CFunDef "$lam$14" [ "_b" ]
-            ( CCall
-                ( CVar "$df$$rowmono$2$bindEither$1" )
-                [ CVar "oc" ]
-            )
-        , CFunDef "$lam$15" [ "_a" ]
-            ( CCall
-                ( CVar "$df$$rowmono$1$bindEither$2" )
-                [ CVar "ob" ]
-            )
-        , CFunDef "$df$$rowmono$0$bindEither$0" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CRow 332136403
-                                ( CVar "e" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "$lam$15" )
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$$rowmono$2$bindEither$1" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CRow 365691641
-                                ( CVar "e" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "$lam$13" )
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$$rowmono$1$bindEither$2" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CRow 348914022
-                                ( CVar "e" )
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCall
-                            ( CVar "$lam$14" )
-                            [ CVar "a" ]
-                        )
-                    )
                 ]
             )
         ]

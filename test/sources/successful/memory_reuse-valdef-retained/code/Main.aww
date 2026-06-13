@@ -1,0 +1,39 @@
+{- Attack form, managed-flavoured: a top-level definition flows into a
+   consuming reuse-shaped loop, and is read again after. On JVM/CLR/JS a
+   CValDef is computed once at startup and read by reference — an
+   in-place loop would silently mutate the global; on LLVM/WASM every
+   reference is a fresh cell from the getter. The cells are user data
+   (ReuseGuarded), so neither happens: the second read must see the
+   value intact. The body is a call (not a constant tree), so neither
+   the value nor the probe folds at compile time. -}
+
+import IO.Stdout
+
+type Stack = Empty | Push String Stack
+
+mk : Int32 -> Stack -> Stack
+mk n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _u -> acc
+    Right m -> mk m (Push (showInt32 n) acc)
+
+threeUp : Stack
+threeUp = mk 3 Empty
+
+revInto2 : Stack -> Stack -> Stack
+revInto2 lst acc = case lst of
+  Empty -> acc
+  Push s rest -> revInto2 rest (Push s acc)
+
+second : Stack -> String
+second st = case st of
+  Empty -> "E"
+  Push _s2 r -> case r of
+    Empty -> "e"
+    Push s3 _r2 -> s3
+
+main : IO Never Unit
+main =
+  IO.Stdout.print (second (revInto2 threeUp Empty))
+    |> andThenIO (\_u2 -> IO.Stdout.print (second threeUp))

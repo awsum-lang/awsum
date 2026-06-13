@@ -1,0 +1,352 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "swap"
+            [ "n"
+            , "a"
+            , "b"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqUInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TUInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCall
+                            ( CBuiltIn "showUInt32" )
+                            [ CVar "a" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "subUInt32" )
+                                [ CVar "n"
+                                , CIntLit 1 TUInt32
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CString "E"
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "a"
+                                            ( CDrop DropFreeUnchecked "b"
+                                                ( CContinue
+                                                    [ CVar "m"
+                                                    , CVar "b"
+                                                    , CVar "a"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "wrap"
+            [ "n"
+            , "d"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqUInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TUInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCase
+                            ( CVar "acc" )
+                            [
+                                ( 13
+                                , []
+                                , CString "none"
+                                )
+                            ,
+                                ( 14
+                                ,
+                                    [ "$inl1$h"
+                                    , "$inl2$_t"
+                                    ]
+                                , CCall
+                                    ( CBuiltIn "showUInt32" )
+                                    [ CProj "acc" 1 ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "subUInt32" )
+                                [ CVar "n"
+                                , CIntLit 1 TUInt32
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CString "E"
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "d"
+                                            ( CDrop DropFreeUnchecked "acc"
+                                                ( CContinue
+                                                    [ CVar "m"
+                                                    , CVar "m"
+                                                    , CCon 14
+                                                        [ CVar "d"
+                                                        , CVar "acc"
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "fib"
+            [ "n"
+            , "a"
+            , "b"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqUInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TUInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCall
+                            ( CBuiltIn "showUInt32" )
+                            [ CVar "a" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "addUInt32" )
+                                [ CVar "a"
+                                , CVar "b"
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "_e" ]
+                                , CString "OVERFLOW"
+                                )
+                            ,
+                                ( 4
+                                , [ "s" ]
+                                , CDrop DropFreeUnchecked "s"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "subUInt32" )
+                                            [ CVar "n"
+                                            , CIntLit 1 TUInt32
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "_e2" ]
+                                            , CString "E"
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "m" ]
+                                            , CDrop DropFreeUnchecked "m"
+                                                ( CDrop DropFreeUnchecked "n"
+                                                    ( CDrop DropFreeUnchecked "a"
+                                                        ( CDrop DropFreeUnchecked "b"
+                                                            ( CContinue
+                                                                [ CVar "m"
+                                                                , CVar "b"
+                                                                , CVar "s"
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CVar "swap" )
+                        [ CIntLit 5 TUInt32
+                        , CIntLit 7 TUInt32
+                        , CIntLit 9 TUInt32
+                        ]
+                    , CString "|"
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "_e" ]
+                    , CCon 7
+                        [ CString "TOO_LONG"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 4
+                    , [ "p1" ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "p1"
+                            , CCall
+                                ( CVar "wrap" )
+                                [ CIntLit 4 TUInt32
+                                , CIntLit 1 TUInt32
+                                , CCon 14
+                                    [ CIntLit 1 TUInt32
+                                    , CCon 13 []
+                                    ]
+                                ]
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "_e2" ]
+                            , CCon 7
+                                [ CString "TOO_LONG"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ,
+                            ( 4
+                            , [ "p2" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "p2"
+                                    , CString "|"
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "_e3" ]
+                                    , CCon 7
+                                        [ CString "TOO_LONG"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "p3" ]
+                                    , CCase
+                                        ( CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "p3"
+                                            , CCall
+                                                ( CVar "fib" )
+                                                [ CIntLit 40 TUInt32
+                                                , CIntLit 0 TUInt32
+                                                , CIntLit 1 TUInt32
+                                                ]
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "_e4" ]
+                                            , CCon 7
+                                                [ CString "TOO_LONG"
+                                                , CCon 5
+                                                    [ CCon 0 [] ]
+                                                ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "out" ]
+                                            , CCon 7
+                                                [ CVar "out"
+                                                , CCon 5
+                                                    [ CCon 0 [] ]
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

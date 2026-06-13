@@ -6,102 +6,62 @@
     return [0];
   };
 
+  const v_widened = [
+    1454647603,
+    (v__inl2___input =>
+      (s => {
+        switch (s[0]) {
+          case 11: {
+            return v__inl2___input;
+          }
+          case 12: {
+            return [12, [796142685, v__inl2___input[1]]];
+          }
+        }
+      })(v__inl2___input))([12, [1]])
+  ];
+
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
+        }
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = [
+    7,
+    (v__inl4_x =>
+      (s => {
+        switch (s[0]) {
+          case 11: {
+            return "N";
           }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
+          case 12: {
+            const v__inl3_inner = s[1];
             {
-              const __s = __print(v_s);
+              const __s = v__inl3_inner[1];
               switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
+                case 1: {
+                  return "T";
+                }
+                case 2: {
+                  return "F";
                 }
               }
             }
           }
         }
-      }
-    }
-  };
-
-  const v_narrow = [995908654, [12, [1]]];
-
-  const v_describe = v_x => {
-    {
-      const __s = v_x;
-      switch (__s[0]) {
-        case 1454647603: {
-          const v_m = __s[1];
-          {
-            const __s = v_m;
-            switch (__s[0]) {
-              case 11: {
-                return "N";
-              }
-              case 12: {
-                const v_inner = __s[1];
-                {
-                  const __s = v_inner;
-                  switch (__s[0]) {
-                    case 796142685: {
-                      const v_b = __s[1];
-                      {
-                        const __s = v_b;
-                        switch (__s[0]) {
-                          case 1: {
-                            return "T";
-                          }
-                          case 2: {
-                            return "F";
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  };
-
-  const v__lift_13 = v___input => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 11: {
-          return [11];
-        }
-        case 12: {
-          const v___f0 = __s[1];
-          return [12, [796142685, v___f0]];
-        }
-      }
-    }
-  };
-
-  const v_widened = (s => {
-    switch (s[0]) {
-      case 995908654: {
-        const v__lift_14 = s[1];
-        return [1454647603, v__lift_13(v__lift_14)];
-      }
-    }
-  })(v_narrow);
-
-  const main = [7, v_describe(v_widened), [5, [0]]];
+      })(v__inl4_x[1]))(v_widened),
+    [5, [0]]
+  ];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

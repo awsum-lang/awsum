@@ -36,18 +36,28 @@ lint-fix:
   # `hlint: Refactor flag can only be used with an individual file`
   find . -name '*.hs' | xargs -L1 hlint --refactor --refactor-options="--inplace"
 
-# Run tests (excludes property tests — use `just test-property` for those)
+# Run tests (excludes property tests and the no-simplify differential —
+# `just test-property` / `just test-no-simplify` run those)
 test:
-  stack test --pedantic --ta '--skip "Property tests"'
+  stack test --pedantic --ta '--skip "Property tests" --skip "No-simplify differential"'
   @echo "\n\n✅ Test completed!\n\n"
 
 test-watch:
-  stack test --pedantic --file-watch --ta '--skip "Property tests"'
+  stack test --pedantic --file-watch --ta '--skip "Property tests" --skip "No-simplify differential"'
 
-# Run only property-based tests (slow: spawns 5 backends per generated input)
+# Run only property-based tests (slow: spawns both pipeline modes × 5 backends per generated input)
 test-property:
   stack test --pedantic --ta '--match "Property tests"'
   @echo "\n\n✅ Property tests completed!\n\n"
+
+# Differential gate for the Simplify pass: recompile every successful-corpus
+# program with the pass disabled and assert each backend's stdout still equals
+# the committed output goldens (recorded under the normal pipeline by `just
+# test`). Catches a wrong Core rewrite on which all five backends agree.
+# Slow for the same reason as test-property: one extra clang per program.
+test-no-simplify:
+  stack test --pedantic --ta '--match "No-simplify differential"'
+  @echo "\n\n✅ No-simplify differential completed!\n\n"
 
 # Run the tree-sitter fast tests:
 #   * `corpus`  — parse every .aww under test/sources/successful/,
@@ -191,20 +201,32 @@ benchmark-all timeout="60":
   fi
   echo "════════════════════════════════════════════════════════════════════════════"
 
-# Overwrite the median-benchmark snapshots for every benchmark (manual; no threshold).
-# Runs each program `runs` times per backend and writes the median wall time + peak RSS
-# to .snapshots/benchmark/<NAME>/bench.txt. Workflow: overwrite-before, `git add`, make
+# Overwrite the median-benchmark snapshots for every benchmark (manual; no threshold
+# on the numbers, but a run that fails, times out, or prints stdout diverging from the
+# cross-backend anchor exits non-zero). Runs each program `runs` times per backend and
+# writes the per-backend median (min–max) wall time + peak RSS
+# to .benchmarks/<NAME>/bench.txt. Workflow: overwrite-before, `git add`, make
 # the change, overwrite-after, read `git diff` — local and hardware-independent, so it
 # doesn't depend on which machine (developer/CI) produced the numbers. macOS-only.
+# Doesn't bail on a failing benchmark — every file is regenerated (no stale survivors);
+# the summary at the end lists failures and exits non-zero.
 # Override: `just benchmark-snapshot 7 90`.
 benchmark-snapshot runs="5" timeout="60":
   #!/bin/sh
   set -u
+  failures=""
   for dir in test/sources/benchmark/*/; do
     name=$(basename "$dir")
     echo "── snapshot: $name"
-    stack run awsum-bench -- "$name" --snapshot --runs {{runs}} --timeout {{timeout}}
+    if ! stack run awsum-bench -- "$name" --snapshot --runs {{runs}} --timeout {{timeout}}; then
+      failures="$failures $name"
+    fi
   done
+  if [ -n "$failures" ]; then
+    echo "❌ Non-ok snapshots:$failures"
+    exit 1
+  fi
+  echo "✅ All benchmark snapshots written clean."
 
 show-binary-sizes:
   #!/bin/sh
@@ -265,4 +287,5 @@ fix:
   # just weeder # disabled because this tool is not configured well enough to be used in precommit yet.
   echo "Test..."
   just test
+  just test-no-simplify
   just test-property

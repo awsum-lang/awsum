@@ -1,0 +1,113 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl5$b"
+                    ( CCall
+                        ( CBuiltIn "eqUInt32" )
+                        [ CCall
+                            ( CBuiltIn "lengthUtf8Bytes" )
+                            [ CString "x" ]
+                        , CIntLit 9 TUInt32
+                        ]
+                    )
+                    ( CDrop DropFreeUnchecked "$inl5$b"
+                        ( CCase
+                            ( CCase
+                                ( CVar "$inl5$b" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CVar "$inl5$b"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CCon 1 []
+                                    )
+                                ]
+                            )
+                            [
+                                ( 1
+                                , []
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "a"
+                                        , CString "b"
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "$inl1$_e" ]
+                                        , CString "overflow"
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "$inl2$ab" ]
+                                        , CCase
+                                            ( CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "$inl2$ab"
+                                                , CString "c"
+                                                ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$inl3$_e2" ]
+                                                , CString "overflow2"
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "$inl4$abc" ]
+                                                , CVar "$inl4$abc"
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CString "no"
+                                )
+                            ]
+                        )
+                    )
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

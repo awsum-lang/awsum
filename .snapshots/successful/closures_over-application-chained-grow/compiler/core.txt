@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,111 +15,135 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "add3"
-            [ "a"
-            , "_b"
-            , "_c"
-            ]
-            ( CVar "a" )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$14" )
-                [ CCall
-                    ( CVar "$apply1" )
-                    [ CCall
-                        ( CVar "$df$identity$0" ) []
-                    , CIntLit 7 TInt32
-                    ]
-                ]
-            )
-        , CFunDef "$let$13" [ "h" ]
-            ( CCon 7
-                [ CCall
-                    ( CBuiltIn "showInt32" )
-                    [ CCall
-                        ( CVar "$apply1" )
-                        [ CVar "h"
-                        , CIntLit 9 TInt32
-                        ]
-                    ]
-                , CCon 5
-                    [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$let$14" [ "g" ]
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCall
-                    ( CVar "$apply1" )
-                    [ CVar "g"
-                    , CIntLit 8 TInt32
-                    ]
-                ]
-            )
-        , CFunDef "$df$identity$0" []
-            ( CCon 10 [] )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" )
-                [
-                    ( 8
-                    ,
-                        [ "$cap8_0"
-                        , "$cap8_1"
-                        ]
-                    , CDrop DropFreeUnchecked "$cap8_0"
-                        ( CDrop DropFreeUnchecked "$cap8_1"
-                            ( CCall
-                                ( CVar "add3" )
-                                [ CVar "$cap8_0"
-                                , CVar "$cap8_1"
-                                , CVar "$arg0"
+            ( CLet "$inl28$g"
+                ( CLet "$inl17$$cl"
+                    ( CCon 10 [] )
+                    ( CDrop DropFreeUnchecked "$inl17$$cl"
+                        ( CLet "$inl18$$arg0"
+                            ( CIntLit 7 TInt32 )
+                            ( CDrop DropFreeUnchecked "$inl18$$arg0"
+                                ( CCase
+                                    ( CVar "$inl17$$cl" )
+                                    [
+                                        ( 8
+                                        ,
+                                            [ "$inl14$$cap8_0"
+                                            , "$inl15$$cap8_1"
+                                            ]
+                                        , CProj "$inl17$$cl" 1
+                                        )
+                                    ,
+                                        ( 9
+                                        , [ "$inl16$$cap9_0" ]
+                                        , CCon 8
+                                            [ CProj "$inl17$$cl" 1
+                                            , CVar "$inl18$$arg0"
+                                            ]
+                                        )
+                                    ,
+                                        ( 10
+                                        , []
+                                        , CCon 9
+                                            [ CVar "$inl18$$arg0" ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    )
+                )
+                ( CDrop DropFreeUnchecked "$inl28$g"
+                    ( CLet "$inl23$h"
+                        ( CLet "$inl19$$arg0"
+                            ( CIntLit 8 TInt32 )
+                            ( CDrop DropFreeUnchecked "$inl19$$arg0"
+                                ( CCase
+                                    ( CVar "$inl28$g" )
+                                    [
+                                        ( 8
+                                        ,
+                                            [ "$inl20$$cap8_0"
+                                            , "$inl21$$cap8_1"
+                                            ]
+                                        , CProj "$inl28$g" 1
+                                        )
+                                    ,
+                                        ( 9
+                                        , [ "$inl22$$cap9_0" ]
+                                        , CCon 8
+                                            [ CProj "$inl28$g" 1
+                                            , CVar "$inl19$$arg0"
+                                            ]
+                                        )
+                                    ,
+                                        ( 10
+                                        , []
+                                        , CCon 9
+                                            [ CVar "$inl19$$arg0" ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                        ( CDrop DropFreeUnchecked "$inl23$h"
+                            ( CCon 7
+                                [ CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CLet "$inl24$$arg0"
+                                        ( CIntLit 9 TInt32 )
+                                        ( CDrop DropFreeUnchecked "$inl24$$arg0"
+                                            ( CCase
+                                                ( CVar "$inl23$h" )
+                                                [
+                                                    ( 8
+                                                    ,
+                                                        [ "$inl25$$cap8_0"
+                                                        , "$inl26$$cap8_1"
+                                                        ]
+                                                    , CProj "$inl23$h" 1
+                                                    )
+                                                ,
+                                                    ( 9
+                                                    , [ "$inl27$$cap9_0" ]
+                                                    , CCon 8
+                                                        [ CProj "$inl23$h" 1
+                                                        , CVar "$inl24$$arg0"
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 10
+                                                    , []
+                                                    , CCon 9
+                                                        [ CVar "$inl24$$arg0" ]
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    ]
+                                , CCon 5
+                                    [ CCon 0 [] ]
                                 ]
                             )
                         )
                     )
-                ,
-                    ( 9
-                    , [ "$cap9_0" ]
-                    , CDrop DropFreeUnchecked "$cap9_0"
-                        ( CCon 8
-                            [ CVar "$cap9_0"
-                            , CVar "$arg0"
-                            ]
-                        )
-                    )
-                ,
-                    ( 10
-                    , []
-                    , CCon 9
-                        [ CVar "$arg0" ]
-                    )
-                ]
+                )
             )
         ]
     }

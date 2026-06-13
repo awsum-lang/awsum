@@ -1,21 +1,18 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$scc$show_showCons:
-  param           $args                           count=1
+main:
+  case-pattern    $inl1$__w0                      count=0
+  case-pattern    $inl2$s                         count=1
 
 $cps$$scc$show_showCons:
   param           $args                           count=2
   param           $k                              count=2
-  case-pattern    xs                              count=0
+  case-pattern    xs                              count=2
   case-pattern    h                               count=0
   case-pattern    t                               count=0
   case-pattern    h                               count=0
@@ -25,12 +22,9 @@ $cps$$scc$show_showCons:
 
 $apply$$scc$show_showCons:
   param           $k                              count=1
-  param           $x                              count=3
+  param           $x                              count=2
   case-pattern    $pk_18                          count=0
   case-pattern    hc                              count=0
   case-pattern    $do_e_0                         count=0
   case-pattern    rest                            count=0
-
-show:
-  param           xs                              count=1
 

@@ -1,88 +1,167 @@
-pureIO:
-  param           x                               count=1
-
-failIO:
-  param           e                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-eitherToIO:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
+nevOk:
+  let             $inl30$x                        count=0
+  case-pattern    $inl28$e                        count=0
+  case-pattern    $inl29$a                        count=0
 
-kNever:
-  param           n                               count=1
+nevFail:
+  let             $inl27$x                        count=0
+  case-pattern    $inl25$e                        count=0
+  case-pattern    $inl26$a                        count=0
 
-kAOk:
-  param           n                               count=1
+nevRightOk:
+  let             $inl15$x                        count=0
+  case-pattern    $inl13$e                        count=0
+  case-pattern    $inl14$a                        count=0
 
-kAFail:
-  param           _n                              count=0
+nevRightE1:
+  let             $inl12$x                        count=0
+  case-pattern    $inl10$e                        count=0
+  case-pattern    $inl11$a                        count=0
 
-kBFail:
-  param           _n                              count=0
+pureNever:
+  let             $inl18$x                        count=0
+  case-pattern    $inl16$e                        count=0
+  case-pattern    $inl17$a                        count=0
 
-kSOk:
-  param           n                               count=1
+strOk:
+  let             $inl154$x                       count=0
+  case-pattern    $inl149$e                       count=0
+  case-pattern    $inl150$a                       count=0
+  let             $inl151$__input                 count=0
+  case-pattern    $inl152$__f0                    count=0
+  case-pattern    $inl153$__f0                    count=0
 
-kSFail:
-  param           _n                              count=0
+strE1:
+  let             $inl148$x                       count=0
+  case-pattern    $inl143$e                       count=0
+  case-pattern    $inl144$a                       count=0
+  let             $inl145$__input                 count=0
+  case-pattern    $inl146$__f0                    count=0
+  case-pattern    $inl147$__f0                    count=0
 
-kSecond:
-  param           _n                              count=0
+strE2:
+  let             $inl137$__input                 count=0
+  case-pattern    $inl138$__f0                    count=0
+  case-pattern    $inl139$__f0                    count=0
 
-showA:
-  param           e                               count=1
-  case-pattern    __p0                            count=0
-  case-pattern    n                               count=0
+strIdem:
+  let             $inl9$x                         count=0
+  case-pattern    $inl7$e                         count=0
+  case-pattern    $inl8$a                         count=0
 
-showNever:
-  param           e                               count=1
-  case-pattern    n                               count=0
+abE2:
+  let             $inl129$__input                 count=0
+  case-pattern    $inl130$__f0                    count=0
+  case-pattern    $inl131$__f0                    count=0
 
-showTwo:
-  param           e                               count=1
-  case-pattern    __p0                            count=0
-  case-pattern    n                               count=0
+twoFirst:
+  let             $inl106$x                       count=0
+  case-pattern    $inl101$e                       count=0
+  case-pattern    $inl102$a                       count=0
+  let             $inl103$__input                 count=0
+  case-pattern    $inl104$__f0                    count=0
+  case-pattern    $inl105$__f0                    count=0
 
-showStr:
-  param           e                               count=1
-  case-pattern    s                               count=0
-  case-pattern    n                               count=0
+twoSecond:
+  let             $inl118$x                       count=0
+  case-pattern    $inl113$e                       count=0
+  case-pattern    $inl114$a                       count=0
+  let             $inl115$__input                 count=0
+  case-pattern    $inl116$__f0                    count=0
+  case-pattern    $inl117$__f0                    count=0
 
-showStrA:
-  param           e                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        s                               count=0
-  row-case        _a                              count=0
-  case-pattern    n                               count=0
+twoE2:
+  let             $inl95$__input                  count=0
+  case-pattern    $inl96$__f0                     count=0
+  case-pattern    $inl97$__f0                     count=0
 
-showAB:
-  param           e                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        _a                              count=0
-  row-case        _b                              count=0
-  case-pattern    n                               count=0
+twoOk:
+  let             $inl112$x                       count=0
+  case-pattern    $inl107$e                       count=0
+  case-pattern    $inl108$a                       count=0
+  let             $inl109$__input                 count=0
+  case-pattern    $inl110$__f0                    count=0
+  case-pattern    $inl111$__f0                    count=0
 
-showTwoA:
-  param           e                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        t                               count=0
-  row-case        _a                              count=0
-  case-pattern    n                               count=0
+idemE1:
+  let             $inl21$x                        count=0
+  case-pattern    $inl19$e                        count=0
+  case-pattern    $inl20$a                        count=0
 
-showThree:
-  param           e                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        t                               count=0
-  row-case        s                               count=0
-  row-case        _a                              count=0
-  case-pattern    n                               count=0
+idemE2:
+  let             $inl24$x                        count=0
+  case-pattern    $inl22$e                        count=0
+  case-pattern    $inl23$a                        count=0
+
+idem2First:
+  let             $inl3$x                         count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$a                         count=0
+
+idem2Second:
+  let             $inl6$x                         count=0
+  case-pattern    $inl4$e                         count=0
+  case-pattern    $inl5$a                         count=0
+
+wE1:
+  let             $inl60$x                        count=0
+  case-pattern    $inl55$e                        count=0
+  case-pattern    $inl56$a                        count=0
+  let             $inl57$__input                  count=0
+  case-pattern    $inl58$__f0                     count=0
+  case-pattern    $inl59$__f0                     count=0
+  let             $inl66$x                        count=0
+  case-pattern    $inl61$e                        count=0
+  case-pattern    $inl62$a                        count=0
+  let             $inl63$__input                  count=0
+  case-pattern    $inl64$__f0                     count=0
+  case-pattern    $inl65$__f0                     count=0
+
+wE2str:
+  let             $inl69$__input                  count=0
+  case-pattern    $inl70$__f0                     count=0
+  case-pattern    $inl71$__f0                     count=0
+  let             $inl77$x                        count=0
+  case-pattern    $inl72$e                        count=0
+  case-pattern    $inl73$a                        count=0
+  let             $inl74$__input                  count=0
+  case-pattern    $inl75$__f0                     count=0
+  case-pattern    $inl76$__f0                     count=0
+
+wE3:
+  let             $inl45$x                        count=0
+  case-pattern    $inl40$e                        count=0
+  case-pattern    $inl41$a                        count=0
+  let             $inl42$__input                  count=0
+  case-pattern    $inl43$__f0                     count=0
+  case-pattern    $inl44$__f0                     count=0
+  let             $inl51$x                        count=0
+  case-pattern    $inl46$e                        count=0
+  case-pattern    $inl47$a                        count=0
+  let             $inl48$__input                  count=0
+  case-pattern    $inl49$__f0                     count=0
+  case-pattern    $inl50$__f0                     count=0
+
+wOk:
+  let             $inl83$x                        count=0
+  case-pattern    $inl78$e                        count=0
+  case-pattern    $inl79$a                        count=0
+  let             $inl80$__input                  count=0
+  case-pattern    $inl81$__f0                     count=0
+  case-pattern    $inl82$__f0                     count=0
+  let             $inl89$x                        count=0
+  case-pattern    $inl84$e                        count=0
+  case-pattern    $inl85$a                        count=0
+  let             $inl86$__input                  count=0
+  case-pattern    $inl87$__f0                     count=0
+  case-pattern    $inl88$__f0                     count=0
 
 tagged:
   param           label                           count=1
@@ -92,165 +171,221 @@ tagged:
   case-pattern    $do_e_0                         count=0
   case-pattern    b                               count=0
 
-appendTagged:
-  param           acc                             count=1
-  param           label                           count=1
-  param           val                             count=1
-  case-pattern    $do_e_2                         count=0
-  case-pattern    line                            count=0
-
 render:
+  let             $inl157$e                       count=0
+  case-pattern    $inl155$__p0                    count=0
+  case-pattern    $inl156$n                       count=0
   case-pattern    $do_e_24                        count=1
   case-pattern    r01                             count=1
-  case-pattern    $do_e_23                        count=1
-  case-pattern    r02                             count=1
-  case-pattern    $do_e_22                        count=1
-  case-pattern    r03                             count=1
-  case-pattern    $do_e_21                        count=1
-  case-pattern    r04                             count=1
-  case-pattern    $do_e_20                        count=1
-  case-pattern    r05                             count=1
-  case-pattern    $do_e_19                        count=1
-  case-pattern    r06                             count=1
-  case-pattern    $do_e_18                        count=1
-  case-pattern    r07                             count=1
-  case-pattern    $do_e_17                        count=1
-  case-pattern    r08                             count=1
-  case-pattern    $do_e_16                        count=1
-  case-pattern    r09                             count=1
-  case-pattern    $do_e_15                        count=1
-  case-pattern    r10                             count=1
-  case-pattern    $do_e_14                        count=1
-  case-pattern    r11                             count=1
-  case-pattern    $do_e_13                        count=1
-  case-pattern    r12                             count=1
-  case-pattern    $do_e_12                        count=1
-  case-pattern    r13                             count=1
-  case-pattern    $do_e_11                        count=1
-  case-pattern    r14                             count=1
-  case-pattern    $do_e_10                        count=1
-  case-pattern    r15                             count=1
-  case-pattern    $do_e_9                         count=1
-  case-pattern    r16                             count=1
-  case-pattern    $do_e_8                         count=1
-  case-pattern    r17                             count=1
-  case-pattern    $do_e_7                         count=1
-  case-pattern    r18                             count=1
-  case-pattern    $do_e_6                         count=1
-  case-pattern    r19                             count=1
-  case-pattern    $do_e_5                         count=1
-  case-pattern    r20                             count=1
-  case-pattern    $do_e_4                         count=1
-  case-pattern    r21                             count=1
-  case-pattern    $do_e_3                         count=1
-  case-pattern    r22                             count=1
+  join-param      $inl297$scrut                   count=3
+  case-pattern    $do_e_23                        count=0
+  case-pattern    r02                             count=0
+  join-param      $inl299$scrut                   count=3
+  case-pattern    $do_e_22                        count=0
+  case-pattern    r03                             count=0
+  join-param      $inl301$scrut                   count=3
+  case-pattern    $do_e_21                        count=0
+  case-pattern    r04                             count=0
+  join-param      $inl303$scrut                   count=3
+  case-pattern    $do_e_20                        count=0
+  case-pattern    r05                             count=0
+  join-param      $inl305$scrut                   count=3
+  case-pattern    $do_e_19                        count=0
+  case-pattern    r06                             count=0
+  join-param      $inl307$scrut                   count=3
+  case-pattern    $do_e_18                        count=0
+  case-pattern    r07                             count=0
+  join-param      $inl309$scrut                   count=3
+  case-pattern    $do_e_17                        count=0
+  case-pattern    r08                             count=0
+  join-param      $inl311$scrut                   count=3
+  case-pattern    $do_e_16                        count=0
+  case-pattern    r09                             count=0
+  join-param      $inl313$scrut                   count=3
+  case-pattern    $do_e_15                        count=0
+  case-pattern    r10                             count=0
+  join-param      $inl315$scrut                   count=3
+  case-pattern    $do_e_14                        count=0
+  case-pattern    r11                             count=0
+  join-param      $inl317$scrut                   count=3
+  case-pattern    $do_e_13                        count=0
+  case-pattern    r12                             count=0
+  join-param      $inl319$scrut                   count=3
+  case-pattern    $do_e_12                        count=0
+  case-pattern    r13                             count=0
+  join-param      $inl321$scrut                   count=3
+  case-pattern    $do_e_11                        count=0
+  case-pattern    r14                             count=0
+  join-param      $inl323$scrut                   count=3
+  case-pattern    $do_e_10                        count=0
+  case-pattern    r15                             count=0
+  join-param      $inl325$scrut                   count=3
+  case-pattern    $do_e_9                         count=0
+  case-pattern    r16                             count=0
+  join-param      $inl327$scrut                   count=3
+  case-pattern    $do_e_8                         count=0
+  case-pattern    r17                             count=0
+  join-param      $inl329$scrut                   count=3
+  case-pattern    $do_e_7                         count=0
+  case-pattern    r18                             count=0
+  join-param      $inl331$scrut                   count=3
+  case-pattern    $do_e_6                         count=0
+  case-pattern    r19                             count=0
+  join-param      $inl333$scrut                   count=3
+  case-pattern    $do_e_5                         count=0
+  case-pattern    r20                             count=0
+  join-param      $inl335$scrut                   count=3
+  case-pattern    $do_e_4                         count=0
+  case-pattern    r21                             count=0
+  join-param      $inl337$scrut                   count=3
+  case-pattern    $do_e_3                         count=0
+  case-pattern    r22                             count=0
+  let             $inl293$e                       count=0
+  case-pattern    $inl288$__pa0                   count=0
+  row-case        $inl289$t                       count=0
+  row-case        $inl290$s                       count=0
+  row-case        $inl291$_a                      count=0
+  case-pattern    $inl292$n                       count=0
+  case-pattern    $inl294$$do_e_2                 count=0
+  case-pattern    $inl295$line                    count=0
+  let             $inl285$e                       count=0
+  case-pattern    $inl280$__pa0                   count=0
+  row-case        $inl281$t                       count=0
+  row-case        $inl282$s                       count=0
+  row-case        $inl283$_a                      count=0
+  case-pattern    $inl284$n                       count=0
+  case-pattern    $inl286$$do_e_2                 count=0
+  case-pattern    $inl287$line                    count=0
+  let             $inl277$e                       count=0
+  case-pattern    $inl272$__pa0                   count=0
+  row-case        $inl273$t                       count=0
+  row-case        $inl274$s                       count=0
+  row-case        $inl275$_a                      count=0
+  case-pattern    $inl276$n                       count=0
+  case-pattern    $inl278$$do_e_2                 count=0
+  case-pattern    $inl279$line                    count=0
+  let             $inl269$e                       count=0
+  case-pattern    $inl264$__pa0                   count=0
+  row-case        $inl265$t                       count=0
+  row-case        $inl266$s                       count=0
+  row-case        $inl267$_a                      count=0
+  case-pattern    $inl268$n                       count=0
+  case-pattern    $inl270$$do_e_2                 count=0
+  case-pattern    $inl271$line                    count=0
+  let             $inl261$e                       count=0
+  case-pattern    $inl259$__p0                    count=0
+  case-pattern    $inl260$n                       count=0
+  case-pattern    $inl262$$do_e_2                 count=0
+  case-pattern    $inl263$line                    count=0
+  let             $inl256$e                       count=0
+  case-pattern    $inl254$__p0                    count=0
+  case-pattern    $inl255$n                       count=0
+  case-pattern    $inl257$$do_e_2                 count=0
+  case-pattern    $inl258$line                    count=0
+  let             $inl251$e                       count=0
+  case-pattern    $inl249$__p0                    count=0
+  case-pattern    $inl250$n                       count=0
+  case-pattern    $inl252$$do_e_2                 count=0
+  case-pattern    $inl253$line                    count=0
+  let             $inl246$e                       count=0
+  case-pattern    $inl244$__p0                    count=0
+  case-pattern    $inl245$n                       count=0
+  case-pattern    $inl247$$do_e_2                 count=0
+  case-pattern    $inl248$line                    count=0
+  let             $inl241$e                       count=0
+  case-pattern    $inl237$__pa0                   count=0
+  row-case        $inl238$t                       count=0
+  row-case        $inl239$_a                      count=0
+  case-pattern    $inl240$n                       count=0
+  case-pattern    $inl242$$do_e_2                 count=0
+  case-pattern    $inl243$line                    count=0
+  let             $inl234$e                       count=0
+  case-pattern    $inl230$__pa0                   count=0
+  row-case        $inl231$t                       count=0
+  row-case        $inl232$_a                      count=0
+  case-pattern    $inl233$n                       count=0
+  case-pattern    $inl235$$do_e_2                 count=0
+  case-pattern    $inl236$line                    count=0
+  let             $inl227$e                       count=0
+  case-pattern    $inl223$__pa0                   count=0
+  row-case        $inl224$t                       count=0
+  row-case        $inl225$_a                      count=0
+  case-pattern    $inl226$n                       count=0
+  case-pattern    $inl228$$do_e_2                 count=0
+  case-pattern    $inl229$line                    count=0
+  let             $inl220$e                       count=0
+  case-pattern    $inl216$__pa0                   count=0
+  row-case        $inl217$t                       count=0
+  row-case        $inl218$_a                      count=0
+  case-pattern    $inl219$n                       count=0
+  case-pattern    $inl221$$do_e_2                 count=0
+  case-pattern    $inl222$line                    count=0
+  let             $inl213$e                       count=0
+  case-pattern    $inl209$__pa0                   count=0
+  row-case        $inl210$_a                      count=0
+  row-case        $inl211$_b                      count=0
+  case-pattern    $inl212$n                       count=0
+  case-pattern    $inl214$$do_e_2                 count=0
+  case-pattern    $inl215$line                    count=0
+  let             $inl206$e                       count=0
+  case-pattern    $inl202$__pa0                   count=0
+  row-case        $inl203$_a                      count=0
+  row-case        $inl204$_b                      count=0
+  case-pattern    $inl205$n                       count=0
+  case-pattern    $inl207$$do_e_2                 count=0
+  case-pattern    $inl208$line                    count=0
+  let             $inl199$e                       count=0
+  case-pattern    $inl197$s                       count=0
+  case-pattern    $inl198$n                       count=0
+  case-pattern    $inl200$$do_e_2                 count=0
+  case-pattern    $inl201$line                    count=0
+  let             $inl194$e                       count=0
+  case-pattern    $inl190$__pa0                   count=0
+  row-case        $inl191$s                       count=0
+  row-case        $inl192$_a                      count=0
+  case-pattern    $inl193$n                       count=0
+  case-pattern    $inl195$$do_e_2                 count=0
+  case-pattern    $inl196$line                    count=0
+  let             $inl187$e                       count=0
+  case-pattern    $inl183$__pa0                   count=0
+  row-case        $inl184$s                       count=0
+  row-case        $inl185$_a                      count=0
+  case-pattern    $inl186$n                       count=0
+  case-pattern    $inl188$$do_e_2                 count=0
+  case-pattern    $inl189$line                    count=0
+  let             $inl180$e                       count=0
+  case-pattern    $inl176$__pa0                   count=0
+  row-case        $inl177$s                       count=0
+  row-case        $inl178$_a                      count=0
+  case-pattern    $inl179$n                       count=0
+  case-pattern    $inl181$$do_e_2                 count=0
+  case-pattern    $inl182$line                    count=0
+  let             $inl173$e                       count=0
+  case-pattern    $inl174$$do_e_2                 count=0
+  case-pattern    $inl175$line                    count=0
+  let             $inl170$e                       count=0
+  case-pattern    $inl168$__p0                    count=0
+  case-pattern    $inl169$n                       count=0
+  case-pattern    $inl171$$do_e_2                 count=0
+  case-pattern    $inl172$line                    count=0
+  let             $inl165$e                       count=0
+  case-pattern    $inl163$__p0                    count=0
+  case-pattern    $inl164$n                       count=0
+  case-pattern    $inl166$$do_e_2                 count=0
+  case-pattern    $inl167$line                    count=0
+  let             $inl160$e                       count=0
+  case-pattern    $inl158$__p0                    count=0
+  case-pattern    $inl159$n                       count=0
+  case-pattern    $inl161$$do_e_2                 count=1
+  case-pattern    $inl162$line                    count=1
 
-printErr:
-  param           e                               count=1
-
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lift$14:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lift$15:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lift$16:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lift$17:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$bi$IO.Stdout.print:
-  param           $x0                             count=1
-
-$df$bindEither$0:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$bindEither$1:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$bindEither$2:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$0$bindEither$3:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$0$bindEither$4:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$bindEither$5:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$1$bindEither$6:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$2$bindEither$7:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$2$bindEither$8:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$bindEither$9:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$3$bindEither$10:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$4$bindEither$11:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$4$bindEither$12:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$$rowmono$3$bindEither$13:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$handleErrorIO$14:
-  param           io                              count=1
+main:
+  let             $inl340$x                       count=0
+  case-pattern    $inl338$e                       count=0
+  case-pattern    $inl339$a                       count=0
 
 $cps$$df$handleErrorIO$14:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -263,11 +398,8 @@ $apply$$df$handleErrorIO$14:
   case-pattern    $pk_29                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$18:
-  param           io                              count=1
-
 $cps$$df$andThenIO$18:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a                               count=0
   case-pattern    e                               count=0

@@ -59,15 +59,17 @@ classify (BindingUsage _) = Bucket 0 0 1
 data Summary = Summary
   { sParam :: !Bucket,
     sCasePattern :: !Bucket,
-    sRowCaseBinder :: !Bucket
+    sRowCaseBinder :: !Bucket,
+    sLetBinder :: !Bucket,
+    sJoinParam :: !Bucket
   }
   deriving stock (Show)
 
 instance Semigroup Summary where
-  Summary a b c <> Summary d e f = Summary (a <> d) (b <> e) (c <> f)
+  Summary a b c d j <> Summary e f g h k = Summary (a <> e) (b <> f) (c <> g) (d <> h) (j <> k)
 
 instance Monoid Summary where
-  mempty = Summary mempty mempty mempty
+  mempty = Summary mempty mempty mempty mempty mempty
 
 summarize :: [DeclLifetime] -> Summary
 summarize = foldMap (foldMap entrySummary . dlEntries)
@@ -78,9 +80,11 @@ summarize = foldMap (foldMap entrySummary . dlEntries)
             Param -> mempty {sParam = b}
             CasePattern -> mempty {sCasePattern = b}
             RowCaseBinder -> mempty {sRowCaseBinder = b}
+            LetBinder -> mempty {sLetBinder = b}
+            JoinParam -> mempty {sJoinParam = b}
 
 summaryOverall :: Summary -> Bucket
-summaryOverall s = s.sParam <> s.sCasePattern <> s.sRowCaseBinder
+summaryOverall s = s.sParam <> s.sCasePattern <> s.sRowCaseBinder <> s.sLetBinder <> s.sJoinParam
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Driver
@@ -100,6 +104,8 @@ main = do
   putTextLn (formatRow "Param" agg.sParam)
   putTextLn (formatRow "CasePattern" agg.sCasePattern)
   putTextLn (formatRow "RowCaseBinder" agg.sRowCaseBinder)
+  putTextLn (formatRow "LetBinder" agg.sLetBinder)
+  putTextLn (formatRow "JoinParam" agg.sJoinParam)
   putTextLn separator
   putTextLn (formatRow "overall" (summaryOverall agg))
 

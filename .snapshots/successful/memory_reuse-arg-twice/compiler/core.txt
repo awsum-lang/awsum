@@ -1,0 +1,223 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "revInto2"
+            [ "lst"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "lst" )
+                    [
+                        ( 24
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 25
+                        ,
+                            [ "s"
+                            , "rest"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "rest"
+                                ( CDrop DropFreeUnchecked "acc"
+                                    ( CContinue
+                                        [ CVar "rest"
+                                        , CReuse ReuseGuarded "lst" 25
+                                            [ CVar "s"
+                                            , CVar "acc"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "mk"
+            [ "n"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "_u" ]
+                                , CVar "acc"
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "n"
+                                        ( CDrop DropFreeUnchecked "acc"
+                                            ( CContinue
+                                                [ CVar "m"
+                                                , CCon 25
+                                                    [ CCall
+                                                        ( CBuiltIn "showInt32" )
+                                                        [ CVar "n" ]
+                                                    , CVar "acc"
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CLet "$inl37$xs"
+                ( CCall
+                    ( CVar "mk" )
+                    [ CIntLit 3 TInt32
+                    , CCon 24 []
+                    ]
+                )
+                ( CDrop DropFreeUnchecked "$inl37$xs"
+                    ( CCon 7
+                        [ CCase
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCase
+                                    ( CCall
+                                        ( CVar "revInto2" )
+                                        [ CVar "$inl37$xs"
+                                        , CCon 24 []
+                                        ]
+                                    )
+                                    [
+                                        ( 24
+                                        , []
+                                        , CString "E"
+                                        )
+                                    ,
+                                        ( 25
+                                        ,
+                                            [ "$inl27$_s2"
+                                            , "$inl28$r"
+                                            ]
+                                        , CCase
+                                            ( CVar "$inl28$r" )
+                                            [
+                                                ( 24
+                                                , []
+                                                , CString "e"
+                                                )
+                                            ,
+                                                ( 25
+                                                ,
+                                                    [ "$inl29$s3"
+                                                    , "$inl30$_r2"
+                                                    ]
+                                                , CProj "$inl28$r" 1
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                , CCase
+                                    ( CVar "$inl37$xs" )
+                                    [
+                                        ( 24
+                                        , []
+                                        , CString "E"
+                                        )
+                                    ,
+                                        ( 25
+                                        ,
+                                            [ "$inl31$_s2"
+                                            , "$inl32$r"
+                                            ]
+                                        , CCase
+                                            ( CVar "$inl32$r" )
+                                            [
+                                                ( 24
+                                                , []
+                                                , CString "e"
+                                                )
+                                            ,
+                                                ( 25
+                                                ,
+                                                    [ "$inl33$s3"
+                                                    , "$inl34$_r2"
+                                                    ]
+                                                , CProj "$inl32$r" 1
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "$inl35$_e" ]
+                                , CString "L"
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl36$z" ]
+                                , CVar "$inl36$z"
+                                )
+                            ]
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                )
+            )
+        ]
+    }

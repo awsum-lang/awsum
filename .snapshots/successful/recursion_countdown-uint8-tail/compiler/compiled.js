@@ -13,82 +13,16 @@
   const __concat = (a, b) =>
     a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_showUnderflowError = v__wild0 => "UnderflowError";
-
-  const v_showResult = v_r => {
-    {
-      const __s = v_r;
-      switch (__s[0]) {
-        case 3: {
-          const v_e = __s[1];
-          {
-            const __s = v_e;
-            switch (__s[0]) {
-              case 589989748: {
-                const v___rw = __s[1];
-                {
-                  const __s = v___rw;
-                  switch (__s[0]) {
-                    case 19: {
-                      return [4, "STRING_TOO_LONG"];
-                    }
-                  }
-                }
-              }
-              case 3768445577: {
-                const v_u = __s[1];
-                return __concat("left: ", v_showUnderflowError(v_u));
-              }
-            }
-          }
-        }
-        case 4: {
-          const v_s = __s[1];
-          return __concat("right: ", v_s);
-        }
-      }
-    }
-  };
-
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
         }
-      }
-    }
-  };
-
-  const v__lift_13 = v___input => {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 3: {
-          const v___f0 = __s[1];
-          return [3, [589989748, v___f0]];
-        }
-        case 4: {
-          const v___f0 = __s[1];
-          return [4, v___f0];
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
@@ -100,7 +34,15 @@
         const __s = __eqUInt8(v_n, 0 & 0xFF);
         switch (__s[0]) {
           case 1: {
-            return v__lift_13(__concat(v_acc, String(v_n)));
+            const v__inl3___input = __concat(v_acc, String(v_n));
+            switch (v__inl3___input[0]) {
+              case 3: {
+                return [3, [589989748, v__inl3___input[1]]];
+              }
+              case 4: {
+                return v__inl3___input;
+              }
+            }
           }
           case 2: {
             {
@@ -130,10 +72,8 @@
                             }
                             case 4: {
                               const v_s1 = __s[1];
-                              const __t0 = v_m;
-                              const __t1 = v_s1;
-                              v_n = __t0;
-                              v_acc = __t1;
+                              v_n = v_m;
+                              v_acc = v_s1;
                               continue;
                             }
                           }
@@ -150,23 +90,39 @@
     }
   };
 
-  const v__let_14 = v_res => {
-    {
-      const __s = v_res;
-      switch (__s[0]) {
+  const main = (v__inl8_r =>
+    (s => {
+      switch (s[0]) {
         case 3: {
-          const v___w0 = __s[1];
           return [7, "STRING_TOO_LONG", [5, [0]]];
         }
         case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
+          const v__inl10_s = s[1];
+          return [7, v__inl10_s, [5, [0]]];
         }
       }
-    }
-  };
-
-  const main = v__let_14(v_showResult(v_countDown(255 & 0xFF, "")));
+    })(
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            {
+              const __s = v__inl8_r[1];
+              switch (__s[0]) {
+                case 589989748: {
+                  return [4, "STRING_TOO_LONG"];
+                }
+                case 3768445577: {
+                  return __concat("left: ", "UnderflowError");
+                }
+              }
+            }
+          }
+          case 4: {
+            return __concat("right: ", v__inl8_r[1]);
+          }
+        }
+      })(v__inl8_r)
+    ))(v_countDown(255 & 0xFF, ""));
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

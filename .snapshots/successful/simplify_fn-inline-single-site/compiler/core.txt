@@ -1,0 +1,125 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl1$n"
+                    ( CCall
+                        ( CBuiltIn "lengthUtf8Bytes" )
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CIntLit
+                                ( -2000000000 ) TInt32
+                            ]
+                        ]
+                    )
+                    ( CDrop DropFreeUnchecked "$inl1$n"
+                        ( CCase
+                            ( CCall
+                                ( CBuiltIn "eqUInt32" )
+                                [ CVar "$inl1$n"
+                                , CIntLit 0 TUInt32
+                                ]
+                            )
+                            [
+                                ( 1
+                                , []
+                                , CString "zero"
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "eqUInt32" )
+                                        [ CVar "$inl1$n"
+                                        , CIntLit 1 TUInt32
+                                        ]
+                                    )
+                                    [
+                                        ( 1
+                                        , []
+                                        , CString "one"
+                                        )
+                                    ,
+                                        ( 2
+                                        , []
+                                        , CCase
+                                            ( CCall
+                                                ( CBuiltIn "eqUInt32" )
+                                                [ CVar "$inl1$n"
+                                                , CIntLit 2 TUInt32
+                                                ]
+                                            )
+                                            [
+                                                ( 1
+                                                , []
+                                                , CString "two"
+                                                )
+                                            ,
+                                                ( 2
+                                                , []
+                                                , CCase
+                                                    ( CCall
+                                                        ( CBuiltIn "eqUInt32" )
+                                                        [ CVar "$inl1$n"
+                                                        , CIntLit 11 TUInt32
+                                                        ]
+                                                    )
+                                                    [
+                                                        ( 1
+                                                        , []
+                                                        , CString "eleven"
+                                                        )
+                                                    ,
+                                                        ( 2
+                                                        , []
+                                                        , CCall
+                                                            ( CBuiltIn "showUInt32" )
+                                                            [ CVar "$inl1$n" ]
+                                                        )
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    )
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

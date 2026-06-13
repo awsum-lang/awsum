@@ -1,0 +1,30 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+build:
+  param           n                               count=2
+  param           acc                             count=2
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+length:
+  param           xs                              count=1
+  param           acc                             count=3
+  case-pattern    _h                              count=0
+  case-pattern    t                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    a                               count=0
+
+runN:
+  param           iters                           count=2
+  param           listLen                         count=1
+  param           accSum                          count=4
+  case-pattern    _e                              count=0
+  case-pattern    i                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    s                               count=0
+

@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,62 +15,29 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CValDef "answer"
-            ( CIntLit 42 TInt32 )
-        , CFunDef "captureFn" [ "k" ]
-            ( CCall
-                ( CVar "$df$apply$0" )
-                [ CVar "answer"
-                , CVar "k"
-                ]
-            )
         , CValDef "main"
             ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
-                    [ CCall
-                        ( CVar "captureFn" )
-                        [ CIntLit 7 TInt32 ]
-                    ]
+                    [ CIntLit 7 TInt32 ]
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lam$13"
-            [ "k"
-            , "_n"
-            ]
-            ( CVar "k" )
-        , CFunDef "$df$apply$0"
-            [ "x"
-            , "$df$apply$0$cap0$0"
-            ]
-            ( CCall
-                ( CVar "$lam$13" )
-                [ CVar "$df$apply$0$cap0$0"
-                , CVar "x"
                 ]
             )
         ]

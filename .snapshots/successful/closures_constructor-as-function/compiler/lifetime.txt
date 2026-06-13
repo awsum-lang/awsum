@@ -1,16 +1,10 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-unwrap:
-  param           b                               count=1
-  case-pattern    value                           count=0
-
-$con$Box:
-  param           $x0                             count=1
-
-$df$wrap$0:
-  param           x                               count=1
+main:
+  let             $inl1$b                         count=0
 

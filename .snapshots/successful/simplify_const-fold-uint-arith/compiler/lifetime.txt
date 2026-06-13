@@ -1,0 +1,137 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+$cps$$df$andThenIO$0:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_9                           count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_11                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$8:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$8:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_13                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$12:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$12:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_15                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$16:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$16:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_17                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$20:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$20:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_19                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$24:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$24:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_21                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$28:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$28:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$32:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$32:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_25                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$36:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$36:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    s                               count=0
+

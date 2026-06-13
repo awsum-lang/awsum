@@ -1,42 +1,22 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-d:
-  param           x                               count=1
-  row-case        s                               count=0
-  row-case        n                               count=0
-
-pick:
-  param           b                               count=1
-
-fromLet:
-  param           _b                              count=0
-
-$let$13:
-  param           lv                              count=1
-
-$lam$14:
-  param           _u                              count=0
-
-$lam$15:
-  param           _u                              count=0
-
-$lam$16:
-  param           _u                              count=0
-
-$lam$17:
-  param           _u                              count=0
-
-$df$andThenIO$0:
-  param           io                              count=1
+main:
+  let             $inl32$x                        count=0
+  row-case        $inl30$s                        count=0
+  row-case        $inl31$n                        count=0
 
 $cps$$df$andThenIO$0:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl27$lv                       count=0
+  row-case        $inl28$s                        count=0
+  row-case        $inl29$n                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -46,13 +26,13 @@ $apply$$df$andThenIO$0:
   case-pattern    $pk_9                           count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$4:
-  param           io                              count=1
-
 $cps$$df$andThenIO$4:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl21$x                        count=0
+  row-case        $inl22$s                        count=0
+  row-case        $inl23$n                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -62,13 +42,13 @@ $apply$$df$andThenIO$4:
   case-pattern    $pk_11                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$8:
-  param           io                              count=1
-
 $cps$$df$andThenIO$8:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl18$x                        count=0
+  row-case        $inl19$s                        count=0
+  row-case        $inl20$n                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -78,13 +58,13 @@ $apply$$df$andThenIO$8:
   case-pattern    $pk_13                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$12:
-  param           io                              count=1
-
 $cps$$df$andThenIO$12:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl24$x                        count=0
+  row-case        $inl25$s                        count=0
+  row-case        $inl26$n                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 

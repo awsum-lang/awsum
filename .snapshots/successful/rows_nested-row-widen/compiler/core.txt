@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,57 +15,56 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CValDef "narrow"
-            ( CRow 995908654
-                ( CCon 12
-                    [ CCon 1 [] ]
-                )
-            )
         , CValDef "widened"
-            ( CRowCase
-                ( CVar "narrow" )
-                [
-                    ( 995908654
-                    , "$lift$14"
-                    , CRow 1454647603
-                        ( CCall
-                            ( CVar "$lift$13" )
-                            [ CVar "$lift$14" ]
+            ( CRow 1454647603
+                ( CLet "$inl2$__input"
+                    ( CCon 12
+                        [ CCon 1 [] ]
+                    )
+                    ( CDrop DropFreeUnchecked "$inl2$__input"
+                        ( CCase
+                            ( CVar "$inl2$__input" )
+                            [
+                                ( 11
+                                , []
+                                , CVar "$inl2$__input"
+                                )
+                            ,
+                                ( 12
+                                , [ "$inl1$__f0" ]
+                                , CCon 12
+                                    [ CRow 796142685
+                                        ( CProj "$inl2$__input" 1 )
+                                    ]
+                                )
+                            ]
                         )
                     )
-                ]
+                )
             )
-        , CFunDef "describe" [ "x" ]
-            ( CRowCase
-                ( CVar "x" )
-                [
-                    ( 1454647603
-                    , "m"
-                    , CDrop DropFreeUnchecked "m"
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl4$x"
+                    ( CVar "widened" )
+                    ( CDrop DropFreeUnchecked "$inl4$x"
                         ( CCase
-                            ( CVar "m" )
+                            ( CProj "$inl4$x" 1 )
                             [
                                 ( 11
                                 , []
@@ -74,64 +72,26 @@ CoreProgram
                                 )
                             ,
                                 ( 12
-                                , [ "inner" ]
-                                , CDrop DropFreeUnchecked "inner"
-                                    ( CRowCase
-                                        ( CVar "inner" )
-                                        [
-                                            ( 796142685
-                                            , "b"
-                                            , CDrop DropFreeUnchecked "b"
-                                                ( CCase
-                                                    ( CVar "b" )
-                                                    [
-                                                        ( 1
-                                                        , []
-                                                        , CString "T"
-                                                        )
-                                                    ,
-                                                        ( 2
-                                                        , []
-                                                        , CString "F"
-                                                        )
-                                                    ]
-                                                )
-                                            )
-                                        ]
-                                    )
+                                , [ "$inl3$inner" ]
+                                , CCase
+                                    ( CProj "$inl3$inner" 1 )
+                                    [
+                                        ( 1
+                                        , []
+                                        , CString "T"
+                                        )
+                                    ,
+                                        ( 2
+                                        , []
+                                        , CString "F"
+                                        )
+                                    ]
                                 )
                             ]
                         )
                     )
-                ]
-            )
-        , CValDef "main"
-            ( CCon 7
-                [ CCall
-                    ( CVar "describe" )
-                    [ CVar "widened" ]
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$lift$13" [ "__input" ]
-            ( CCase
-                ( CVar "__input" )
-                [
-                    ( 11
-                    , []
-                    , CCon 11 []
-                    )
-                ,
-                    ( 12
-                    , [ "__f0" ]
-                    , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 12
-                            [ CRow 796142685
-                                ( CVar "__f0" )
-                            ]
-                        )
-                    )
                 ]
             )
         ]

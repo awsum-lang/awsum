@@ -106,12 +106,10 @@ L_eq_i32_ne:
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 3
-  .limit locals 7
+  .limit locals 5
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
-  astore_1
-  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
@@ -120,67 +118,26 @@ L_tco0:
   iload_2
   iconst_5
   if_icmpne L_tarm1
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aconst_null
-  astore 4
-  aload_3
-  aconst_null
-  astore_3
   areturn
 L_tarm1:
-  aload_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore_3
-  aload_1
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  astore_1
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_2
   aaload
-  astore 4
-  aload_3
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  checkcast [Ljava/lang/Object;
-  astore 5
-  aload 5
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore 6
-  aload 4
   aconst_null
-  astore 4
-  aconst_null
-  astore_3
+  astore_1
   astore_0
   goto L_tco0
-.end method
-
-
-.method static v_identity(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 1
-  .limit locals 1
-  aload_0
-  areturn
-.end method
-
-
-.method static v_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 2
-  aload_0
-  aload_1
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 26
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  invokestatic AwsumMain/v__cps_countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
 .end method
 
 
@@ -284,113 +241,27 @@ L_tarm4:
 
 
 .method static v__apply_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 12
+  .limit stack 3
+  .limit locals 5
 L_tco5:
   aload_0
   checkcast [Ljava/lang/Object;
-  astore_2
-  aload_2
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  istore_3
-  iload_3
+  istore_2
+  iload_2
   bipush 26
   if_icmpne L_tarm6
-  aconst_null
-  astore 4
-  aconst_null
-  astore 5
   aload_1
   areturn
 L_tarm6:
-  aload_2
+  aload_0
+  checkcast [Ljava/lang/Object;
   iconst_1
   aaload
-  astore 4
-  aload_2
-  iconst_2
-  aaload
-  astore 5
   aload_1
-  checkcast [Ljava/lang/Object;
-  astore 6
-  aload 6
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore 7
-  iload 7
-  iconst_3
-  if_icmpne L_tarm7
-  aload 6
-  iconst_1
-  aaload
-  astore 8
-  aload 4
-  aload_1
-  checkcast [Ljava/lang/Object;
-  dup
-  iconst_0
-  iconst_3
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 8
-  aastore
-  aconst_null
-  astore 8
-  aconst_null
-  astore 5
-  aconst_null
-  astore 4
-  astore_1
-  astore_0
-  goto L_tco5
-L_tarm7:
-  aload 6
-  iconst_1
-  aaload
-  astore 8
-  aload 5
-  checkcast [Ljava/lang/Object;
-  astore 9
-  aload 9
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore 10
-  aload 9
-  iconst_1
-  aaload
-  astore 11
-  aload 4
-  aload_1
-  checkcast [Ljava/lang/Object;
-  dup
-  iconst_0
-  iconst_4
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 11
-  aload 8
-  invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aastore
-  aconst_null
-  astore 11
-  aconst_null
-  astore 8
-  aconst_null
-  astore 5
-  aconst_null
-  astore 4
   astore_1
   astore_0
   goto L_tco5
@@ -419,7 +290,14 @@ L_tarm7:
   aastore
   ldc 1000000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 26
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v__cps_countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore_0
   aload_0
@@ -430,10 +308,8 @@ L_tarm7:
   istore_1
   iload_1
   iconst_3
-  if_icmpne L_arm9
-  aload_0
-  iconst_1
-  aaload
+  if_icmpne L_arm8
+  aconst_null
   astore_2
   iconst_3
   anewarray java/lang/Object
@@ -466,8 +342,8 @@ L_tarm7:
   aastore
   aastore
   aastore
-  goto L_join8
-L_arm9:
+  goto L_join7
+L_arm8:
   aload_0
   iconst_1
   aaload
@@ -505,25 +381,7 @@ L_arm9:
   aastore
   aastore
   aastore
-L_join8:
-  areturn
-.end method
-
-
-.method static v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 4
-  aload_0
-  checkcast [Ljava/lang/Object;
-  astore_2
-  aload_2
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  istore_3
-  aload_1
-  invokestatic AwsumMain/v_identity(Ljava/lang/Object;)Ljava/lang/Object;
+L_join7:
   areturn
 .end method
 

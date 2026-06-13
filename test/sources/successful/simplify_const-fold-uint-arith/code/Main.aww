@@ -1,0 +1,50 @@
+{- `Awsum.Simplify` folds the unsigned-integer built-ins over literal
+   operands. Unsigned add/sub/mul have one reachable failure direction each,
+   so the folded `Left` carries the bare single-error constructor — no row
+   wrapper, exactly like the runtime helpers. Boundary cases on both widths:
+   the UInt8 cap (255) and the UInt32 cap (4294967295). -}
+
+import IO.Stdout
+
+mulU8Overflow : String
+mulU8Overflow = case mulUInt8 16 16 of
+  Left _e1 -> "O"
+  Right v1 -> showUInt8 v1
+
+subU8Underflow : String
+subU8Underflow = case subUInt8 3 5 of
+  Left _e2 -> "U"
+  Right v2 -> showUInt8 v2
+
+addU8Ok : String
+addU8Ok = case addUInt8 254 1 of
+  Left _e3 -> "O"
+  Right v3 -> showUInt8 v3
+
+mulU32Overflow : String
+mulU32Overflow = case mulUInt32 65_536 65_536 of
+  Left _e4 -> "O"
+  Right v4 -> showUInt32 v4
+
+predU32Underflow : String
+predU32Underflow = case predUInt32 0 of
+  Left _e5 -> "U"
+  Right v5 -> showUInt32 v5
+
+addU32Ok : String
+addU32Ok = case addUInt32 4_294_967_294 1 of
+  Left _e6 -> "O"
+  Right v6 -> showUInt32 v6
+
+main : IO Never Unit
+main = IO.Stdout.print mulU8Overflow
+  |> andThenIO (\_s1 -> IO.Stdout.print ";")
+  |> andThenIO (\_p1 -> IO.Stdout.print subU8Underflow)
+  |> andThenIO (\_s2 -> IO.Stdout.print ";")
+  |> andThenIO (\_p2 -> IO.Stdout.print addU8Ok)
+  |> andThenIO (\_s3 -> IO.Stdout.print ";")
+  |> andThenIO (\_p3 -> IO.Stdout.print mulU32Overflow)
+  |> andThenIO (\_s4 -> IO.Stdout.print ";")
+  |> andThenIO (\_p4 -> IO.Stdout.print predU32Underflow)
+  |> andThenIO (\_s5 -> IO.Stdout.print ";")
+  |> andThenIO (\_p5 -> IO.Stdout.print addU32Ok)

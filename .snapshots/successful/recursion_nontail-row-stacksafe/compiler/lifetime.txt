@@ -1,8 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
 buildOnes:
   param           n                               count=2
@@ -16,9 +17,6 @@ buildMixed:
   case-pattern    _e                              count=0
   case-pattern    m                               count=0
 
-sumRow:
-  param           xs                              count=1
-
 $cps$sumRow:
   param           xs                              count=2
   param           $k                              count=1
@@ -28,20 +26,12 @@ $cps$sumRow:
   row-case        n                               count=0
 
 $apply$sumRow:
-  param           $k                              count=1
+  param           $k                              count=2
   param           $x                              count=2
   case-pattern    $pk_16                          count=0
   case-pattern    n                               count=0
   case-pattern    _e                              count=0
   case-pattern    r                               count=0
-
-extract:
-  param           x                               count=1
-  row-case        _s                              count=0
-  row-case        n                               count=0
-
-countRow:
-  param           n                               count=1
 
 $cps$countRow:
   param           n                               count=4
@@ -53,26 +43,16 @@ $apply$countRow:
   param           $k                              count=1
   param           $x                              count=1
   case-pattern    $pk_18                          count=0
-
-$lam$13:
-  param           _u                              count=0
-
-$lam$14:
-  param           _u                              count=0
-
-$lam$15:
-  param           _u                              count=0
-
-$lam$16:
-  param           _u                              count=0
-
-$df$andThenIO$0:
-  param           io                              count=1
+  row-case        $inl1$_s                        count=0
+  row-case        $inl2$n                         count=0
 
 $cps$$df$andThenIO$0:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl6$x                         count=0
+  row-case        $inl7$_s                        count=0
+  row-case        $inl8$n                         count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -81,9 +61,6 @@ $apply$$df$andThenIO$0:
   param           $x                              count=1
   case-pattern    $pk_20                          count=0
   case-pattern    s                               count=0
-
-$df$andThenIO$4:
-  param           io                              count=1
 
 $cps$$df$andThenIO$4:
   param           io                              count=2
@@ -98,9 +75,6 @@ $apply$$df$andThenIO$4:
   case-pattern    $pk_22                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$8:
-  param           io                              count=1
-
 $cps$$df$andThenIO$8:
   param           io                              count=2
   param           $k                              count=1
@@ -113,9 +87,6 @@ $apply$$df$andThenIO$8:
   param           $x                              count=1
   case-pattern    $pk_24                          count=0
   case-pattern    s                               count=0
-
-$df$andThenIO$12:
-  param           io                              count=1
 
 $cps$$df$andThenIO$12:
   param           io                              count=2

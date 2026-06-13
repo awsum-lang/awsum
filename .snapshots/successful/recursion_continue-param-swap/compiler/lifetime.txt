@@ -1,0 +1,42 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+swap:
+  param           n                               count=2
+  param           a                               count=1
+  param           b                               count=0
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+wrap:
+  param           n                               count=2
+  param           d                               count=0
+  param           acc                             count=2
+  case-pattern    $inl1$h                         count=0
+  case-pattern    $inl2$_t                        count=0
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+fib:
+  param           n                               count=2
+  param           a                               count=2
+  param           b                               count=1
+  case-pattern    _e                              count=0
+  case-pattern    s                               count=0
+  case-pattern    _e2                             count=0
+  case-pattern    m                               count=0
+
+main:
+  case-pattern    _e                              count=0
+  case-pattern    p1                              count=1
+  case-pattern    _e2                             count=0
+  case-pattern    p2                              count=1
+  case-pattern    _e3                             count=0
+  case-pattern    p3                              count=1
+  case-pattern    _e4                             count=0
+  case-pattern    out                             count=1
+

@@ -1,0 +1,20 @@
+{- `Awsum.Simplify` collapses a case over a top-level constant: the scrutinee
+   names a `CValDef` whose body is a constructor tree of literals, so the
+   matching arm is selected at compile time and the constant falls to the
+   tree-shake. A plain-variable body chases to its target's registered
+   constant, so the case over `alias` folds the same way. The Core snapshot
+   pins the rewrite — `main` holds a direct `showInt32 42` call, no `CCase`,
+   and neither `boxed` nor `alias` survives. -}
+
+import IO.Stdout
+
+boxed : Maybe Int32
+boxed = Just 42
+
+alias : Maybe Int32
+alias = boxed
+
+main : IO Never Unit
+main = IO.Stdout.print (case alias of
+  Nothing -> "nothing"
+  Just n -> showInt32 n)

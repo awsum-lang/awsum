@@ -1,17 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-$lam$13:
-  param           _u                              count=0
-
-$lam$14:
-  param           _u                              count=0
-
-$df$andThenIO$0:
-  param           io                              count=1
+  let             $inl0$eff                       count=0
 
 $cps$$df$andThenIO$0:
   param           io                              count=2
@@ -25,9 +17,6 @@ $apply$$df$andThenIO$0:
   param           $x                              count=1
   case-pattern    $pk_9                           count=0
   case-pattern    s                               count=0
-
-$df$andThenIO$4:
-  param           io                              count=1
 
 $cps$$df$andThenIO$4:
   param           io                              count=2

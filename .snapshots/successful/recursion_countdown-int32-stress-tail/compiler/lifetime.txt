@@ -1,24 +1,19 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-showUnderflowError:
-  param           $wild0                          count=0
+  let             $inl0$eff                       count=0
 
 countDown:
   param           n                               count=2
   case-pattern    e                               count=0
   case-pattern    m                               count=0
 
-showResult:
-  param           r                               count=1
-  case-pattern    e                               count=0
-  case-pattern    v                               count=0
-
-$let$13:
-  param           res                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
+main:
+  let             $inl3$r                         count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$v                         count=0
+  case-pattern    $inl4$__w0                      count=0
+  case-pattern    $inl5$s                         count=1
 

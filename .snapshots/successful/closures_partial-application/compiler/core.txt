@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,102 +15,27 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
                     ]
                 )
             )
-        , CFunDef "wrap" [ "s" ]
-            ( CCon 24
-                [ CVar "s" ]
-            )
-        , CFunDef "unwrap" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 24
-                    , [ "value" ]
-                    , CDrop DropFreeUnchecked "value"
-                        ( CVar "value" )
-                    )
-                ]
-            )
-        , CFunDef "compose"
-            [ "f"
-            , "g"
-            , "x"
-            ]
-            ( CCall
-                ( CVar "$apply1" )
-                [ CVar "f"
-                , CCall
-                    ( CVar "$apply1" )
-                    [ CVar "g"
-                    , CVar "x"
-                    ]
-                ]
-            )
         , CValDef "main"
             ( CCon 7
-                [ CCall
-                    ( CVar "$df$apply$0" )
-                    [ CString "chain"
-                    , CCon 25 []
-                    , CCon 26 []
-                    ]
+                [ CString "chain"
                 , CCon 5
                     [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$df$apply$0"
-            [ "x"
-            , "$df$apply$0$cap0$0"
-            , "$df$apply$0$cap0$1"
-            ]
-            ( CCall
-                ( CVar "compose" )
-                [ CVar "$df$apply$0$cap0$0"
-                , CVar "$df$apply$0$cap0$1"
-                , CVar "x"
-                ]
-            )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" )
-                [
-                    ( 25
-                    , []
-                    , CCall
-                        ( CVar "unwrap" )
-                        [ CVar "$arg0" ]
-                    )
-                ,
-                    ( 26
-                    , []
-                    , CCall
-                        ( CVar "wrap" )
-                        [ CVar "$arg0" ]
-                    )
                 ]
             )
         ]

@@ -1,0 +1,222 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$andThenIO$0" )
+                [ CCon 7
+                    [ CLet "$inl9$n"
+                        ( CCase
+                            ( CCall
+                                ( CBuiltIn "eqUInt32" )
+                                [ CCall
+                                    ( CBuiltIn "lengthUtf8Bytes" )
+                                    [ CString "one" ]
+                                , CIntLit 3 TUInt32
+                                ]
+                            )
+                            [
+                                ( 1
+                                , []
+                                , CCall
+                                    ( CBuiltIn "lengthUtf8Bytes" )
+                                    [ CString "abc" ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CCall
+                                    ( CBuiltIn "lengthUtf8Bytes" )
+                                    [ CString "zz" ]
+                                )
+                            ]
+                        )
+                        ( CDrop DropFreeUnchecked "$inl9$n"
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "addUInt32" )
+                                    [ CVar "$inl9$n"
+                                    , CVar "$inl9$n"
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$inl7$_o" ]
+                                    , CString "OVERFLOW"
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl8$d" ]
+                                    , CCall
+                                        ( CBuiltIn "showUInt32" )
+                                        [ CVar "$inl8$d" ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 5
+                        [ CCon 0 [] ]
+                    ]
+                , CCon 8 []
+                ]
+            )
+        , CFunDef "$cps$$df$andThenIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CLet "$inl4$n"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "eqUInt32" )
+                                            [ CCall
+                                                ( CBuiltIn "lengthUtf8Bytes" )
+                                                [ CString "no" ]
+                                            , CIntLit 3 TUInt32
+                                            ]
+                                        )
+                                        [
+                                            ( 1
+                                            , []
+                                            , CCall
+                                                ( CBuiltIn "lengthUtf8Bytes" )
+                                                [ CString "abc" ]
+                                            )
+                                        ,
+                                            ( 2
+                                            , []
+                                            , CCall
+                                                ( CBuiltIn "lengthUtf8Bytes" )
+                                                [ CString "zz" ]
+                                            )
+                                        ]
+                                    )
+                                    ( CDrop DropFreeUnchecked "$inl4$n"
+                                        ( CCase
+                                            ( CCall
+                                                ( CBuiltIn "addUInt32" )
+                                                [ CVar "$inl4$n"
+                                                , CVar "$inl4$n"
+                                                ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$inl5$_o" ]
+                                                , CString "OVERFLOW"
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "$inl6$d" ]
+                                                , CDrop DropFreeUnchecked "$inl6$d"
+                                                    ( CCall
+                                                        ( CBuiltIn "showUInt32" )
+                                                        [ CVar "$inl6$d" ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 9
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 8
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 9
+                        ,
+                            [ "$pk_9"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_9"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_9"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

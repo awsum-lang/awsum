@@ -1,34 +1,23 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-cont:
-  param           _n                              count=0
-
-describe:
-  param           r                               count=1
-  case-pattern    __pa0                           count=0
-  row-case        _a                              count=0
-  row-case        _b                              count=0
-  case-pattern    v                               count=0
-
-$lift$13:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$lift$14:
-  param           __input                         count=1
-  case-pattern    __f0                            count=0
-  case-pattern    __f0                            count=0
-
-$df$$rowmono$0$bindEither$1:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$partialB$0:
-
+main:
+  let             $inl13$__input                  count=0
+  case-pattern    $inl14$__f0                     count=0
+  case-pattern    $inl15$__f0                     count=0
+  let             $inl16$x                        count=0
+  case-pattern    $inl17$e                        count=0
+  case-pattern    $inl18$a                        count=0
+  let             $inl19$__input                  count=0
+  case-pattern    $inl20$__f0                     count=0
+  case-pattern    $inl21$__f0                     count=0
+  let             $inl26$r                        count=0
+  case-pattern    $inl22$__pa0                    count=0
+  row-case        $inl23$_a                       count=0
+  row-case        $inl24$_b                       count=0
+  case-pattern    $inl25$v                        count=0
 

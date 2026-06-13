@@ -1,0 +1,31 @@
+{- A tower above a residual join keeps collapsing: the mix step leaves a
+   join (its True arm is a runtime computation), and every level above it
+   used to pile up as nested cases over that join — the consumer case now
+   moves into a fresh join's body (case-of-join), the old join's literal
+   value tails jump there, jump-of-known-arg resolves those jumps against
+   the consumer, and the emptied consumer join disappears. The pin: one
+   `CJoin` in Core, with the four upper levels folded into its body. -}
+
+import IO.Stdout
+
+mix : Bool -> Bool
+mix b = case b of
+  True -> eqUInt32 (lengthUtf8Bytes "xyz") 3
+  False -> False
+
+seed : Bool
+seed = eqUInt32 (lengthUtf8Bytes (showInt32 42)) 2
+
+result : String
+result =
+  let s0 = seed
+   in let s1 = and (mix s0) True
+   in let s2 = and s1 True
+   in let s3 = or s2 False
+   in let s4 = not s3
+   in case s4 of
+        True -> "T"
+        False -> "F"
+
+main : IO Never Unit
+main = IO.Stdout.print result

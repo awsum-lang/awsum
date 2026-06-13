@@ -1,48 +1,18 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-extract:
-  param           x                               count=1
-  row-case        n                               count=0
-
-extractU:
-  param           x                               count=1
-  row-case        n                               count=0
-
-gAsc:
-  param           n                               count=1
-
-gBare:
-  param           n                               count=1
-
-gU:
-  param           n                               count=1
-
-$lam$13:
-  param           _u                              count=0
-
-$lam$14:
-  param           _u                              count=0
-
-$lam$15:
-  param           _u                              count=0
-
-$lam$16:
-  param           _u                              count=0
-
-$lam$17:
-  param           _u                              count=0
-
-$df$andThenIO$0:
-  param           io                              count=1
+main:
+  let             $inl11$x                        count=0
 
 $cps$$df$andThenIO$0:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl10$x                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -52,13 +22,11 @@ $apply$$df$andThenIO$0:
   case-pattern    $pk_9                           count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$4:
-  param           io                              count=1
-
 $cps$$df$andThenIO$4:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl7$x                         count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -68,13 +36,11 @@ $apply$$df$andThenIO$4:
   case-pattern    $pk_11                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$8:
-  param           io                              count=1
-
 $cps$$df$andThenIO$8:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl6$x                         count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -84,13 +50,11 @@ $apply$$df$andThenIO$8:
   case-pattern    $pk_13                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$12:
-  param           io                              count=1
-
 $cps$$df$andThenIO$12:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl9$x                         count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
@@ -100,13 +64,11 @@ $apply$$df$andThenIO$12:
   case-pattern    $pk_15                          count=0
   case-pattern    s                               count=0
 
-$df$andThenIO$16:
-  param           io                              count=1
-
 $cps$$df$andThenIO$16:
   param           io                              count=2
   param           $k                              count=1
   case-pattern    a                               count=0
+  let             $inl8$x                         count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 

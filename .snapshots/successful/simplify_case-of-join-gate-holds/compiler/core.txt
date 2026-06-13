@@ -1,0 +1,129 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "seed"
+            ( CCall
+                ( CBuiltIn "eqUInt32" )
+                [ CCall
+                    ( CBuiltIn "lengthUtf8Bytes" )
+                    [ CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CIntLit 42 TInt32 ]
+                    ]
+                , CIntLit 2 TUInt32
+                ]
+            )
+        , CValDef "other"
+            ( CCall
+                ( CBuiltIn "eqUInt32" )
+                [ CCall
+                    ( CBuiltIn "lengthUtf8Bytes" )
+                    [ CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CIntLit 7 TInt32 ]
+                    ]
+                , CIntLit 1 TUInt32
+                ]
+            )
+        , CValDef "result"
+            ( CLet "$inl1$b"
+                ( CVar "seed" )
+                ( CDrop DropFreeUnchecked "$inl1$b"
+                    ( CCase
+                        ( CCase
+                            ( CVar "$inl1$b" )
+                            [
+                                ( 1
+                                , []
+                                , CCall
+                                    ( CBuiltIn "eqUInt32" )
+                                    [ CCall
+                                        ( CBuiltIn "lengthUtf8Bytes" )
+                                        [ CString "xyz" ]
+                                    , CIntLit 3 TUInt32
+                                    ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CVar "$inl1$b"
+                                )
+                            ]
+                        )
+                        [
+                            ( 1
+                            , []
+                            , CCase
+                                ( CVar "other" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CString "TT"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CString "TF"
+                                    )
+                                ]
+                            )
+                        ,
+                            ( 2
+                            , []
+                            , CCase
+                                ( CVar "other" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CString "FT"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CString "FF"
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CVar "result"
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

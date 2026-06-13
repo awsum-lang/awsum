@@ -7,8 +7,7 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CDrop DropFreeUnchecked "u"
-                            ( CVar "u" )
+                        , CProj "io" 1
                         )
                     ,
                         ( 7
@@ -16,22 +15,16 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CCase
-                                    ( CCall
-                                        ( CBuiltIn "internalStdoutPrint" )
-                                        [ CVar "s" ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
                                     )
-                                    [
-                                        ( 0
-                                        , []
-                                        , CDrop DropFreeUnchecked "io"
-                                            ( CContinue
-                                                [ CVar "next" ]
-                                            )
-                                        )
-                                    ]
                                 )
                             )
                         )
@@ -47,163 +40,111 @@ CoreProgram
                 [ CIntLit 42 TInt32 ]
             )
         , CValDef "main"
-            ( CCall
-                ( CVar "$let$17" )
-                [ CCall
-                    ( CVar "$df$mapLeft$0" )
-                    [ CVar "bad" ]
-                ]
-            )
-        , CFunDef "$let$13" [ "msg" ]
-            ( CCase
-                ( CVar "msg" )
-                [
-                    ( 3
-                    , [ "__w0" ]
-                    , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 7
-                            [ CString "STRING_TOO_LONG"
-                            , CCon 5
-                                [ CCon 0 [] ]
+            ( CLet "$inl23$renamedGood"
+                ( CLet "$inl20$x"
+                    ( CVar "good" )
+                    ( CDrop DropFreeUnchecked "$inl20$x"
+                        ( CCase
+                            ( CVar "$inl20$x" )
+                            [
+                                ( 3
+                                , [ "$inl21$e" ]
+                                , CCon 3
+                                    [ CCon 25 [] ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl22$a" ]
+                                , CVar "$inl20$x"
+                                )
                             ]
                         )
                     )
-                ,
-                    ( 4
-                    , [ "s" ]
-                    , CDrop DropFreeUnchecked "s"
-                        ( CCon 7
-                            [ CVar "s"
-                            , CCon 5
-                                [ CCon 0 [] ]
+                )
+                ( CDrop DropFreeUnchecked "$inl23$renamedGood"
+                    ( CJoin "$join24" [ "$inl25$scrut" ]
+                        ( CCase
+                            ( CVar "$inl25$scrut" )
+                            [
+                                ( 3
+                                , [ "$inl26$__w0" ]
+                                , CCon 7
+                                    [ CString "STRING_TOO_LONG"
+                                    , CCon 5
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "$inl27$s" ]
+                                , CCon 7
+                                    [ CProj "$inl25$scrut" 1
+                                    , CCon 5
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
                             ]
                         )
-                    )
-                ]
-            )
-        , CFunDef "$lam$14" [ "_a" ]
-            ( CCon 25 [] )
-        , CFunDef "$let$15"
-            [ "renamedBad"
-            , "renamedGood"
-            ]
-            ( CCall
-                ( CVar "$let$13" )
-                [ CCase
-                    ( CVar "renamedBad" )
-                    [
-                        ( 3
-                        , [ "__p0" ]
-                        , CDrop DropFreeUnchecked "__p0"
-                            ( CCase
-                                ( CVar "__p0" )
-                                [
-                                    ( 25
-                                    , []
-                                    , CCase
-                                        ( CVar "renamedGood" )
+                        ( CLet "$inl19$x"
+                            ( CVar "bad" )
+                            ( CDrop DropFreeUnchecked "$inl19$x"
+                                ( CCase
+                                    ( CCase
+                                        ( CVar "$inl19$x" )
                                         [
                                             ( 3
-                                            , [ "__p0" ]
-                                            , CDrop DropFreeUnchecked "__p0"
-                                                ( CCase
-                                                    ( CVar "__p0" )
-                                                    [
-                                                        ( 25
-                                                        , []
-                                                        , CCon 4
-                                                            [ CString "bad-Left bad-Left" ]
-                                                        )
-                                                    ]
-                                                )
+                                            , [ "$inl17$e" ]
+                                            , CCon 3
+                                                [ CCon 25 [] ]
                                             )
                                         ,
                                             ( 4
-                                            , [ "n" ]
-                                            , CDrop DropFreeUnchecked "n"
-                                                ( CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CString "bad-Left good-Right "
-                                                    , CCall
-                                                        ( CBuiltIn "showInt32" )
-                                                        [ CVar "n" ]
-                                                    ]
-                                                )
+                                            , [ "$inl18$a" ]
+                                            , CVar "$inl19$x"
                                             )
                                         ]
                                     )
-                                ]
+                                    [
+                                        ( 3
+                                        , [ "$inl28$__p0" ]
+                                        , CJump "$join24"
+                                            [ CCase
+                                                ( CVar "$inl23$renamedGood" )
+                                                [
+                                                    ( 3
+                                                    , [ "$inl29$__p0" ]
+                                                    , CCon 4
+                                                        [ CString "bad-Left bad-Left" ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "$inl30$n" ]
+                                                    , CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CString "bad-Left good-Right "
+                                                        , CCall
+                                                            ( CBuiltIn "showInt32" )
+                                                            [ CProj "$inl23$renamedGood" 1 ]
+                                                        ]
+                                                    )
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "$inl31$__w0" ]
+                                        , CCon 7
+                                            [ CString "WAT"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        )
+                                    ]
+                                )
                             )
                         )
-                    ,
-                        ( 4
-                        , [ "__w0" ]
-                        , CDrop DropFreeUnchecked "__w0"
-                            ( CCon 4
-                                [ CString "WAT" ]
-                            )
-                        )
-                    ]
-                ]
-            )
-        , CFunDef "$lam$16" [ "_a" ]
-            ( CCon 25 [] )
-        , CFunDef "$let$17" [ "renamedBad" ]
-            ( CCall
-                ( CVar "$let$15" )
-                [ CVar "renamedBad"
-                , CCall
-                    ( CVar "$df$mapLeft$1" )
-                    [ CVar "good" ]
-                ]
-            )
-        , CFunDef "$df$mapLeft$0" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CCall
-                                ( CVar "$lam$16" )
-                                [ CVar "e" ]
-                            ]
-                        )
                     )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
-            )
-        , CFunDef "$df$mapLeft$1" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 3
-                    , [ "e" ]
-                    , CDrop DropFreeUnchecked "e"
-                        ( CCon 3
-                            [ CCall
-                                ( CVar "$lam$14" )
-                                [ CVar "e" ]
-                            ]
-                        )
-                    )
-                ,
-                    ( 4
-                    , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
-                        ( CCon 4
-                            [ CVar "a" ]
-                        )
-                    )
-                ]
+                )
             )
         ]
     }

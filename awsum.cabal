@@ -59,6 +59,7 @@ library
       Awsum.Codegen.JVM.Instr
       Awsum.Codegen.LLVM
       Awsum.Codegen.LLVM.Syntax
+      Awsum.Codegen.ReuseSchedule
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
       Awsum.Codegen.WASM.Instr
@@ -84,6 +85,7 @@ library
       Awsum.RestrictPreludeRefs
       Awsum.Reuse
       Awsum.Scc
+      Awsum.Simplify
       Awsum.StackSafety
       Awsum.Symbols
       Awsum.Syntax
@@ -210,6 +212,7 @@ test-suite awsum-test
       Awsum.HoverSpec
       Awsum.JvmFarBranchSpec
       Awsum.JvmMethodLimitSpec
+      Awsum.NoSimplifySpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
       Awsum.RunBackend

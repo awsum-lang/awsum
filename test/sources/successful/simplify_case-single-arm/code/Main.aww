@@ -1,0 +1,22 @@
+{- A case whose arms all return the same body decides nothing. The
+   single-arm form over a parameter disappears (its binders are unused),
+   and the identical-arms form drops its scrutinee together with the
+   computation — the dead-computation stance dead-let already takes. The
+   Core pin: neither case survives, and the eqUInt32/lengthUtf8Bytes
+   chain inside same is gone with its dispatch. -}
+
+import IO.Stdout
+
+label : Tuple2 UInt32 UInt32 -> String
+label t = case t of
+  Tuple2 _a _b -> "pair"
+
+same : String -> String
+same s = case eqUInt32 (lengthUtf8Bytes s) 1 of
+  True -> "fixed"
+  False -> "fixed"
+
+main : IO Never Unit
+main = case label (Tuple2 (1 : UInt32) (2 : UInt32)) ++ same "abc" of
+  Left _e -> IO.Stdout.print "TOO_LONG"
+  Right r -> IO.Stdout.print r

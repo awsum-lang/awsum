@@ -1,0 +1,24 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+rebuild:
+  param           k                               count=2
+  param           m                               count=4
+  case-pattern    _u                              count=0
+  case-pattern    j                               count=0
+  case-pattern    _n                              count=0
+
+main:
+  case-pattern    $inl1$a                         count=2
+  case-pattern    $inl2$_b                        count=0
+  case-pattern    $inl3$_e                        count=0
+  case-pattern    $inl4$r                         count=1
+  let             $inl6$m                         count=0
+  case-pattern    $inl5$n                         count=0
+  case-pattern    _e2                             count=0
+  case-pattern    out                             count=1
+

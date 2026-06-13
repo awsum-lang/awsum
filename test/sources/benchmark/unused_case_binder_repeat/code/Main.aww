@@ -28,10 +28,8 @@ zero = 0
 type IntList = INil | ICons Int32 IntList
 
 -- Tail-recursive build: each iter consumes 'n' and 'acc' (both
-
 -- transferred into 'ICons n acc'), and the new 'm' becomes the
-
--- next 'n'. No build-side leak.
+-- next 'n'.
 
 build : Int32 -> IntList -> IntList
 build n acc = case eqInt32 n zero of
@@ -40,13 +38,11 @@ build n acc = case eqInt32 n zero of
     Left _e -> acc
     Right m -> build m (ICons n acc)
 
--- Walks the list counting elements; '_h' is bound from each
-
--- 'ICons' cell's slot 1 but never referenced. Tail-recursive so
-
--- 'xs' and 'acc' are loop accumulators dropped by Phase B; '_h'
-
--- is a case-pattern binder, not a parameter, and leaks.
+-- Walks the list counting elements. Tail-recursive: Tco turns the
+-- self-call into a loop with 'xs' / 'acc' as the accumulators.
+-- '_h' is bound from each 'ICons' cell's slot 1 but never
+-- referenced; 'Lifetime.insertDrops' drops it at the arm start —
+-- nothing leaks (see the steady-state RSS table in the header).
 
 length : IntList -> Int32 -> Int32
 length xs acc = case xs of
@@ -56,10 +52,8 @@ length xs acc = case xs of
     Right a -> length t a
 
 -- Outer loop: build a fresh list, walk it counting elements,
-
--- accumulate the count. 'iters * listLen' ICons cells walked,
-
--- equal number of boxed Int32 cells leaked on LLVM/WASM.
+-- accumulate the count. 'iters * listLen' ICons cells are built,
+-- walked, and freed; peak RSS stays flat across iterations.
 
 runN : Int32 -> Int32 -> Int32 -> Int32
 runN iters listLen accSum = case eqInt32 iters zero of

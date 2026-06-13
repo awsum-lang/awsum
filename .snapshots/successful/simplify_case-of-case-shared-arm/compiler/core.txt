@@ -1,0 +1,83 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl5$b"
+                    ( CCall
+                        ( CBuiltIn "eqUInt32" )
+                        [ CCall
+                            ( CBuiltIn "lengthUtf8Bytes" )
+                            [ CString "x" ]
+                        , CIntLit 9 TUInt32
+                        ]
+                    )
+                    ( CDrop DropFreeUnchecked "$inl5$b"
+                        ( CJoin "$join3" [ "$inl4$scrut" ]
+                            ( CCase
+                                ( CVar "$inl4$scrut" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CString "yes"
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CString "no"
+                                    )
+                                ]
+                            )
+                            ( CCase
+                                ( CVar "$inl5$b" )
+                                [
+                                    ( 1
+                                    , []
+                                    , CJump "$join3"
+                                        [ CVar "$inl5$b" ]
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CString "yes"
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

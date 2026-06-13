@@ -96,7 +96,11 @@ freeVars = \case
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
   CDrop _ n b -> Set.delete n (freeVars b)
-  CReuse n _ fs -> Set.insert n (foldMap freeVars fs)
+  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
+  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
+  CProj n _ -> Set.singleton n
+  CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
+  CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
   where
     armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
     rowArmFv (_, bound, body) = freeVars body `Set.difference` Set.singleton bound
@@ -272,6 +276,8 @@ goNonTail env expr kont = case expr of
   CString _ -> kont expr
   CIntLit _ _ -> kont expr
   CBuiltIn _ -> kont expr
+  CProj _ _ -> kont expr -- trivial: a pure field read, no buried self-call
+  CLet {} -> error "Cps goNonTail: CLet is handled in core-simplifier step 2 (CPS over ANF)"
   -- Non-self call: evaluate args in non-tail, then synchronous call.
   CCall (CVar n) args
     | n == env.cpsSelfF ->
@@ -346,6 +352,12 @@ goNonTail env expr kont = case expr of
   -- it here would also be a pipeline bug.
   CReuse {} ->
     error "Awsum.Cps: CReuse reached goNonTail — Cps must run before insertReuse"
+  -- 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' /after/ Tco, so
+  -- seeing them here would also be a pipeline bug.
+  CJoin {} ->
+    error "Awsum.Cps: CJoin reached goNonTail — Cps must run before Simplify"
+  CJump {} ->
+    error "Awsum.Cps: CJump reached goNonTail — Cps must run before Simplify"
 
 -- | Build the body of @$apply$f@.
 --
@@ -403,9 +415,17 @@ alphaRename from to = go
       CDrop k n b
         | n == from -> CDrop k n b -- the drop kills 'from'; stop descending
         | otherwise -> CDrop k n (go b)
-      CReuse n t fs
-        | n == from -> CReuse to t (map go fs)
-        | otherwise -> CReuse n t (map go fs)
+      CReuse rm n t fs
+        | n == from -> CReuse rm to t (map go fs)
+        | otherwise -> CReuse rm n t (map go fs)
+      CLet x rhs body
+        | x == from -> CLet x (go rhs) body -- x shadows 'from' in body
+        | otherwise -> CLet x (go rhs) (go body)
+      CProj n i
+        | n == from -> CProj to i
+        | otherwise -> CProj n i
+      CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
+      CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
 
     goAlt (t, vs, b)
       | from `elem` vs = (t, vs, b) -- shadowed; don't rename further in

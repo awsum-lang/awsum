@@ -24,10 +24,14 @@ module Awsum.Core
     CoreProgram (..),
     PreludeTags (..),
     CDropKind (..),
+    ReuseMode (..),
     BinderKindMap,
     usedBuiltIns,
     usesIntLit,
     nextFreshConTag,
+    binderUsedIn,
+    effectfulIn,
+    reusedBinders,
   )
 where
 
@@ -86,6 +90,26 @@ intTypeName = \case
 --     * 'DropNoop' — binder is an unboxed scalar ('Int32', 'UInt8',
 --       …). No memory to reclaim; codegen emits nothing.
 data CDropKind = DropFreeUnchecked | DropFreeStringChecked | DropNoop
+  deriving stock (Show, Eq, Ord)
+
+-- | How a 'CReuse' may take its cell — the static uniqueness evidence
+--   'Awsum.Reuse.insertReuse' attaches when it rewrites.
+--
+--     * 'ReuseUnique' — the dying cell is an Scc argument pack or a Cps
+--       continuation cell (its constructor tag was minted above
+--       'nextFreshConTag' of the pre-Scc program). Those cells are
+--       created and consumed entirely inside the compiler-generated
+--       loop, never stored into user data and never visible to user
+--       code, so no other holder can exist: every backend mutates in
+--       place unconditionally.
+--     * 'ReuseGuarded' — a user-visible cell (a list node, a tree node,
+--       an IO step). The local drop only proves the /binder's/
+--       reference dies; the caller may retain the structure (Awsum is
+--       pure — @let ys = reverse xs@ keeps @xs@ readable), so
+--       uniqueness is a runtime property. LLVM/WASM check the refcount
+--       and copy-on-write when shared; the managed backends have no
+--       refcount header to check and allocate a fresh cell instead.
+data ReuseMode = ReuseUnique | ReuseGuarded
   deriving stock (Show, Eq, Ord)
 
 -- | Side table mapping every binder name in a Core program — function
@@ -172,7 +196,7 @@ data CExpr
     --   transfer ownership; no drop is emitted for transferred
     --   binders).
     CDrop CDropKind Name CExpr
-  | -- | Cell reuse à la Lean 4. @CReuse n tag fields@ writes @tag@
+  | -- | Cell reuse à la Lean 4. @CReuse mode n tag fields@ writes @tag@
     --   into slot 0 of the existing user-pointer at @n@ and the
     --   @fields@ values into slots 1, 2, …, length fields. The result
     --   value of the expression is @n@ itself — same physical pointer
@@ -189,12 +213,64 @@ data CExpr
     --   arm's pattern has exactly @length fields@ binders (so the
     --   slot count is exact) — see 'Awsum.Reuse.rewriteFirstCCon'.
     --
-    --   Backend lowering: in-place stores into the existing block, no
-    --   '__alloc' / '__free' call. The pre-existing refcount header
-    --   on LLVM/WASM is left intact — the block is still
-    --   heap-allocated, so on a later 'CDrop' '__free_recursive' will
-    --   correctly recognise it.
-    CReuse Name Int [CExpr]
+    --   Backend lowering by 'ReuseMode': a 'ReuseUnique' cell mutates in
+    --   place unconditionally on every backend; a 'ReuseGuarded' cell
+    --   mutates under a runtime uniqueness check with copy-on-write on
+    --   the reference-counted backends (LLVM/WASM) and falls back to a
+    --   plain allocation on the managed ones (no refcount header to
+    --   check). The pre-existing refcount header on LLVM/WASM is left
+    --   intact — the block is still heap-allocated, so on a later
+    --   'CDrop' '__free_recursive' will correctly recognise it.
+    CReuse ReuseMode Name Int [CExpr]
+  | -- | Let-binding: @let n = rhs in body@. The expression's value is
+    --   @body@'s value with @n@ bound to @rhs@'s value throughout @body@;
+    --   @rhs@ is evaluated once. @rhs@ is in non-tail position, @body@ is in
+    --   tail position iff the @CLet@ itself is (so 'Awsum.Cps' / 'Awsum.Tco'
+    --   recurse into @body@ as a tail and @rhs@ as a non-tail).
+    --
+    --   The binder's 'CDropKind' lives in the 'BinderKindMap' keyed by @n@,
+    --   like any case-pattern / parameter binder — not inline on the node.
+    --
+    --   Part of the ANF representation of case-binding: a case scrutinee and
+    --   its pattern fields become @let@s (the latter bound to a 'CProj').
+    --   Also the form 'Awsum.Simplify' inlines (single-use @let@) and floats.
+    CLet Name CExpr CExpr
+  | -- | Field projection: slot @Int@ of the constructor cell bound to @Name@
+    --   (slot 0 is the tag; fields occupy slots 1.., the same layout
+    --   'CReuse' writes). A /leaf/ of the 'CExpr' tree, like 'CVar' — it has
+    --   no sub-expressions.
+    --
+    --   A pure read. The reference-count / ownership discipline (whether a
+    --   field is moved out, when @Name@'s cell is freed) is governed by
+    --   'CDrop' placement in 'Awsum.Lifetime', not by the projection itself —
+    --   so on every backend 'CProj' lowers to a plain slot load, exactly as a
+    --   case-arm field binder does today.
+    --
+    --   In the ANF form, a case-arm field binder becomes
+    --   @let v = CProj scrut slot in …@.
+    CProj Name Int
+  | -- | Join point: @CJoin j params joinBody inner@ declares the label @j@
+    --   with @params@ over @joinBody@, then evaluates @inner@. The
+    --   expression's value is @inner@'s value on paths whose tail is not a
+    --   'CJump', and @joinBody@'s value (with @params@ bound to the jump's
+    --   arguments) on paths that jump. The dual of 'CLoop': a forward label
+    --   instead of a backward one.
+    --
+    --   Produced by case-of-case fusion in 'Awsum.Simplify' so the outer
+    --   case's arms exist once instead of being copied into every inner arm.
+    --   The join name is a minted @$join$…@ — its own namespace, never a
+    --   'CVar', untouched by substitution.
+    --
+    --   Invariants: 'CJump' to @j@ appears only in tail positions of
+    --   @inner@, with arity matching @params@; @joinBody@ never jumps to
+    --   @j@ (no cycles — stack safety is settled before 'Awsum.Simplify'
+    --   runs). A 'CContinue' inside @joinBody@ is legal: every backend
+    --   lowers the node natively, so the body stays inside its 'CLoop'.
+    CJoin Name [Name] CExpr CExpr
+  | -- | Jump to the named enclosing 'CJoin': bind its parameters to @args@
+    --   and continue with its body. Appears only in tail positions of the
+    --   join's @inner@ expression, like 'CContinue' inside 'CLoop'.
+    CJump Name [CExpr]
   deriving stock (Show, Eq)
 
 -- | Top-level Core declarations.
@@ -264,7 +340,11 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
       CLoop b -> exprBuiltIns b
       CContinue xs -> foldMap exprBuiltIns xs
       CDrop _ _ b -> exprBuiltIns b
-      CReuse _ _ fs -> foldMap exprBuiltIns fs
+      CReuse _ _ _ fs -> foldMap exprBuiltIns fs
+      CLet _ rhs body -> exprBuiltIns rhs <> exprBuiltIns body
+      CProj _ _ -> mempty
+      CJoin _ _ body inner -> exprBuiltIns body <> exprBuiltIns inner
+      CJump _ args -> foldMap exprBuiltIns args
 
 -- | Smallest 'Int' strictly greater than every constructor tag used
 --   anywhere in the program ('CCon' construction sites and 'CCase'
@@ -296,7 +376,11 @@ nextFreshConTag (CoreProgram ds) =
       CLoop b -> exprConTags b
       CContinue xs -> concatMap exprConTags xs
       CDrop _ _ b -> exprConTags b
-      CReuse _ t fs -> t : concatMap exprConTags fs
+      CReuse _ _ t fs -> t : concatMap exprConTags fs
+      CLet _ rhs body -> exprConTags rhs <> exprConTags body
+      CProj _ _ -> []
+      CJoin _ _ body inner -> exprConTags body <> exprConTags inner
+      CJump _ args -> concatMap exprConTags args
       CVar _ -> []
       CString _ -> []
       CIntLit _ _ -> []
@@ -323,4 +407,114 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
       CLoop b -> exprHasInt b
       CContinue xs -> any exprHasInt xs
       CDrop _ _ b -> exprHasInt b
-      CReuse _ _ fs -> any exprHasInt fs
+      CReuse _ _ _ fs -> any exprHasInt fs
+      CLet _ rhs body -> exprHasInt rhs || exprHasInt body
+      CProj _ _ -> False
+      CJoin _ _ body inner -> exprHasInt body || exprHasInt inner
+      CJump _ args -> any exprHasInt args
+
+-- | Does @v@ appear in @e@ — as a 'CVar', or as the variable of a 'CProj' /
+--   'CReuse'? Shadowing-aware: does not descend under a binder that
+--   reintroduces @v@.
+--
+--   This is the single predicate the arm-binder elision rests on. Its one
+--   producer is 'Awsum.Simplify', which inlines a binder only when it occurs
+--   exactly once as a 'CVar' and never as a name — and the inline replaces
+--   that lone 'CVar' with @CProj scrut i@ (the /scrutinee/, not the binder),
+--   so the binder's @binderUsedIn@ drops to 'False'. Its six consumers —
+--   'Awsum.Lifetime' (skips the binder's 'CDrop') and all five codegens (skip
+--   extracting / binding / inc'ing it) — must all read this same predicate, so
+--   that the set a consumer elides is exactly the set the producer inlined. A
+--   future 'Awsum.Simplify' rule that inlines a binder into something other
+--   than a @CProj scrut@, or a new consumer that forgets the gate, has to keep
+--   that equality or it reintroduces a dead binding or an unbalanced refcount.
+binderUsedIn :: Name -> CExpr -> Bool
+binderUsedIn v = go
+  where
+    go = \case
+      CVar n -> n == v
+      CProj n _ -> n == v
+      CCall f xs -> go f || any go xs
+      CCon _ fs -> any go fs
+      CRow _ x -> go x
+      CCase s alts -> go s || any (\(_, vs, b) -> notElem v vs && go b) alts
+      CRowCase s alts -> go s || any (\(_, w, b) -> v /= w && go b) alts
+      CLoop b -> go b
+      CContinue xs -> any go xs
+      CLet n rhs b -> go rhs || (n /= v && go b)
+      CDrop _ _ b -> go b
+      CReuse _ n _ fs -> n == v || any go fs
+      -- The join name is a minted @$join$…@, never a value binder, so only
+      -- the params shadow @v@ — and only inside the join body.
+      CJoin _ ps body inner -> (notElem v ps && go body) || go inner
+      CJump _ args -> any go args
+      CString _ -> False
+      CIntLit _ _ -> False
+      CBuiltIn _ -> False
+
+-- | Does evaluating this expression perform I/O — does it call one of the
+--   platform-effect primitives? The four @internal*@ built-ins are the
+--   only calls in Core whose evaluation is observable: user-facing
+--   platform effects are lowered to constructor cells (effects are data),
+--   and the primitives survive only inside @runIO@'s walker, where the
+--   call /is/ the effect. Everything else is pure — droppable when unused
+--   and reorderable among other pure expressions; an effectful call is
+--   neither. Gates 'Awsum.Simplify''s unused-position drops (a collapsed
+--   case's scrutinee, a dead let's right-hand side, an unused inline
+--   argument, a dropped known-constructor field) and the JS codegen's
+--   parameter-rebind scheduling.
+effectfulIn :: CExpr -> Bool
+effectfulIn = goE
+  where
+    effectful :: Set Name
+    effectful = Set.fromList ["internalStdoutPrint", "internalGetArgs", "internalStdinReadAllString", "internalStdinReadAllBytes"]
+    goE = \case
+      CBuiltIn n -> n `Set.member` effectful
+      CVar _ -> False
+      CString _ -> False
+      CIntLit _ _ -> False
+      CProj _ _ -> False
+      CCall f xs -> goE f || any goE xs
+      CCon _ fs -> any goE fs
+      CRow _ v -> goE v
+      CCase s alts -> goE s || any (\(_, _, b) -> goE b) alts
+      CRowCase s alts -> goE s || any (\(_, _, b) -> goE b) alts
+      CLoop b -> goE b
+      CContinue xs -> any goE xs
+      CLet _ rhs b -> goE rhs || goE b
+      CDrop _ _ b -> goE b
+      CReuse _ _ _ fs -> any goE fs
+      CJoin _ _ body inner -> goE body || goE inner
+      CJump _ args -> any goE args
+
+-- | Every binder whose cell a 'CReuse' inside this expression overwrites.
+--   'effectfulIn' is about evaluation being observable outside the
+--   program; this is about it being observable by /sibling/ expressions:
+--   a 'CReuse' rewrites the cell its binder names in place, so a sibling
+--   that mentions the same binder (a projection, a call receiving it)
+--   reads different contents depending on which of the two evaluates
+--   first. Reordering two expressions is sound exactly when no binder
+--   returned here for one is mentioned by the other. Feeds the JS
+--   codegen's parameter-rebind scheduling, which keeps such conflicting
+--   pairs in source evaluation order.
+reusedBinders :: CExpr -> [Name]
+reusedBinders = goE
+  where
+    goE = \case
+      CReuse _ n _ fs -> n : concatMap goE fs
+      CVar _ -> []
+      CString _ -> []
+      CIntLit _ _ -> []
+      CBuiltIn _ -> []
+      CProj _ _ -> []
+      CCall f xs -> goE f <> concatMap goE xs
+      CCon _ fs -> concatMap goE fs
+      CRow _ v -> goE v
+      CCase s alts -> goE s <> concatMap (\(_, _, b) -> goE b) alts
+      CRowCase s alts -> goE s <> concatMap (\(_, _, b) -> goE b) alts
+      CLoop b -> goE b
+      CContinue xs -> concatMap goE xs
+      CLet _ rhs b -> goE rhs <> goE b
+      CDrop _ _ b -> goE b
+      CJoin _ _ body inner -> goE body <> goE inner
+      CJump _ args -> concatMap goE args

@@ -1,38 +1,15 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
 
-$let$13:
-  param           msg                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$lam$14:
-  param           n                               count=1
-
-$let$15:
-  param           mappedOk                        count=1
-  param           mappedBad                       count=1
-  case-pattern    __p0                            count=0
-  case-pattern    n                               count=0
-  case-pattern    __p0                            count=0
-  case-pattern    _m                              count=0
-
-$lam$16:
-  param           n                               count=1
-
-$let$17:
-  param           mappedOk                        count=1
-
-$df$mapRight$0:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
-
-$df$mapRight$1:
-  param           x                               count=1
-  case-pattern    e                               count=0
-  case-pattern    a                               count=0
+main:
+  let             $inl19$mappedOk                 count=0
+  join-param      $inl14$scrut                    count=2
+  case-pattern    $inl15$__w0                     count=0
+  case-pattern    $inl16$s                        count=0
+  case-pattern    $inl17$__p0                     count=0
+  case-pattern    $inl18$n                        count=0
 

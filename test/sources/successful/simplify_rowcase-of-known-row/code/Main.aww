@@ -1,0 +1,12 @@
+{- `Awsum.Simplify` collapses a row-case over a literal injection
+   (case-of-known-constructor, row form): the ascription injects "hi" as
+   `CRow tag "hi"`, and the case selects the String arm at compile time — the
+   row wrapper and the hash dispatch never reach codegen. The Core snapshot
+   pins the rewrite: `main` holds the string directly, no `CRowCase`. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (case ("hi" : (Int32 | String)) of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s)

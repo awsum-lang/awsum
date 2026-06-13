@@ -1,0 +1,51 @@
+{- `Awsum.Simplify` folds signed-integer built-ins over literal operands into
+   the exact value the runtime helper would build — `Right` with the computed
+   literal, or the same `Left` the helper returns on overflow/underflow (the
+   add/sub/mul family wraps the error in its two-label row; negInt32/succInt32
+   build the bare single-error constructor). Case-of-known-constructor then
+   collapses every case below, so the Core snapshot holds no arithmetic call
+   and no dispatch — only the chosen branches. -}
+
+import IO.Stdout
+
+addOk : String
+addOk = case addInt32 5 7 of
+  Left e1 -> case e1 of
+    (_u1 : UnderflowError) -> "U"
+    (_o1 : OverflowError) -> "O"
+  Right v1 -> showInt32 v1
+
+addOverflow : String
+addOverflow = case addInt32 2_147_483_647 1 of
+  Left e2 -> case e2 of
+    (_u2 : UnderflowError) -> "U"
+    (_o2 : OverflowError) -> "O"
+  Right v2 -> showInt32 v2
+
+subUnderflow : String
+subUnderflow = case subInt32 (-2_147_483_648) 1 of
+  Left e3 -> case e3 of
+    (_u3 : UnderflowError) -> "U"
+    (_o3 : OverflowError) -> "O"
+  Right v3 -> showInt32 v3
+
+negOverflow : String
+negOverflow = case negInt32 (-2_147_483_648) of
+  Left _e4 -> "O"
+  Right v4 -> showInt32 v4
+
+succOk : String
+succOk = case succInt32 41 of
+  Left _e5 -> "O"
+  Right v5 -> showInt32 v5
+
+main : IO Never Unit
+main = IO.Stdout.print addOk
+  |> andThenIO (\_s1 -> IO.Stdout.print ";")
+  |> andThenIO (\_p1 -> IO.Stdout.print addOverflow)
+  |> andThenIO (\_s2 -> IO.Stdout.print ";")
+  |> andThenIO (\_p2 -> IO.Stdout.print subUnderflow)
+  |> andThenIO (\_s3 -> IO.Stdout.print ";")
+  |> andThenIO (\_p3 -> IO.Stdout.print negOverflow)
+  |> andThenIO (\_s4 -> IO.Stdout.print ";")
+  |> andThenIO (\_p4 -> IO.Stdout.print succOk)

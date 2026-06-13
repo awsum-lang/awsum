@@ -1,0 +1,42 @@
+{- The caller retains the argument across a reuse-shaped callee: revInto2's
+   loop matches the linear-scrutinee pattern on its own parameter, but xs
+   stays readable after the call — Awsum is pure, so retention is always
+   possible. The reuse must therefore be ReuseGuarded: LLVM/WASM mutate
+   only when the runtime refcount proves unique ownership (here it does
+   not — they copy), and the managed backends allocate the cell the reuse
+   replaced. Before the guard existed, four backends overwrote the
+   retained list's tail in place and printed "2e" against LLVM's "22" —
+   the identical-stdout invariant broken from an eight-line source
+   program.
+
+   second probes one level past the head: the head survives corruption
+   as a self-move, the tail is where the overwrite lands. -}
+
+import IO.Stdout
+
+type Stack = Empty | Push String Stack
+
+revInto2 : Stack -> Stack -> Stack
+revInto2 lst acc = case lst of
+  Empty -> acc
+  Push s rest -> revInto2 rest (Push s acc)
+
+second : Stack -> String
+second st = case st of
+  Empty -> "E"
+  Push _s2 r -> case r of
+    Empty -> "e"
+    Push s3 _r2 -> s3
+
+mk : Int32 -> Stack -> Stack
+mk n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _u -> acc
+    Right m -> mk m (Push (showInt32 n) acc)
+
+main : IO Never Unit
+main =
+  let xs = mk 3 Empty
+   in IO.Stdout.print (second (revInto2 xs Empty))
+        |> andThenIO (\_u2 -> IO.Stdout.print (second xs))

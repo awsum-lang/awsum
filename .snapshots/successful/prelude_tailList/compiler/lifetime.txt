@@ -1,16 +1,9 @@
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
-
-tailList:
-  param           xs                              count=1
-  case-pattern    _h                              count=0
-  case-pattern    t                               count=0
-
-showList:
-  param           xs                              count=1
+  let             $inl0$eff                       count=0
 
 $cps$showList:
   param           xs                              count=2
@@ -19,8 +12,8 @@ $cps$showList:
   case-pattern    t                               count=0
 
 $apply$showList:
-  param           $k                              count=1
-  param           $x                              count=4
+  param           $k                              count=2
+  param           $x                              count=3
   case-pattern    $pk_16                          count=0
   case-pattern    h                               count=0
   case-pattern    $do_e_1                         count=0
@@ -28,38 +21,35 @@ $apply$showList:
   case-pattern    $do_e_0                         count=0
   case-pattern    hc                              count=0
 
-show:
-  param           m                               count=1
-  case-pattern    xs                              count=0
-  case-pattern    $do_e_2                         count=0
-  case-pattern    rendered                        count=0
-
-$let$13:
-  param           msg                             count=1
-  case-pattern    __w0                            count=0
-  case-pattern    s                               count=0
-
-$let$14:
-  param           noElems                         count=1
-  param           single                          count=1
-  param           multi                           count=1
-  case-pattern    $do_e_8                         count=0
-  case-pattern    a                               count=0
-  case-pattern    $do_e_7                         count=0
-  case-pattern    b                               count=0
-  case-pattern    $do_e_6                         count=0
-  case-pattern    c                               count=0
-  case-pattern    $do_e_5                         count=0
-  case-pattern    s0                              count=0
-  case-pattern    $do_e_4                         count=0
-  case-pattern    s1                              count=0
-  case-pattern    $do_e_3                         count=0
-  case-pattern    s2                              count=0
-
-$let$15:
-  param           noElems                         count=1
-  param           single                          count=1
-
-$let$16:
-  param           noElems                         count=1
+main:
+  join-param      $inl80$scrut                    count=2
+  case-pattern    $inl81$__w0                     count=0
+  case-pattern    $inl82$s                        count=0
+  let             $inl78$xs                       count=0
+  case-pattern    $inl76$_h                       count=0
+  case-pattern    $inl77$t                        count=0
+  case-pattern    $inl108$$do_e_2                 count=1
+  case-pattern    $inl109$rendered                count=1
+  case-pattern    $inl86$$do_e_8                  count=0
+  case-pattern    $inl87$a                        count=1
+  let             $inl88$xs                       count=0
+  case-pattern    $inl89$_h                       count=0
+  case-pattern    $inl90$t                        count=0
+  case-pattern    $inl91$$do_e_2                  count=1
+  case-pattern    $inl92$rendered                 count=1
+  case-pattern    $inl93$$do_e_7                  count=1
+  case-pattern    $inl94$b                        count=1
+  let             $inl95$xs                       count=0
+  case-pattern    $inl96$_h                       count=0
+  case-pattern    $inl97$t                        count=0
+  case-pattern    $inl98$$do_e_2                  count=1
+  case-pattern    $inl99$rendered                 count=1
+  case-pattern    $inl100$$do_e_6                 count=1
+  case-pattern    $inl101$c                       count=1
+  case-pattern    $inl102$$do_e_5                 count=1
+  case-pattern    $inl103$s0                      count=1
+  case-pattern    $inl104$$do_e_4                 count=1
+  case-pattern    $inl105$s1                      count=1
+  case-pattern    $inl106$$do_e_3                 count=1
+  case-pattern    $inl107$s2                      count=1
 

@@ -11,43 +11,14 @@
 
   const v_runIO = v_io => {
     while (true) {
-      {
-        const __s = v_io;
-        switch (__s[0]) {
-          case 5: {
-            const v_u = __s[1];
-            return v_u;
-          }
-          case 7: {
-            const v_s = __s[1];
-            const v_next = __s[2];
-            {
-              const __s = __print(v_s);
-              switch (__s[0]) {
-                case 0: {
-                  const __t0 = v_next;
-                  v_io = __t0;
-                  continue;
-                }
-              }
-            }
-          }
+      switch (v_io[0]) {
+        case 5: {
+          return v_io[1];
         }
-      }
-    }
-  };
-
-  const v__let_13 = v_res => {
-    {
-      const __s = v_res;
-      switch (__s[0]) {
-        case 3: {
-          const v___w0 = __s[1];
-          return [7, "STRING_TOO_LONG", [5, [0]]];
-        }
-        case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
+        case 7: {
+          const v__inl0_eff = __print(v_io[1]);
+          v_io = v_io[2];
+          continue;
         }
       }
     }
@@ -55,35 +26,21 @@
 
   const v__apply__scc_show_showCons = (v__k, v__x) => {
     while (true) {
-      {
-        const __s = v__k;
-        switch (__s[0]) {
-          case 17: {
-            return v__x;
-          }
-          case 18: {
-            const v__pk_18 = __s[1];
-            const v_hc = __s[2];
-            {
-              const __s = v__x;
-              switch (__s[0]) {
-                case 3: {
-                  const v__do_e_0 = __s[1];
-                  const __t0 = v__pk_18;
-                  const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_0, v__x);
-                  v__k = __t0;
-                  v__x = __t1;
-                  continue;
-                }
-                case 4: {
-                  const v_rest = __s[1];
-                  const __t0 = v__pk_18;
-                  const __t1 = __concat(v_hc, v_rest);
-                  v__k = __t0;
-                  v__x = __t1;
-                  continue;
-                }
-              }
+      switch (v__k[0]) {
+        case 17: {
+          return v__x;
+        }
+        case 18: {
+          const v__pk_18 = v__k[1];
+          switch (v__x[0]) {
+            case 3: {
+              v__k = v__pk_18;
+              continue;
+            }
+            case 4: {
+              v__x = __concat(v__k[2], v__x[1]);
+              v__k = v__pk_18;
+              continue;
             }
           }
         }
@@ -93,47 +50,36 @@
 
   const v__cps__scc_show_showCons = (v__args, v__k) => {
     while (true) {
-      {
-        const __s = v__args;
-        switch (__s[0]) {
-          case 15: {
-            const v_xs = __s[1];
-            {
-              const __s = v_xs;
-              switch (__s[0]) {
-                case 13: {
-                  return v__apply__scc_show_showCons(v__k, [4, ""]);
-                }
-                case 14: {
-                  const v_h = __s[1];
-                  const v_t = __s[2];
-                  const __t0 = [16, v_h, v_t];
-                  const __t1 = v__k;
-                  v__args = __t0;
-                  v__k = __t1;
-                  continue;
-                }
-              }
+      switch (v__args[0]) {
+        case 15: {
+          const v_xs = v__args[1];
+          switch (v_xs[0]) {
+            case 13: {
+              return v__apply__scc_show_showCons(v__k, [4, ""]);
+            }
+            case 14: {
+              const v_h = v_xs[1];
+              const v_t = v_xs[2];
+              v__args = [16, v_h, v_t];
+              continue;
             }
           }
-          case 16: {
-            const v_h = __s[1];
-            const v_t = __s[2];
-            {
-              const __s = __concat(v_h, ",");
-              switch (__s[0]) {
-                case 3: {
-                  const v__do_e_1 = __s[1];
-                  return v__apply__scc_show_showCons(v__k, [3, v__do_e_1]);
-                }
-                case 4: {
-                  const v_hc = __s[1];
-                  const __t0 = [15, v_t];
-                  const __t1 = (v__args[0] = 18, v__args[1] = v__k, v__args[2] = v_hc, v__args);
-                  v__args = __t0;
-                  v__k = __t1;
-                  continue;
-                }
+        }
+        case 16: {
+          const v_h = v__args[1];
+          const v_t = v__args[2];
+          {
+            const __s = __concat(v_h, ",");
+            switch (__s[0]) {
+              case 3: {
+                const v__do_e_1 = __s[1];
+                return v__apply__scc_show_showCons(v__k, [3, v__do_e_1]);
+              }
+              case 4: {
+                const v_hc = __s[1];
+                v__k = (v__args[0] = 18, v__args[1] = v__k, v__args[2] = v_hc, v__args);
+                v__args = [15, v_t];
+                continue;
               }
             }
           }
@@ -142,12 +88,19 @@
     }
   };
 
-  const v__scc_show_showCons = v__args =>
-    v__cps__scc_show_showCons(v__args, [17]);
-
-  const v_show = v_xs => v__scc_show_showCons([15, v_xs]);
-
-  const main = v__let_13(v_show([14, "a", [14, "b", [14, "c", [13]]]]));
+  const main = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [7, "STRING_TOO_LONG", [5, [0]]];
+      }
+      case 4: {
+        const v__inl2_s = s[1];
+        return [7, v__inl2_s, [5, [0]]];
+      }
+    }
+  })(
+    v__cps__scc_show_showCons([15, [14, "a", [14, "b", [14, "c", [13]]]]], [17])
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

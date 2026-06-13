@@ -1,30 +1,14 @@
-failIO:
-  param           e                               count=1
-
 runIO:
-  param           io                              count=1
+  param           io                              count=3
   case-pattern    u                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  let             $inl5$eff                       count=0
   case-pattern    cont$u3                         count=0
-
-cont:
-  param           _args                           count=0
-
-showN:
-  param           n                               count=1
-
-handler:
-  param           e                               count=1
-  row-case        _b                              count=0
-  row-case        _u                              count=0
-  row-case        _s                              count=0
-
-$lift$13:
-  param           __input                         count=1
+  let             $inl6$$arg0                     count=0
 
 $cps$$lift$13:
-  param           __input                         count=2
+  param           __input                         count=3
   param           $k                              count=3
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
@@ -38,19 +22,14 @@ $apply$$lift$13:
   case-pattern    $pk_36                          count=0
   case-pattern    __f0                            count=0
 
-$io_getargs_cont:
-  param           result                          count=1
-  case-pattern    e                               count=0
-  case-pattern    s                               count=0
-
-$df$handleErrorIO$0:
-  param           io                              count=1
-
 $cps$$df$handleErrorIO$0:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=3
   case-pattern    a                               count=0
   case-pattern    e                               count=0
+  row-case        $inl0$_b                        count=0
+  row-case        $inl1$_u                        count=0
+  row-case        $inl2$_s                        count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont$u0                         count=0
@@ -61,11 +40,8 @@ $apply$$df$handleErrorIO$0:
   case-pattern    $pk_38                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$0$bindIO$4:
-  param           io                              count=1
-
 $cps$$df$$rowmono$0$bindIO$4:
-  param           io                              count=2
+  param           io                              count=4
   param           $k                              count=3
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -79,11 +55,8 @@ $apply$$df$$rowmono$0$bindIO$4:
   case-pattern    $pk_40                          count=0
   case-pattern    s                               count=0
 
-$df$$rowmono$4$bindIO$8:
-  param           io                              count=1
-
 $cps$$df$$rowmono$4$bindIO$8:
-  param           io                              count=2
+  param           io                              count=3
   param           $k                              count=3
   case-pattern    a                               count=0
   case-pattern    e                               count=0
@@ -97,9 +70,6 @@ $apply$$df$$rowmono$4$bindIO$8:
   case-pattern    $pk_42                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$9$1_$df$$rowmono$1$bindIOAfterArgs$5_$df$$rowmono$5$bindIOAfterArgs$9_$lift$14:
-  param           $args                           count=1
-
 $cps$$scc$$apply1_$df$$lam$9$1_$df$$rowmono$1$bindIOAfterArgs$5_$df$$rowmono$5$bindIOAfterArgs$9_$lift$14:
   param           $args                           count=9
   param           $k                              count=1
@@ -108,6 +78,8 @@ $cps$$scc$$apply1_$df$$lam$9$1_$df$$rowmono$1$bindIOAfterArgs$5_$df$$rowmono$5$b
   case-pattern    $cap25_0                        count=0
   case-pattern    $cap26_0                        count=0
   case-pattern    $cap27_0                        count=0
+  case-pattern    $inl3$e                         count=0
+  case-pattern    $inl4$s                         count=0
   case-pattern    $cap29_0                        count=0
   case-pattern    cont$u18                        count=0
   case-pattern    result                          count=0
@@ -125,8 +97,4 @@ $apply$$scc$$apply1_$df$$lam$9$1_$df$$rowmono$1$bindIOAfterArgs$5_$df$$rowmono$5
   case-pattern    $pk_45                          count=0
   case-pattern    $pk_46                          count=0
   case-pattern    $pk_47                          count=0
-
-$apply1:
-  param           $cl                             count=1
-  param           $arg0                           count=1
 
