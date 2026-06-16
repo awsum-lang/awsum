@@ -1,9 +1,7 @@
-{- Multi-child non-tail self-recursion at depth 100_000: 'sumTree' has
-   the inner 'sumTree l (...)' as a non-tail argument to the outer tail
-   'sumTree r ...' — Cps's K_1 carries the outer call's remaining arg
-   forward, and the K_1 apply arm tail-calls '$cps$sumTree' to start the
-   second call. The resulting '$cps$sumTree' / '$apply$sumTree' mutual
-   cycle is fused by the second SCC-merge pass before TCO. -}
+{- Multi-child non-tail self-recursion at depth 100_000: `sumTree` makes
+   the inner `sumTree l …` a non-tail argument to the outer tail
+   `sumTree r …`, so two non-tail self-calls run on every Node. Runs in
+   bounded stack on every backend. -}
 
 import IO.Stdout
 
@@ -37,6 +35,10 @@ sumTree t acc = case t of
   Node l v r -> sumTree r (sumTree l (addOr0 acc v))
 
 main : IO Never Unit
-main = case buildLeft 100_000 Leaf of
-  Left _e -> IO.Stdout.print "UNDERFLOW"
-  Right t -> IO.Stdout.print (showInt32 (sumTree t 0))
+main = eitherToIO (buildLeft 100_000 Leaf)
+  |> andThenIO (\t -> IO.Stdout.print (showInt32 (sumTree t 0)))
+  |> handleErrorIO onError
+
+onError : UnderflowError -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"

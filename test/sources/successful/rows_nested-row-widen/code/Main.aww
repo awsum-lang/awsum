@@ -1,17 +1,16 @@
+{- A value bound at a narrow row flows into a wider one where a shared label
+   is a nominal head whose inner row grew (`Maybe Bool` into
+   `Maybe (Bool | Unit)`). `narrow = Just True`, widened and matched back by
+   nested row `case`, so it prints `T`. -}
+
 import IO.Stdout
 
 type A = A
 
--- Regression: a value bound at a narrow row flows into a wider row where
--- a shared label is a nominal head whose inner row grew
--- (Maybe Bool -> Maybe (Bool | Unit)). That label's FNV tag changes, so
--- the row -> row coercion must re-tag it rather than pass through. Before
--- the fix the cell kept the narrow "Maybe Bool" tag and the row-case
--- matched neither arm (LLVM/JVM print "A", JS "undefined").
-narrow : (Maybe Bool | A)
+narrow : Maybe Bool | A
 narrow = Just True
 
-widened : (Maybe (Bool | Unit) | A)
+widened : Maybe (Bool | Unit) | A
 widened = narrow
 
 describe : (Maybe (Bool | Unit) | A) -> String

@@ -1,9 +1,8 @@
-{- `mapIOError` whose transform targets a row: `f : e1 -> (row)`. In `IO`
-   the row tag is produced inside `f` and `mapIOError` must carry it out
-   on `IOFail` unchanged. Covers a plain source mapped to each row
-   alternative, a success (transform not called), and a row source
-   remapped to a wider row. Each case is run and its `IOFail` row
-   alternative (or success value) printed. -}
+{- `mapIOError` whose transform targets a row (`f : e1 -> (row)`): the
+   row tag is produced inside `f` and carried out on a failure unchanged.
+   Covers a plain source mapped to each row alternative, a success
+   (transform not called), and a row source remapped to a wider row.
+   Prints `label=value` per line. -}
 
 import IO.Stdout
 

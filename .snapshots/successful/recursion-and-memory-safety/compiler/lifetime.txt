@@ -6,10 +6,11 @@ runIO:
   let             $inl0$eff                       count=0
 
 main:
-  case-pattern    e                               count=0
-  case-pattern    n                               count=1
+  let             $inl10$x                        count=0
+  case-pattern    $inl8$e                         count=0
+  case-pattern    $inl9$a                         count=0
 
-runDemo:
+res:
   let             $inl5$depth                     count=0
   join-param      $inl7$scrut                     count=3
   case-pattern    $do_e_1                         count=0
@@ -38,6 +39,34 @@ mirrorN:
   param           t                               count=1
   case-pattern    $do_e_6                         count=0
   case-pattern    m                               count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_33                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_35                          count=0
+  case-pattern    s                               count=0
 
 $scc$deepestLeftA_deepestLeftB_deepestLeftC:
   param           $args                           count=4

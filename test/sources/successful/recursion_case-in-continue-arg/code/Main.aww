@@ -1,15 +1,6 @@
-{- Regression: a multi-arm case in a tail self-call argument must compile on
-   the JVM. TCO rewrites the tail call into a loop continue whose arguments
-   the JVM emitter evaluated straight onto the operand stack — and a
-   multi-arm case emits StackMapTable frames that declare an empty stack,
-   contradicting the sibling arguments already sitting there, so the emitter
-   rejected the shape with an internal error ("unified emitter gate missed
-   function"). Continue arguments holding a multi-arm case now go through
-   save locals first (`emitContinue`), the same discipline as call arguments
-   and constructor-cell fields; the parallel-assignment order (every new
-   value computed before the first parameter is overwritten) is preserved.
-   `Awsum.Simplify` leaves the case in place on purpose: the scrutinee is a
-   parameter, not a literal, and the Bool arms bind nothing. -}
+{- A multi-arm `case` sitting in a tail self-call's argument, inside a
+   function that becomes a loop. Compiles and runs on every backend;
+   prints the boolean result. -}
 
 import IO.Stdout
 
@@ -20,7 +11,8 @@ go n flag = case eqInt32 n (0 : Int32) of
     Left _e -> "underflow"
     Right m -> go m (case flag of
       True -> False
-      False -> True)
+      False -> True
+    )
 
 main : IO Never Unit
 main = IO.Stdout.print (go (3 : Int32) True)

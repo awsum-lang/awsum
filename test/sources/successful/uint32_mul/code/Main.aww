@@ -7,26 +7,30 @@ render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt32 v
 
+res : Either StringTooLong String
+res = do
+  a <- render (mulUInt32 65_535 65_537)
+  b <- render (mulUInt32 65_536 65_536)
+  c <- render (mulUInt32 maxUInt32 maxUInt32)
+  d <- render (mulUInt32 minUInt32 maxUInt32)
+  e <- render (mulUInt32 1 2_147_483_648)
+  f <- render (mulUInt32 2 2_147_483_648)
+  s0 <- a ++ ", "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ ", "
+  s3 <- s2 ++ c
+  s4 <- s3 ++ ", "
+  s5 <- s4 ++ d
+  s6 <- s5 ++ ", "
+  s7 <- s6 ++ e
+  s8 <- s7 ++ ", "
+  s8 ++ f
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- render (mulUInt32 65_535 65_537)
-        b <- render (mulUInt32 65_536 65_536)
-        c <- render (mulUInt32 maxUInt32 maxUInt32)
-        d <- render (mulUInt32 minUInt32 maxUInt32)
-        e <- render (mulUInt32 1 2_147_483_648)
-        f <- render (mulUInt32 2 2_147_483_648)
-        s0 <- a ++ ", "
-        s1 <- s0 ++ b
-        s2 <- s1 ++ ", "
-        s3 <- s2 ++ c
-        s4 <- s3 ++ ", "
-        s5 <- s4 ++ d
-        s6 <- s5 ++ ", "
-        s7 <- s6 ++ e
-        s8 <- s7 ++ ", "
-        s8 ++ f
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

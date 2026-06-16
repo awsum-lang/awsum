@@ -1,9 +1,7 @@
-{- The case-over-constant collapse registers only constant trees. A top-level
-   value whose field carries computation (`lengthUtf8Bytes` is never
-   const-folded) is not registered: on JVM/CLR/JS the value is evaluated once
-   at startup, and substituting the field would re-run the computation at
-   every collapse site. The Core snapshot pins the gate — `main` keeps its
-   `CCase` over `computed`. -}
+{- A `case` over a top-level value whose field carries computation
+   (`lengthUtf8Bytes`, which doesn't constant-fold): the compiler declines to
+   collapse it, since substituting the field would re-run the computation. The
+   case stays. Prints `3`. -}
 
 import IO.Stdout
 
@@ -13,4 +11,5 @@ computed = Just (lengthUtf8Bytes "abc")
 main : IO Never Unit
 main = IO.Stdout.print (case computed of
   Nothing -> "nothing"
-  Just n -> showUInt32 n)
+  Just n -> showUInt32 n
+)

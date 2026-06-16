@@ -1,5 +1,5 @@
-{- Three-way mutual tail recursion at depth 1_000_000; SCC must merge
-   the three-member cluster, TCO folds dispatch-by-tag into a loop. -}
+{- Three-way mutual tail recursion at depth 1_000_000. Runs in bounded
+   stack on every backend. -}
 
 import IO.Stdout
 
@@ -25,6 +25,10 @@ stepC n = case eqInt32 n 0 of
     Right m -> stepA m
 
 main : IO Never Unit
-main = case stepA 1_000_000 of
-  Left e -> IO.Stdout.print (showUnderflowError e)
-  Right v -> IO.Stdout.print (showInt32 v)
+main = eitherToIO (stepA 1_000_000)
+  |> andThenIO (\v -> IO.Stdout.print (showInt32 v))
+  |> handleErrorIO onError
+
+onError : UnderflowError -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print (showUnderflowError e)

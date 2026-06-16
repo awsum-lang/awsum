@@ -14,42 +14,72 @@ $cps$showList:
 $apply$showList:
   param           $k                              count=2
   param           $x                              count=3
-  case-pattern    $pk_16                          count=0
+  case-pattern    $pk_21                          count=0
   case-pattern    h                               count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    rest                            count=0
   case-pattern    $do_e_0                         count=0
   case-pattern    hc                              count=0
 
+res:
+  let             $inl66$xs                       count=0
+  case-pattern    $inl64$_h                       count=0
+  case-pattern    $inl65$t                        count=0
+  case-pattern    $inl92$$do_e_2                  count=1
+  case-pattern    $inl93$rendered                 count=1
+  case-pattern    $inl70$$do_e_8                  count=1
+  case-pattern    $inl71$a                        count=1
+  let             $inl72$xs                       count=0
+  case-pattern    $inl73$_h                       count=0
+  case-pattern    $inl74$t                        count=0
+  case-pattern    $inl75$$do_e_2                  count=1
+  case-pattern    $inl76$rendered                 count=1
+  case-pattern    $inl77$$do_e_7                  count=1
+  case-pattern    $inl78$b                        count=1
+  let             $inl79$xs                       count=0
+  case-pattern    $inl80$_h                       count=0
+  case-pattern    $inl81$t                        count=0
+  case-pattern    $inl82$$do_e_2                  count=1
+  case-pattern    $inl83$rendered                 count=1
+  case-pattern    $inl84$$do_e_6                  count=1
+  case-pattern    $inl85$c                        count=1
+  case-pattern    $inl86$$do_e_5                  count=1
+  case-pattern    $inl87$s0                       count=1
+  case-pattern    $inl88$$do_e_4                  count=1
+  case-pattern    $inl89$s1                       count=1
+  case-pattern    $inl90$$do_e_3                  count=1
+  case-pattern    $inl91$s2                       count=1
+
 main:
-  join-param      $inl80$scrut                    count=2
-  case-pattern    $inl81$__w0                     count=0
-  case-pattern    $inl82$s                        count=0
-  let             $inl78$xs                       count=0
-  case-pattern    $inl76$_h                       count=0
-  case-pattern    $inl77$t                        count=0
-  case-pattern    $inl108$$do_e_2                 count=1
-  case-pattern    $inl109$rendered                count=1
-  case-pattern    $inl86$$do_e_8                  count=0
-  case-pattern    $inl87$a                        count=1
-  let             $inl88$xs                       count=0
-  case-pattern    $inl89$_h                       count=0
-  case-pattern    $inl90$t                        count=0
-  case-pattern    $inl91$$do_e_2                  count=1
-  case-pattern    $inl92$rendered                 count=1
-  case-pattern    $inl93$$do_e_7                  count=1
-  case-pattern    $inl94$b                        count=1
-  let             $inl95$xs                       count=0
-  case-pattern    $inl96$_h                       count=0
-  case-pattern    $inl97$t                        count=0
-  case-pattern    $inl98$$do_e_2                  count=1
-  case-pattern    $inl99$rendered                 count=1
-  case-pattern    $inl100$$do_e_6                 count=1
-  case-pattern    $inl101$c                       count=1
-  case-pattern    $inl102$$do_e_5                 count=1
-  case-pattern    $inl103$s0                      count=1
-  case-pattern    $inl104$$do_e_4                 count=1
-  case-pattern    $inl105$s1                      count=1
-  case-pattern    $inl106$$do_e_3                 count=1
-  case-pattern    $inl107$s2                      count=1
+  let             $inl96$x                        count=0
+  case-pattern    $inl94$e                        count=0
+  case-pattern    $inl95$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_25                          count=0
+  case-pattern    s                               count=0
 

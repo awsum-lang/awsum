@@ -1,17 +1,14 @@
-{- The same-arity carve-out applies only to reuse-eligible scrutinees.
+{- In-place reconstruction applies only to cells that can be reused.
 
-   swap's inner case scrutinises an arm binder that is read twice (the
-   One arm returns p itself) — not a sole-scrutinee binder, so no drop
-   sinks and the cell is never a reuse target: the Two arm's single-use
-   binders inline to projections even though it rebuilds a same-arity
-   Pair. core.txt has CProj over the binder, no extraction.
+   `swap`'s inner case scrutinises a binder read twice (the `One` arm returns it
+   directly), so its `Pair` cell is not a reuse target even though the `Two` arm
+   rebuilds a same-arity `Pair`.
 
-   spin cases on its own parameter and rebuilds a same-arity cell in each
-   loop arm — the carve-out holds, the binders stay extracted, and
-   Awsum.Reuse rewrites the reconstruction in place: core.txt has CReuse.
+   `spin` cases on its own parameter and rebuilds a same-arity cell in each loop
+   arm — that cell is reuse-eligible, so the reconstruction happens in place.
 
-   make and eat are loops only so their argument and result stay
-   runtime-opaque — neither inlines, so no case folds at compile time. -}
+   `make` and `eat` are loops so their argument and result stay runtime-opaque,
+   keeping any case from folding at compile time. Prints `ba`. -}
 
 import IO.Stdout
 
@@ -51,6 +48,4 @@ spin c q2 = case eqInt32 c 0 of
       Two x3 y3 -> spin m2 (Two y3 x3)
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (eat 1 (swap (make 1)))
-    |> andThenIO (\_u4 -> IO.Stdout.print (eat 0 (spin 1 (swap (make 0)))))
+main = IO.Stdout.print (eat 1 (swap (make 1))) |> andThenIO (\_u4 -> IO.Stdout.print (eat 0 (spin 1 (swap (make 0)))))

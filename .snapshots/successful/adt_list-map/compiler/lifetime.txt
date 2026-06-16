@@ -6,8 +6,9 @@ runIO:
   let             $inl0$eff                       count=0
 
 main:
-  case-pattern    $inl1$__w0                      count=0
-  case-pattern    $inl2$s                         count=1
+  let             $inl3$x                         count=0
+  case-pattern    $inl1$e                         count=0
+  case-pattern    $inl2$a                         count=0
 
 $cps$$df$map$0:
   param           list                            count=3
@@ -18,8 +19,36 @@ $cps$$df$map$0:
 $apply$$df$map$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_18                          count=0
+  case-pattern    $pk_23                          count=0
   case-pattern    head                            count=0
+
+$cps$$df$handleErrorIO$1:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$1:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_25                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$5:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$5:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    s                               count=0
 
 $cps$$scc$show_showCons:
   param           $args                           count=2
@@ -35,7 +64,7 @@ $cps$$scc$show_showCons:
 $apply$$scc$show_showCons:
   param           $k                              count=2
   param           $x                              count=3
-  case-pattern    $pk_20                          count=0
+  case-pattern    $pk_29                          count=0
   case-pattern    hStr                            count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    rest                            count=0

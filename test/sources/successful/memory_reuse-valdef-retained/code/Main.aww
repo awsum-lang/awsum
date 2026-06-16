@@ -1,11 +1,9 @@
-{- Attack form, managed-flavoured: a top-level definition flows into a
-   consuming reuse-shaped loop, and is read again after. On JVM/CLR/JS a
-   CValDef is computed once at startup and read by reference — an
-   in-place loop would silently mutate the global; on LLVM/WASM every
-   reference is a fresh cell from the getter. The cells are user data
-   (ReuseGuarded), so neither happens: the second read must see the
-   value intact. The body is a call (not a constant tree), so neither
-   the value nor the probe folds at compile time. -}
+{- A top-level value flows into a loop that consumes a stack of the same
+   shape, and is read again afterwards. Awsum is pure, so the retained
+   value must read back unchanged — the second read probes one level past
+   the head, where an in-place overwrite would show. Its body is a call,
+   not a constant, so neither the value nor the probe folds at compile
+   time. Identical stdout on every backend is the check. -}
 
 import IO.Stdout
 
@@ -34,6 +32,4 @@ second st = case st of
     Push s3 _r2 -> s3
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (second (revInto2 threeUp Empty))
-    |> andThenIO (\_u2 -> IO.Stdout.print (second threeUp))
+main = IO.Stdout.print (second (revInto2 threeUp Empty)) |> andThenIO (\_u2 -> IO.Stdout.print (second threeUp))

@@ -1,10 +1,7 @@
-{- Integer-literal injection into a structural sum at a value-flow boundary.
-   A `case` arm (or any non-argument position) returning an integer literal
-   into a row type used to lower to a bare `Int32`/`UInt32` rather than a
-   `CRow` — the typechecker accepted the implicit injection but lowering
-   dropped it, so a row-consumer (`extract`) misread the cell and the five
-   backends diverged. Both the ascribed form `(7 : Int32)` and the bare form
-   `7` (resolved against the row's unique int label) must now inject. -}
+{- Integer-literal injection into a structural sum `(Int32 | String)` (and
+   `(UInt32 | String)`), in both the ascribed form `(7 : Int32)` and the
+   bare form `7`. A consumer (`extract`) reads each injected value back via
+   a row `case`. -}
 
 import IO.Stdout
 

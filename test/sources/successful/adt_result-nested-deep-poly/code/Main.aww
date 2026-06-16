@@ -15,24 +15,28 @@ unwrap r = case r of
   Err (Err (Ok value)) -> value
   Err (Err (Err value)) -> value
 
+res : Either StringTooLong String
+res = do
+  s0 <- unwrap (Ok (Ok (Ok "1"))) ++ ","
+  s1 <- s0 ++ unwrap (Ok (Ok (Err "2")))
+  s2 <- s1 ++ ","
+  s3 <- s2 ++ unwrap (Ok (Err (Ok "3")))
+  s4 <- s3 ++ ","
+  s5 <- s4 ++ unwrap (Ok (Err (Err "4")))
+  s6 <- s5 ++ ","
+  s7 <- s6 ++ unwrap (Err (Ok (Ok "5")))
+  s8 <- s7 ++ ","
+  s9 <- s8 ++ unwrap (Err (Ok (Err "6")))
+  s10 <- s9 ++ ","
+  s11 <- s10 ++ unwrap (Err (Err (Ok "7")))
+  s12 <- s11 ++ ","
+  s12 ++ unwrap (Err (Err (Err "8")))
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- unwrap (Ok (Ok (Ok "1"))) ++ ","
-        s1 <- s0 ++ unwrap (Ok (Ok (Err "2")))
-        s2 <- s1 ++ ","
-        s3 <- s2 ++ unwrap (Ok (Err (Ok "3")))
-        s4 <- s3 ++ ","
-        s5 <- s4 ++ unwrap (Ok (Err (Err "4")))
-        s6 <- s5 ++ ","
-        s7 <- s6 ++ unwrap (Err (Ok (Ok "5")))
-        s8 <- s7 ++ ","
-        s9 <- s8 ++ unwrap (Err (Ok (Err "6")))
-        s10 <- s9 ++ ","
-        s11 <- s10 ++ unwrap (Err (Err (Ok "7")))
-        s12 <- s11 ++ ","
-        s12 ++ unwrap (Err (Err (Err "8")))
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

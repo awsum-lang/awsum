@@ -1,26 +1,8 @@
-{- Pin the row-tag dispatch when a `Left e` rebuilt from `(++)`'s
-   `Either StringTooLong String` flows into a multi-alternative
-   error row.
-
-   The case-binder `e` from `case s ++ s of Left e -> Left e` should
-   carry `StringTooLong`. That requires `synthLabelType` on the
-   scrutinee `s ++ s` to resolve to `Either StringTooLong String`,
-   which in turn requires `synthLabelType` on `EInfix OpConcat` to
-   reuse `lookupBuiltIn "concatString"` (rather than returning the
-   stale `String` from when `(++)` was total).
-
-   Without that, `e` types at `TyVar "a"`, and the lift on the
-   rebuilt `Left e` picks the first row label
-   (`UnderflowError`), so the program prints `"underflow"`
-   regardless of which side of the `Either` actually fired.
-
-   This program forces `(++)` past `maxStringLengthUtf16CodeUnits`
-   (`2^27 = 134_217_728` UTF-16 code units): starting from a 16-char
-   ASCII base and doubling 24 times would yield `16 * 2^24 = 268M >
-   cap`, so `(++)` returns `Left StringTooLong` and the row dispatch
-   reports `string-too-long`. Memory peak during the recursion is
-   ~167 MB at the moment the cap-check fires (two 83 MB operands;
-   the would-be-allocated 167 MB output is rejected). -}
+{- A `Left e` rebuilt from `(++)`'s `Either StringTooLong String` flows
+   into a multi-alternative error row `(UnderflowError | StringTooLong)`.
+   The program doubles a 16-char ASCII string 24 times, pushing `(++)` past
+   `maxStringLengthUtf16CodeUnits` (`2^27` UTF-16 code units), so it returns
+   `Left StringTooLong` and the row dispatch prints `string-too-long`. -}
 
 import IO.Stdout
 
@@ -33,9 +15,12 @@ double n s = case eqInt32 n 0 of
       Left se -> Left se
       Right s2 -> double m s2
 
+onError : (UnderflowError | StringTooLong) -> IO Never Unit
+onError e = case e of
+  (_u : UnderflowError) -> IO.Stdout.print "underflow"
+  (_t : StringTooLong) -> IO.Stdout.print "string-too-long"
+
 main : IO Never Unit
-main = case double 24 "0123456789abcdef" of
-  Right _s -> IO.Stdout.print "done"
-  Left e -> case e of
-    (_u : UnderflowError) -> IO.Stdout.print "underflow"
-    (_t : StringTooLong) -> IO.Stdout.print "string-too-long"
+main = eitherToIO (double 24 "0123456789abcdef")
+  |> andThenIO (\_s -> IO.Stdout.print "done")
+  |> handleErrorIO onError

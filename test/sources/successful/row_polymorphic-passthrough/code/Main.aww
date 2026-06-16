@@ -1,7 +1,7 @@
-{- Pins a row-typed value flowing through a polymorphic function whose type
-   variable instantiates to the row. `myId`/`myFirst` are generic; the
-   already-injected `CRow` value must pass through unchanged and still
-   dispatch correctly at the consuming row-case. -}
+{- A row-typed value `(Int32 | String)` flowing through a polymorphic
+   function whose type variable instantiates to the row — `myId v` and
+   `myFirst v True`. Both pass the `String` value through and dispatch back
+   via a row `case`, so it prints `poly` twice (`polypoly`). -}
 
 import IO.Stdout
 

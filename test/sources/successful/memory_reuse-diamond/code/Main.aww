@@ -35,5 +35,4 @@ mk2 n acc = case eqInt32 n 0 of
 main : IO Never Unit
 main =
   let s = mk2 2 Leaf
-   in IO.Stdout.print (topV (sumLeft s Leaf))
-        |> andThenIO (\_u2 -> IO.Stdout.print (rightV s))
+   in IO.Stdout.print (topV (sumLeft s Leaf)) |> andThenIO (\_u2 -> IO.Stdout.print (rightV s))

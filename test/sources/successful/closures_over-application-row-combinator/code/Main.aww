@@ -10,6 +10,7 @@
 import IO.Stdout
 
 type ErrA = ErrA
+
 type ErrB = ErrB
 
 identity : a -> a

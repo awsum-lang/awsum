@@ -41,8 +41,8 @@ describeEither r = case r of
   Left _e -> Right "ErrA"
   Right m -> describeMaybe m
 
-summary : Either StringTooLong String
-summary = do
+res : Either StringTooLong String
+res = do
   a <- describeMaybe defaultJust
   b <- describeLst defaultBools
   c <- describeEither defaultRight
@@ -52,8 +52,10 @@ summary = do
   s2 ++ c
 
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = summary
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

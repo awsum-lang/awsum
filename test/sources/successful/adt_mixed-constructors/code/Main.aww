@@ -15,20 +15,24 @@ showToken token = case token of
   Comma -> Right ","
   EOF -> Right "<eof>"
 
+res : Either StringTooLong String
+res = do
+  a <- showToken (Word "hello")
+  b <- showToken Comma
+  c <- showToken (Number "42")
+  d <- showToken EOF
+  ab <- a ++ " "
+  abc <- ab ++ b
+  abcs <- abc ++ " "
+  abcsc <- abcs ++ c
+  abcscd <- abcsc ++ " "
+  abcscd ++ d
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- showToken (Word "hello")
-        b <- showToken Comma
-        c <- showToken (Number "42")
-        d <- showToken EOF
-        ab <- a ++ " "
-        abc <- ab ++ b
-        abcs <- abc ++ " "
-        abcsc <- abcs ++ c
-        abcscd <- abcsc ++ " "
-        abcscd ++ d
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

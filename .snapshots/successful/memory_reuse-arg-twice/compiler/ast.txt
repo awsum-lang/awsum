@@ -548,7 +548,7 @@ Program
                 { spanStartLine = 26
                 , spanStartCol = 1
                 , spanEndLine = 31
-                , spanEndCol = 25
+                , spanEndCol = 21
                 }
             ) "both"
             [ Param
@@ -663,34 +663,34 @@ Program
                 ( ELet
                     ( SrcSpan
                         { spanStartLine = 28
-                        , spanStartCol = 11
+                        , spanStartCol = 7
                         , spanEndLine = 28
-                        , spanEndCol = 23
+                        , spanEndCol = 19
                         }
                     )
                     ( PVar
                         ( SrcSpan
                             { spanStartLine = 28
-                            , spanStartCol = 11
+                            , spanStartCol = 7
                             , spanEndLine = 28
-                            , spanEndCol = 12
+                            , spanEndCol = 8
                             }
                         ) "y"
                     ) Nothing
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 28
-                            , spanStartCol = 15
+                            , spanStartCol = 11
                             , spanEndLine = 28
-                            , spanEndCol = 23
+                            , spanEndCol = 19
                             }
                         )
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 28
-                                , spanStartCol = 15
+                                , spanStartCol = 11
                                 , spanEndLine = 28
-                                , spanEndCol = 22
+                                , spanEndCol = 18
                                 }
                             )
                             ( QName [] "second" )
@@ -698,9 +698,9 @@ Program
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 28
-                                , spanStartCol = 22
+                                , spanStartCol = 18
                                 , spanEndLine = 28
-                                , spanEndCol = 23
+                                , spanEndCol = 19
                                 }
                             )
                             ( QName [] "b" )
@@ -709,25 +709,25 @@ Program
                     ( ECase
                         ( SrcSpan
                             { spanStartLine = 29
-                            , spanStartCol = 11
+                            , spanStartCol = 7
                             , spanEndLine = 31
-                            , spanEndCol = 25
+                            , spanEndCol = 21
                             }
                         )
                         ( EInfix
                             ( SrcSpan
                                 { spanStartLine = 29
-                                , spanStartCol = 16
+                                , spanStartCol = 12
                                 , spanEndLine = 29
-                                , spanEndCol = 23
+                                , spanEndCol = 19
                                 }
                             ) OpConcat
                             ( EVar
                                 ( SrcSpan
                                     { spanStartLine = 29
-                                    , spanStartCol = 16
+                                    , spanStartCol = 12
                                     , spanEndLine = 29
-                                    , spanEndCol = 18
+                                    , spanEndCol = 14
                                     }
                                 )
                                 ( QName [] "x" )
@@ -735,9 +735,9 @@ Program
                             ( EVar
                                 ( SrcSpan
                                     { spanStartLine = 29
-                                    , spanStartCol = 21
+                                    , spanStartCol = 17
                                     , spanEndLine = 29
-                                    , spanEndCol = 23
+                                    , spanEndCol = 19
                                     }
                                 )
                                 ( QName [] "y" )
@@ -747,17 +747,17 @@ Program
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 30
-                                    , spanStartCol = 13
+                                    , spanStartCol = 9
                                     , spanEndLine = 30
-                                    , spanEndCol = 17
+                                    , spanEndCol = 13
                                     }
                                 ) "Left"
                                 [ PVar
                                     ( SrcSpan
                                         { spanStartLine = 30
-                                        , spanStartCol = 18
+                                        , spanStartCol = 14
                                         , spanEndLine = 30
-                                        , spanEndCol = 20
+                                        , spanEndCol = 16
                                         }
                                     ) "_e"
                                 ]
@@ -765,9 +765,9 @@ Program
                             ( ELit
                                 ( SrcSpan
                                     { spanStartLine = 30
-                                    , spanStartCol = 24
+                                    , spanStartCol = 20
                                     , spanEndLine = 30
-                                    , spanEndCol = 27
+                                    , spanEndCol = 23
                                     }
                                 )
                                 ( LString "L" )
@@ -776,17 +776,17 @@ Program
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 31
-                                        , spanStartCol = 13
+                                        , spanStartCol = 9
                                         , spanEndLine = 31
-                                        , spanEndCol = 18
+                                        , spanEndCol = 14
                                         }
                                     ) "Right"
                                     [ PVar
                                         ( SrcSpan
                                             { spanStartLine = 31
-                                            , spanStartCol = 19
+                                            , spanStartCol = 15
                                             , spanEndLine = 31
-                                            , spanEndCol = 20
+                                            , spanEndCol = 16
                                             }
                                         ) "z"
                                     ]
@@ -794,9 +794,9 @@ Program
                                 ( EVar
                                     ( SrcSpan
                                         { spanStartLine = 31
-                                        , spanStartCol = 24
+                                        , spanStartCol = 20
                                         , spanEndLine = 31
-                                        , spanEndCol = 25
+                                        , spanEndCol = 21
                                         }
                                     )
                                     ( QName [] "z" )

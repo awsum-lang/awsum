@@ -1,21 +1,7 @@
-{- A row combinator (`bindEither`) PARTIALLY applied and bound to a named
-   top-level whose signature carries a concrete, narrow continuation row.
-
-   `partialB = bindEither oa` is a partial application with no continuation
-   argument, so the checker's synth path leaves the combinator's result-row
-   variable `e2` abstract on the call head — the concrete `EB` lives only in
-   `partialB`'s signature. Row monomorphisation therefore did not specialise
-   `bindEither` here, the generic body's `Left`-payload coercion stayed an
-   identity (a label cannot re-tag against a variable), and the continuation's
-   `Left EB` reached the consuming `case` carrying its NOMINAL tag instead of
-   the row tag — every backend disagreed (out-of-bounds on LLVM/JVM/CLR/WASM,
-   wrong value on JS).
-
-   The fix threads each definition's declared signature into row
-   monomorphisation as the checking-mode expected type, so the partial
-   application's `e2` is recovered from `partialB`'s signature and `bindEither`
-   is specialised with `e2 := EB`. The `Left EB` then carries the row tag and
-   every backend prints `B`. -}
+{- A row combinator (`bindEither`) partially applied and bound to a named
+   top-level (`partialB = bindEither oa`) whose signature carries a concrete,
+   narrow continuation row. The errors compose into `(EA | EB)`; `cont`
+   returns `Left EB`, so it prints `B`. -}
 
 import IO.Stdout
 

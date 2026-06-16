@@ -1,13 +1,8 @@
 {- Non-tail self-recursion under a structural-sum (row) case and row
-   injection, at depth 1_000_000 — the shapes `Awsum.Cps.goTail` had to learn
-   to descend into ('CRowCase' arms and tail 'CRow' injections). Before the
-   fix these were rejected by the stack-safety verifier; they must now run in
-   bounded stack on every backend.
-
-   `sumRow` folds a `List (Int32 | String)` with a non-tail self-call inside
-   the `(n : Int32)` row arm and a tail self-call in the `(_s : String)` arm.
-   `countRow` returns a row and injects its non-tail self-call's result at the
-   tail (`extract (countRow m)` lowers to `CRow tag (extract …)`). -}
+   injection, at depth 1_000_000. `sumRow` folds a `List (Int32 | String)`
+   with a non-tail self-call in the `(n : Int32)` arm and a tail self-call in
+   the `(_s : String)` arm; `countRow` returns a row and injects its non-tail
+   self-call's result at the tail. Runs in bounded stack on every backend. -}
 
 import IO.Stdout
 

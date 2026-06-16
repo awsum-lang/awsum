@@ -1,18 +1,7 @@
-{- Stress test for `andThenEither` composing with structural-sum
-   (row) error types: when two Either-returning steps compose, their
-   error rows union as `(e1 | e2)`, and `andThenEither` injects both the
-   passed-through `Left e1` and the continuation's `Left e2` into that
-   row. This program hardcodes one composition per collapse scenario and
-   prints `label=value` per line, so the snapshot shows exactly which
-   error (or success value) survived each union.
-
-   Scenarios: `Never` collapse on either side and as a pure result;
-   the primitive `String` as a row alternative; one-constructor ADTs
-   (`ErrA`, `ErrB`); a two-constructor ADT (`ErrTwo`); idempotent
-   collapse `(e | e) ~ e`; and a three-step chain `(ErrTwo | String | ErrA)`.
-
-   Each case carries an explicit signature with the collapsed row, both
-   to document the expected union and to make the typechecker verify it. -}
+{- Composes `andThenEither` across a matrix of error-row shapes — `Never`
+   collapse, the primitive `String` as an alternative, one- and
+   two-constructor errors, idempotent `(e | e)`, and a three-step chain —
+   and prints `label=value` per line. -}
 
 import IO.Stdout
 
@@ -262,11 +251,11 @@ render = do
   r22 <- appendTagged r21 "wE3" (showThree wE3)
   appendTagged r22 "wOk" (showThree wOk)
 
-printErr : StringTooLong -> IO Never Unit
-printErr e = case e of
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
 main = eitherToIO render
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printErr
+  |> handleErrorIO onError

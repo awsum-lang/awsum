@@ -23,14 +23,19 @@ triple = Tuple3 10 20 30
 pair : Tuple2 Int32 Int32
 pair = Tuple2 100 200
 
-main : IO Never Unit
-main =
+res : Either StringTooLong String
+res =
   let n = sumTriple triple
       m = apply (\(Tuple2 a b) -> sumPair (Tuple2 a b)) pair
-      res : Either StringTooLong String = (do
+   in do
         s0 <- showInt32 n ++ " / "
         s0 ++ showInt32 m
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

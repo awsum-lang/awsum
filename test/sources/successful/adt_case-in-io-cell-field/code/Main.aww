@@ -1,21 +1,14 @@
-{- Regression: a multi-arm case in a constructor-cell field must compile on
-   the JVM. `IO.Stdout.print (case x of …)` puts the case into a field of the
-   lowered `IOStdoutPrint` cell — the lazy-IO lowering routes every user
-   expression handed to an IO platform built-in through a constructor field —
-   and the JVM emitter used to reject the shape with an internal error
-   ("unified emitter gate missed value"): a multi-arm case emits StackMapTable
-   frames that declare an empty operand stack, which the half-built cell on
-   the stack would contradict. The emitter now evaluates such fields into save
-   locals first (`emitCellI`), the same discipline call arguments always had.
-   The case below survives to codegen on purpose: a variable scrutinee with a
-   multi-arm body is exactly the shape `Awsum.Simplify` leaves in place. -}
+{- A multi-arm `case` used directly as the argument to `IO.Stdout.print`, so
+   the case sits inside a constructor field. Compiles and runs on every
+   backend; prints `1`. -}
 
 import IO.Stdout
 
 f : Maybe Int32 -> IO Never Unit
 f x = IO.Stdout.print (case x of
   Nothing -> "n"
-  Just n -> showInt32 n)
+  Just n -> showInt32 n
+)
 
 main : IO Never Unit
 main = f (Just (1 : Int32))

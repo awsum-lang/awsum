@@ -3,7 +3,7 @@
    and displays the deepest value on the left path.
 
    Every recursion shape is stack-safe on every target, including JVM and JS
-   where native cross-method TCO doesn't exist.
+   where native cross-method tail calls don't exist.
 
    JVM, CLR, and JS targets use their GCs.
    LLVM and WASM targets use static lifetimes — no GC, no explicit lifetime annotations. -}
@@ -13,12 +13,16 @@ import IO.Stdout
 type Tree a = Leaf | Node (Tree a) a (Tree a)
 
 main : IO Never Unit
-main = case runDemo of
-  Left e -> showUnderflowError e |> IO.Stdout.print
-  Right n -> showInt32 n |> IO.Stdout.print
+main = eitherToIO res
+  |> andThenIO (\n -> IO.Stdout.print (showInt32 n))
+  |> handleErrorIO onError
 
-runDemo : Either UnderflowError Int32
-runDemo = do
+onError : UnderflowError -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print (showUnderflowError e)
+
+res : Either UnderflowError Int32
+res = do
   tree <- buildTree 10_000
   mirrored <- mirrorN 500 tree
   Right (deepestLeftA 0 mirrored)

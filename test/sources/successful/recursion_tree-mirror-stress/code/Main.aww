@@ -1,9 +1,8 @@
-{- Multi-child non-tail self-recursion at depth 100_000: 'mirror' has
-   two non-tail self-calls in one expression ('Node (mirror r) v (mirror l)').
-   Cps emits a '$cps$mirror' / '$apply$mirror' pair whose K_1 arm tail-calls
-   '$cps$mirror' — a mutual cycle. The second SCC-merge pass fuses the pair
-   into a single self-recursive function before TCO; the resulting loop
-   runs in bounded stack on every backend. -}
+{- Multi-child non-tail self-recursion at depth 100_000: `mirror` makes
+   two non-tail self-calls in one expression (`Node (mirror r) v (mirror l)`).
+   Mirroring a right-spine of depth n yields a left-spine with the same
+   values, so the deepest left-spine value equals n. Runs in bounded
+   stack on every backend. -}
 
 import IO.Stdout
 
@@ -35,6 +34,10 @@ spineLast t lastV = case t of
   Node l v _r -> spineLast l v
 
 main : IO Never Unit
-main = case buildRight 100_000 Leaf of
-  Left _e -> IO.Stdout.print "UNDERFLOW"
-  Right t -> IO.Stdout.print (showInt32 (spineLast (mirror t) 0))
+main = eitherToIO (buildRight 100_000 Leaf)
+  |> andThenIO (\t -> IO.Stdout.print (showInt32 (spineLast (mirror t) 0)))
+  |> handleErrorIO onError
+
+onError : UnderflowError -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"

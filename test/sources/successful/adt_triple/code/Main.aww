@@ -8,12 +8,17 @@ showTriple : Triple String String String -> Either StringTooLong String
 showTriple t = case t of
   Triple a b c -> h0 a b c
 
+res : Either StringTooLong String
+res = showTriple (Triple "one" "two" "three")
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = showTriple (Triple "one" "two" "three")
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 h0 : String -> String -> String -> Either StringTooLong String
 h0 a b c = do

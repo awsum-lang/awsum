@@ -7,44 +7,48 @@ render r = case r of
   Left _ -> Right "err"
   Right v -> "ok:" ++ showInt32 v
 
+res : Either StringTooLong String
+res = do
+  a <- render (parseInt32 "42")
+  b <- render (parseInt32 "-42")
+  c <- render (parseInt32 "0")
+  d <- render (parseInt32 "2147483647")
+  e <- render (parseInt32 "-2147483648")
+  f <- render (parseInt32 "2147483648")
+  g <- render (parseInt32 "-2147483649")
+  h <- render (parseInt32 "")
+  i <- render (parseInt32 "-")
+  j <- render (parseInt32 "+42")
+  k <- render (parseInt32 " 42")
+  l <- render (parseInt32 "12abc")
+  s0 <- a ++ ", "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ ", "
+  s3 <- s2 ++ c
+  s4 <- s3 ++ ", "
+  s5 <- s4 ++ d
+  s6 <- s5 ++ ", "
+  s7 <- s6 ++ e
+  s8 <- s7 ++ ", "
+  s9 <- s8 ++ f
+  s10 <- s9 ++ ", "
+  s11 <- s10 ++ g
+  s12 <- s11 ++ ", "
+  s13 <- s12 ++ h
+  s14 <- s13 ++ ", "
+  s15 <- s14 ++ i
+  s16 <- s15 ++ ", "
+  s17 <- s16 ++ j
+  s18 <- s17 ++ ", "
+  s19 <- s18 ++ k
+  s20 <- s19 ++ ", "
+  s20 ++ l
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- render (parseInt32 "42")
-        b <- render (parseInt32 "-42")
-        c <- render (parseInt32 "0")
-        d <- render (parseInt32 "2147483647")
-        e <- render (parseInt32 "-2147483648")
-        f <- render (parseInt32 "2147483648")
-        g <- render (parseInt32 "-2147483649")
-        h <- render (parseInt32 "")
-        i <- render (parseInt32 "-")
-        j <- render (parseInt32 "+42")
-        k <- render (parseInt32 " 42")
-        l <- render (parseInt32 "12abc")
-        s0 <- a ++ ", "
-        s1 <- s0 ++ b
-        s2 <- s1 ++ ", "
-        s3 <- s2 ++ c
-        s4 <- s3 ++ ", "
-        s5 <- s4 ++ d
-        s6 <- s5 ++ ", "
-        s7 <- s6 ++ e
-        s8 <- s7 ++ ", "
-        s9 <- s8 ++ f
-        s10 <- s9 ++ ", "
-        s11 <- s10 ++ g
-        s12 <- s11 ++ ", "
-        s13 <- s12 ++ h
-        s14 <- s13 ++ ", "
-        s15 <- s14 ++ i
-        s16 <- s15 ++ ", "
-        s17 <- s16 ++ j
-        s18 <- s17 ++ ", "
-        s19 <- s18 ++ k
-        s20 <- s19 ++ ", "
-        s20 ++ l
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

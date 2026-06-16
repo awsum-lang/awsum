@@ -1,7 +1,6 @@
-{- Direct test of `pureIO`: lifts a pure value into the IO monad
-   as an `IOPure` cell. Composed with `bindIO` whose continuation
-   is the platform built-in `IO.Stdout.print` passed as a value —
-   this shape used to crash before built-in eta-wrappers landed. -}
+{- `pureIO` lifts a pure value into IO, composed with `bindIO` whose
+   continuation is the platform built-in `IO.Stdout.print` passed as a
+   value. Prints `from pureIO`. -}
 
 import IO.Stdout
 

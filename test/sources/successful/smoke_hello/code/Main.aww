@@ -9,7 +9,7 @@ main : IO Never Unit
 main = IO.Args.getArgs
   |> andThenIO (\args -> eitherToIO (greet args))
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printError
+  |> handleErrorIO onError
 
 greet : List String -> Either (NoArg | StringTooLong) String
 greet args = do
@@ -17,8 +17,8 @@ greet args = do
   hello <- "Hello, " ++ name
   hello ++ "!"
 
-printError : (StringTooLong | UnpairedUtf16Surrogate | NoArg) -> IO Never Unit
-printError e = case e of
+onError : (StringTooLong | UnpairedUtf16Surrogate | NoArg) -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
   UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
   NoArg -> IO.Stdout.print "NO_ARG"

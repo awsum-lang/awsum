@@ -31,13 +31,13 @@ CoreProgram
                     ]
                 )
             )
-        , CValDef "main"
-            ( CLet "$inl91$noElems"
-                ( CLet "$inl63$xs"
+        , CValDef "res"
+            ( CLet "$inl75$noElems"
+                ( CLet "$inl51$xs"
                     ( CCon 13 [] )
-                    ( CDrop DropFreeUnchecked "$inl63$xs"
+                    ( CDrop DropFreeUnchecked "$inl51$xs"
                         ( CCase
-                            ( CVar "$inl63$xs" )
+                            ( CVar "$inl51$xs" )
                             [
                                 ( 13
                                 , []
@@ -46,27 +46,27 @@ CoreProgram
                             ,
                                 ( 14
                                 ,
-                                    [ "$inl61$h"
-                                    , "$inl62$_t"
+                                    [ "$inl49$h"
+                                    , "$inl50$_t"
                                     ]
                                 , CCon 12
-                                    [ CProj "$inl63$xs" 1 ]
+                                    [ CProj "$inl51$xs" 1 ]
                                 )
                             ]
                         )
                     )
                 )
-                ( CDrop DropFreeUnchecked "$inl91$noElems"
-                    ( CLet "$inl67$single"
-                        ( CLet "$inl64$xs"
+                ( CDrop DropFreeUnchecked "$inl75$noElems"
+                    ( CLet "$inl55$single"
+                        ( CLet "$inl52$xs"
                             ( CCon 14
                                 [ CString "a"
                                 , CCon 13 []
                                 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl64$xs"
+                            ( CDrop DropFreeUnchecked "$inl52$xs"
                                 ( CCase
-                                    ( CVar "$inl64$xs" )
+                                    ( CVar "$inl52$xs" )
                                     [
                                         ( 13
                                         , []
@@ -75,19 +75,19 @@ CoreProgram
                                     ,
                                         ( 14
                                         ,
-                                            [ "$inl65$h"
-                                            , "$inl66$_t"
+                                            [ "$inl53$h"
+                                            , "$inl54$_t"
                                             ]
                                         , CCon 12
-                                            [ CProj "$inl64$xs" 1 ]
+                                            [ CProj "$inl52$xs" 1 ]
                                         )
                                     ]
                                 )
                             )
                         )
-                        ( CDrop DropFreeUnchecked "$inl67$single"
-                            ( CLet "$inl71$multi"
-                                ( CLet "$inl68$xs"
+                        ( CDrop DropFreeUnchecked "$inl55$single"
+                            ( CLet "$inl59$multi"
+                                ( CLet "$inl56$xs"
                                     ( CCon 14
                                         [ CString "a"
                                         , CCon 14
@@ -99,9 +99,9 @@ CoreProgram
                                             ]
                                         ]
                                     )
-                                    ( CDrop DropFreeUnchecked "$inl68$xs"
+                                    ( CDrop DropFreeUnchecked "$inl56$xs"
                                         ( CCase
-                                            ( CVar "$inl68$xs" )
+                                            ( CVar "$inl56$xs" )
                                             [
                                                 ( 13
                                                 , []
@@ -110,76 +110,78 @@ CoreProgram
                                             ,
                                                 ( 14
                                                 ,
-                                                    [ "$inl69$h"
-                                                    , "$inl70$_t"
+                                                    [ "$inl57$h"
+                                                    , "$inl58$_t"
                                                     ]
                                                 , CCon 12
-                                                    [ CProj "$inl68$xs" 1 ]
+                                                    [ CProj "$inl56$xs" 1 ]
                                                 )
                                             ]
                                         )
                                     )
                                 )
-                                ( CDrop DropFreeUnchecked "$inl71$multi"
-                                    ( CJoin "$join72" [ "$inl73$scrut" ]
+                                ( CDrop DropFreeUnchecked "$inl59$multi"
+                                    ( CCase
                                         ( CCase
-                                            ( CVar "$inl73$scrut" )
+                                            ( CVar "$inl75$noElems" )
                                             [
-                                                ( 3
-                                                , [ "$inl74$__w0" ]
-                                                , CCon 7
-                                                    [ CString "STRING_TOO_LONG"
-                                                    , CCon 5
-                                                        [ CCon 0 [] ]
-                                                    ]
+                                                ( 11
+                                                , []
+                                                , CCon 4
+                                                    [ CString "Nothing" ]
                                                 )
                                             ,
-                                                ( 4
-                                                , [ "$inl75$s" ]
-                                                , CCon 7
-                                                    [ CProj "$inl73$scrut" 1
-                                                    , CCon 5
-                                                        [ CCon 0 [] ]
+                                                ( 12
+                                                , [ "$inl60$s" ]
+                                                , CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CString "Just "
+                                                    , CProj "$inl75$noElems" 1
                                                     ]
                                                 )
                                             ]
                                         )
-                                        ( CCase
-                                            ( CCase
-                                                ( CVar "$inl91$noElems" )
-                                                [
-                                                    ( 11
-                                                    , []
-                                                    , CCon 4
-                                                        [ CString "Nothing" ]
-                                                    )
-                                                ,
-                                                    ( 12
-                                                    , [ "$inl76$s" ]
-                                                    , CCall
-                                                        ( CBuiltIn "concatString" )
-                                                        [ CString "Just "
-                                                        , CProj "$inl91$noElems" 1
-                                                        ]
-                                                    )
-                                                ]
+                                        [
+                                            ( 3
+                                            , [ "$inl61$$do_e_5" ]
+                                            , CCon 3
+                                                [ CVar "$inl61$$do_e_5" ]
                                             )
-                                            [
-                                                ( 3
-                                                , [ "$inl77$$do_e_5" ]
-                                                , CCon 7
-                                                    [ CString "STRING_TOO_LONG"
-                                                    , CCon 5
-                                                        [ CCon 0 [] ]
+                                        ,
+                                            ( 4
+                                            , [ "$inl62$a" ]
+                                            , CCase
+                                                ( CCase
+                                                    ( CVar "$inl55$single" )
+                                                    [
+                                                        ( 11
+                                                        , []
+                                                        , CCon 4
+                                                            [ CString "Nothing" ]
+                                                        )
+                                                    ,
+                                                        ( 12
+                                                        , [ "$inl63$s" ]
+                                                        , CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CString "Just "
+                                                            , CProj "$inl55$single" 1
+                                                            ]
+                                                        )
                                                     ]
                                                 )
-                                            ,
-                                                ( 4
-                                                , [ "$inl78$a" ]
-                                                , CJump "$join72"
-                                                    [ CCase
+                                                [
+                                                    ( 3
+                                                    , [ "$inl64$$do_e_4" ]
+                                                    , CCon 3
+                                                        [ CVar "$inl64$$do_e_4" ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "$inl65$b" ]
+                                                    , CCase
                                                         ( CCase
-                                                            ( CVar "$inl67$single" )
+                                                            ( CVar "$inl59$multi" )
                                                             [
                                                                 ( 11
                                                                 , []
@@ -188,107 +190,76 @@ CoreProgram
                                                                 )
                                                             ,
                                                                 ( 12
-                                                                , [ "$inl79$s" ]
+                                                                , [ "$inl66$s" ]
                                                                 , CCall
                                                                     ( CBuiltIn "concatString" )
                                                                     [ CString "Just "
-                                                                    , CProj "$inl67$single" 1
+                                                                    , CProj "$inl59$multi" 1
                                                                     ]
                                                                 )
                                                             ]
                                                         )
                                                         [
                                                             ( 3
-                                                            , [ "$inl80$$do_e_4" ]
+                                                            , [ "$inl67$$do_e_3" ]
                                                             , CCon 3
-                                                                [ CVar "$inl80$$do_e_4" ]
+                                                                [ CVar "$inl67$$do_e_3" ]
                                                             )
                                                         ,
                                                             ( 4
-                                                            , [ "$inl81$b" ]
+                                                            , [ "$inl68$c" ]
                                                             , CCase
-                                                                ( CCase
-                                                                    ( CVar "$inl71$multi" )
-                                                                    [
-                                                                        ( 11
-                                                                        , []
-                                                                        , CCon 4
-                                                                            [ CString "Nothing" ]
-                                                                        )
-                                                                    ,
-                                                                        ( 12
-                                                                        , [ "$inl82$s" ]
-                                                                        , CCall
-                                                                            ( CBuiltIn "concatString" )
-                                                                            [ CString "Just "
-                                                                            , CProj "$inl71$multi" 1
-                                                                            ]
-                                                                        )
+                                                                ( CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CVar "$inl62$a"
+                                                                    , CString "|"
                                                                     ]
                                                                 )
                                                                 [
                                                                     ( 3
-                                                                    , [ "$inl83$$do_e_3" ]
+                                                                    , [ "$inl69$$do_e_2" ]
                                                                     , CCon 3
-                                                                        [ CVar "$inl83$$do_e_3" ]
+                                                                        [ CVar "$inl69$$do_e_2" ]
                                                                     )
                                                                 ,
                                                                     ( 4
-                                                                    , [ "$inl84$c" ]
+                                                                    , [ "$inl70$s0" ]
                                                                     , CCase
                                                                         ( CCall
                                                                             ( CBuiltIn "concatString" )
-                                                                            [ CVar "$inl78$a"
-                                                                            , CString "|"
+                                                                            [ CVar "$inl70$s0"
+                                                                            , CVar "$inl65$b"
                                                                             ]
                                                                         )
                                                                         [
                                                                             ( 3
-                                                                            , [ "$inl85$$do_e_2" ]
+                                                                            , [ "$inl71$$do_e_1" ]
                                                                             , CCon 3
-                                                                                [ CVar "$inl85$$do_e_2" ]
+                                                                                [ CVar "$inl71$$do_e_1" ]
                                                                             )
                                                                         ,
                                                                             ( 4
-                                                                            , [ "$inl86$s0" ]
+                                                                            , [ "$inl72$s1" ]
                                                                             , CCase
                                                                                 ( CCall
                                                                                     ( CBuiltIn "concatString" )
-                                                                                    [ CVar "$inl86$s0"
-                                                                                    , CVar "$inl81$b"
+                                                                                    [ CVar "$inl72$s1"
+                                                                                    , CString "|"
                                                                                     ]
                                                                                 )
                                                                                 [
                                                                                     ( 3
-                                                                                    , [ "$inl87$$do_e_1" ]
+                                                                                    , [ "$inl73$$do_e_0" ]
                                                                                     , CCon 3
-                                                                                        [ CVar "$inl87$$do_e_1" ]
+                                                                                        [ CVar "$inl73$$do_e_0" ]
                                                                                     )
                                                                                 ,
                                                                                     ( 4
-                                                                                    , [ "$inl88$s1" ]
-                                                                                    , CCase
-                                                                                        ( CCall
-                                                                                            ( CBuiltIn "concatString" )
-                                                                                            [ CVar "$inl88$s1"
-                                                                                            , CString "|"
-                                                                                            ]
-                                                                                        )
-                                                                                        [
-                                                                                            ( 3
-                                                                                            , [ "$inl89$$do_e_0" ]
-                                                                                            , CCon 3
-                                                                                                [ CVar "$inl89$$do_e_0" ]
-                                                                                            )
-                                                                                        ,
-                                                                                            ( 4
-                                                                                            , [ "$inl90$s2" ]
-                                                                                            , CCall
-                                                                                                ( CBuiltIn "concatString" )
-                                                                                                [ CVar "$inl90$s2"
-                                                                                                , CVar "$inl84$c"
-                                                                                                ]
-                                                                                            )
+                                                                                    , [ "$inl74$s2" ]
+                                                                                    , CCall
+                                                                                        ( CBuiltIn "concatString" )
+                                                                                        [ CVar "$inl74$s2"
+                                                                                        , CVar "$inl68$c"
                                                                                         ]
                                                                                     )
                                                                                 ]
@@ -298,15 +269,219 @@ CoreProgram
                                                                 ]
                                                             )
                                                         ]
-                                                    ]
-                                                )
-                                            ]
-                                        )
+                                                    )
+                                                ]
+                                            )
+                                        ]
                                     )
                                 )
                             )
                         )
                     )
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CCall
+                    ( CVar "$cps$$df$andThenIO$4" )
+                    [ CLet "$inl78$x"
+                        ( CVar "res" )
+                        ( CDrop DropFreeUnchecked "$inl78$x"
+                            ( CCase
+                                ( CVar "$inl78$x" )
+                                [
+                                    ( 3
+                                    , [ "$inl76$e" ]
+                                    , CCon 6
+                                        [ CProj "$inl78$x" 1 ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl77$a" ]
+                                    , CCon 5
+                                        [ CProj "$inl78$x" 1 ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 22 []
+                    ]
+                , CCon 20 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 21
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 20
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 21
+                        ,
+                            [ "$pk_21"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_21"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_21"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$4"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CProj "io" 1
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 23
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$4"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 22
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 23
+                        ,
+                            [ "$pk_23"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_23"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_23"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
                 )
             )
         ]

@@ -1,8 +1,6 @@
-{- Direct test of `mapIO`: rewrites the success value of an IO
-   action while preserving the IO tree structure. The pure source
-   is composed with `bindIO` and the platform built-in
-   `IO.Stdout.print` passed as a value — this shape relies on the
-   built-in eta-wrapper lowering to compile correctly. -}
+{- `mapIO` rewrites the success value of an IO action, composed with
+   `bindIO` whose continuation is the platform built-in `IO.Stdout.print`
+   passed as a value. Prints `after`. -}
 
 import IO.Stdout
 

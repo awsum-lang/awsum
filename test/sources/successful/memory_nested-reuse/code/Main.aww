@@ -1,15 +1,9 @@
-{- A binder whose sole use is the scrutinee of an inner case dies with
-   that dispatch: Awsum.Lifetime sinks its drop into the arms, and
-   Awsum.Reuse rewrites the same-arity reconstruction nested inside the
-   pack rebuild — core.txt has CReuse on the pack and, inside its field,
-   CReuse on the list cell (with a self-move on the kept head). Pack and
-   Stack are user types, so both reuses are ReuseGuarded: LLVM/WASM run
-   the loop allocation-free through the uniqueness check (the cells are
-   genuinely linear here), the managed backends allocate.
-
-   make is a loop so the list stays runtime-opaque; the first print is
-   the unreversed top, so a reversal that silently stopped reusing or
-   reordering shows in stdout. -}
+{- A loop that reverses a stack while rebuilding a pack of two stacks,
+   so the inner list cell is rebuilt inside the pack rebuild — two nested
+   same-shape reconstructions in one iteration. `make` is a loop, so the
+   list stays opaque at compile time; the first print is the unreversed
+   top, so a reversal that reordered or corrupted cells would show in
+   stdout. Identical stdout on every backend is the check. -}
 
 import IO.Stdout
 
@@ -36,6 +30,4 @@ top st2 = case st2 of
   Push s2 _rest2 -> s2
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (top (make 3 Empty))
-    |> andThenIO (\_u2 -> IO.Stdout.print (top (rev (Pack (make 3 Empty) Empty))))
+main = IO.Stdout.print (top (make 3 Empty)) |> andThenIO (\_u2 -> IO.Stdout.print (top (rev (Pack (make 3 Empty) Empty))))

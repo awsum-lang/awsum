@@ -13,8 +13,8 @@ bad = Left ErrA
 good : Either ErrA Int32
 good = Right 42
 
-main : IO Never Unit
-main =
+res : Either StringTooLong String
+res =
   let renamedBad : Either ErrB Int32 = mapLeft bad (\_a -> ErrB)
       renamedGood : Either ErrB Int32 = mapLeft good (\_a -> ErrB)
       msg : Either StringTooLong String = (case renamedBad of
@@ -23,6 +23,13 @@ main =
           Right n -> "bad-Left good-Right " ++ showInt32 n
         Right _ -> Right "WAT"
       )
-   in case msg of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+   in msg
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

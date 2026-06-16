@@ -1,18 +1,16 @@
-{- Pins the `IO.Stdin.readAllString` codegen on every backend: the strict
-   UTF-8 decoder (RFC 3629) that resolves the malformed-stdin divergence.
-   Runtime behaviour over real byte streams is covered by the
-   `readAllString-strict-decode` property test; this snapshot locks the
-   generated code. -}
+{- Reads all of stdin as strict UTF-8 (RFC 3629) with
+   `IO.Stdin.readAllString` and prints it; malformed bytes give
+   `InvalidUtf8`, input past the length cap gives `StringTooLong`. -}
 
 import IO.Stdout
 import IO.Stdin
 
-handleErr : (StringTooLong | InvalidUtf8) -> IO Never Unit
-handleErr e = case e of
-  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-  (_i : InvalidUtf8) -> IO.Stdout.print "INVALID_UTF8"
+onError : (StringTooLong | InvalidUtf8) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO handleErr
+  |> handleErrorIO onError

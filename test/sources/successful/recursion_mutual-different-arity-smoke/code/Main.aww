@@ -1,5 +1,5 @@
-{- Mutual recursion with mismatched arities; SCC must merge via a
-   sum-typed args ADT. -}
+{- Mutual recursion between two functions of different arities. Compiles
+   and runs on every backend; prints `0`. -}
 
 import IO.Stdout
 

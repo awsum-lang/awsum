@@ -1,9 +1,5 @@
-{- A platform-effect built-in (`IO.Stdout.print`) passed as a value
-   into a higher-order combinator (`bindIO`). Before the built-in
-   eta-wrapper lowering, the bare `CBuiltIn` flowed into a fn-typed
-   slot, violating `Awsum.LowerClosures`'s invariant and crashing
-   `$applyN` at runtime. Now `lowerExprM` re-routes through the
-   synthesised `$bi$IO.Stdout.print` wrapper. -}
+{- A platform-effect built-in (`IO.Stdout.print`) passed as a value into
+   a higher-order combinator (`bindIO`). Prints `hello`. -}
 
 import IO.Stdout
 

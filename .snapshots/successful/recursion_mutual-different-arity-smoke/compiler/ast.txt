@@ -1,6 +1,6 @@
 Program
-    { moduleComment = Just " Mutual recursion with mismatched arities; SCC must merge via a
-         sum-typed args ADT. "
+    { moduleComment = Just " Mutual recursion between two functions of different arities. Compiles
+         and runs on every backend; prints `0`. "
     , imports =
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing

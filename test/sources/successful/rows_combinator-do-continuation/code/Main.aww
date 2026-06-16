@@ -1,20 +1,7 @@
 {- A row combinator (`bindEither`) applied to an inline `do`-block
-   continuation whose error labels differ from the first operand's.
-
-   The continuation's result row is the combinator's `e2` — a type
-   variable until the surrounding signature pins it. Checked against an
-   abstract `e2`, the continuation's own `Left` injections would record
-   no coercion (a label does not inject into a bare variable) and reach
-   lowering untagged, while the combinator's call head would not
-   specialise (its row never widens to a concrete one). Both effects
-   break cross-target row dispatch: the EC value would be mis-tagged and
-   every backend would disagree (wrong arm / out-of-bounds / `undefined`).
-
-   The fix pins `e2` from the signature (here `(EA | EB | EC)`) before the
-   continuation is elaborated — `e1` first from `oa`, then `e2` from the
-   surrounding row — so the continuation is checked against a concrete
-   result row and its injections get their tags. `oc = Left EC`, so the
-   chain short-circuits to `EC` and every backend prints `C`. -}
+   continuation whose error labels differ from the first operand's; the
+   errors compose into `(EA | EB | EC)`. `oc = Left EC`, so the chain
+   short-circuits to `EC` and it prints `C`. -}
 
 import IO.Stdout
 

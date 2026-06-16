@@ -1,9 +1,6 @@
-{- A function-typed value stored in a constructor field, extracted
-   by a `case` arm, then called. The closure flows through `Box`'s
-   field, so `Awsum.LowerClosures` is what makes this work — the
-   call through the case-arm-binder otherwise reaches a backend as
-   a first-class application. Two distinct functions are stored to
-   exercise dispatch (one tag per closure shape). -}
+{- A function value stored in a constructor field, extracted by a
+   `case` arm, then called. Two distinct functions are stored so the
+   call site dispatches on more than one closure shape. -}
 
 import IO.Stdout
 
@@ -21,14 +18,20 @@ callBox : Box (Int32 -> Either (UnderflowError | OverflowError) Int32) -> Int32 
 callBox b x = case b of
   Box f -> f x
 
-formatOutputs : Either (UnderflowError | OverflowError | StringTooLong) String
-formatOutputs = do
+res : Either (UnderflowError | OverflowError | StringTooLong) String
+res = do
   d <- callBox (Box double) 7
   t <- callBox (Box triple) 7
   ds <- showInt32 d ++ " "
   ds ++ showInt32 t
 
 main : IO Never Unit
-main = case formatOutputs of
-  Left _e -> IO.Stdout.print "error"
-  Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (UnderflowError | OverflowError | StringTooLong) -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

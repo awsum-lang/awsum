@@ -16,8 +16,8 @@ check expected actual label = case eqUInt32 expected actual of
     s3 <- s2 ++ showUInt32 actual
     s3 ++ ")"
 
-run : Either StringTooLong String
-run = do
+res : Either StringTooLong String
+res = do
   a <- check 1 (lengthCodePoints "🔥") "lengthCodePoints"
   b <- check 2 (lengthUtf16CodeUnits "🔥") "lengthUtf16CodeUnits"
   c <- check 4 (lengthUtf8Bytes "🔥") "lengthUtf8Bytes"
@@ -27,6 +27,10 @@ run = do
   s2 ++ c
 
 main : IO Never Unit
-main = case run of
-  Right s -> IO.Stdout.print s
-  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

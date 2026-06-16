@@ -1,7 +1,5 @@
-{- Forces a `CLet` whose right-hand side is a multi-arm case, sitting inside
-   a constructor cell field (the lazy-IO print argument): the JVM save-locals
-   spill, the let-slot region and the contextual frame typing all have to
-   agree here; the other backends pin their own nested-let positions. -}
+{- A `let` whose right-hand side is a multi-arm `case`, used inside a print
+   argument. Prints `64`. -}
 
 import IO.Stdout
 
@@ -16,6 +14,4 @@ pick flag = case flag of
   False -> lengthUtf8Bytes "zz"
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (double (pick (eqUInt32 (lengthUtf8Bytes "one") 3)))
-    |> andThenIO (\_u -> IO.Stdout.print (double (pick (eqUInt32 (lengthUtf8Bytes "no") 3))))
+main = IO.Stdout.print (double (pick (eqUInt32 (lengthUtf8Bytes "one") 3))) |> andThenIO (\_u -> IO.Stdout.print (double (pick (eqUInt32 (lengthUtf8Bytes "no") 3))))

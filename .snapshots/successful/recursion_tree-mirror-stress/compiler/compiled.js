@@ -73,7 +73,7 @@
   const v__scc__apply_mirror__cps_mirror = v__args => {
     while (true) {
       switch (v__args[0]) {
-        case 29: {
+        case 33: {
           const v__k = v__args[1];
           const v__x = v__args[2];
           switch (v__k[0]) {
@@ -82,26 +82,26 @@
             }
             case 28: {
               const v__pk_28 = v__k[1];
-              v__args = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = (v__k[0] = 25, v__k[1] = v__k[2], v__k[2] = v__k[3], v__k[3] = v__x, v__k), v__args);
+              v__args = (v__args[0] = 33, v__args[1] = v__pk_28, v__args[2] = (v__k[0] = 25, v__k[1] = v__k[2], v__k[2] = v__k[3], v__k[3] = v__x, v__k), v__args);
               continue;
             }
             case 27: {
               const v_l = v__k[2];
-              v__args = (v__args[0] = 30, v__args[1] = v_l, v__args[2] = (v__k[0] = 28, v__k[2] = v__x, v__k), v__args);
+              v__args = (v__args[0] = 34, v__args[1] = v_l, v__args[2] = (v__k[0] = 28, v__k[2] = v__x, v__k), v__args);
               continue;
             }
           }
         }
-        case 30: {
+        case 34: {
           const v_t = v__args[1];
           const v__k = v__args[2];
           switch (v_t[0]) {
             case 24: {
-              v__args = (v__args[0] = 29, v__args[2] = v__args[1], v__args[1] = v__k, v__args);
+              v__args = (v__args[0] = 33, v__args[2] = v__args[1], v__args[1] = v__k, v__args);
               continue;
             }
             case 25: {
-              v__args = (v__args[0] = 30, v__args[1] = v_t[3], v__args[2] = [
+              v__args = (v__args[0] = 34, v__args[1] = v_t[3], v__args[2] = [
                 27,
                 v__k,
                 v_t[1],
@@ -115,26 +115,107 @@
     }
   };
 
-  const main = (s => {
-    switch (s[0]) {
-      case 3: {
-        return [7, "UNDERFLOW", [5, [0]]];
-      }
-      case 4: {
-        const v_t = s[1];
-        return [
-          7,
-          String(
-            v_spineLast(
-              v__scc__apply_mirror__cps_mirror([30, v_t, [26]]),
-              0 | 0
-            )
-          ),
-          [5, [0]]
-        ];
+  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 29: {
+          return v__x;
+        }
+        case 30: {
+          const v__pk_30 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_30;
+          continue;
+        }
       }
     }
-  })(v_buildRight(100000 | 0, [24]));
+  };
+
+  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_handleErrorIO_0(v__k, v_io);
+        }
+        case 6: {
+          return v__apply__df_handleErrorIO_0(v__k, [7, "UNDERFLOW", [5, [0]]]);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [30, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 31: {
+          return v__x;
+        }
+        case 32: {
+          const v__pk_32 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_32;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_andThenIO_4(
+            v__k,
+            [
+              7,
+              String(
+                v_spineLast(
+                  v__scc__apply_mirror__cps_mirror([34, v_io[1], [26]]),
+                  0 | 0
+                )
+              ),
+              [5, [0]]
+            ]
+          );
+        }
+        case 6: {
+          return v__apply__df_andThenIO_4(v__k, v_io);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [32, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df_andThenIO_4(
+      (v__inl3_x =>
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [6, v__inl3_x[1]];
+            }
+            case 4: {
+              return [5, v__inl3_x[1]];
+            }
+          }
+        })(v__inl3_x))(v_buildRight(100000 | 0, [24])),
+      [31]
+    ),
+    [29]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

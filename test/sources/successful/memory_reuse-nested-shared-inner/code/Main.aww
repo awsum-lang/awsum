@@ -36,5 +36,4 @@ mk n acc = case eqInt32 n 0 of
 main : IO Never Unit
 main =
   let xs = mk 3 Empty
-   in IO.Stdout.print (second (rev (Pack xs Empty)))
-        |> andThenIO (\_u2 -> IO.Stdout.print (second xs))
+   in IO.Stdout.print (second (rev (Pack xs Empty))) |> andThenIO (\_u2 -> IO.Stdout.print (second xs))

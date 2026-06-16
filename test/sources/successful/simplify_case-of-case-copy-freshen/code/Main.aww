@@ -1,8 +1,14 @@
+{- Inlining a function whose body is a `case` (`inner`) into another's
+   scrutinee position makes a `case`-of-`case`, which the compiler fuses.
+   The `MkA` arm shares a binding (from `dup`'s doubled argument) that must
+   be freshened when the arm is copied. `run True 3` builds `Tuple2 7 7`
+   (sum 14); `run False 4` builds `Tuple2 4 4` (sum 8). Prints `148`. -}
+
 import IO.Stdout
 
 type T = MkA | MkB
 
--- Recursive: never inlined; its call is the non-duplicable CLet rhs.
+{- Recursive, so never inlined. -}
 g : Int32 -> Int32
 g n = case eqInt32 n 0 of
   True -> 7
@@ -10,9 +16,7 @@ g n = case eqInt32 n 0 of
     Left _e -> 7
     Right m -> g m
 
--- Recursive: never inlined; keeps the False inner arm non-literal.
--- Returns MkA on one path so the MkA tag stays constructable and
--- pruneDeadArms keeps the MkA arm in the minted join body.
+{- Recursive, so never inlined; returns MkA on one path so that arm stays live. -}
 mk2 : Int32 -> T
 mk2 n = case eqInt32 n 0 of
   True -> MkB
@@ -20,19 +24,16 @@ mk2 n = case eqInt32 n 0 of
     Left _e -> MkA
     Right m -> mk2 m
 
--- Small: inlines everywhere. Param used twice + call argument => CLet.
+{- Small, so inlines; its parameter is used twice. -}
 dup : Int32 -> Tuple2 Int32 Int32
 dup n = Tuple2 n n
 
--- Small: inlines. Body is a case => becomes the inner case of the fusion.
+{- Small, so inlines; its body is a case. -}
 inner : Bool -> Int32 -> T
 inner b x = case b of
   True -> MkA
   False -> mk2 x
 
--- After inlining: case-of-case whose MkA arm holds the CLet; the True inner
--- arm selects it statically, the False inner arm jumps (join keeps the outer
--- case). Called twice from main and too big after fusion => never inlined.
 run : Bool -> Int32 -> Tuple2 Int32 Int32
 run b x = case inner b x of
   MkA -> dup (g x)
@@ -44,6 +45,4 @@ sumPair (Tuple2 a b) = case addInt32 a b of
   Right s -> s
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (showInt32 (sumPair (run True 3)))
-    |> andThenIO (\_u -> IO.Stdout.print (showInt32 (sumPair (run False 4))))
+main = IO.Stdout.print (showInt32 (sumPair (run True 3))) |> andThenIO (\_u -> IO.Stdout.print (showInt32 (sumPair (run False 4))))

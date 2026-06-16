@@ -28,65 +28,143 @@
 
   const v_bad = [3, [24]];
 
-  const main = (v__inl23_renamedGood =>
-    (() => {
-      let v__inl25_scrut;
-      $join24: {
-        const v__inl19_x = v_bad;
-        {
-          const __s = (s => {
-            switch (s[0]) {
+  const v_res = (v__inl15_renamedGood =>
+    (v__inl11_x =>
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            switch (v__inl15_renamedGood[0]) {
               case 3: {
-                return [3, [25]];
+                return [4, "bad-Left bad-Left"];
               }
               case 4: {
-                return v__inl19_x;
+                return __concat(
+                  "bad-Left good-Right ",
+                  String(v__inl15_renamedGood[1])
+                );
               }
             }
-          })(v__inl19_x);
-          switch (__s[0]) {
-            case 3: {
-              v__inl25_scrut = (s => {
-                switch (s[0]) {
-                  case 3: {
-                    return [4, "bad-Left bad-Left"];
-                  }
-                  case 4: {
-                    return __concat(
-                      "bad-Left good-Right ",
-                      String(v__inl23_renamedGood[1])
-                    );
-                  }
-                }
-              })(v__inl23_renamedGood);
-              break $join24;
-            }
-            case 4: {
-              return [7, "WAT", [5, [0]]];
-            }
+          }
+          case 4: {
+            return [4, "WAT"];
           }
         }
-      }
-      switch (v__inl25_scrut[0]) {
-        case 3: {
-          return [7, "STRING_TOO_LONG", [5, [0]]];
-        }
-        case 4: {
-          return [7, v__inl25_scrut[1], [5, [0]]];
-        }
-      }
-    })())(
-    (v__inl20_x =>
+      })(
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [3, [25]];
+            }
+            case 4: {
+              return v__inl11_x;
+            }
+          }
+        })(v__inl11_x)
+      ))(v_bad))(
+    (v__inl12_x =>
       (s => {
         switch (s[0]) {
           case 3: {
             return [3, [25]];
           }
           case 4: {
-            return v__inl20_x;
+            return v__inl12_x;
           }
         }
-      })(v__inl20_x))(v_good)
+      })(v__inl12_x))(v_good)
+  );
+
+  const v__apply__df_handleErrorIO_1 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 26: {
+          return v__x;
+        }
+        case 27: {
+          const v__pk_27 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_27;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_handleErrorIO_1 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_handleErrorIO_1(v__k, v_io);
+        }
+        case 6: {
+          return v__apply__df_handleErrorIO_1(
+            v__k,
+            [7, "STRING_TOO_LONG", [5, [0]]]
+          );
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [27, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__apply__df_andThenIO_5 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 28: {
+          return v__x;
+        }
+        case 29: {
+          const v__pk_29 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_29;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_andThenIO_5 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_andThenIO_5(v__k, [7, v_io[1], [5, [0]]]);
+        }
+        case 6: {
+          return v__apply__df_andThenIO_5(v__k, v_io);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [29, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = v__cps__df_handleErrorIO_1(
+    v__cps__df_andThenIO_5(
+      (v__inl22_x =>
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [6, v__inl22_x[1]];
+            }
+            case 4: {
+              return [5, v__inl22_x[1]];
+            }
+          }
+        })(v__inl22_x))(v_res),
+      [28]
+    ),
+    [26]
   );
 
   if (typeof require !== "undefined" && require.main === module) {

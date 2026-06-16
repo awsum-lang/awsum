@@ -16,9 +16,14 @@ bothBody a b = do
   s0 <- showInt32 a ++ "/"
   s0 ++ showInt32 b
 
+res : Either StringTooLong String
+res = both 11 22
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = both 11 22
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

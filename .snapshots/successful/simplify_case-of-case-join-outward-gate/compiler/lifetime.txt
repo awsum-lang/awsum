@@ -37,8 +37,8 @@ $cps$$df$handleErrorIO$0:
   param           $k                              count=3
   case-pattern    a                               count=0
   case-pattern    e                               count=0
-  row-case        $inl12$_u                       count=0
-  row-case        $inl13$_l                       count=0
+  row-case        $inl12$__rw                     count=0
+  row-case        $inl13$__rw                     count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont                            count=0

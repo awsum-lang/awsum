@@ -1,11 +1,6 @@
-{- A row-typed list built from literals mixing Int32 and String elements.
-   `synthLabelType` used to under-approximate the tail of such a list as
-   `List String`: the bare int literals synthesise to nothing, so a later
-   string element alone fixed the element tyvar, and the int literals were
-   then lowered against a `String` element type — a "no numeric type" compile
-   error on a well-typed program. Now an un-synthesisable argument that
-   reaches the result fails synthesis, so the declared element type
-   propagates to every element and the five backends agree on the fold. -}
+{- A row-typed list built from literals mixing `Int32` and `String` elements
+   (`List (Int32 | String)`). The fold sums the `Int32` elements and skips
+   the strings: `1 + 2 + 3`, so it prints `6`. -}
 
 import IO.Stdout
 

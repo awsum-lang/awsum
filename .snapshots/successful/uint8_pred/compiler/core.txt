@@ -35,207 +35,178 @@ CoreProgram
             ( CIntLit 0 TUInt8 )
         , CValDef "maxUInt8"
             ( CIntLit 255 TUInt8 )
-        , CValDef "main"
+        , CValDef "res"
             ( CLet "$inl3$r"
                 ( CCall
                     ( CBuiltIn "predUInt8" )
                     [ CVar "minUInt8" ]
                 )
                 ( CDrop DropFreeUnchecked "$inl3$r"
-                    ( CJoin "$join12" [ "$inl13$scrut" ]
+                    ( CCase
                         ( CCase
-                            ( CVar "$inl13$scrut" )
+                            ( CVar "$inl3$r" )
                             [
                                 ( 3
-                                , [ "$inl10$__w0" ]
-                                , CCon 7
-                                    [ CString "STRING_TOO_LONG"
-                                    , CCon 5
-                                        [ CCon 0 [] ]
+                                , [ "$inl1$e" ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "underflow: "
+                                    , CString "UnderflowError"
                                     ]
                                 )
                             ,
                                 ( 4
-                                , [ "$inl11$s" ]
-                                , CCon 7
-                                    [ CProj "$inl13$scrut" 1
-                                    , CCon 5
-                                        [ CCon 0 [] ]
+                                , [ "$inl2$v" ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "ok: "
+                                    , CCall
+                                        ( CBuiltIn "showUInt8" )
+                                        [ CProj "$inl3$r" 1 ]
                                     ]
                                 )
                             ]
                         )
-                        ( CCase
-                            ( CCase
-                                ( CVar "$inl3$r" )
-                                [
-                                    ( 3
-                                    , [ "$inl1$e" ]
-                                    , CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CString "underflow: "
-                                        , CString "UnderflowError"
-                                        ]
-                                    )
-                                ,
-                                    ( 4
-                                    , [ "$inl2$v" ]
-                                    , CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CString "ok: "
-                                        , CCall
-                                            ( CBuiltIn "showUInt8" )
-                                            [ CProj "$inl3$r" 1 ]
-                                        ]
-                                    )
-                                ]
+                        [
+                            ( 3
+                            , [ "$do_e_5" ]
+                            , CCon 3
+                                [ CVar "$do_e_5" ]
                             )
-                            [
-                                ( 3
-                                , [ "$do_e_5" ]
-                                , CCon 7
-                                    [ CString "STRING_TOO_LONG"
-                                    , CCon 5
-                                        [ CCon 0 [] ]
-                                    ]
+                        ,
+                            ( 4
+                            , [ "a" ]
+                            , CLet "$inl6$r"
+                                ( CCon 4
+                                    [ CIntLit 0 TUInt8 ]
                                 )
-                            ,
-                                ( 4
-                                , [ "a" ]
-                                , CJump "$join12"
-                                    [ CLet "$inl6$r"
-                                        ( CCon 4
-                                            [ CIntLit 0 TUInt8 ]
-                                        )
-                                        ( CDrop DropFreeUnchecked "$inl6$r"
-                                            ( CCase
-                                                ( CCase
-                                                    ( CVar "$inl6$r" )
-                                                    [
-                                                        ( 3
-                                                        , [ "$inl4$e" ]
-                                                        , CCall
-                                                            ( CBuiltIn "concatString" )
-                                                            [ CString "underflow: "
-                                                            , CString "UnderflowError"
-                                                            ]
-                                                        )
-                                                    ,
-                                                        ( 4
-                                                        , [ "$inl5$v" ]
-                                                        , CCall
-                                                            ( CBuiltIn "concatString" )
-                                                            [ CString "ok: "
-                                                            , CCall
-                                                                ( CBuiltIn "showUInt8" )
-                                                                [ CProj "$inl6$r" 1 ]
-                                                            ]
-                                                        )
+                                ( CDrop DropFreeUnchecked "$inl6$r"
+                                    ( CCase
+                                        ( CCase
+                                            ( CVar "$inl6$r" )
+                                            [
+                                                ( 3
+                                                , [ "$inl4$e" ]
+                                                , CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CString "underflow: "
+                                                    , CString "UnderflowError"
                                                     ]
                                                 )
-                                                [
-                                                    ( 3
-                                                    , [ "$do_e_4" ]
-                                                    , CCon 3
-                                                        [ CVar "$do_e_4" ]
-                                                    )
-                                                ,
-                                                    ( 4
-                                                    , [ "b" ]
-                                                    , CLet "$inl9$r"
-                                                        ( CCall
-                                                            ( CBuiltIn "predUInt8" )
-                                                            [ CVar "maxUInt8" ]
+                                            ,
+                                                ( 4
+                                                , [ "$inl5$v" ]
+                                                , CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CString "ok: "
+                                                    , CCall
+                                                        ( CBuiltIn "showUInt8" )
+                                                        [ CProj "$inl6$r" 1 ]
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_4" ]
+                                            , CCon 3
+                                                [ CVar "$do_e_4" ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "b" ]
+                                            , CLet "$inl9$r"
+                                                ( CCall
+                                                    ( CBuiltIn "predUInt8" )
+                                                    [ CVar "maxUInt8" ]
+                                                )
+                                                ( CDrop DropFreeUnchecked "$inl9$r"
+                                                    ( CCase
+                                                        ( CCase
+                                                            ( CVar "$inl9$r" )
+                                                            [
+                                                                ( 3
+                                                                , [ "$inl7$e" ]
+                                                                , CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CString "underflow: "
+                                                                    , CString "UnderflowError"
+                                                                    ]
+                                                                )
+                                                            ,
+                                                                ( 4
+                                                                , [ "$inl8$v" ]
+                                                                , CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CString "ok: "
+                                                                    , CCall
+                                                                        ( CBuiltIn "showUInt8" )
+                                                                        [ CProj "$inl9$r" 1 ]
+                                                                    ]
+                                                                )
+                                                            ]
                                                         )
-                                                        ( CDrop DropFreeUnchecked "$inl9$r"
-                                                            ( CCase
-                                                                ( CCase
-                                                                    ( CVar "$inl9$r" )
-                                                                    [
-                                                                        ( 3
-                                                                        , [ "$inl7$e" ]
-                                                                        , CCall
-                                                                            ( CBuiltIn "concatString" )
-                                                                            [ CString "underflow: "
-                                                                            , CString "UnderflowError"
-                                                                            ]
-                                                                        )
-                                                                    ,
-                                                                        ( 4
-                                                                        , [ "$inl8$v" ]
-                                                                        , CCall
-                                                                            ( CBuiltIn "concatString" )
-                                                                            [ CString "ok: "
-                                                                            , CCall
-                                                                                ( CBuiltIn "showUInt8" )
-                                                                                [ CProj "$inl9$r" 1 ]
-                                                                            ]
-                                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_3" ]
+                                                            , CCon 3
+                                                                [ CVar "$do_e_3" ]
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "c" ]
+                                                            , CCase
+                                                                ( CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CVar "a"
+                                                                    , CString ", "
                                                                     ]
                                                                 )
                                                                 [
                                                                     ( 3
-                                                                    , [ "$do_e_3" ]
+                                                                    , [ "$do_e_2" ]
                                                                     , CCon 3
-                                                                        [ CVar "$do_e_3" ]
+                                                                        [ CVar "$do_e_2" ]
                                                                     )
                                                                 ,
                                                                     ( 4
-                                                                    , [ "c" ]
+                                                                    , [ "s0" ]
                                                                     , CCase
                                                                         ( CCall
                                                                             ( CBuiltIn "concatString" )
-                                                                            [ CVar "a"
-                                                                            , CString ", "
+                                                                            [ CVar "s0"
+                                                                            , CVar "b"
                                                                             ]
                                                                         )
                                                                         [
                                                                             ( 3
-                                                                            , [ "$do_e_2" ]
+                                                                            , [ "$do_e_1" ]
                                                                             , CCon 3
-                                                                                [ CVar "$do_e_2" ]
+                                                                                [ CVar "$do_e_1" ]
                                                                             )
                                                                         ,
                                                                             ( 4
-                                                                            , [ "s0" ]
+                                                                            , [ "s1" ]
                                                                             , CCase
                                                                                 ( CCall
                                                                                     ( CBuiltIn "concatString" )
-                                                                                    [ CVar "s0"
-                                                                                    , CVar "b"
+                                                                                    [ CVar "s1"
+                                                                                    , CString ", "
                                                                                     ]
                                                                                 )
                                                                                 [
                                                                                     ( 3
-                                                                                    , [ "$do_e_1" ]
+                                                                                    , [ "$do_e_0" ]
                                                                                     , CCon 3
-                                                                                        [ CVar "$do_e_1" ]
+                                                                                        [ CVar "$do_e_0" ]
                                                                                     )
                                                                                 ,
                                                                                     ( 4
-                                                                                    , [ "s1" ]
-                                                                                    , CCase
-                                                                                        ( CCall
-                                                                                            ( CBuiltIn "concatString" )
-                                                                                            [ CVar "s1"
-                                                                                            , CString ", "
-                                                                                            ]
-                                                                                        )
-                                                                                        [
-                                                                                            ( 3
-                                                                                            , [ "$do_e_0" ]
-                                                                                            , CCon 3
-                                                                                                [ CVar "$do_e_0" ]
-                                                                                            )
-                                                                                        ,
-                                                                                            ( 4
-                                                                                            , [ "s2" ]
-                                                                                            , CCall
-                                                                                                ( CBuiltIn "concatString" )
-                                                                                                [ CVar "s2"
-                                                                                                , CVar "c"
-                                                                                                ]
-                                                                                            )
+                                                                                    , [ "s2" ]
+                                                                                    , CCall
+                                                                                        ( CBuiltIn "concatString" )
+                                                                                        [ CVar "s2"
+                                                                                        , CVar "c"
                                                                                         ]
                                                                                     )
                                                                                 ]
@@ -244,16 +215,220 @@ CoreProgram
                                                                     )
                                                                 ]
                                                             )
-                                                        )
+                                                        ]
                                                     )
-                                                ]
+                                                )
                                             )
-                                        )
-                                    ]
+                                        ]
+                                    )
                                 )
+                            )
+                        ]
+                    )
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CCall
+                    ( CVar "$cps$$df$andThenIO$4" )
+                    [ CLet "$inl12$x"
+                        ( CVar "res" )
+                        ( CDrop DropFreeUnchecked "$inl12$x"
+                            ( CCase
+                                ( CVar "$inl12$x" )
+                                [
+                                    ( 3
+                                    , [ "$inl10$e" ]
+                                    , CCon 6
+                                        [ CProj "$inl12$x" 1 ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl11$a" ]
+                                    , CCon 5
+                                        [ CProj "$inl12$x" 1 ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 22 []
+                    ]
+                , CCon 20 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CVar "io"
                             ]
                         )
-                    )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 21
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 20
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 21
+                        ,
+                            [ "$pk_21"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_21"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_21"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$4"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CProj "io" 1
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 23
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$4"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 22
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 23
+                        ,
+                            [ "$pk_23"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_23"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_23"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
                 )
             )
         ]

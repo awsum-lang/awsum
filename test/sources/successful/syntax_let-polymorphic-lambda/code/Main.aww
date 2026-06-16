@@ -23,9 +23,14 @@ threeTypes n s b =
         s2 <- s1 ++ "/"
         s2 ++ showTri (id b)
 
+res : Either StringTooLong String
+res = threeTypes 42 "hello" TA
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = threeTypes 42 "hello" TA
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

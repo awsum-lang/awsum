@@ -5,12 +5,43 @@ runIO:
   case-pattern    next                            count=0
   let             $inl0$eff                       count=0
 
-main:
+res:
   let             $inl3$r                         count=0
   case-pattern    $inl1$e                         count=0
   case-pattern    $inl2$v                         count=0
-  case-pattern    $inl4$__w0                      count=0
-  case-pattern    $inl5$s                         count=1
+
+main:
+  let             $inl6$x                         count=0
+  case-pattern    $inl4$e                         count=0
+  case-pattern    $inl5$a                         count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_25                          count=0
+  case-pattern    s                               count=0
 
 $scc$pingOne_pongTwo:
   param           $args                           count=1

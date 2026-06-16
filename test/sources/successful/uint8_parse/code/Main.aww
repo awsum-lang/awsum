@@ -7,32 +7,36 @@ render r = case r of
   Left _ -> Right "err"
   Right v -> "ok:" ++ showUInt8 v
 
+res : Either StringTooLong String
+res = do
+  a <- render (parseUInt8 "0")
+  b <- render (parseUInt8 "255")
+  c <- render (parseUInt8 "256")
+  d <- render (parseUInt8 "-1")
+  e <- render (parseUInt8 "")
+  f <- render (parseUInt8 "abc")
+  g <- render (parseUInt8 " 5")
+  h <- render (parseUInt8 "12a")
+  r0 <- a ++ ", "
+  r1 <- r0 ++ b
+  r2 <- r1 ++ ", "
+  r3 <- r2 ++ c
+  r4 <- r3 ++ ", "
+  r5 <- r4 ++ d
+  r6 <- r5 ++ ", "
+  r7 <- r6 ++ e
+  r8 <- r7 ++ ", "
+  r9 <- r8 ++ f
+  r10 <- r9 ++ ", "
+  r11 <- r10 ++ g
+  r12 <- r11 ++ ", "
+  r12 ++ h
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- render (parseUInt8 "0")
-        b <- render (parseUInt8 "255")
-        c <- render (parseUInt8 "256")
-        d <- render (parseUInt8 "-1")
-        e <- render (parseUInt8 "")
-        f <- render (parseUInt8 "abc")
-        g <- render (parseUInt8 " 5")
-        h <- render (parseUInt8 "12a")
-        r0 <- a ++ ", "
-        r1 <- r0 ++ b
-        r2 <- r1 ++ ", "
-        r3 <- r2 ++ c
-        r4 <- r3 ++ ", "
-        r5 <- r4 ++ d
-        r6 <- r5 ++ ", "
-        r7 <- r6 ++ e
-        r8 <- r7 ++ ", "
-        r9 <- r8 ++ f
-        r10 <- r9 ++ ", "
-        r11 <- r10 ++ g
-        r12 <- r11 ++ ", "
-        r12 ++ h
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

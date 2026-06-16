@@ -1,14 +1,7 @@
-{- A case-of-case tower whose middle fusion declines (the literal arm's
-   selected outer arm is a 17-node constructor tree, demoted by the
-   duplication gate) while the outer fusion succeeds — so the re-walk sees
-   the minted join's inner case with `CJump`-carrying arms as the outer case
-   of a second fusion. Minting that second join would put a jump to the
-   enclosing join inside its body — a join body that jumps outward, the one
-   shape the expression-position emitters do not lower (the tower sits in
-   `showInt32`'s argument). The outward-jump gate declines the second fusion;
-   the first join still forms and both its paths run: input 5 takes the
-   static branch (head of the big literal, `9`), input 3 the jump branch
-   (`mklist` of `mkmb`'s payload, `1`). -}
+{- A nested `case`-of-`case` tower in `showInt32`'s argument, over a runtime
+   value taken from the first command-line argument (or `3` when absent).
+   With argument `5` it prints `9`; with no argument (value `3`) it
+   prints `1`. -}
 
 import IO.Stdout
 import IO.Args
@@ -39,20 +32,23 @@ run args =
           Left _e3 -> 4
           Right m -> m
    in IO.Stdout.print (showInt32 (case (case (case eqInt32 k2 5 of
-            True -> Nothing
-            False -> mkmb k2) of
-          Nothing -> MyCons 9 (MyCons 2 (MyCons 3 (MyCons 4 (MyCons 5 (MyCons 6 (MyCons 7 (MyCons 8 MyNil)))))))
-          Just v -> mklist v) of
+        True -> Nothing
+        False -> mkmb k2
+      ) of
+        Nothing -> MyCons 9 (MyCons 2 (MyCons 3 (MyCons 4 (MyCons 5 (MyCons 6 (MyCons 7 (MyCons 8 MyNil)))))))
+        Just v -> mklist v
+      ) of
         MyCons h _t -> h
-        MyNil -> 0))
+        MyNil -> 0
+      )
+      )
 
-handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
-handleInputErr e = case e of
-  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED"
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED"
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO run
-    |> handleErrorIO handleInputErr
+main = IO.Args.getArgs
+  |> andThenIO run
+  |> handleErrorIO onError

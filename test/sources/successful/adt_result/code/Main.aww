@@ -9,12 +9,16 @@ unwrap r = case r of
   Ok value -> value
   Err value -> value
 
+res : Either StringTooLong String
+res = do
+  s0 <- unwrap (Ok "1") ++ ","
+  s0 ++ unwrap (Err "2")
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- unwrap (Ok "1") ++ ","
-        s0 ++ unwrap (Err "2")
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

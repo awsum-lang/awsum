@@ -198,7 +198,7 @@ CoreProgram
                                 ( CProj "io" 1 )
                                 [
                                     ( 348914022
-                                    , "$inl0$_b"
+                                    , "$inl0$__rw"
                                     , CCon 7
                                         [ CString "EB"
                                         , CCon 5
@@ -207,7 +207,7 @@ CoreProgram
                                     )
                                 ,
                                     ( 502975519
-                                    , "$inl1$_u"
+                                    , "$inl1$__rw"
                                     , CCon 7
                                         [ CString "UNPAIRED_UTF16_SURROGATE"
                                         , CCon 5
@@ -216,7 +216,7 @@ CoreProgram
                                     )
                                 ,
                                     ( 589989748
-                                    , "$inl2$_s"
+                                    , "$inl2$__rw"
                                     , CCon 7
                                         [ CString "STRING_TOO_LONG"
                                         , CCon 5

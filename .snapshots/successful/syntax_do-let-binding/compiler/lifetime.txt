@@ -5,14 +5,43 @@ runIO:
   case-pattern    next                            count=0
   let             $inl0$eff                       count=0
 
-main:
+res:
   let             $inl25$__input                  count=0
   case-pattern    $inl26$__f0                     count=0
   case-pattern    $inl27$__f0                     count=0
-  case-pattern    e                               count=1
-  join-param      $inl32$scrut                    count=2
-  case-pattern    __w0                            count=0
-  case-pattern    out                             count=0
+
+main:
+  let             $inl33$x                        count=0
+  case-pattern    $inl31$e                        count=0
+  case-pattern    $inl32$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  let             $inl30$e                        count=0
   row-case        $inl28$__rw                     count=0
-  case-pattern    s                               count=1
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_21                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$$rowmono$0$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$$rowmono$0$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
 

@@ -20,9 +20,12 @@ main =
         b <- opB
         pureEither b
       )
-   in case res of
-        Left e -> case e of
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          ErrA -> IO.Stdout.print "ERR_A"
-          ErrB -> IO.Stdout.print "ERR_B"
-        Right n -> IO.Stdout.print (showInt32 n)
+   in eitherToIO res
+        |> andThenIO (\n -> IO.Stdout.print (showInt32 n))
+        |> handleErrorIO onError
+
+onError : (ParseError | ErrA | ErrB) -> IO Never Unit
+onError e = case e of
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  ErrA -> IO.Stdout.print "ERR_A"
+  ErrB -> IO.Stdout.print "ERR_B"

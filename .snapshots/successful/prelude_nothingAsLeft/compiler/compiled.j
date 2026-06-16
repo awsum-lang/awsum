@@ -245,7 +245,7 @@ L_join2:
   istore 5
   iload 5
   iconst_3
-  if_icmpne L_arm7
+  if_icmpne L_arm5
   iconst_2
   anewarray java/lang/Object
   dup
@@ -257,15 +257,15 @@ L_join2:
   iconst_1
   ldc "Left Missing"
   aastore
-  goto L_join6
-L_arm7:
+  goto L_join4
+L_arm5:
   ldc "Right "
   aload_0
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_join6:
+L_join4:
   checkcast [Ljava/lang/Object;
   astore 5
   aload 5
@@ -276,42 +276,24 @@ L_join6:
   istore 6
   iload 6
   iconst_3
-  if_icmpne L_jarm8
-  aconst_null
+  if_icmpne L_arm7
+  aload 5
+  iconst_1
+  aaload
   astore 7
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
   iconst_3
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 7
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
   iconst_1
-  ldc "STRING_TOO_LONG"
+  aload 7
   aastore
-  dup
-  iconst_2
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_5
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  aastore
-  aastore
-  goto L_jafter5
-L_jarm8:
+  goto L_join6
+L_arm7:
   aload 5
   iconst_1
   aaload
@@ -325,7 +307,7 @@ L_jarm8:
   istore 8
   iload 8
   iconst_3
-  if_icmpne L_arm10
+  if_icmpne L_arm9
   iconst_2
   anewarray java/lang/Object
   dup
@@ -337,15 +319,15 @@ L_jarm8:
   iconst_1
   ldc "Left Missing"
   aastore
-  goto L_join9
-L_arm10:
+  goto L_join8
+L_arm9:
   ldc "Right "
   aload_1
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_join9:
+L_join8:
   checkcast [Ljava/lang/Object;
   astore 8
   aload 8
@@ -356,7 +338,7 @@ L_join9:
   istore 9
   iload 9
   iconst_3
-  if_icmpne L_arm12
+  if_icmpne L_arm11
   aload 8
   iconst_1
   aaload
@@ -372,8 +354,8 @@ L_join9:
   iconst_1
   aload 10
   aastore
-  goto L_join11
-L_arm12:
+  goto L_join10
+L_arm11:
   aload 8
   iconst_1
   aaload
@@ -387,7 +369,7 @@ L_arm12:
   istore 11
   iload 11
   iconst_3
-  if_icmpne L_arm14
+  if_icmpne L_arm13
   iconst_2
   anewarray java/lang/Object
   dup
@@ -399,15 +381,15 @@ L_arm12:
   iconst_1
   ldc "Left Missing"
   aastore
-  goto L_join13
-L_arm14:
+  goto L_join12
+L_arm13:
   ldc "Right "
   aload_3
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_join13:
+L_join12:
   checkcast [Ljava/lang/Object;
   astore 11
   aload 11
@@ -418,7 +400,7 @@ L_join13:
   istore 12
   iload 12
   iconst_3
-  if_icmpne L_arm16
+  if_icmpne L_arm15
   aload 11
   iconst_1
   aaload
@@ -434,8 +416,8 @@ L_join13:
   iconst_1
   aload 13
   aastore
-  goto L_join15
-L_arm16:
+  goto L_join14
+L_arm15:
   aload 11
   iconst_1
   aaload
@@ -453,7 +435,7 @@ L_arm16:
   istore 15
   iload 15
   iconst_3
-  if_icmpne L_arm18
+  if_icmpne L_arm17
   aload 14
   iconst_1
   aaload
@@ -469,8 +451,8 @@ L_arm16:
   iconst_1
   aload 16
   aastore
-  goto L_join17
-L_arm18:
+  goto L_join16
+L_arm17:
   aload 14
   iconst_1
   aaload
@@ -488,7 +470,7 @@ L_arm18:
   istore 18
   iload 18
   iconst_3
-  if_icmpne L_arm20
+  if_icmpne L_arm19
   aload 17
   iconst_1
   aaload
@@ -504,8 +486,8 @@ L_arm18:
   iconst_1
   aload 19
   aastore
-  goto L_join19
-L_arm20:
+  goto L_join18
+L_arm19:
   aload 17
   iconst_1
   aaload
@@ -523,7 +505,7 @@ L_arm20:
   istore 21
   iload 21
   iconst_3
-  if_icmpne L_arm22
+  if_icmpne L_arm21
   aload 20
   iconst_1
   aaload
@@ -539,8 +521,8 @@ L_arm20:
   iconst_1
   aload 22
   aastore
-  goto L_join21
-L_arm22:
+  goto L_join20
+L_arm21:
   aload 20
   iconst_1
   aaload
@@ -548,24 +530,113 @@ L_arm22:
   aload 22
   aload 13
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_join21:
-L_join19:
-L_join17:
-L_join15:
-L_join11:
+L_join20:
+L_join18:
+L_join16:
+L_join14:
+L_join10:
+L_join6:
   astore 4
-  goto L_jbody4
-L_jbody4:
   aload 4
   checkcast [Ljava/lang/Object;
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  istore 5
-  iload 5
+  istore 9
+  iload 9
   iconst_3
-  if_icmpne L_arm24
+  if_icmpne L_arm23
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 6
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload 4
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  aastore
+  goto L_join22
+L_arm23:
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_5
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload 4
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  aastore
+L_join22:
+  astore 7
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 27
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  astore 8
+  aload 7
+  aload 8
+  invokestatic AwsumMain/v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  astore 5
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 25
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  astore 6
+  aload 5
+  aload 6
+  invokestatic AwsumMain/v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 12
+  .limit locals 5
+L_tco24:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  istore_2
+  iload_2
+  iconst_5
+  if_icmpne L_tarm25
+  aconst_null
+  astore_3
+  aconst_null
+  astore 4
+  aload_1
+  aload_0
+  invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+L_tarm25:
+  iload_2
+  bipush 6
+  if_icmpne L_tarm26
+  aconst_null
+  astore_3
+  aconst_null
+  astore 4
+  aload_1
   iconst_3
   anewarray java/lang/Object
   dup
@@ -597,8 +668,120 @@ L_jbody4:
   aastore
   aastore
   aastore
-  goto L_join23
-L_arm24:
+  invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+L_tarm26:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  astore_3
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aaload
+  astore 4
+  aload 4
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 26
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  dup
+  iconst_2
+  aload_3
+  aastore
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  astore_1
+  astore_0
+  goto L_tco24
+.end method
+
+
+.method static v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 5
+  .limit locals 5
+L_tco27:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  istore_2
+  iload_2
+  bipush 25
+  if_icmpne L_tarm28
+  aconst_null
+  astore_3
+  aload_1
+  areturn
+L_tarm28:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  astore_3
+  aload_3
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  bipush 7
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aaload
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aload_1
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  astore_1
+  astore_0
+  goto L_tco27
+.end method
+
+
+.method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 12
+  .limit locals 5
+L_tco29:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  istore_2
+  iload_2
+  iconst_5
+  if_icmpne L_tarm30
+  aconst_null
+  astore_3
+  aconst_null
+  astore 4
+  aload_1
   iconst_3
   anewarray java/lang/Object
   dup
@@ -608,7 +791,7 @@ L_arm24:
   aastore
   dup
   iconst_1
-  aload 4
+  aload_0
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
@@ -633,9 +816,110 @@ L_arm24:
   aastore
   aastore
   aastore
-L_join23:
-L_jafter5:
+  invokestatic AwsumMain/v__apply__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
+L_tarm30:
+  iload_2
+  bipush 6
+  if_icmpne L_tarm31
+  aconst_null
+  astore_3
+  aconst_null
+  astore 4
+  aload_1
+  aload_0
+  invokestatic AwsumMain/v__apply__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+L_tarm31:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  astore_3
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aaload
+  astore 4
+  aload 4
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 28
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  dup
+  iconst_2
+  aload_3
+  aastore
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  astore_1
+  astore_0
+  goto L_tco29
+.end method
+
+
+.method static v__apply__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 5
+  .limit locals 5
+L_tco32:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  istore_2
+  iload_2
+  bipush 27
+  if_icmpne L_tarm33
+  aconst_null
+  astore_3
+  aload_1
+  areturn
+L_tarm33:
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aaload
+  astore_3
+  aload_3
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_0
+  bipush 7
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_1
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aaload
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  iconst_2
+  aload_1
+  aastore
+  aload_0
+  checkcast [Ljava/lang/Object;
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  astore_1
+  astore_0
+  goto L_tco32
 .end method
 
 .method public static main([Ljava/lang/String;)V

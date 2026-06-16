@@ -8,8 +8,8 @@ show m = case m of
   Nothing -> Right "Nothing"
   Just s -> "Just " ++ s
 
-main : IO Never Unit
-main =
+res : Either StringTooLong String
+res =
   let noElems : Maybe String = headList Nil
       single : Maybe String = headList (Cons "a" Nil)
       multi : Maybe String = headList (Cons "a" (Cons "b" (Cons "c" Nil)))
@@ -21,6 +21,13 @@ main =
         s1 <- s0 ++ b
         s2 <- s1 ++ "|"
         s2 ++ c
-   in case msg of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+   in msg
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

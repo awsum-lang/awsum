@@ -7,14 +7,18 @@ unwrap m = case m of
   Just s -> "just: " ++ s
   Nothing -> Right "nothing"
 
+res : Either StringTooLong String
+res = do
+  a <- unwrap (Just "hi")
+  b <- unwrap Nothing
+  s0 <- a ++ ", "
+  s0 ++ b
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- unwrap (Just "hi")
-        b <- unwrap Nothing
-        s0 <- a ++ ", "
-        s0 ++ b
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
