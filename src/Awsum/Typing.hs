@@ -298,14 +298,9 @@ data TypeError
     --   the table. Distinct from 'RowLabelNotInScrut' (the PAscribe
     --   analogue).
     RowLabelNotForConstructor SrcSpan Name Type'
-  | -- | A lambda was used in a synthesis position — i.e. one where
-    --   surrounding context does not provide an expected arrow type.
-    --   The expected-type-driven check in 'checkExpr' is the only
-    --   place that can give a lambda a type.
-    LambdaInSynthesisPosition SrcSpan
-  | -- | A 'do' block was used in a synthesis position. Like lambdas,
-    --   'do' has no synthesis form — it desugars through 'bindEither'
-    --   against the surrounding expected type.
+  | -- | A 'do' block was used in a synthesis position. A 'do' block has
+    --   no synthesis form — it desugars through 'bindEither' against the
+    --   surrounding expected type.
     DoInSynthesisPosition SrcSpan
   | -- | The scrutinee of a 'do' bind statement (the right-hand side of
     --   @x <- e@) does not have an 'Either' type. The current
@@ -418,7 +413,6 @@ typeErrorSpan = \case
   RowCatchAllPattern sp -> Just sp
   DuplicateRowArm sp _ -> Just sp
   RowLabelNotForConstructor sp _ _ -> Just sp
-  LambdaInSynthesisPosition sp -> Just sp
   DoInSynthesisPosition sp -> Just sp
   DoBindNonEither sp _ -> Just sp
   DoBlockMissingResult sp -> Just sp
@@ -570,11 +564,6 @@ prettyPrintTypeError = \case
       <> "' is not in any alternative of the structural sum "
       <> showType scrut
       <> "."
-  LambdaInSynthesisPosition _ ->
-    "A lambda expression needs an expected arrow type from the "
-      <> "surrounding context. Use it as an argument to a function "
-      <> "whose parameter is a function type, or in another position "
-      <> "where its type is fixed."
   DoInSynthesisPosition _ ->
     "A 'do' block needs an expected type from the surrounding context. "
       <> "Use it as the body of a definition with an explicit signature, "
@@ -2012,13 +2001,15 @@ typeOfExpr conEnv tcm env = \case
         let checkAgainstA = do
               xE <- checkExpr conEnv tcm S.empty env a x
               -- A lambda / literal argument has no synthesisable root
-              -- type, but its body can still pin tyvars shared with the
-              -- callee's signature — the @e2@ in a row-combinator
-              -- continuation @\\_n -> ob@. Recover that substitution and
-              -- push it through the result type and the function
-              -- sub-tree, exactly as the synth path's 'unify' does, so
-              -- the call head's instantiated type is fully concrete for
-              -- row-monomorphisation downstream.
+              -- type, but a lambda's body — or an annotated parameter
+              -- (@\\(n : Int32) -> …@) — can still pin tyvars shared with
+              -- the callee's signature (the @e2@ in a row-combinator
+              -- continuation @\\_n -> ob@; the @a@ that @5@ is then checked
+              -- against). Recover that substitution ('argSubstT' descends
+              -- into both) and push it through the result type and the
+              -- function sub-tree, exactly as the synth path's 'unify'
+              -- does, so the call head's instantiated type is fully
+              -- concrete for row-monomorphisation downstream.
               let s = argSubstT a xE
               pure (TApp sp (applySubst s b) (substTExpr s tfE) [substTExpr s xE])
         case x of
