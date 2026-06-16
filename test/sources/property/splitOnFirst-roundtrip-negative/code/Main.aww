@@ -1,37 +1,33 @@
 {- Property: `splitOnFirst sep s == Nothing` whenever `sep` is not a
-   substring of `s`. The Haskell-side generator picks `sep` from
-   `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
-   non-occurrence by construction. -}
+   substring of `s`. Input format: "sep:s" with disjoint alphabets so
+   `sep` does not occur in `s`. -}
 
 import IO.Stdout
 import IO.Stdin
-
-parseInput : String -> Either ParseError (Tuple2 String String)
-parseInput raw = case splitOnFirst ":" raw of
-  Nothing -> Left ParseError
-  Just (Tuple2 sep s) -> Right (Tuple2 sep s)
 
 property : String -> String -> Bool
 property sep s = case splitOnFirst sep s of
   Nothing -> True
   Just _ -> False
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        Tuple2 sep s <- parseInput raw
-        pureEither (property sep s)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple2 sep s) -> printOutcome (property sep s))
+  |> handleErrorIO onError
+
+parseInput : String -> Either ParseError (Tuple2 String String)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 sep s) -> Right (Tuple2 sep s)
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

@@ -1,9 +1,6 @@
-{- Property: `s ++ "" == s` for every String. The Haskell side hands
-   back the input unchanged as the expected output, so this is an
-   expectedOutput-style property (the property prints the computed
-   value, Haskell expects the input back). There's nothing to parse
-   and nothing that can fail, so the property runs over 'main raw'
-   directly. -}
+{- Property: `s ++ "" == s` for every String. There's nothing to
+   parse and nothing that can fail, so the property runs over the
+   raw input directly. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -11,19 +8,13 @@ import IO.Stdin
 property : String -> Either StringTooLong String
 property s = s ++ ""
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8) String = (do
-        raw <- rawArg
-        property raw
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (property raw))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"

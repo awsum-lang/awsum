@@ -1,5 +1,6 @@
-{- Property: `parseUInt32 (showUInt32 x) == Right x` for any UInt32 0..255.
-   Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type. -}
+{- Property: `parseUInt32 (showUInt32 x) == Right x` for any UInt32.
+   Tests that the show / parse pair round-trips; the output echoes
+   the input. Input: one UInt32 decimal literal. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -7,21 +8,14 @@ import IO.Stdin
 property : UInt32 -> String
 property v = showUInt32 v
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) String = (do
-        raw <- rawArg
-        v <- parseUInt32 raw
-        pureEither (property v)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseUInt32 raw))
+  |> andThenIO (\v -> IO.Stdout.print (property v))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

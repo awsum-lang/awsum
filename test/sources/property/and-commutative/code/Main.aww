@@ -1,7 +1,7 @@
 {- Property: `and a b == and b a`. The property emits
    `boolToStr (and a b) ++ boolToStr (and b a)` — both halves
-   should match Haskell's independently computed `(a && b)`.
-   Input format: "a:b" with a, b as "0" / "1" decimal strings. -}
+   should be equal. Input format: "a:b" with a, b as "0" / "1"
+   decimal strings. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -30,21 +30,15 @@ property na nb =
       b = intToBool nb
    in boolToStr (and a b) ++ boolToStr (and b a)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) String = (do
-        raw <- rawArg
-        Tuple2 na nb <- parseInput raw
-        property na nb
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple2 na nb) -> eitherToIO (property na nb))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

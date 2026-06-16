@@ -1,7 +1,7 @@
 {- Property: `succInt32 (predInt32 x) == Right x` for every Int32 with
    `x /= minInt32`. Mirror of `predSucc-roundtrip-int32` in the
-   opposite direction. The Haskell-side generator excludes minInt32,
-   so neither pred nor succ should fail on a well-formed input. -}
+   opposite direction. Inputs exclude minInt32, so neither pred nor
+   succ fails on a well-formed input. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -12,24 +12,22 @@ property x = do
   s <- succInt32 p
   pureEither (eqInt32 s x)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) Bool = (do
-        raw <- rawArg
-        x <- parseInt32 raw
-        property x
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          UnderflowError -> IO.Stdout.print "UNDERFLOW"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
+  |> andThenIO (\x -> eitherToIO (property x))
+  |> andThenIO printOutcome
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

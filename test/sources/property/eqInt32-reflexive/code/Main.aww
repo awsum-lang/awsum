@@ -1,6 +1,5 @@
-{- Property: `eqInt32 a a == True` for every Int32. Single Int32
-   input. The property has no failable inner ops, so the only
-   error path is a parse failure. -}
+{- Property: `eqInt32 a a == True` for every Int32. Single Int32 input; the
+   only error path is a parse failure. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -8,22 +7,19 @@ import IO.Stdin
 property : Int32 -> Bool
 property a = eqInt32 a a
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        a <- parseInt32 raw
-        pureEither (property a)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
+  |> andThenIO (\a -> printOutcome (property a))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

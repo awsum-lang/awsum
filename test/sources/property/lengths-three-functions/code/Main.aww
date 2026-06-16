@@ -1,17 +1,16 @@
 {- Property: for any valid UTF-16 input, the three string-length
-   functions produce values on which all five backends agree, and
-   those values match what the Haskell side computes from the same
-   input. The output is `cp:cu:b` where:
+   functions produce values on which all five backends agree. The
+   output is `cp:cu:b` where:
 
      cp = lengthCodePoints      input
      cu = lengthUtf16CodeUnits  input
-     b  = lengthUtf8Bytes     input
+     b  = lengthUtf8Bytes       input
 
    Catches divergence in any direction: a backend that miscounts
    surrogate pairs, undercounts a 4-byte UTF-8 sequence, or treats
    the underlying buffer as raw bytes instead of as code points
-   would land on a different stdout from at least one of the others
-   and from the Haskell expectation. -}
+   would land on a different stdout from at least one of the
+   others. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -26,19 +25,13 @@ property s = do
   s2 <- s1 ++ ":"
   s2 ++ b
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8) String = (do
-        raw <- rawArg
-        property raw
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (property raw))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"

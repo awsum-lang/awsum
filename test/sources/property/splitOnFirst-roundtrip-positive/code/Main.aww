@@ -1,8 +1,7 @@
 {- Property: if `splitOnFirst sep s == Just (Tuple2 a b)`, then
    `a ++ sep ++ b == s`. Input: "sep:s" where sep is non-empty; s
-   has been constructed Haskell-side as `a ++ sep ++ b` so the
-   split is guaranteed to find a match. The property emits the
-   round-tripped string; Haskell expects `s` back. -}
+   is `a ++ sep ++ b` so the split is guaranteed to find a match.
+   The property emits the round-tripped string. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -21,22 +20,16 @@ property sep s = case splitOnFirst sep s of
     s0 <- a ++ sep
     s0 ++ b
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | NoMatch) String = (do
-        raw <- rawArg
-        Tuple2 sep s <- parseInput raw
-        property sep s
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          NoMatch -> IO.Stdout.print "NO_MATCH"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple2 sep s) -> eitherToIO (property sep s))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError | NoMatch) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  NoMatch -> IO.Stdout.print "NO_MATCH"

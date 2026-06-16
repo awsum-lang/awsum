@@ -1,11 +1,30 @@
 {- Property: `addUInt32 (addUInt32 a b) c == addUInt32 a (addUInt32 b c)`
    whenever every intermediate sum stays in range. Input format:
-   "a:b:c". The Haskell-side generator picks triples constructively
-   from the no-overflow region, so OVERFLOW is never expected to
-   fire on a well-formed input. -}
+   "a:b:c". Inputs stay in the no-overflow region, so OVERFLOW never
+   fires on a well-formed input. -}
 
 import IO.Stdout
 import IO.Stdin
+
+property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
+property a b c = do
+  ab <- addUInt32 a b
+  abc <- addUInt32 ab c
+  bc <- addUInt32 b c
+  aBc <- addUInt32 a bc
+  pureEither (eqUInt32 abc aBc)
+
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Stdin.readAllString
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple3 a b c) -> eitherToIO (property a b c))
+  |> andThenIO printOutcome
+  |> handleErrorIO onError
 
 parseInput : String -> Either ParseError (Tuple3 UInt32 UInt32 UInt32)
 parseInput raw = case splitOnFirst ":" raw of
@@ -18,31 +37,9 @@ parseInput raw = case splitOnFirst ":" raw of
       c <- parseUInt32 cStr
       pureEither (Tuple3 a b c)
 
-property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
-property a b c = do
-  ab <- addUInt32 a b
-  abc <- addUInt32 ab c
-  bc <- addUInt32 b c
-  aBc <- addUInt32 a bc
-  pureEither (eqUInt32 abc aBc)
-
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | OverflowError) Bool = (do
-        raw <- rawArg
-        Tuple3 a b c <- parseInput raw
-        property a b c
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
-
-main : IO Never Unit
-main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+onError : (StringTooLong | InvalidUtf8 | ParseError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

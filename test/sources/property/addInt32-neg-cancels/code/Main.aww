@@ -1,7 +1,6 @@
 {- Property: `negInt32 x + x == 0` for every Int32 except `minInt32`
    (which can't be negated in two's complement). Single Int32 input.
-   The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
-   so neither error branch is expected to fire. -}
+   Inputs exclude `minInt32`, so neither error branch fires. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -12,24 +11,22 @@ property x = do
   s <- addInt32 negX x
   pureEither (eqInt32 s 0)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) Bool = (do
-        raw <- rawArg
-        x <- parseInt32 raw
-        property x
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          UnderflowError -> IO.Stdout.print "UNDERFLOW"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
+  |> andThenIO (\x -> eitherToIO (property x))
+  |> andThenIO printOutcome
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

@@ -6,6 +6,24 @@
 import IO.Stdout
 import IO.Stdin
 
+property : Int32 -> Int32 -> Bool
+property a b = case eqInt32 a b of
+  True -> eqInt32 b a
+  False -> case eqInt32 b a of
+    True -> False
+    False -> True
+
+printOutcome : Bool -> IO Never Unit
+printOutcome holds = case holds of
+  True -> IO.Stdout.print "OK"
+  False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Stdin.readAllString
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple2 a b) -> printOutcome (property a b))
+  |> handleErrorIO onError
+
 parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
 parseInput raw = case splitOnFirst ":" raw of
   Nothing -> Left ParseError
@@ -14,29 +32,8 @@ parseInput raw = case splitOnFirst ":" raw of
     b <- parseInt32 bStr
     pureEither (Tuple2 a b)
 
-property : Int32 -> Int32 -> Bool
-property a b = case eqInt32 a b of
-  True -> eqInt32 b a
-  False -> case eqInt32 b a of
-    True -> False
-    False -> True
-
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        Tuple2 a b <- parseInput raw
-        pureEither (property a b)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
-
-main : IO Never Unit
-main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
