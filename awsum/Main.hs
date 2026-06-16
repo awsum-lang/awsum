@@ -298,8 +298,12 @@ runCommand = \case
       Left e -> die $ toString e
       Right formatted ->
         if inPlace
-          then writeFileText filePath formatted
-          else putTextLn formatted
+          -- Skip the write (and leave mtime untouched) when the file is
+          -- already canonical; rewrite only on a real change.
+          then when (formatted /= src) (writeFileText filePath formatted)
+          -- 'putText', not 'putTextLn': 'formatted' already ends in '\n',
+          -- so stdout is byte-identical to what '-i' writes to disk.
+          else putText formatted
   CmdSymbols filePath useJson -> do
     prog <- parseFileOrDie filePath
     let syms = symbolsOfProgram prog
