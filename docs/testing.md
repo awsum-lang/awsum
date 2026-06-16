@@ -24,6 +24,30 @@ Every successful-corpus program compiled a second time with the `Simplify` pass 
 
 Performance golden files, one per program under [test/sources/benchmark/](../test/sources/benchmark/): `.benchmarks/<name>/bench.txt` records a per-backend `median (min–max)` of wall time and peak RSS (run count and timeout in the header), plus a stdout anchor cross-checked against every backend and run while measuring — a backend whose stdout deviates renders `mismatch` and the run exits non-zero. Snapshot mode also compiles the program without the `Simplify` pass and runs it once per backend (unmeasured) against the same anchor: `bench.txt` records only the normal pipeline, a no-simplify deviation goes to stderr and the exit code. The numbers are machine-local, so they are **not** asserted by `just test` or CI; the workflow is manual: snapshot, make the change, snapshot again, read the `git diff` — the (min–max) band separates run-to-run noise from a real shift. Compiler artifacts for the same programs (`.snapshots/benchmark/<name>/compiler/` — AST, Core, per-backend codegen text, lifetime analysis) **are** golden-tested by `just test`, so a bench delta is diagnosable from the committed IR diff. The split is physical: `.snapshots/` holds what `just test` regenerates and can be reset wholesale; `.benchmarks/` is written only by benchmark runs, so a snapshot reset cannot take the medians with it. macOS-only (BSD `/usr/bin/time -l`, `gtimeout` from coreutils).
 
+## Test source conventions
+
+Snapshot sources under [test/sources/successful/](../test/sources/successful/) are worked examples — read and copied by people and by the language models that assist them — so they hold to one house style. A program that produces output by threading an `Either` to stdout uses this shape:
+
+```awsum
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : <error row> -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  …
+```
+
+1. **Bridge `Either` to `IO` with `eitherToIO`** — never a hand-written `case res of Left … ; Right …` to print the result.
+2. **Sequence `IO` with `andThenIO`** (or `bindIO` where a value is threaded into the continuation), composed left-to-right with `|>`.
+3. **One error handler, named `onError`** — not an inline `\_e -> …` lambda, not a differently-named helper.
+4. **`onError` enumerates the error row by constructor** — one arm per alternative, no `_` wildcard that discards the structure. Bare constructor pattern (`StringTooLong ->`) where the alternative is a single-constructor nominal type; type-ascription pattern (`(s : String) ->`) where it is a primitive or a multi-constructor type; a distinct message per arm.
+5. **The doc comment is behaviour-only** — one short `{- … -}` saying what language shape the program exercises and what it should print. Self-contained: no reference to other test programs, to `docs/`, to compiler modules or passes, or to the property / no-simplify / benchmark layers. Regression history lives in git, not in the comment.
+
+The exception is a test whose *subject* is one of these mechanisms — a program exercising `bindIO`, `handleErrorIO` partial recovery, the row-collapse matrix, a `Simplify` Core shape, the `|>` operator itself, and so on. There the construct under test stays as written; the conventions apply to everything incidental around it.
+
 ## Commands
 
 ```bash

@@ -1,7 +1,6 @@
-{- Chains two `Either`-returning ops with mismatching error labels;
-   the `do`-desugared `case` arms must inject the bare-nominal error
-   into the combined `(ErrA | ErrB)` row at lowering time without an
-   explicit lift wrapper. -}
+{- Chains two `Either`-returning ops with mismatching error labels in a
+   `do` block; the errors compose into `(ErrA | ErrB)`. `opB` fails with
+   `ErrB`, so it prints `ErrB`. -}
 
 import IO.Stdout
 
@@ -27,9 +26,14 @@ describe r = case r of
     ErrB -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
+res : Either StringTooLong String
+res = describe (run 5)
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = describe (run 5)
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

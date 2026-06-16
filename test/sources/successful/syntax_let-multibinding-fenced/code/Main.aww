@@ -1,0 +1,21 @@
+{- Multi-binding `let` mixing single-line bindings with an own-line-
+   signature binding. The own-line binding is fenced by a blank line on
+   each side; the single-line bindings pack together. Prints `hi bob`. -}
+
+import IO.Stdout
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main =
+  let greeting = "hi "
+
+      name : String
+      name = "bob"
+
+      both = greeting ++ name
+   in eitherToIO both
+        |> andThenIO IO.Stdout.print
+        |> handleErrorIO onError

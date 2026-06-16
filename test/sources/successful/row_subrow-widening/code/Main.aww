@@ -1,8 +1,8 @@
-{- Pins widening a narrower structural sum into a wider one. Row tags are
-   per-label (FNV of the label name), so a value injected at `(String | Int32)`
-   is already correctly tagged for `(String | Int32 | Bool)` — widening is a
-   pass-through. Covers an ascription (`("hi" : (String | Int32))` flowing into
-   the wider row) and a sub-row-returning function whose result widens. -}
+{- Widening a narrower structural sum into a wider one — a value at
+   `(String | Int32)` flows into `(String | Int32 | Bool)`. Covers an
+   ascription (`("hi" : (String | Int32))`) and a sub-row-returning function
+   whose result widens. A consumer dispatches back via a row `case`; prints
+   `hi`, `tt`, `2`. -}
 
 import IO.Stdout
 

@@ -1,0 +1,47 @@
+{- Expression-level type ascription '(e : T)'. Pins the type of an
+   inner expression at the use site without introducing a 'let' or a
+   separate signature. Dual to the pattern-form '(p : T)' which
+   eliminates a row alternative; the expression-form pins the type
+   of a value.
+
+   Three demonstrations below:
+     1. Direct literal pin — '(42 : Int32)' resolves an integer
+        literal at the use site, where 'showInt32' alone would
+        succeed but no synth form exists for a bare literal.
+     2. Ascription inside a HOF call — 'identity (10 : Int32)'
+        pins the polymorphic 'a' to 'Int32' through the argument.
+     3. Ascription on a non-literal expression — '(predInt32 5 : Either UnderflowError Int32)'
+        documents the result type at the call site (and would catch
+        a refactor that changed 'predInt32''s error row). -}
+
+import IO.Stdout
+
+identity : a -> a
+identity x = x
+
+direct : String
+direct = showInt32 (42 : Int32)
+
+throughHof : String
+throughHof = showInt32 (identity (10 : Int32))
+
+ascribedCall : String
+ascribedCall = case (predInt32 5 : Either UnderflowError Int32) of
+  Left _ -> "FAIL"
+  Right n -> showInt32 n
+
+res : Either StringTooLong String
+res = do
+  ab <- direct ++ " "
+  abc <- ab ++ throughHof
+  abcd <- abc ++ " "
+  abcd ++ ascribedCall
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

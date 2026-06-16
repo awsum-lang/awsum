@@ -1,9 +1,6 @@
 {- Direct test of `nothingAsLeft`: `Nothing` becomes `Left e`, `Just a`
-   becomes `Right a`. The third binding (`chained`) threads the result
-   through a `do`-block, which lowers to a `CCase` in an argument
-   position of the let-block's compiled `CCall` — a JVM-codegen
-   stackmap regression case (see `Awsum.Codegen.JVM.Assemble`'s
-   `emitArgsViaLocals`). -}
+   becomes `Right a`. The `chained` binding threads the result through a
+   `do`-block sitting in an argument position. -}
 
 import IO.Stdout
 
@@ -19,7 +16,7 @@ main =
   let fromNothing : Either Missing String = nothingAsLeft Missing Nothing
       fromJust : Either Missing String = nothingAsLeft Missing (Just "hi")
       chained : Either Missing String = do
-        h <- nothingAsLeft Missing (headList (Cons "first" (Cons "second" Nil)))
+        h <- headList (Cons "first" (Cons "second" Nil)) |> nothingAsLeft Missing
         pureEither h
       msg : Either StringTooLong String = do
         a <- show fromNothing
@@ -29,6 +26,10 @@ main =
         s1 <- sep ++ b
         s2 <- s1 ++ "|"
         s2 ++ c
-   in case msg of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+   in eitherToIO msg
+        |> andThenIO IO.Stdout.print
+        |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

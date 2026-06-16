@@ -6,11 +6,11 @@ runIO:
   let             $inl0$eff                       count=0
 
 main:
-  let             $inl9$x$u1                      count=0
-  case-pattern    $inl7$e                         count=0
-  case-pattern    $inl8$a$u1                      count=0
+  let             $inl11$x$u1                     count=0
+  case-pattern    $inl9$e                         count=0
+  case-pattern    $inl10$a$u1                     count=0
 
-$cps$$lift$19:
+$cps$$lift$18:
   param           __input                         count=3
   param           $k                              count=2
   case-pattern    __f0                            count=0
@@ -18,24 +18,26 @@ $cps$$lift$19:
   case-pattern    __f0                            count=0
   case-pattern    __f1                            count=0
 
-$apply$$lift$19:
+$apply$$lift$18:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_9                           count=0
+  case-pattern    $pk_20                          count=0
   case-pattern    __f0                            count=0
 
 $cps$$df$handleErrorIO$0:
-  param           io                              count=3
+  param           io                              count=4
   param           $k                              count=2
   case-pattern    a$u0                            count=0
   case-pattern    e                               count=0
+  row-case        $inl4$__rw                      count=0
+  row-case        $inl5$__rw                      count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
 $apply$$df$handleErrorIO$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_11                          count=0
+  case-pattern    $pk_22                          count=0
   case-pattern    s                               count=0
 
 $cps$$df$$rowmono$0$andThenIO$4:
@@ -49,16 +51,16 @@ $cps$$df$$rowmono$0$andThenIO$4:
 $apply$$df$$rowmono$0$andThenIO$4:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_13                          count=0
+  case-pattern    $pk_24                          count=0
   case-pattern    s                               count=0
 
 $cps$$df$$rowmono$1$andThenIO$8:
   param           io                              count=3
   param           $k                              count=2
   case-pattern    a$u3                            count=0
-  let             $inl4$x$u1                      count=0
-  case-pattern    $inl5$e                         count=0
-  case-pattern    $inl6$a$u1                      count=0
+  let             $inl6$x$u1                      count=0
+  case-pattern    $inl7$e                         count=0
+  case-pattern    $inl8$a$u1                      count=0
   case-pattern    e                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
@@ -66,6 +68,6 @@ $cps$$df$$rowmono$1$andThenIO$8:
 $apply$$df$$rowmono$1$andThenIO$8:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_15                          count=0
+  case-pattern    $pk_26                          count=0
   case-pattern    s                               count=0
 

@@ -1,13 +1,15 @@
-{- Pins the `IO.Stdin.readAllBytes` codegen on every backend: the raw-byte
-   reader (fd 0 → `List UInt8`) plus the hex fold. Runtime behaviour over
-   real byte streams is covered by the `readAllBytes-roundtrip` property
-   test; this snapshot locks the generated code. -}
+{- Reads all of stdin as raw bytes with `IO.Stdin.readAllBytes` and prints
+   them as a hex string; input past the length cap gives `StringTooLong`. -}
 
 import IO.Stdout
 import IO.Stdin
 
 main : IO Never Unit
-main = IO.Stdin.readAllBytes |> andThenIO (\bytes -> case bytesToHexStringNoPrefix bytes of
-  Left _e -> IO.Stdout.print "TOO_LONG"
-  Right hex -> IO.Stdout.print hex
-)
+main = IO.Stdin.readAllBytes
+  |> andThenIO (\bytes -> eitherToIO (bytesToHexStringNoPrefix bytes))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "TOO_LONG"

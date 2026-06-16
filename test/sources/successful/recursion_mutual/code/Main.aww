@@ -28,9 +28,14 @@ handleB step = case step of
     "C" ++ rest
   Done -> Right ""
 
+res : Either StringTooLong String
+res = handleA StepA
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = handleA StepA
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

@@ -1,21 +1,20 @@
-{- Case-of-case fusion over a loop dispatch: the outer case's False arm
-   recurses (a `CContinue` after TCO), and with every backend lowering
-   `CJoin` natively the join body stays inside the function's loop — so the
-   fusion gate that used to exclude `CContinue`-carrying outer arms is
-   gone. The inner True arm resolves statically; the computation arm jumps;
-   the minted join's body carries the loop-back arm and runs once per
-   iteration, 100000 times. -}
+{- A `case` whose scrutinee is another `case`, over a recursive loop: the
+   outer `False` arm recurses. The compiler fuses the nested dispatch; the
+   inner `True` arm resolves statically and the fused body runs once per
+   iteration, 100000 times. Prints `1`. -}
 
 import IO.Stdout
 
 go : UInt32 -> String
 go n = case (case eqUInt32 n 0 of
-    True -> True
-    False -> eqUInt32 n 1) of
+  True -> True
+  False -> eqUInt32 n 1
+) of
   True -> showUInt32 n
   False -> (case subUInt32 n 1 of
     Left _e -> "E"
-    Right m -> go m)
+    Right m -> go m
+  )
 
 main : IO Never Unit
-main = IO.Stdout.print (go 100000)
+main = IO.Stdout.print (go 100_000)

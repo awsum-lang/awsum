@@ -41,8 +41,10 @@ withBrackets s = -- FunDef multi-line let body, trailing on '=' line
   let withOpen = "[" ++ s
    in withOpen
 
-handleInputError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
-handleInputError _e = IO.Stdout.print "INPUT_ERROR"
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
 printInput : String -> IO Never Unit
 printInput s = IO.Stdout.print s
@@ -60,6 +62,6 @@ main : IO Never Unit -- Sig trailing
 
 main = IO.Args.getArgs
   |> andThenIO printFirstArg
-  |> handleErrorIO handleInputError
+  |> handleErrorIO onError
 
 -- Trailing line comment at EOF

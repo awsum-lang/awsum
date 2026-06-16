@@ -13,14 +13,18 @@ show c = case c of
   Green -> "Green"
   Blue -> "Blue"
 
+res : Either StringTooLong String
+res = do
+  s0 <- show Red ++ ", "
+  s1 <- s0 ++ show Green
+  s2 <- s1 ++ ", "
+  s2 ++ show Blue
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- show Red ++ ", "
-        s1 <- s0 ++ show Green
-        s2 <- s1 ++ ", "
-        s2 ++ show Blue
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

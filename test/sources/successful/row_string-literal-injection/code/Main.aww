@@ -1,10 +1,7 @@
-{- Pins string-literal injection into a structural sum across the
-   non-argument positions that lower through `lowerExprM` directly:
-   a value-def body (`sv`), a `case`-arm result (`pick`), and a `let`
-   RHS (`fromLet`). Before the fix a string literal in these positions
-   stayed an un-tagged `CString` (the integer-literal arm injected, the
-   string arm did not), so the row-case mis-read it — crash on
-   LLVM/JVM/CLR/WASM, garbage on JS. -}
+{- String-literal injection into a structural sum `(Int32 | String)` across
+   several positions: a value-def body (`sv`), a `case`-arm result (`pick`),
+   and a `let` RHS (`fromLet`). A consumer reads each injected value back via
+   a row `case`. Prints `S`, `9`, `T`, `1`, `L` in order. -}
 
 import IO.Stdout
 

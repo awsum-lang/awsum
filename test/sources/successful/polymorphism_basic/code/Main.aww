@@ -2,15 +2,19 @@
 
 import IO.Stdout
 
+res : Either StringTooLong String
+res = do
+  ax <- appendX (const "a" "b")
+  identity (appendY ax)
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        ax <- appendX (const "a" "b")
-        identity (appendY ax)
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 identity : a -> a
 identity x = x

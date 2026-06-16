@@ -9,13 +9,17 @@ search key = do
   found <- "found:" ++ key
   Right (Found found)
 
+res : Either StringTooLong String
+res = case search "hello" of
+  Left e -> Left e
+  Right (Found v) -> Right v
+  Right NotFound -> Right "nothing"
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (case search "hello" of
-        Left e -> Left e
-        Right (Found v) -> Right v
-        Right NotFound -> Right "nothing"
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

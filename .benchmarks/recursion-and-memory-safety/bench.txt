@@ -2,10 +2,10 @@ benchmark: recursion-and-memory-safety
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 4.45 (4.42–4.78)         40.1 (40.0–40.1)
-JVM      ok                 1.91 (1.85–2.00)   1423.2 (1355.3–1446.1)
-CLR      ok                 5.62 (5.59–5.65)   2241.7 (2239.9–2242.2)
-WASM     ok                 8.04 (8.02–8.17)         39.0 (38.9–39.0)
-JS       ok                 1.56 (1.53–1.58)      329.4 (322.3–330.4)
+LLVM     ok              12.23 (12.16–12.48)   1920.3 (1920.2–1920.3)
+JVM      ok                 8.33 (8.07–8.66)   7602.6 (7397.0–7625.3)
+CLR      ok              21.98 (21.74–23.17)  15456.9 (15404.3–15463.6)
+WASM     ok              21.03 (20.90–21.25)   1298.2 (1298.2–1298.3)
+JS       ok              12.33 (12.29–12.38)   3513.2 (3506.4–3524.6)
 
-stdout: 100000
+stdout: 5000000

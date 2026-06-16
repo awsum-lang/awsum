@@ -1,5 +1,5 @@
-{- Two-way mutual tail recursion at depth 1_000_000 on Int32; SCC must fuse
-   the cluster into a single self-recursive function before TCO folds it. -}
+{- Two-way mutual tail recursion at depth 1_000_000 on Int32. Runs in
+   bounded stack on every backend. -}
 
 import IO.Stdout
 
@@ -22,9 +22,14 @@ showResult r = case r of
   Left e -> "left: " ++ showUnderflowError e
   Right b -> "right: " ++ showBool b
 
+res : Either StringTooLong String
+res = showResult (evenInt 1_000_000)
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = showResult (evenInt 1_000_000)
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

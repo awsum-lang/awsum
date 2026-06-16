@@ -1,0 +1,13 @@
+{- A type annotation on a top-level definition's parameter
+   (`f (n : Int32) = …`) is rejected: the parameter type is already fixed
+   by the mandatory signature, so the annotation can only restate or
+   contradict it. Annotate a lambda parameter instead, or drop the
+   annotation here. -}
+
+import IO.Stdout
+
+double : Int32 -> Either (UnderflowError | OverflowError) Int32
+double (n : Int32) = addInt32 n n
+
+main : IO Never Unit
+main = IO.Stdout.print "unreached"

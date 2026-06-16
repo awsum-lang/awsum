@@ -24,36 +24,127 @@
     }
   };
 
-  const main = (v__inl97_fromNothing =>
-    (v__inl70_fromJust =>
-      (v__inl74_chained =>
-        (() => {
-          let v__inl76_scrut;
-          $join75: {
-            const __s = (s => {
-              switch (s[0]) {
-                case 3: {
-                  return [4, "Left Missing"];
+  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 25: {
+          return v__x;
+        }
+        case 26: {
+          const v__pk_26 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_26;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_handleErrorIO_0(v__k, v_io);
+        }
+        case 6: {
+          return v__apply__df_handleErrorIO_0(
+            v__k,
+            [7, "STRING_TOO_LONG", [5, [0]]]
+          );
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [26, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 27: {
+          return v__x;
+        }
+        case 28: {
+          const v__pk_28 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_28;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_andThenIO_4(v__k, [7, v_io[1], [5, [0]]]);
+        }
+        case 6: {
+          return v__apply__df_andThenIO_4(v__k, v_io);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [28, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = (v__inl95_fromNothing =>
+    (v__inl69_fromJust =>
+      (v__inl73_chained =>
+        (v__inl92_msg =>
+          v__cps__df_handleErrorIO_0(
+            v__cps__df_andThenIO_4(
+              (s => {
+                switch (s[0]) {
+                  case 3: {
+                    return [6, v__inl92_msg[1]];
+                  }
+                  case 4: {
+                    return [5, v__inl92_msg[1]];
+                  }
                 }
-                case 4: {
-                  return __concat("Right ", v__inl97_fromNothing[1]);
-                }
-              }
-            })(v__inl97_fromNothing);
-            switch (__s[0]) {
+              })(v__inl92_msg),
+              [27]
+            ),
+            [25]
+          ))(
+          (s => {
+            switch (s[0]) {
               case 3: {
-                return [7, "STRING_TOO_LONG", [5, [0]]];
+                const v__inl76__do_e_6 = s[1];
+                return [3, v__inl76__do_e_6];
               }
               case 4: {
-                const v__inl82_a = __s[1];
-                v__inl76_scrut = (s => {
-                  switch (s[0]) {
+                const v__inl77_a = s[1];
+                {
+                  const __s = (s => {
+                    switch (s[0]) {
+                      case 3: {
+                        return [4, "Left Missing"];
+                      }
+                      case 4: {
+                        return __concat("Right ", v__inl69_fromJust[1]);
+                      }
+                    }
+                  })(v__inl69_fromJust);
+                  switch (__s[0]) {
                     case 3: {
-                      const v__inl85__do_e_5 = s[1];
-                      return [3, v__inl85__do_e_5];
+                      const v__inl80__do_e_5 = __s[1];
+                      return [3, v__inl80__do_e_5];
                     }
                     case 4: {
-                      const v__inl86_b = s[1];
+                      const v__inl81_b = __s[1];
                       {
                         const __s = (s => {
                           switch (s[0]) {
@@ -61,53 +152,53 @@
                               return [4, "Left Missing"];
                             }
                             case 4: {
-                              return __concat("Right ", v__inl74_chained[1]);
+                              return __concat("Right ", v__inl73_chained[1]);
                             }
                           }
-                        })(v__inl74_chained);
+                        })(v__inl73_chained);
                         switch (__s[0]) {
                           case 3: {
-                            const v__inl89__do_e_4 = __s[1];
-                            return [3, v__inl89__do_e_4];
+                            const v__inl84__do_e_4 = __s[1];
+                            return [3, v__inl84__do_e_4];
                           }
                           case 4: {
-                            const v__inl90_c = __s[1];
+                            const v__inl85_c = __s[1];
                             {
-                              const __s = __concat(v__inl82_a, "|");
+                              const __s = __concat(v__inl77_a, "|");
                               switch (__s[0]) {
                                 case 3: {
-                                  const v__inl91__do_e_3 = __s[1];
-                                  return [3, v__inl91__do_e_3];
+                                  const v__inl86__do_e_3 = __s[1];
+                                  return [3, v__inl86__do_e_3];
                                 }
                                 case 4: {
-                                  const v__inl92_sep = __s[1];
+                                  const v__inl87_sep = __s[1];
                                   {
                                     const __s = __concat(
-                                      v__inl92_sep,
-                                      v__inl86_b
+                                      v__inl87_sep,
+                                      v__inl81_b
                                     );
                                     switch (__s[0]) {
                                       case 3: {
-                                        const v__inl93__do_e_2 = __s[1];
-                                        return [3, v__inl93__do_e_2];
+                                        const v__inl88__do_e_2 = __s[1];
+                                        return [3, v__inl88__do_e_2];
                                       }
                                       case 4: {
-                                        const v__inl94_s1 = __s[1];
+                                        const v__inl89_s1 = __s[1];
                                         {
                                           const __s = __concat(
-                                            v__inl94_s1,
+                                            v__inl89_s1,
                                             "|"
                                           );
                                           switch (__s[0]) {
                                             case 3: {
-                                              const v__inl95__do_e_1 = __s[1];
-                                              return [3, v__inl95__do_e_1];
+                                              const v__inl90__do_e_1 = __s[1];
+                                              return [3, v__inl90__do_e_1];
                                             }
                                             case 4: {
-                                              const v__inl96_s2 = __s[1];
+                                              const v__inl91_s2 = __s[1];
                                               return __concat(
-                                                v__inl96_s2,
-                                                v__inl90_c
+                                                v__inl91_s2,
+                                                v__inl85_c
                                               );
                                             }
                                           }
@@ -123,42 +214,33 @@
                       }
                     }
                   }
-                })(
-                  (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        return [4, "Left Missing"];
-                      }
-                      case 4: {
-                        return __concat("Right ", v__inl70_fromJust[1]);
-                      }
-                    }
-                  })(v__inl70_fromJust)
-                );
-                break $join75;
+                }
               }
             }
-          }
-          switch (v__inl76_scrut[0]) {
-            case 3: {
-              return [7, "STRING_TOO_LONG", [5, [0]]];
-            }
-            case 4: {
-              return [7, v__inl76_scrut[1], [5, [0]]];
-            }
-          }
-        })())(
-        (v__inl71_xs =>
+          })(
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  return [4, "Left Missing"];
+                }
+                case 4: {
+                  return __concat("Right ", v__inl95_fromNothing[1]);
+                }
+              }
+            })(v__inl95_fromNothing)
+          )
+        ))(
+        (v__inl70_xs =>
           (s => {
             switch (s[0]) {
               case 13: {
                 return [3, [24]];
               }
               case 14: {
-                return [4, v__inl71_xs[1]];
+                return [4, v__inl70_xs[1]];
               }
             }
-          })(v__inl71_xs))([14, "first", [14, "second", [13]]])
+          })(v__inl70_xs))([14, "first", [14, "second", [13]]])
       ))([4, "hi"]))([3, [24]]);
 
   if (typeof require !== "undefined" && require.main === module) {

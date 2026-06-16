@@ -1,12 +1,30 @@
 {- Property: `mulUInt32 (mulUInt32 a b) c == mulUInt32 a (mulUInt32 b c)`
    whenever every intermediate product stays in range. Input format:
-   "a:b:c" where a, b, c are decimal UInt32 literals. The Haskell-side
-   generator picks triples constructively from the no-overflow region
-   (see `NoOverflowMulUInt32Triple` in PropertySpec.hs), so the
-   OVERFLOW branch is never expected to fire. -}
+   "a:b:c" where a, b, c are decimal UInt32 literals. Inputs stay in
+   the no-overflow region, so the OVERFLOW branch never fires. -}
 
 import IO.Stdout
 import IO.Stdin
+
+property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
+property a b c = do
+  ab <- mulUInt32 a b
+  abc <- mulUInt32 ab c
+  bc <- mulUInt32 b c
+  aBc <- mulUInt32 a bc
+  pureEither (eqUInt32 abc aBc)
+
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
+
+main : IO Never Unit
+main = IO.Stdin.readAllString
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple3 a b c) -> eitherToIO (property a b c))
+  |> andThenIO (\holds -> IO.Stdout.print (showOutcome holds))
+  |> handleErrorIO onError
 
 parseInput : String -> Either ParseError (Tuple3 UInt32 UInt32 UInt32)
 parseInput raw = case splitOnFirst ":" raw of
@@ -19,31 +37,9 @@ parseInput raw = case splitOnFirst ":" raw of
       c <- parseUInt32 cStr
       pureEither (Tuple3 a b c)
 
-property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
-property a b c = do
-  ab <- mulUInt32 a b
-  abc <- mulUInt32 ab c
-  bc <- mulUInt32 b c
-  aBc <- mulUInt32 a bc
-  pureEither (eqUInt32 abc aBc)
-
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | OverflowError) Bool = (do
-        raw <- rawArg
-        Tuple3 a b c <- parseInput raw
-        property a b c
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
-
-main : IO Never Unit
-main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+onError : (StringTooLong | InvalidUtf8 | ParseError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

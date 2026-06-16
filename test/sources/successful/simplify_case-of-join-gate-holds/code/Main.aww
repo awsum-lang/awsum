@@ -1,10 +1,7 @@
-{- The duplication pricing of case-of-join holds. The `and` level fuses
-   into a residual join; the consumer above it carries a case in every
-   arm, so resolving it against the join's value tails would copy a
-   case-carrying arm per tail — the strict gate declines, all-or-nothing,
-   and the consumer stays where it was: a live case over the join node,
-   dispatching at runtime. The pin: one `CJoin` in Core with the consumer
-   case still scrutinising it. -}
+{- A boolean step the compiler declines to fold through: the consumer above it
+   carries a case in every arm, so folding would duplicate a case-carrying arm
+   on each path. The consumer stays a live case dispatching at runtime. Prints
+   `TT`. -}
 
 import IO.Stdout
 
@@ -25,10 +22,12 @@ result =
    in case s1 of
         True -> (case other of
           True -> "TT"
-          False -> "TF")
+          False -> "TF"
+        )
         False -> (case other of
           True -> "FT"
-          False -> "FF")
+          False -> "FF"
+        )
 
 main : IO Never Unit
 main = IO.Stdout.print result

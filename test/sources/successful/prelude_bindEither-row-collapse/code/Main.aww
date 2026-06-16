@@ -1,10 +1,7 @@
-{- Stress test for `bindEither` (`bindEither x k`) composing with
-   structural-sum (row) error types. Every composition widens the error
-   rows — `Never` collapse, the primitive `String` as an alternative,
-   one- and two-constructor ADTs, idempotent `(e | e) ~ e`, and a
-   three-step chain — and each case takes a `Left` path (or a `Right`)
-   so the row tag carried out of `bindEither` is observed. Output is
-   `label=value` per line. -}
+{- Composes `bindEither` across a matrix of error-row shapes — `Never`
+   collapse, the primitive `String` as an alternative, one- and
+   two-constructor errors, idempotent `(e | e)`, and a three-step chain —
+   and prints `label=value` per line. -}
 
 import IO.Stdout
 
@@ -214,11 +211,11 @@ render = do
   r22 <- appendTagged r21 "wE3" (showThree wE3)
   appendTagged r22 "wOk" (showThree wOk)
 
-printErr : StringTooLong -> IO Never Unit
-printErr e = case e of
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
 main = eitherToIO render
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printErr
+  |> handleErrorIO onError

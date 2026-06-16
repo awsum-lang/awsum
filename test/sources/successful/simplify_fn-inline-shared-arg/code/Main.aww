@@ -1,7 +1,6 @@
-{- A parameter used twice with a non-variable argument: inlining shares the
-   argument through a `CLet` (evaluated once, never duplicated) — the first
-   producer of the node, so this also pins the `CLet` lowering on all five
-   backends. The seed is runtime so nothing folds away. -}
+{- A parameter used twice with a non-variable argument: when the helper inlines,
+   the argument is shared through a binding so it is evaluated once, not
+   duplicated. A runtime seed keeps anything from folding away. Prints `14`. -}
 
 import IO.Stdout
 
@@ -11,4 +10,4 @@ double n = case addUInt32 n n of
   Right d -> showUInt32 d
 
 main : IO Never Unit
-main = IO.Stdout.print (double (lengthUtf8Bytes (showInt32 (-123456))))
+main = IO.Stdout.print (double (lengthUtf8Bytes (showInt32 (-123_456))))

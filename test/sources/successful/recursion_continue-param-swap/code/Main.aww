@@ -1,13 +1,11 @@
-{- Parallel-assignment semantics of self-tail-call rebinds, pinned from
-   all three scheduling paths. `swap` recurses with two parameters
-   exchanged — a genuine dependency cycle, so those two snapshot through
-   temps (one bad iteration would turn (7,9) into (9,9)). `wrap` recurses
-   with a cell argument reading a parameter that parameter order would
-   rebind first — acyclic, so assigning in dependency order (acc before d)
-   needs no snapshot at all. `fib` recurses with a shifted window — every
-   argument reads only parameters at its own position or later, so plain
-   parameter order is already correct. Identical stdout across the five
-   backends pins all of it. -}
+{- Parallel-assignment semantics of self-tail-call rebinds, in three
+   shapes. `swap` recurses with two parameters exchanged — a genuine
+   dependency cycle, so both must be read before either is overwritten
+   (one bad iteration would turn (7,9) into (9,9)). `wrap` recurses with a
+   cell argument reading a parameter that would be rebound first — acyclic,
+   so dependency order suffices. `fib` recurses with a shifted window —
+   every argument reads only parameters at its own position or later, so
+   plain order is already correct. -}
 
 import IO.Stdout
 
@@ -16,16 +14,19 @@ swap n a b = case eqUInt32 n 0 of
   True -> showUInt32 a
   False -> (case subUInt32 n 1 of
     Left _e -> "E"
-    Right m -> swap m b a)
+    Right m -> swap m b a
+  )
 
 wrap : UInt32 -> UInt32 -> List UInt32 -> String
 wrap n d acc = case eqUInt32 n 0 of
   True -> (case headList acc of
     Nothing -> "none"
-    Just h -> showUInt32 h)
+    Just h -> showUInt32 h
+  )
   False -> (case subUInt32 n 1 of
     Left _e -> "E"
-    Right m -> wrap m m (Cons d acc))
+    Right m -> wrap m m (Cons d acc)
+  )
 
 fib : UInt32 -> UInt32 -> UInt32 -> String
 fib n a b = case eqUInt32 n 0 of
@@ -34,15 +35,22 @@ fib n a b = case eqUInt32 n 0 of
     Left _e -> "OVERFLOW"
     Right s -> (case subUInt32 n 1 of
       Left _e2 -> "E"
-      Right m -> fib m b s))
+      Right m -> fib m b s
+    )
+  )
+
+res : Either StringTooLong String
+res = do
+  p1 <- swap 5 7 9 ++ "|"
+  p2 <- p1 ++ wrap 4 1 (Cons (1 : UInt32) Nil)
+  p3 <- p2 ++ "|"
+  p3 ++ fib 40 0 1
 
 main : IO Never Unit
-main = case swap 5 7 9 ++ "|" of
-  Left _e -> IO.Stdout.print "TOO_LONG"
-  Right p1 -> case p1 ++ wrap 4 1 (Cons (1 : UInt32) Nil) of
-    Left _e2 -> IO.Stdout.print "TOO_LONG"
-    Right p2 -> case p2 ++ "|" of
-      Left _e3 -> IO.Stdout.print "TOO_LONG"
-      Right p3 -> case p3 ++ fib 40 0 1 of
-        Left _e4 -> IO.Stdout.print "TOO_LONG"
-        Right out -> IO.Stdout.print out
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "TOO_LONG"

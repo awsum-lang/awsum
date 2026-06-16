@@ -89,49 +89,230 @@ CoreProgram
                 )
             )
         , CValDef "main"
-            ( CCase
-                ( CCall
-                    ( CVar "buildLeft" )
-                    [ CIntLit 100000 TInt32
-                    , CCon 24 []
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CCall
+                    ( CVar "$cps$$df$andThenIO$4" )
+                    [ CLet "$inl5$x"
+                        ( CCall
+                            ( CVar "buildLeft" )
+                            [ CIntLit 100000 TInt32
+                            , CCon 24 []
+                            ]
+                        )
+                        ( CDrop DropFreeUnchecked "$inl5$x"
+                            ( CCase
+                                ( CVar "$inl5$x" )
+                                [
+                                    ( 3
+                                    , [ "$inl3$e" ]
+                                    , CCon 6
+                                        [ CProj "$inl5$x" 1 ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl4$a" ]
+                                    , CCon 5
+                                        [ CProj "$inl5$x" 1 ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 30 []
                     ]
-                )
-                [
-                    ( 3
-                    , [ "_e" ]
-                    , CCon 7
-                        [ CString "UNDERFLOW"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
-                    )
-                ,
-                    ( 4
-                    , [ "t" ]
-                    , CCon 7
-                        [ CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CCall
-                                ( CVar "$scc$$apply$sumTree_$cps$sumTree" )
-                                [ CCon 29
-                                    [ CVar "t"
-                                    , CIntLit 0 TInt32
-                                    , CCon 26 []
-                                    ]
+                , CCon 28 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CString "UNDERFLOW"
+                                , CCon 5
+                                    [ CCon 0 [] ]
                                 ]
                             ]
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
-                    )
-                ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 29
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 28
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 29
+                        ,
+                            [ "$pk_29"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_29"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_29"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$4"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CCall
+                                        ( CVar "$scc$$apply$sumTree_$cps$sumTree" )
+                                        [ CCon 33
+                                            [ CProj "io" 1
+                                            , CIntLit 0 TInt32
+                                            , CCon 26 []
+                                            ]
+                                        ]
+                                    ]
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 31
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$4"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 30
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 31
+                        ,
+                            [ "$pk_31"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_31"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_31"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
             )
         , CFunDef "$scc$$apply$sumTree_$cps$sumTree" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 28
+                        ( 32
                         ,
                             [ "$k"
                             , "$x"
@@ -153,7 +334,7 @@ CoreProgram
                                             ]
                                         , CDrop DropFreeUnchecked "$args"
                                             ( CContinue
-                                                [ CCon 29
+                                                [ CCon 33
                                                     [ CProj "$k" 2
                                                     , CVar "$x"
                                                     , CProj "$k" 1
@@ -166,7 +347,7 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 29
+                        ( 33
                         ,
                             [ "t"
                             , "acc"
@@ -182,7 +363,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "t"
                                             ( CDrop DropFreeUnchecked "$args"
                                                 ( CContinue
-                                                    [ CCon 28
+                                                    [ CCon 32
                                                         [ CVar "$k"
                                                         , CVar "acc"
                                                         ]
@@ -202,7 +383,7 @@ CoreProgram
                                                 ( CDrop DropFreeUnchecked "r"
                                                     ( CDrop DropFreeUnchecked "$args"
                                                         ( CContinue
-                                                            [ CReuse ReuseGuarded "t" 29
+                                                            [ CReuse ReuseGuarded "t" 33
                                                                 [ CVar "l"
                                                                 , CCase
                                                                     ( CCall

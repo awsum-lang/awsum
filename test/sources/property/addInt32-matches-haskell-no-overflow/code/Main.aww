@@ -1,9 +1,8 @@
 {- Property: when (a, b) is a no-overflow pair, `addInt32 a b ==
-   Right (a + b)` with the result matching what Haskell's i32
-   addition produces. Stronger than commutativity: closes the
-   "all backends agree but every backend agrees on the wrong
-   value" gap. The property prints the computed sum as a decimal
-   string; Haskell expects `show (a + b)`. -}
+   Right (a + b)` over i32 addition. Stronger than commutativity:
+   closes the "all backends agree but every backend agrees on the
+   wrong value" gap. The property prints the computed sum as a
+   decimal string. Input: "a:b" with Int32 decimal literals. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -21,23 +20,17 @@ property a b = do
   r <- addInt32 a b
   pureEither (showInt32 r)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) String = (do
-        raw <- rawArg
-        Tuple2 a b <- parseInput raw
-        property a b
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          UnderflowError -> IO.Stdout.print "UNDERFLOW"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple2 a b) -> eitherToIO (property a b))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

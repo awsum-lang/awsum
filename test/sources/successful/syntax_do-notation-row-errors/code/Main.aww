@@ -1,5 +1,6 @@
 {- `do` over three `Either`-returning steps with distinct error labels;
-   overall error is the row union, dispatched by row-tag. -}
+   the overall error type is the union of the three rows. The middle
+   step fails (`Left ErrorC`), so the program prints `ErrorC`. -}
 
 import IO.Stdout
 
@@ -33,9 +34,14 @@ describe r = case r of
     ErrorC -> Right "ErrorC"
   Right n -> "Ok " ++ showInt32 n
 
+res : Either StringTooLong String
+res = describe f
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = describe f
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

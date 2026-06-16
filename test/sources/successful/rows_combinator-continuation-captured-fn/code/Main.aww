@@ -1,14 +1,7 @@
 {- A row combinator (`bindEither`) whose inline continuation applies a
    captured function-typed parameter (`\n -> k n`) — the row-typed form of
-   the closure-capture case.
-
-   Defunctionalising the enclosing HOF must resolve the captured `k` (a
-   value, not a callee) to the incoming closure, or the row-monomorphised
-   `bindEither` specialisation references a dangling free `k` and every
-   backend crashes / reads undefined.
-
-   `oa = Right 1`, so `bindEither` runs the continuation `k 1`; `cont`
-   returns `Left EB`, so every backend prints `B`. -}
+   a closure capture. `oa = Right 1`, so the continuation `k 1` runs; `cont`
+   returns `Left EB`, so it prints `B`. -}
 
 import IO.Stdout
 

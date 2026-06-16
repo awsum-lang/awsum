@@ -1,7 +1,6 @@
-{- A helper too big for the always-inline bound but called exactly once:
-   the single-site rule inlines it and the definition falls to the
-   tree-shake. The seed value is runtime (string built-ins never
-   const-fold), so the inlined chain executes at run time. -}
+{- A helper too big to always inline but called exactly once: the compiler
+   inlines it and drops the definition. A runtime seed (string built-ins don't
+   constant-fold) keeps the inlined chain running at run time. Prints `eleven`. -}
 
 import IO.Stdout
 
@@ -17,4 +16,4 @@ describe n = case eqUInt32 n 0 of
         False -> showUInt32 n
 
 main : IO Never Unit
-main = IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2000000000))))
+main = IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2_000_000_000))))

@@ -299,7 +299,7 @@ CoreProgram
                                 ( CProj "io" 1 )
                                 [
                                     ( 502975519
-                                    , "$inl12$_u"
+                                    , "$inl12$__rw"
                                     , CCon 7
                                         [ CString "UNPAIRED"
                                         , CCon 5
@@ -308,7 +308,7 @@ CoreProgram
                                     )
                                 ,
                                     ( 589989748
-                                    , "$inl13$_l"
+                                    , "$inl13$__rw"
                                     , CCon 7
                                         [ CString "STRING_TOO_LONG"
                                         , CCon 5

@@ -69,7 +69,7 @@
   const v__scc__apply_sumTree__cps_sumTree = v__args => {
     while (true) {
       switch (v__args[0]) {
-        case 28: {
+        case 32: {
           const v__k = v__args[1];
           const v__x = v__args[2];
           switch (v__k[0]) {
@@ -77,18 +77,18 @@
               return v__x;
             }
             case 27: {
-              v__args = [29, v__k[2], v__x, v__k[1]];
+              v__args = [33, v__k[2], v__x, v__k[1]];
               continue;
             }
           }
         }
-        case 29: {
+        case 33: {
           const v_t = v__args[1];
           const v_acc = v__args[2];
           const v__k = v__args[3];
           switch (v_t[0]) {
             case 24: {
-              v__args = [28, v__k, v_acc];
+              v__args = [32, v__k, v_acc];
               continue;
             }
             case 25: {
@@ -96,7 +96,7 @@
               const v_v = v_t[2];
               const v_r = v_t[3];
               v__args = [
-                29,
+                33,
                 v_l,
                 (s => {
                   switch (s[0]) {
@@ -119,21 +119,104 @@
     }
   };
 
-  const main = (s => {
-    switch (s[0]) {
-      case 3: {
-        return [7, "UNDERFLOW", [5, [0]]];
-      }
-      case 4: {
-        const v_t = s[1];
-        return [
-          7,
-          String(v__scc__apply_sumTree__cps_sumTree([29, v_t, 0 | 0, [26]])),
-          [5, [0]]
-        ];
+  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 28: {
+          return v__x;
+        }
+        case 29: {
+          const v__pk_29 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_29;
+          continue;
+        }
       }
     }
-  })(v_buildLeft(100000 | 0, [24]));
+  };
+
+  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_handleErrorIO_0(v__k, v_io);
+        }
+        case 6: {
+          return v__apply__df_handleErrorIO_0(v__k, [7, "UNDERFLOW", [5, [0]]]);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [29, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 30: {
+          return v__x;
+        }
+        case 31: {
+          const v__pk_31 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_31;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_andThenIO_4(
+            v__k,
+            [
+              7,
+              String(
+                v__scc__apply_sumTree__cps_sumTree([33, v_io[1], 0 | 0, [26]])
+              ),
+              [5, [0]]
+            ]
+          );
+        }
+        case 6: {
+          return v__apply__df_andThenIO_4(v__k, v_io);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [31, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df_andThenIO_4(
+      (v__inl5_x =>
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [6, v__inl5_x[1]];
+            }
+            case 4: {
+              return [5, v__inl5_x[1]];
+            }
+          }
+        })(v__inl5_x))(v_buildLeft(100000 | 0, [24])),
+      [30]
+    ),
+    [28]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

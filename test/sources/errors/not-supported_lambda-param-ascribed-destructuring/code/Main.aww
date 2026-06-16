@@ -1,0 +1,14 @@
+{- A destructuring lambda parameter cannot also be type-ascribed
+   (`\((Pair a b) : Pair) -> …`): ascribing the destructured pattern as a
+   whole is ambiguous. Annotate a simple binder, or destructure without
+   an annotation (`\(Pair a b) -> …`). -}
+
+import IO.Stdout
+
+type Pair = Pair Int32 Int32
+
+useIt : (Pair -> Int32) -> Int32
+useIt f = f (Pair 3 4)
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (useIt (\((Pair a b) : Pair) -> a)))

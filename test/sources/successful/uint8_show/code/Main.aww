@@ -2,16 +2,20 @@
 
 import IO.Stdout
 
+res : Either StringTooLong String
+res = do
+  s0 <- showUInt8 minUInt8 ++ ", "
+  s1 <- s0 ++ showUInt8 42
+  s2 <- s1 ++ ", "
+  s3 <- s2 ++ showUInt8 200
+  s4 <- s3 ++ ", "
+  s4 ++ showUInt8 maxUInt8
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- showUInt8 minUInt8 ++ ", "
-        s1 <- s0 ++ showUInt8 42
-        s2 <- s1 ++ ", "
-        s3 <- s2 ++ showUInt8 200
-        s4 <- s3 ++ ", "
-        s4 ++ showUInt8 maxUInt8
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

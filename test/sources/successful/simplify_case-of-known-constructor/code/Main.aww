@@ -1,12 +1,11 @@
-{- `Awsum.Simplify` collapses a case over a literal constructor into the
-   matching arm's body (case-of-known-constructor): the binder is substituted
-   with the field, so the scrutinee allocation and the dispatch never reach
-   codegen. The Core snapshot pins the rewrite — `main` holds a direct
-   `showInt32 42` call, no `CCase`. -}
+{- A `case` over a literal `Just 42`: the compiler collapses it to the matching
+   arm, so the scrutinee allocation and the dispatch disappear and the program
+   just shows `42`. -}
 
 import IO.Stdout
 
 main : IO Never Unit
 main = IO.Stdout.print (case Just (42 : Int32) of
   Nothing -> "nothing"
-  Just n -> showInt32 n)
+  Just n -> showInt32 n
+)

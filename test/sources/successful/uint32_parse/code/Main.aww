@@ -7,35 +7,39 @@ render r = case r of
   Left _ -> Right "err"
   Right v -> "ok:" ++ showUInt32 v
 
+res : Either StringTooLong String
+res = do
+  a <- render (parseUInt32 "0")
+  b <- render (parseUInt32 "4294967295")
+  c <- render (parseUInt32 "4294967296")
+  d <- render (parseUInt32 "-1")
+  e <- render (parseUInt32 "")
+  f <- render (parseUInt32 "abc")
+  g <- render (parseUInt32 " 5")
+  h <- render (parseUInt32 "12a")
+  i <- render (parseUInt32 "2147483648")
+  r0 <- a ++ ", "
+  r1 <- r0 ++ b
+  r2 <- r1 ++ ", "
+  r3 <- r2 ++ c
+  r4 <- r3 ++ ", "
+  r5 <- r4 ++ d
+  r6 <- r5 ++ ", "
+  r7 <- r6 ++ e
+  r8 <- r7 ++ ", "
+  r9 <- r8 ++ f
+  r10 <- r9 ++ ", "
+  r11 <- r10 ++ g
+  r12 <- r11 ++ ", "
+  r13 <- r12 ++ h
+  r14 <- r13 ++ ", "
+  r14 ++ i
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        a <- render (parseUInt32 "0")
-        b <- render (parseUInt32 "4294967295")
-        c <- render (parseUInt32 "4294967296")
-        d <- render (parseUInt32 "-1")
-        e <- render (parseUInt32 "")
-        f <- render (parseUInt32 "abc")
-        g <- render (parseUInt32 " 5")
-        h <- render (parseUInt32 "12a")
-        i <- render (parseUInt32 "2147483648")
-        r0 <- a ++ ", "
-        r1 <- r0 ++ b
-        r2 <- r1 ++ ", "
-        r3 <- r2 ++ c
-        r4 <- r3 ++ ", "
-        r5 <- r4 ++ d
-        r6 <- r5 ++ ", "
-        r7 <- r6 ++ e
-        r8 <- r7 ++ ", "
-        r9 <- r8 ++ f
-        r10 <- r9 ++ ", "
-        r11 <- r10 ++ g
-        r12 <- r11 ++ ", "
-        r13 <- r12 ++ h
-        r14 <- r13 ++ ", "
-        r14 ++ i
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

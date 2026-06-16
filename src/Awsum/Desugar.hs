@@ -206,12 +206,13 @@ desugarDo sp = go
     -- desugar output stays well-formed.
     go (DoExpr esp _ : _ : _) = lift (Left (DesugarBindNameStillUsed esp "<non-final-expr>"))
 
--- | Rewrite any 'ParamPat' parameter into a fresh 'Param' plus a
---   single-arm 'ECase' wrapping the body that destructures the
---   synthesised name back to the user-written pattern. After this
---   pass, the AST contains only 'Param' bindings — typecheck and
---   lowering never see destructuring patterns at parameter
---   positions.
+-- | Rewrite each /destructuring/ 'ParamPat' parameter into a fresh
+--   'Param' plus a single-arm 'ECase' wrapping the body that
+--   destructures the synthesised name back to the user-written pattern.
+--   After this pass, typecheck and lowering never see destructuring
+--   patterns at parameter positions. A /type-ascription/ param @(x : T)@
+--   is left as a 'ParamPat' (it is a parameter annotation, resolved or
+--   rejected by the typechecker — see 'mkParam').
 --
 --   Each 'ParamPat' contributes one nesting level to the body:
 --   given @f (Tuple3 a b c) (Just x) = body@, lifting produces
@@ -237,7 +238,14 @@ liftParamPatterns params body = do
   pure (params', wrap body)
   where
     mkParam :: Param -> DesugarM (Param, Expr -> Expr)
-    mkParam (Param sp n) = pure (Param sp n, id)
+    mkParam p@(Param _ _) = pure (p, id)
+    -- A type-ascription parameter @(x : T)@ is a parameter annotation,
+    -- not a destructuring pattern: the typechecker resolves it against
+    -- the param type from context (lambda) or rejects it (top-level
+    -- def). Pass it through untouched rather than rewriting to a @case@,
+    -- which would type the annotation against a nominal scrutinee and
+    -- fail.
+    mkParam p@(ParamPat _ (PAscribe {})) = pure (p, id)
     mkParam (ParamPat sp pat) = do
       n <- freshArgName
       let newWrap inner =
@@ -267,7 +275,7 @@ liftParamPatterns params body = do
 --
 --   Shared by both standalone 'let-in' and 'do { let … }', so the
 --   rewrite happens exactly once regardless of source shape.
-rewriteLet :: SrcSpan -> Pattern -> Maybe Type' -> Expr -> Expr -> DesugarM Expr
+rewriteLet :: SrcSpan -> Pattern -> Maybe (Type', LetSigLayout) -> Expr -> Expr -> DesugarM Expr
 rewriteLet sp pat mAnnot e' body' = case pat of
   PVar _ _ -> pure (ELet sp pat mAnnot e' body')
   PWild _ -> pure (ELet sp pat mAnnot e' body')

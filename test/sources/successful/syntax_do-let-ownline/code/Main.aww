@@ -1,0 +1,26 @@
+{- Own-line `let` signature inside a `do` block: `let temp : T` then
+   `temp = e`, the definition indented under the binder (deeper than the
+   do-statement column). Prints `3`. -}
+
+import IO.Stdout
+
+type ErrB = ErrB
+
+opB : Either ErrB Int32
+opB = Right 3
+
+onError : ErrB -> IO Never Unit
+onError e = case e of
+  ErrB -> IO.Stdout.print "ERR_B"
+
+compute : Either ErrB Int32
+compute = do
+  let temp : Either ErrB Int32
+      temp = opB
+  b <- temp
+  pureEither b
+
+main : IO Never Unit
+main = eitherToIO compute
+  |> andThenIO (\n -> IO.Stdout.print (showInt32 n))
+  |> handleErrorIO onError

@@ -245,7 +245,7 @@
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7)
-    ldc.i4 100000
+    ldc.i4 5000000
     box [System.Runtime]System.Int32
     stloc.0
     ldloc.0
@@ -387,7 +387,7 @@
     br IL_c5
   IL_c6:
     pop
-    ldc.i4 500
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     ldloc.1
     castclass object[]

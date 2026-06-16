@@ -1,63 +1,53 @@
 Program
-    { moduleComment = Just " Cross-backend snapshot test for the parser's string-literal escape
-         sequences. All six escapes (see 'Awsum.Parser') are exercised here
-         verbatim — `\n \t \r \" \\ \0`.
+    { moduleComment = Just " Exercises the parser's string-literal escape sequences —
+         `\n \t \r \" \\ \0` — and prints them verbatim, so the exact bytes
+         (including CR / LF / TAB / NUL) are checked. The NUL case confirms a
+         NUL stays one byte inside a string rather than terminating it.
 
-         Identical stdout bytes on every backend confirm both the parser's
-         escape handling and the runtime's "print exactly" semantics; the
-         no-input snapshot pins the exact byte sequence (including CR / LF /
-         TAB / NUL characters that look unusual in text editors). The NUL
-         case in particular verifies that strings are length-prefixed end-to-
-         end on every backend — including LLVM and WASM, which moved off
-         C-style null-terminated layout.
-
-         `\0` is exercised twice: before a space, and immediately before a digit
-         (`\07`). The second pins that a NUL adjacent to a digit stays one NUL byte
-         on every backend — on JS the NUL must use a fixed-length Unicode escape
-         (U+0000), since the short escape before a digit would be a strict-mode
-         octal escape. "
+         `\0` appears twice, once before a digit (`\07`), to confirm a NUL
+         adjacent to a digit stays one NUL byte. "
     , imports =
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 21
+            { spanStartLine = 11
             , spanStartCol = 1
-            , spanEndLine = 21
+            , spanEndLine = 11
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 21
+                { spanStartLine = 11
                 , spanStartCol = 8
-                , spanEndLine = 21
+                , spanEndLine = 11
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 21
+                    { spanStartLine = 11
                     , spanStartCol = 8
-                    , spanEndLine = 21
+                    , spanEndLine = 11
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 21
+                        { spanStartLine = 11
                         , spanStartCol = 8
-                        , spanEndLine = 21
+                        , spanEndLine = 11
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 21
+                        { spanStartLine = 11
                         , spanStartCol = 11
-                        , spanEndLine = 21
+                        , spanEndLine = 11
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -65,9 +55,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 21
+                    { spanStartLine = 11
                     , spanStartCol = 17
-                    , spanEndLine = 21
+                    , spanEndLine = 11
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -75,25 +65,25 @@ Program
         ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 22
+                { spanStartLine = 12
                 , spanStartCol = 1
-                , spanEndLine = 22
+                , spanEndLine = 12
                 , spanEndCol = 76
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 22
+                    { spanStartLine = 12
                     , spanStartCol = 8
-                    , spanEndLine = 22
+                    , spanEndLine = 12
                     , spanEndCol = 76
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 22
+                        { spanStartLine = 12
                         , spanStartCol = 8
-                        , spanEndLine = 22
+                        , spanEndLine = 12
                         , spanEndCol = 24
                         }
                     )
@@ -105,9 +95,9 @@ Program
                 )
                 ( ELit
                     ( SrcSpan
-                        { spanStartLine = 22
+                        { spanStartLine = 12
                         , spanStartCol = 24
-                        , spanEndLine = 22
+                        , spanEndLine = 12
                         , spanEndCol = 76
                         }
                     )

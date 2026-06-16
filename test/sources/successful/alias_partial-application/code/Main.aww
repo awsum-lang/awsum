@@ -1,12 +1,9 @@
+{- An alias-form definition whose body is a partial application
+   (`const "RESULT"`, supplying one of `const`'s two arguments). Applying
+   `partial "ignored"` discards its argument. Prints `RESULT`. -}
+
 import IO.Stdout
 
--- Regression: an alias-form definition whose body is a partial
--- application (`const "RESULT"`, one of const's two arguments) is
--- eta-expanded into a first-order function. The eta parameter must be
--- appended to the inner call (`const "RESULT" $eta`) rather than
--- wrapping it (`CCall (CCall const ["RESULT"]) [$eta]`) — the nested form
--- is defunctionalised into a closure CCon in callee position that
--- LowerClosures cannot route through $applyN, crashing every backend.
 partial : String -> String
 partial = const "RESULT"
 

@@ -1,6 +1,5 @@
-{- Property: `succUInt32 x` fails iff `x == maxUInt32`. Both branches
-   must be exercised, so the Haskell-side generator biases towards
-   the boundary to make it appear in 100-test runs. -}
+{- Property: `succUInt32 x` fails iff `x == maxUInt32`. Single UInt32
+   input; the only error path is a parse failure. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -10,22 +9,19 @@ property x = case succUInt32 x of
   Left _ -> eqUInt32 x maxUInt32
   Right _ -> not (eqUInt32 x maxUInt32)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        x <- parseUInt32 raw
-        pureEither (property x)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseUInt32 raw))
+  |> andThenIO (\x -> IO.Stdout.print (showOutcome (property x)))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

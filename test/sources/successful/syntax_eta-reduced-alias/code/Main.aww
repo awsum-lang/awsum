@@ -11,10 +11,12 @@ sayFirst args = case headList args of
   Nothing -> say "NO_ARG"
   Just first -> say first
 
-handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
-handleInputErr _e = IO.Stdout.print "INPUT_ERROR"
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
 main : IO Never Unit
 main = IO.Args.getArgs
   |> andThenIO sayFirst
-  |> handleErrorIO handleInputErr
+  |> handleErrorIO onError

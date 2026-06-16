@@ -1,9 +1,7 @@
 {- Property: a generated Int32 round-trips through a `(Int32 | String)` row.
    The int is injected and dispatched in both label orders (commutativity),
    and a string is injected and dispatched — all must recover `showInt32 a`.
-   Self-verifying (prints OK/FAIL). The first property test to exercise
-   structural unions, so the row injection/dispatch machinery is fuzzed
-   cross-backend rather than only pinned by fixed snapshots. -}
+   Single Int32 input; the only error path is a parse failure. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -27,22 +25,19 @@ d2 x = case x of
 property : Int32 -> Bool
 property a = and (and (eqString (d (intToRow a)) (showInt32 a)) (eqString (d2 (intToRow a)) (showInt32 a))) (eqString (d (strToRow (showInt32 a))) (showInt32 a))
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        a <- parseInt32 raw
-        pureEither (property a)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
+  |> andThenIO (\a -> IO.Stdout.print (showOutcome (property a)))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

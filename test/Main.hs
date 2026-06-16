@@ -9,6 +9,7 @@ import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
 import Awsum.JvmFarBranchSpec qualified
 import Awsum.JvmMethodLimitSpec qualified
+import Awsum.LspSpec qualified
 import Awsum.NoSimplifySpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
@@ -50,6 +51,7 @@ main = do
     Awsum.StringLiteralCapSpec.spec
     Awsum.JvmMethodLimitSpec.spec
     Awsum.JvmFarBranchSpec.spec
+    Awsum.LspSpec.spec
     jsSyntaxSpec
 
 -- | Direct tests of the JS pretty-printer's two lexical guards (a nested unary

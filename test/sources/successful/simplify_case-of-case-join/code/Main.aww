@@ -1,16 +1,15 @@
-{- Case-of-case with mixed arms: one inner arm is a literal (the outer case
-   resolves against it statically), the other carries a computation — it
-   jumps to a join point holding the outer case once. In the S1 lowering the
-   join leaves `Awsum.Simplify` as a lambda-lifted top-level function. The
-   Core snapshot pins the shape: a `$join` `CFunDef` holding the outer
-   dispatch, called from the computation arm. -}
+{- A `case` whose scrutinee is another `case` with mixed arms: one inner arm
+   is a literal, so the outer case resolves against it statically; the other
+   carries a computation, so the outer dispatch is shared once and run on that
+   path. Prints `len3`. -}
 
 import IO.Stdout
 
 describe : String -> String
 describe s = case (case eqUInt32 (lengthUtf8Bytes s) 0 of
-    True -> False
-    False -> eqUInt32 (lengthUtf8Bytes s) 3) of
+  True -> False
+  False -> eqUInt32 (lengthUtf8Bytes s) 3
+) of
   True -> "len3"
   False -> "other"
 

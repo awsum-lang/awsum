@@ -299,7 +299,7 @@ case.join.5:
 define internal ptr @v_runDemo() {
   %v__inl7_scrut.jslot = alloca ptr
   %t0 = call ptr @__alloc(i64 4, i32 0)
-  store i32 100000, ptr %t0
+  store i32 5000000, ptr %t0
   call void @__inc_ref(ptr %t0)
   %t3 = call ptr @__alloc(i64 8, i32 0)
   %t4 = inttoptr i64 24 to ptr
@@ -403,7 +403,7 @@ case.end.3.62:
   br label %case.join.60
 case.arm.4.63:
   %t65 = call ptr @__alloc(i64 4, i32 0)
-  store i32 500, ptr %t65
+  store i32 25, ptr %t65
   %t66 = getelementptr ptr, ptr %t55, i32 1
   %t67 = load ptr, ptr %t66
   call void @__inc_ref(ptr %t67)

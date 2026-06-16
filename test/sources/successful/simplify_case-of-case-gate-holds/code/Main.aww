@@ -1,9 +1,7 @@
-{- The duplication gate holds: both inner arms select the same outer arm,
-   but that arm contains cases of its own, so duplicating it would grow the
-   case count (the fusion's termination measure). The arms demote to the
-   jump side, which leaves no statically-resolved arm at all — and a fusion
-   that collapses nothing is not performed. The Core snapshot pins the
-   unfused case-of-case shape. -}
+{- A `case` whose scrutinee is another `case` where the compiler declines to
+   fuse: both inner arms select the same outer arm, but that arm contains
+   cases of its own, so fusing would duplicate it without resolving anything.
+   The nested dispatch stays as written. Prints `abc`. -}
 
 import IO.Stdout
 

@@ -1,8 +1,6 @@
-{- Composing two IO actions with `andThenIO`: the first prints "a",
-   its continuation prints "b". Output: `ab`. Demonstrates that
-   `andThenIO` in the prelude (lowered through Defunctionalize → Cps
-   → TCO) produces an IO tree that the runtime walks in order. The
-   `|>` form puts the actions in execution order left-to-right. -}
+{- Composes two IO actions with `andThenIO`: the first prints "a", its
+   continuation prints "b". The `|>` form puts the actions in execution
+   order left-to-right. Prints `ab`. -}
 
 import IO.Stdout
 

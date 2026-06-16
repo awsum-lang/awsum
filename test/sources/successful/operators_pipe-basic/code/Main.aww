@@ -1,8 +1,6 @@
-{- Exercises the `|>` pipe operator. `x |> f` is pure syntax for `f x`,
-   so the IR after lowering is identical to the direct application
-   form. Three shapes appear here: a basic chain, a left-associative
-   chain, and a lambda on the right of `|>`. The program prints one
-   line that combines all three results. -}
+{- Exercises the `|>` pipe operator (`x |> f` is `f x`) in three shapes:
+   a basic chain, a left-associative chain, and a lambda on the right of
+   `|>`. Prints one line combining all three results (`42|42|42`). -}
 
 import IO.Stdout
 
@@ -32,6 +30,10 @@ joined = do
   c ++ viaLambda
 
 main : IO Never Unit
-main = case joined of
-  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-  Right s -> s |> IO.Stdout.print
+main = eitherToIO joined
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

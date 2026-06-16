@@ -10,23 +10,21 @@ property a = do
   r <- mulUInt8 a 1
   pureEither (eqUInt8 r a)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError | OverflowError) Bool = (do
-        raw <- rawArg
-        a <- parseUInt8 raw
-        property a
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-          OverflowError -> IO.Stdout.print "OVERFLOW"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseUInt8 raw))
+  |> andThenIO (\a -> eitherToIO (property a))
+  |> andThenIO (\holds -> IO.Stdout.print (showOutcome holds))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError | OverflowError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

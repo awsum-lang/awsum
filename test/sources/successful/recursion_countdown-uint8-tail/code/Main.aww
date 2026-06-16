@@ -1,5 +1,5 @@
-{- Tail self-recursion on UInt8 with accumulator; TCO must fold to
-   `CLoop` before codegen. -}
+{- Tail self-recursion on UInt8 with a string accumulator. Runs in
+   bounded stack on every backend. -}
 
 import IO.Stdout
 
@@ -21,9 +21,14 @@ showResult r = case r of
     StringTooLong -> Right "STRING_TOO_LONG"
   Right s -> "right: " ++ s
 
+res : Either StringTooLong String
+res = showResult (countDown 255 "")
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = showResult (countDown 255 "")
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

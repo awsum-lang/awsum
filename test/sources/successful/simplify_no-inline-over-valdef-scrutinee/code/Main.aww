@@ -1,15 +1,8 @@
-{- Regression: `Awsum.Simplify` must not inline a single-use case-arm binder
-   into a `CProj` when the scrutinee is a top-level value definition.
-
-   On LLVM/WASM a `CValDef` reference lowers to a getter call that allocates a
-   fresh cell on every reference, so projecting the scrutinee (`CProj box 1`)
-   would re-invoke the getter: the case match and the projection would read two
-   different cells, and the second one leaks (never reclaimed). stdout is
-   identical across all five backends — the getter is deterministic — so the
-   snapshot and property suites cannot see the leak. The Core snapshot pins the
-   fix: `box` is matched and its field extracted with the getter called once,
-   and no `CProj` over `box` appears. A parameter scrutinee stays inlinable; a
-   value-definition scrutinee does not. -}
+{- A `case` whose scrutinee is a top-level value definition (`box`): the
+   compiler must read the matched field through the case binder, not project it
+   from the scrutinee a second time, since re-referencing a top-level value can
+   re-evaluate it. A parameter scrutinee stays inlinable; a value-definition
+   scrutinee does not. Prints `X`. -}
 
 import IO.Stdout
 

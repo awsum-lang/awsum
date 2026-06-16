@@ -1,51 +1,49 @@
 Program
-    { moduleComment = Just " Composing two IO actions with `andThenIO`: the first prints "a",
-         its continuation prints "b". Output: `ab`. Demonstrates that
-         `andThenIO` in the prelude (lowered through Defunctionalize → Cps
-         → TCO) produces an IO tree that the runtime walks in order. The
-         `|>` form puts the actions in execution order left-to-right. "
+    { moduleComment = Just " Composes two IO actions with `andThenIO`: the first prints "a", its
+         continuation prints "b". The `|>` form puts the actions in execution
+         order left-to-right. Prints `ab`. "
     , imports =
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 9
+            { spanStartLine = 7
             , spanStartCol = 1
-            , spanEndLine = 9
+            , spanEndLine = 7
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 9
+                { spanStartLine = 7
                 , spanStartCol = 8
-                , spanEndLine = 9
+                , spanEndLine = 7
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 9
+                    { spanStartLine = 7
                     , spanStartCol = 8
-                    , spanEndLine = 9
+                    , spanEndLine = 7
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 9
+                        { spanStartLine = 7
                         , spanStartCol = 8
-                        , spanEndLine = 9
+                        , spanEndLine = 7
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 9
+                        { spanStartLine = 7
                         , spanStartCol = 11
-                        , spanEndLine = 9
+                        , spanEndLine = 7
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -53,9 +51,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 9
+                    { spanStartLine = 7
                     , spanStartCol = 17
-                    , spanEndLine = 9
+                    , spanEndLine = 7
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -63,33 +61,33 @@ Program
         ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 10
+                { spanStartLine = 8
                 , spanStartCol = 1
-                , spanEndLine = 10
+                , spanEndLine = 8
                 , spanEndCol = 69
                 }
             ) "main" []
             ( EInfix
                 ( SrcSpan
-                    { spanStartLine = 10
+                    { spanStartLine = 8
                     , spanStartCol = 8
-                    , spanEndLine = 10
+                    , spanEndLine = 8
                     , spanEndCol = 69
                     }
                 ) OpPipe
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 10
+                        { spanStartLine = 8
                         , spanStartCol = 8
-                        , spanEndLine = 10
+                        , spanEndLine = 8
                         , spanEndCol = 28
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 10
+                            { spanStartLine = 8
                             , spanStartCol = 8
-                            , spanEndLine = 10
+                            , spanEndLine = 8
                             , spanEndCol = 24
                             }
                         )
@@ -101,9 +99,9 @@ Program
                     )
                     ( ELit
                         ( SrcSpan
-                            { spanStartLine = 10
+                            { spanStartLine = 8
                             , spanStartCol = 24
-                            , spanEndLine = 10
+                            , spanEndLine = 8
                             , spanEndCol = 28
                             }
                         )
@@ -112,17 +110,17 @@ Program
                 )
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 10
+                        { spanStartLine = 8
                         , spanStartCol = 31
-                        , spanEndLine = 10
+                        , spanEndLine = 8
                         , spanEndCol = 69
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 10
+                            { spanStartLine = 8
                             , spanStartCol = 31
-                            , spanEndLine = 10
+                            , spanEndLine = 8
                             , spanEndCol = 41
                             }
                         )
@@ -130,42 +128,42 @@ Program
                     )
                     ( EParens
                         ( SrcSpan
-                            { spanStartLine = 10
+                            { spanStartLine = 8
                             , spanStartCol = 41
-                            , spanEndLine = 10
+                            , spanEndLine = 8
                             , spanEndCol = 69
                             }
                         )
                         ( ELam
                             ( SrcSpan
-                                { spanStartLine = 10
+                                { spanStartLine = 8
                                 , spanStartCol = 42
-                                , spanEndLine = 10
+                                , spanEndLine = 8
                                 , spanEndCol = 68
                                 }
                             )
                             [ Param
                                 ( SrcSpan
-                                    { spanStartLine = 10
+                                    { spanStartLine = 8
                                     , spanStartCol = 43
-                                    , spanEndLine = 10
+                                    , spanEndLine = 8
                                     , spanEndCol = 45
                                     }
                                 ) "_u"
                             ]
                             ( EApp
                                 ( SrcSpan
-                                    { spanStartLine = 10
+                                    { spanStartLine = 8
                                     , spanStartCol = 49
-                                    , spanEndLine = 10
+                                    , spanEndLine = 8
                                     , spanEndCol = 68
                                     }
                                 )
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 10
+                                        { spanStartLine = 8
                                         , spanStartCol = 49
-                                        , spanEndLine = 10
+                                        , spanEndLine = 8
                                         , spanEndCol = 65
                                         }
                                     )
@@ -177,9 +175,9 @@ Program
                                 )
                                 ( ELit
                                     ( SrcSpan
-                                        { spanStartLine = 10
+                                        { spanStartLine = 8
                                         , spanStartCol = 65
-                                        , spanEndLine = 10
+                                        , spanEndLine = 8
                                         , spanEndCol = 68
                                         }
                                     )

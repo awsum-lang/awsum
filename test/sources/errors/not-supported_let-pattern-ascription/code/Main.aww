@@ -1,0 +1,14 @@
+{- An ascription pattern `let (x : T) = e` over a nominal type is not a
+   binding form: it desugars to a `case` on a nominal scrutinee, which
+   must match constructors. To annotate a `let` binding, use the
+   annotation form `let x : T = e` instead. -}
+
+import IO.Stdout
+
+describe : Bool -> String
+describe b =
+  let (holds : Bool) = b
+   in showBool holds
+
+main : IO Never Unit
+main = IO.Stdout.print (describe True)

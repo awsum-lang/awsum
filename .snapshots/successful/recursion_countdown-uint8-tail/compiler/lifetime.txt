@@ -18,12 +18,43 @@ countDown:
   case-pattern    e                               count=0
   case-pattern    s1                              count=0
 
-main:
+res:
   let             $inl8$r                         count=0
   case-pattern    $inl4$e                         count=0
   row-case        $inl5$__rw                      count=0
   row-case        $inl6$u                         count=0
   case-pattern    $inl7$s                         count=0
-  case-pattern    $inl9$__w0                      count=0
-  case-pattern    $inl10$s                        count=1
+
+main:
+  let             $inl11$x                        count=0
+  case-pattern    $inl9$e                         count=0
+  case-pattern    $inl10$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_21                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
 

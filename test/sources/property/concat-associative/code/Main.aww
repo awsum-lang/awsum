@@ -1,7 +1,7 @@
 {- Property: `(a ++ b) ++ c == a ++ (b ++ c)` for every triple of
    Strings (over an alphabet that excludes ':'). Input: "a:b:c".
-   The property emits both groupings separated by ':' so Haskell
-   can verify each half against an independently computed
+   The property emits both groupings separated by ':' so each half
+   can be checked against an independently computed
    concatenation. -}
 
 import IO.Stdout
@@ -23,21 +23,15 @@ property a b c = do
   delim <- abc ++ ":"
   delim ++ aBc
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) String = (do
-        raw <- rawArg
-        Tuple3 a b c <- parseInput raw
-        property a b c
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right s -> IO.Stdout.print s
-
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInput raw))
+  |> andThenIO (\(Tuple3 a b c) -> eitherToIO (property a b c))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

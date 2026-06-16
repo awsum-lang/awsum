@@ -1,5 +1,5 @@
-{- Lambda lifting at lowering: closed lambda passed to a HOF, and a
-   `do`-block whose desugaring leaves a real lambda for the lifter. -}
+{- Closed lambdas in two shapes: one passed to a HOF (`apply (\n -> n) 42`),
+   and a `do`-block sequencing `Either` steps. Prints `42 / Ok 1`. -}
 
 import IO.Stdout
 
@@ -32,13 +32,17 @@ describe r = case r of
     ErrB -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
+res : Either StringTooLong String
+res = do
+  d <- describe g
+  s0 <- showInt32 inc42 ++ " / "
+  s0 ++ d
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        d <- describe g
-        s0 <- showInt32 inc42 ++ " / "
-        s0 ++ d
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

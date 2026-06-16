@@ -52,11 +52,11 @@ render = do
   r02 <- appendTagged r01 "directDeepU" (showDeep directDeepU)
   appendTagged r02 "widenedDeep" (showDeep widenedDeep)
 
-printErr : StringTooLong -> IO Never Unit
-printErr e = case e of
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
 main = eitherToIO render
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printErr
+  |> handleErrorIO onError

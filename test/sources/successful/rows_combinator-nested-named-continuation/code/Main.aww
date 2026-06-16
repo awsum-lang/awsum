@@ -1,17 +1,8 @@
 {- A row combinator nested inside another combinator's inline continuation,
-   where the *inner* combinator uses a NAMED continuation (`inner`) and a
-   pure-like operand (`pureEither n`).
-
-   The inner call has no deferred argument to pin its result row, and its
-   pure operand leaves the input-side row variable free, so synthesis left
-   the inner `bindEither` abstract and its `Left EC` reached lowering
-   untagged (out-of-bounds / `undefined`).
-
-   The spine now applies a final upper-bound pin from the surrounding
-   signature after every argument is checked, concretising the inner call's
-   result row so it row-monomorphises and tags `EC`. `oa = Right 3` runs the
-   outer continuation; `inner` short-circuits to `Left EC`, so every backend
-   prints `C`. -}
+   where the inner combinator uses a named continuation (`inner`) and a
+   pure-like operand (`pureEither n`); the errors compose into
+   `(EA | EB | EC)`. `oa = Right 3` runs the outer continuation; `inner`
+   short-circuits to `Left EC`, so it prints `C`. -}
 
 import IO.Stdout
 

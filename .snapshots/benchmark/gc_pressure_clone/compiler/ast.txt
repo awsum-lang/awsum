@@ -1368,6 +1368,7 @@ Program
                             , spanEndCol = 25
                             }
                         ) "IntList"
+                    , InlineSig
                     )
                 )
                 ( EApp
@@ -1444,6 +1445,7 @@ Program
                                 , spanEndCol = 23
                                 }
                             ) "IntList"
+                        , InlineSig
                         )
                     )
                     ( EApp

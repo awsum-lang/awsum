@@ -240,7 +240,7 @@
         }
         case 4: {
           {
-            const __s = v_mirrorN(500 | 0, v__inl7_scrut[1]);
+            const __s = v_mirrorN(25 | 0, v__inl7_scrut[1]);
             switch (__s[0]) {
               case 3: {
                 const v__do_e_0 = __s[1];
@@ -259,7 +259,7 @@
           }
         }
       }
-    })())(100000 | 0);
+    })())(5000000 | 0);
 
   const main = (s => {
     switch (s[0]) {

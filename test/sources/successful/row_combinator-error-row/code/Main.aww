@@ -1,10 +1,7 @@
-{- Pins error-row injection when a row-unioning combinator is applied to a
-   continuation whose type the lowering can't synthesise — `const ob` (a
-   partial application) and `\_n -> ob` (a lambda). The combinator's result
-   error row stays partly abstract from the arguments alone, so the concrete
-   `Left` label is recovered from the expected result type before the body is
-   re-lowered at concrete types. Before the fix the `Left EA` payload reached
-   the row-case un-tagged — crash on four backends, garbage on JS. -}
+{- A row-unioning combinator applied to a continuation that ignores its
+   argument — `const ob` (a partial application) and `\_n -> ob` (a lambda).
+   The errors compose into `(EA | EB)`. `oa = Left EA`, so each chain
+   short-circuits to `EA` — it prints `AA`. -}
 
 import IO.Stdout
 

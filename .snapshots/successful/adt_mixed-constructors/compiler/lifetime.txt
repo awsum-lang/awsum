@@ -5,14 +5,11 @@ runIO:
   case-pattern    next                            count=0
   let             $inl0$eff                       count=0
 
-main:
+res:
   let             $inl3$token                     count=0
-  join-param      $inl16$scrut                    count=2
-  case-pattern    $inl13$__w0                     count=0
-  case-pattern    $inl14$s                        count=0
   case-pattern    $inl1$w                         count=0
   case-pattern    $inl2$n                         count=0
-  case-pattern    $do_e_8                         count=0
+  case-pattern    $do_e_8                         count=1
   case-pattern    a                               count=1
   let             $inl6$token                     count=0
   case-pattern    $inl4$w                         count=0
@@ -39,4 +36,37 @@ main:
   case-pattern    abcsc                           count=1
   case-pattern    $do_e_0                         count=1
   case-pattern    abcscd                          count=1
+
+main:
+  let             $inl15$x                        count=0
+  case-pattern    $inl13$e                        count=0
+  case-pattern    $inl14$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_29                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_31                          count=0
+  case-pattern    s                               count=0
 

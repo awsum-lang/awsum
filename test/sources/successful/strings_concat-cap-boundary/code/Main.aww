@@ -1,16 +1,9 @@
-{- Exercises the runtime cap-check inside `(++)` end-to-end on every
-   backend. Builds a string of exactly `maxStringLengthUtf16CodeUnits`
-   UTF-16 code units via 20 doublings of a 128-CJK-code-unit literal
-   (128 * 2^20 = 134_217_728 = cap), confirms the result lands on the
-   `Right` branch with a length equal to the constant, then attempts
-   one more `++ "!"` and confirms the language-fixed cap pushes that
-   one over to `Left StringTooLong`.
-
-   CJK content is the worst case for UTF-8 expansion (3 bytes per
-   UTF-16 code unit for the BMP CJK range), so on UTF-8 backends the
-   peak resident bytes during the 20th doubling are ~600 MiB. WASM
-   handles this through the `__alloc` `memory.grow` loop documented
-   in the WASM-Specific Details section of `docs/targets.md`. -}
+{- Exercises the runtime cap-check inside `(++)`. Builds a string of
+   exactly `maxStringLengthUtf16CodeUnits` UTF-16 code units via 20
+   doublings of a 128-CJK-code-unit literal (128 * 2^20 = 134_217_728
+   = cap), confirms the result lands on `Right` with a length equal to
+   the constant, then attempts one more `++ "!"` and confirms the cap
+   pushes that one over to `Left StringTooLong`. Prints `OK`. -}
 
 import IO.Stdout
 
@@ -32,8 +25,7 @@ build n acc = case predUInt32 n of
      `lengthUtf16CodeUnits s == maxStringLengthUtf16CodeUnits` AND
      `s ++ "!"` returns `Left StringTooLong`.
    - Otherwise a labelled `FAIL` so a regression points at the broken
-     branch. Cross-backend stdout assertion catches per-target
-     divergence. -}
+     branch. -}
 
 runTest : String
 runTest = case build 20 block of

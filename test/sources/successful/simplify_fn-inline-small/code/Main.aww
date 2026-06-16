@@ -1,6 +1,5 @@
-{- A small helper called twice: both calls inline (body under the
-   always-inline size bound) and the definition falls to the tree-shake —
-   core.txt has no `shout` and no calls to it. -}
+{- A small helper called twice: both calls inline and the definition is
+   dropped. Prints `hello!again!`. -}
 
 import IO.Stdout
 
@@ -10,6 +9,4 @@ shout s = case s ++ "!" of
   Right t -> t
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (shout "hello")
-    |> andThenIO (\_u -> IO.Stdout.print (shout "again"))
+main = IO.Stdout.print (shout "hello") |> andThenIO (\_u -> IO.Stdout.print (shout "again"))

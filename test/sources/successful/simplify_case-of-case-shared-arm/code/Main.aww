@@ -1,9 +1,7 @@
-{- Case-of-case where both inner arms select the same outer arm (the `or`
-   shape: `or b True` is True on both branches). The selected arm is small
-   and case-free, so the duplication gate allows materialising it twice and
-   the fusion still fires without a join. The Core snapshot pins the result:
-   a single `CCase` over the seed whose arms are both the duplicated outer
-   body, no `$join`. -}
+{- A `case` whose scrutinee is another `case` where both inner arms select the
+   same outer arm (`or b True` is `True` on both branches). The selected arm is
+   small and case-free, so the compiler fuses the nested dispatch by
+   materialising it on each branch. Prints `yes`. -}
 
 import IO.Stdout
 

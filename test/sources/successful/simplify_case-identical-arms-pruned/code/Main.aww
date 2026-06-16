@@ -1,12 +1,14 @@
-{- The flow-sensitive dead-arm pruning composes with the collapse: Blue is
-   never constructed, so lowering shake removes its arm before Simplify
-   runs, and the two survivors are identical — the dispatch decides
-   nothing. With the fusion folding pick through, the whole program pins
-   to printing the constant. -}
+{- Dead-arm pruning composes with the collapse: `Blue` is never constructed,
+   so its arm is dropped, and the two survivors are identical — the dispatch
+   decides nothing. The compiler folds the choice through and the whole
+   program reduces to printing a constant. Prints `vis`. -}
 
 import IO.Stdout
 
-type Color = Red | Green | Blue
+type Color
+  = Red
+  | Green
+  | Blue
 
 pick : Bool -> Color
 pick b = case b of

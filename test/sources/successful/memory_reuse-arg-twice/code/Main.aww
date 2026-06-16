@@ -25,10 +25,10 @@ second st = case st of
 both : Stack -> Stack -> String
 both a b =
   let x = second (revInto2 a Empty)
-   in let y = second b
-       in case x ++ y of
-            Left _e -> "L"
-            Right z -> z
+      y = second b
+   in case x ++ y of
+        Left _e -> "L"
+        Right z -> z
 
 mk : Int32 -> Stack -> Stack
 mk n acc = case eqInt32 n 0 of

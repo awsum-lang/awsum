@@ -1,8 +1,7 @@
-{- `Awsum.Simplify` folds the unsigned-integer built-ins over literal
-   operands. Unsigned add/sub/mul have one reachable failure direction each,
-   so the folded `Left` carries the bare single-error constructor — no row
-   wrapper, exactly like the runtime helpers. Boundary cases on both widths:
-   the UInt8 cap (255) and the UInt32 cap (4294967295). -}
+{- The compiler constant-folds the unsigned-integer built-ins over literal
+   operands into the exact value the operation would produce at runtime, with
+   the matching error on overflow/underflow. Boundary cases on both widths: the
+   UInt8 cap (255) and the UInt32 cap (4294967295). Prints `O;U;255;O;U;4294967295`. -}
 
 import IO.Stdout
 

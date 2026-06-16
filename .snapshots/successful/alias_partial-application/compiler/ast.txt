@@ -1,72 +1,67 @@
 Program
-    { moduleComment = Nothing
+    { moduleComment = Just " An alias-form definition whose body is a partial application
+         (`const "RESULT"`, supplying one of `const`'s two arguments). Applying
+         `partial "ignored"` discards its argument. Prints `RESULT`. "
     , imports =
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 10
+            { spanStartLine = 7
             , spanStartCol = 1
-            , spanEndLine = 10
+            , spanEndLine = 7
             , spanEndCol = 27
             }
         ) "partial"
         ( TyArrow
             ( SrcSpan
-                { spanStartLine = 10
+                { spanStartLine = 7
                 , spanStartCol = 11
-                , spanEndLine = 10
+                , spanEndLine = 7
                 , spanEndCol = 27
                 }
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 10
+                    { spanStartLine = 7
                     , spanStartCol = 11
-                    , spanEndLine = 10
+                    , spanEndLine = 7
                     , spanEndCol = 17
                     }
                 ) "String"
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 10
+                    { spanStartLine = 7
                     , spanStartCol = 21
-                    , spanEndLine = 10
+                    , spanEndLine = 7
                     , spanEndCol = 27
                     }
                 ) "String"
             )
-        ) Nothing
-        ( Just "Regression: an alias-form definition whose body is a partial
-        application (`const "RESULT"`, one of const's two arguments) is
-        eta-expanded into a first-order function. The eta parameter must be
-        appended to the inner call (`const "RESULT" $eta`) rather than
-        wrapping it (`CCall (CCall const ["RESULT"]) [$eta]`) — the nested form
-        is defunctionalised into a closure CCon in callee position that
-        LowerClosures cannot route through $applyN, crashing every backend." ) :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 11
+                { spanStartLine = 8
                 , spanStartCol = 1
-                , spanEndLine = 11
+                , spanEndLine = 8
                 , spanEndCol = 25
                 }
             ) "partial" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 11
+                    { spanStartLine = 8
                     , spanStartCol = 11
-                    , spanEndLine = 11
+                    , spanEndLine = 8
                     , spanEndCol = 25
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 11
+                        { spanStartLine = 8
                         , spanStartCol = 11
-                        , spanEndLine = 11
+                        , spanEndLine = 8
                         , spanEndCol = 17
                         }
                     )
@@ -74,9 +69,9 @@ Program
                 )
                 ( ELit
                     ( SrcSpan
-                        { spanStartLine = 11
+                        { spanStartLine = 8
                         , spanStartCol = 17
-                        , spanEndLine = 11
+                        , spanEndLine = 8
                         , spanEndCol = 25
                         }
                     )
@@ -85,42 +80,42 @@ Program
             ) Nothing Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 13
+                { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 13
+                , spanEndLine = 10
                 , spanEndCol = 21
                 }
             ) "main"
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 13
+                    { spanStartLine = 10
                     , spanStartCol = 8
-                    , spanEndLine = 13
+                    , spanEndLine = 10
                     , spanEndCol = 21
                     }
                 )
                 ( TyApp
                     ( SrcSpan
-                        { spanStartLine = 13
+                        { spanStartLine = 10
                         , spanStartCol = 8
-                        , spanEndLine = 13
+                        , spanEndLine = 10
                         , spanEndCol = 16
                         }
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 13
+                            { spanStartLine = 10
                             , spanStartCol = 8
-                            , spanEndLine = 13
+                            , spanEndLine = 10
                             , spanEndCol = 10
                             }
                         ) "IO"
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 13
+                            { spanStartLine = 10
                             , spanStartCol = 11
-                            , spanEndLine = 13
+                            , spanEndLine = 10
                             , spanEndCol = 16
                             }
                         ) "Never"
@@ -128,9 +123,9 @@ Program
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 13
+                        { spanStartLine = 10
                         , spanStartCol = 17
-                        , spanEndLine = 13
+                        , spanEndLine = 10
                         , spanEndCol = 21
                         }
                     ) "Unit"
@@ -138,25 +133,25 @@ Program
             ) Nothing Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 14
+                { spanStartLine = 11
                 , spanStartCol = 1
-                , spanEndLine = 14
+                , spanEndLine = 11
                 , spanEndCol = 43
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 14
+                    { spanStartLine = 11
                     , spanStartCol = 8
-                    , spanEndLine = 14
+                    , spanEndLine = 11
                     , spanEndCol = 43
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 14
+                        { spanStartLine = 11
                         , spanStartCol = 8
-                        , spanEndLine = 14
+                        , spanEndLine = 11
                         , spanEndCol = 24
                         }
                     )
@@ -168,25 +163,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 14
+                        { spanStartLine = 11
                         , spanStartCol = 24
-                        , spanEndLine = 14
+                        , spanEndLine = 11
                         , spanEndCol = 43
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 14
+                            { spanStartLine = 11
                             , spanStartCol = 25
-                            , spanEndLine = 14
+                            , spanEndLine = 11
                             , spanEndCol = 42
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 14
+                                { spanStartLine = 11
                                 , spanStartCol = 25
-                                , spanEndLine = 14
+                                , spanEndLine = 11
                                 , spanEndCol = 33
                                 }
                             )
@@ -194,9 +189,9 @@ Program
                         )
                         ( ELit
                             ( SrcSpan
-                                { spanStartLine = 14
+                                { spanStartLine = 11
                                 , spanStartCol = 33
-                                , spanEndLine = 14
+                                , spanEndLine = 11
                                 , spanEndCol = 42
                                 }
                             )

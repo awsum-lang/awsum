@@ -233,10 +233,15 @@ show-binary-sizes:
   set -eu
   du -h $(stack path --dist-dir)/build/awsum/awsum
 
-# Format all source files and apply fixes
+# Format all source files and apply fixes (Haskell + Awsum test sources + prelude)
 format-fix:
-  @ ormolu --mode inplace $(find awsum src test -name '*.hs')
-  @echo "\n\n✅ Formatting completed!\n\n"
+  #!/bin/sh
+  set -eu
+  ormolu --mode inplace $(find awsum src test -name '*.hs')
+  for f in $(find test/sources/successful test/sources/property -name 'Main.aww') stdlib/Prelude.aww; do
+    stack exec awsum -- format -i "$f"
+  done
+  echo "\n\n✅ Formatting completed!\n\n"
 
 # Confirm potentially dangerous actions with a specific confirmation input (e.g. version, environment name)
 [private]

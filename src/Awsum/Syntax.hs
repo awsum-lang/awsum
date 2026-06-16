@@ -8,6 +8,7 @@ module Awsum.Syntax
     SrcSpan (..),
     noSpan,
     spanBetween,
+    spansAdjacent,
     exprSpan,
     Program (..),
     ImportDecl (..),
@@ -22,6 +23,7 @@ module Awsum.Syntax
     QName (..),
     Op' (..),
     Literal (..),
+    LetSigLayout (..),
     Expr (..),
     DoStmt (..),
     CaseAlt (..),
@@ -68,6 +70,17 @@ noSpan = SrcSpan 0 0 0 0
 -- | Combine two spans into one covering both.
 spanBetween :: SrcSpan -> SrcSpan -> SrcSpan
 spanBetween a b = SrcSpan (spanStartLine a) (spanStartCol a) (spanEndLine b) (spanEndCol b)
+
+-- | True when no blank line separates @before@ from @after@: @after@ starts on
+--   the same line @before@ ends, or the very next one (@M - L <= 1@). The
+--   parser uses it to decide whether a comment attaches to the next
+--   declaration as its docstring; the formatter uses it to keep a run of
+--   source-adjacent top-level comments together instead of wedging a blank
+--   line between every line. Relies on a comment span ending /before/ its
+--   trailing newline (see 'Awsum.Parser.pTopComment'), so the off-by-one
+--   between "adjacent" and "one blank line apart" is honest.
+spansAdjacent :: SrcSpan -> SrcSpan -> Bool
+spansAdjacent before after = spanStartLine after - spanEndLine before <= 1
 
 -- | Extract the source span from an expression.
 exprSpan :: Expr -> SrcSpan
@@ -126,16 +139,20 @@ data Comment
 --
 --   The two constructors mirror the two surface shapes:
 --
---     * @Param sp n@ — a plain name (@f x = …@). The common case;
---       the typechecker and lowering only ever see this variant.
---     * @ParamPat sp pat@ — a destructuring pattern
---       (@f (Tuple3 a b c) = …@). The 'Awsum.Desugar' pass
---       rewrites every 'ParamPat' to a fresh 'Param' plus a
---       single-arm 'ECase' wrapping the body, so by the time the
---       AST reaches typecheck only 'Param' remains. Keeping
---       'ParamPat' in the AST (rather than desugaring at parse
---       time) lets the renderer round-trip the original source
---       shape.
+--     * @Param sp n@ — a plain name (@f x = …@). The common case.
+--     * @ParamPat sp pat@ — a parens-wrapped pattern. Two sub-shapes,
+--       which 'Awsum.Desugar' treats differently:
+--         - A /destructuring/ pattern (@f (Tuple3 a b c) = …@) is
+--           rewritten to a fresh 'Param' plus a single-arm 'ECase'
+--           wrapping the body, so it never reaches typecheck.
+--         - A /type-ascription/ pattern @(x : T)@ is a parameter
+--           annotation, not a destructure; it is passed through to the
+--           typechecker, which resolves it against the param type from
+--           context (lambda) or rejects it (top-level def). It is
+--           reduced to a plain typed param ('TParam') at the typed-AST
+--           boundary, so lowering still only ever sees simple params.
+--       Keeping 'ParamPat' in the surface AST (rather than desugaring at
+--       parse time) lets the renderer round-trip the original shape.
 data Param
   = Param SrcSpan Name
   | ParamPat SrcSpan Pattern
@@ -336,6 +353,21 @@ data Literal
   deriving stock (Show, Eq)
 
 -- | Surface expressions.
+-- | How the type ascription of a let-binding was written in source, so
+--   the formatter can reproduce the author's choice. Neither form is
+--   canonical — both are legitimate, so the formatter preserves whichever
+--   was written rather than normalising (unlike int literals / docstrings).
+--   Lives /inside/ a let-binding's @Just@ annotation: a binding with no
+--   ascription has no layout choice, so @OwnLineSig@-without-a-type is
+--   unrepresentable.
+data LetSigLayout
+  = -- | @let n : T = e@ — signature and binding on one line.
+    InlineSig
+  | -- | @let n : T@ then @n = e@ — signature on its own line above the
+    --   binding (top-level / Haskell / Elm style).
+    OwnLineSig
+  deriving stock (Show, Eq)
+
 data Expr
   = -- | Variable or qualified function name.
     EVar SrcSpan QName
@@ -397,7 +429,12 @@ data Expr
     --   @do@-blocks containing @let@ desugar to nested 'ELet's
     --   wrapping the rest of the block (one 'ELet' per @let@
     --   statement); see 'Awsum.Desugar'.
-    ELet SrcSpan Pattern (Maybe Type') Expr Expr
+    --
+    --   The annotation pairs the user-written 'Type'' with its
+    --   'LetSigLayout' (inline @n : T = e@ vs own-line @n : T@ / @n = e@)
+    --   so the formatter round-trips the source shape; only the 'Type''
+    --   matters downstream of the formatter.
+    ELet SrcSpan Pattern (Maybe (Type', LetSigLayout)) Expr Expr
   | -- | Expression-level type ascription: @(e : T)@. Carries the
     --   user-written @Type'@ verbatim so the formatter can round-trip
     --   the source unchanged. Bidirectional checker treats it as
@@ -430,7 +467,7 @@ data Expr
 --     since we have no @>>@ analogue without a unit type at the row.
 data DoStmt
   = DoBind SrcSpan Pattern Expr
-  | DoLet SrcSpan Pattern (Maybe Type') Expr
+  | DoLet SrcSpan Pattern (Maybe (Type', LetSigLayout)) Expr
   | DoExpr SrcSpan Expr
   deriving stock (Show, Eq)
 

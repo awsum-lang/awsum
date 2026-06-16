@@ -1,10 +1,8 @@
-{- `Awsum.Simplify` folds signed-integer built-ins over literal operands into
-   the exact value the runtime helper would build — `Right` with the computed
-   literal, or the same `Left` the helper returns on overflow/underflow (the
-   add/sub/mul family wraps the error in its two-label row; negInt32/succInt32
-   build the bare single-error constructor). Case-of-known-constructor then
-   collapses every case below, so the Core snapshot holds no arithmetic call
-   and no dispatch — only the chosen branches. -}
+{- The compiler constant-folds signed-integer built-ins over literal operands
+   into the exact value the operation would produce at runtime — `Right` with
+   the computed literal, or `Left` with the matching error on
+   overflow/underflow — and the cases over those results collapse to the chosen
+   branch. Prints `12;O;U;O;42`. -}
 
 import IO.Stdout
 

@@ -1,0 +1,15 @@
+import IO.Stdout
+
+-- commented-out earlier version, kept as a tight block:
+-- greet : String -> IO Never Unit
+-- greet name = IO.Stdout.print name
+
+-- A standalone note paragraph, deliberately split from the block
+-- above; the single blank line between them must survive (and the
+-- doubled blank line above collapses to one).
+
+greet : String -> IO Never Unit
+greet name = IO.Stdout.print name
+
+main : IO Never Unit
+main = greet "world"

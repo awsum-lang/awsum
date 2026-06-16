@@ -1,7 +1,6 @@
-{- `Awsum.Simplify` folds the integer equality built-ins over literal
-   operands straight to the `True` / `False` constructor, and the case over
-   the folded Bool collapses — the Core snapshot holds only the selected
-   string literals. -}
+{- The compiler constant-folds the integer equality built-ins over literal
+   operands to `True` / `False`, and the case over the folded `Bool` collapses
+   to the selected string. Prints `T;F;F`. -}
 
 import IO.Stdout
 

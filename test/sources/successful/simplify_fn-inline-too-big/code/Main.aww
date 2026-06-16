@@ -16,6 +16,4 @@ describe n = case eqUInt32 n 0 of
         False -> showUInt32 n
 
 main : IO Never Unit
-main =
-  IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2000000000))))
-    |> andThenIO (\_u -> IO.Stdout.print (describe (lengthUtf8Bytes "ab")))
+main = IO.Stdout.print (describe (lengthUtf8Bytes (showInt32 (-2_000_000_000)))) |> andThenIO (\_u -> IO.Stdout.print (describe (lengthUtf8Bytes "ab")))

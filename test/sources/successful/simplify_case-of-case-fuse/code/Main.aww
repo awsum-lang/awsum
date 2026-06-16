@@ -1,9 +1,6 @@
-{- `Awsum.Simplify` fuses a case whose scrutinee is another case
-   (case-of-case): every inner arm here is a literal constructor, so the
-   outer case resolves statically per arm and each tower level re-collapses
-   to a single case — no join point is minted. The runtime seed keeps the
-   scrutinee from constant-folding away entirely. The Core snapshot pins the
-   rewrite: one `CCase` over the seed, no nesting, no `$join`. -}
+{- A `case` whose scrutinee is another `case` (a tower of `and b True`): the
+   compiler fuses the nested dispatch into a single `case` per level. A runtime
+   seed keeps the scrutinee from folding to a constant. Prints `T`. -}
 
 import IO.Stdout
 

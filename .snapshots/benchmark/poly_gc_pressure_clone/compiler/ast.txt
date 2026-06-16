@@ -1434,6 +1434,7 @@ Program
                                 }
                             ) "Int32"
                         )
+                    , InlineSig
                     )
                 )
                 ( EApp
@@ -1528,6 +1529,7 @@ Program
                                     }
                                 ) "Int32"
                             )
+                        , InlineSig
                         )
                     )
                     ( EApp

@@ -2104,57 +2104,57 @@ Program
                 { spanStartLine = 55
                 , spanStartCol = 1
                 , spanEndLine = 55
-                , spanEndCol = 42
+                , spanEndCol = 41
                 }
-            ) "printErr"
+            ) "onError"
             ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 55
-                    , spanStartCol = 12
+                    , spanStartCol = 11
                     , spanEndLine = 55
-                    , spanEndCol = 42
+                    , spanEndCol = 41
                     }
                 )
                 ( TyCon
                     ( SrcSpan
                         { spanStartLine = 55
-                        , spanStartCol = 12
+                        , spanStartCol = 11
                         , spanEndLine = 55
-                        , spanEndCol = 25
+                        , spanEndCol = 24
                         }
                     ) "StringTooLong"
                 )
                 ( TyApp
                     ( SrcSpan
                         { spanStartLine = 55
-                        , spanStartCol = 29
+                        , spanStartCol = 28
                         , spanEndLine = 55
-                        , spanEndCol = 42
+                        , spanEndCol = 41
                         }
                     )
                     ( TyApp
                         ( SrcSpan
                             { spanStartLine = 55
-                            , spanStartCol = 29
+                            , spanStartCol = 28
                             , spanEndLine = 55
-                            , spanEndCol = 37
+                            , spanEndCol = 36
                             }
                         )
                         ( TyCon
                             ( SrcSpan
                                 { spanStartLine = 55
-                                , spanStartCol = 29
+                                , spanStartCol = 28
                                 , spanEndLine = 55
-                                , spanEndCol = 31
+                                , spanEndCol = 30
                                 }
                             ) "IO"
                         )
                         ( TyCon
                             ( SrcSpan
                                 { spanStartLine = 55
-                                , spanStartCol = 32
+                                , spanStartCol = 31
                                 , spanEndLine = 55
-                                , spanEndCol = 37
+                                , spanEndCol = 36
                                 }
                             ) "Never"
                         )
@@ -2162,9 +2162,9 @@ Program
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 55
-                            , spanStartCol = 38
+                            , spanStartCol = 37
                             , spanEndLine = 55
-                            , spanEndCol = 42
+                            , spanEndCol = 41
                             }
                         ) "Unit"
                     )
@@ -2177,20 +2177,20 @@ Program
                 , spanEndLine = 57
                 , spanEndCol = 53
                 }
-            ) "printErr"
+            ) "onError"
             [ Param
                 ( SrcSpan
                     { spanStartLine = 56
-                    , spanStartCol = 10
+                    , spanStartCol = 9
                     , spanEndLine = 56
-                    , spanEndCol = 11
+                    , spanEndCol = 10
                     }
                 ) "e"
             ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 56
-                    , spanStartCol = 14
+                    , spanStartCol = 13
                     , spanEndLine = 57
                     , spanEndCol = 53
                     }
@@ -2198,9 +2198,9 @@ Program
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 56
-                        , spanStartCol = 19
+                        , spanStartCol = 18
                         , spanEndLine = 56
-                        , spanEndCol = 21
+                        , spanEndCol = 20
                         }
                     )
                     ( QName [] "e" )
@@ -2308,7 +2308,7 @@ Program
                 { spanStartLine = 60
                 , spanStartCol = 1
                 , spanEndLine = 62
-                , spanEndCol = 28
+                , spanEndCol = 27
                 }
             ) "main" []
             ( EInfix
@@ -2316,7 +2316,7 @@ Program
                     { spanStartLine = 60
                     , spanStartCol = 8
                     , spanEndLine = 62
-                    , spanEndCol = 28
+                    , spanEndCol = 27
                     }
                 ) OpPipe
                 ( EInfix
@@ -2395,7 +2395,7 @@ Program
                         { spanStartLine = 62
                         , spanStartCol = 6
                         , spanEndLine = 62
-                        , spanEndCol = 28
+                        , spanEndCol = 27
                         }
                     )
                     ( EVar
@@ -2413,10 +2413,10 @@ Program
                             { spanStartLine = 62
                             , spanStartCol = 20
                             , spanEndLine = 62
-                            , spanEndCol = 28
+                            , spanEndCol = 27
                             }
                         )
-                        ( QName [] "printErr" )
+                        ( QName [] "onError" )
                     )
                 )
             ) Nothing Nothing

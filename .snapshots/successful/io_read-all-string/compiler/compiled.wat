@@ -932,7 +932,7 @@
             call 11
             local.set 1
             local.get 1
-            i32.const 13
+            i32.const 25
             i32.store
             local.get 1
             local.get 0
@@ -953,7 +953,7 @@
             call 11
             local.set 1
             local.get 1
-            i32.const 20
+            i32.const 32
             i32.store
             local.get 1
             call 21
@@ -990,7 +990,7 @@
     call 11
     local.set 1
     local.get 1
-    i32.const 12
+    i32.const 24
     i32.store
     local.get 1
     i32.store offset=4
@@ -1000,7 +1000,7 @@
     call 11
     local.set 0
     local.get 0
-    i32.const 18
+    i32.const 30
     i32.store
     local.get 0
     call 19
@@ -1009,7 +1009,7 @@
     call 11
     local.set 0
     local.get 0
-    i32.const 16
+    i32.const 28
     i32.store
     local.get 0
     call 17)
@@ -1179,7 +1179,7 @@
               i32.load offset=8
               call 13
               local.get 0
-              i32.const 17
+              i32.const 29
               i32.store
               local.get 0
               local.get 1
@@ -1200,7 +1200,7 @@
               call 11
               local.set 2
               local.get 2
-              i32.const 17
+              i32.const 29
               i32.store
               local.get 2
               local.get 1
@@ -1256,7 +1256,7 @@
               call 11
               local.set 3
               local.get 3
-              i32.const 10
+              i32.const 22
               i32.store
               local.get 3
               local.get 6
@@ -1292,7 +1292,7 @@
     loop (result i32)
       local.get 0
       i32.load
-      i32.const 16
+      i32.const 28
       i32.eq
       if (result i32)
         block (result i32)
@@ -1473,7 +1473,7 @@
               i32.load offset=8
               call 13
               local.get 0
-              i32.const 19
+              i32.const 31
               i32.store
               local.get 0
               local.get 1
@@ -1494,7 +1494,7 @@
               call 11
               local.set 2
               local.get 2
-              i32.const 19
+              i32.const 31
               i32.store
               local.get 2
               local.get 1
@@ -1550,7 +1550,7 @@
               call 11
               local.set 3
               local.get 3
-              i32.const 11
+              i32.const 23
               i32.store
               local.get 3
               local.get 5
@@ -1586,7 +1586,7 @@
     loop (result i32)
       local.get 0
       i32.load
-      i32.const 18
+      i32.const 30
       i32.eq
       if (result i32)
         block (result i32)
@@ -1660,7 +1660,7 @@
     loop (result i32)
       local.get 0
       i32.load
-      i32.const 13
+      i32.const 25
       i32.eq
       if (result i32)
         local.get 0
@@ -1675,14 +1675,14 @@
         call 12
         local.get 3
         i32.load
-        i32.const 10
+        i32.const 22
         i32.eq
         if (result i32)
           local.get 0
           i32.load offset=4
           call 13
           local.get 0
-          i32.const 14
+          i32.const 26
           i32.store
           local.get 0
           local.get 3
@@ -1711,14 +1711,14 @@
         else
           local.get 3
           i32.load
-          i32.const 11
+          i32.const 23
           i32.eq
           if (result i32)
             local.get 0
             i32.load offset=4
             call 13
             local.get 0
-            i32.const 15
+            i32.const 27
             i32.store
             local.get 0
             local.get 3
@@ -1804,7 +1804,7 @@
       else
         local.get 0
         i32.load
-        i32.const 14
+        i32.const 26
         i32.eq
         if (result i32)
           local.get 0
@@ -1818,7 +1818,7 @@
           local.get 4
           call 12
           local.get 0
-          i32.const 13
+          i32.const 25
           i32.store
           local.get 0
           local.set 6
@@ -1827,7 +1827,7 @@
           call 11
           local.set 2
           local.get 2
-          i32.const 21
+          i32.const 33
           i32.store
           local.get 2
           local.get 1
@@ -1860,7 +1860,7 @@
           local.get 4
           call 12
           local.get 0
-          i32.const 13
+          i32.const 25
           i32.store
           local.get 0
           local.set 6
@@ -1869,7 +1869,7 @@
           call 11
           local.set 2
           local.get 2
-          i32.const 22
+          i32.const 34
           i32.store
           local.get 2
           local.get 1
@@ -1904,7 +1904,7 @@
     loop (result i32)
       local.get 0
       i32.load
-      i32.const 20
+      i32.const 32
       i32.eq
       if (result i32)
         block (result i32)
@@ -1917,7 +1917,7 @@
       else
         local.get 0
         i32.load
-        i32.const 21
+        i32.const 33
         i32.eq
         if (result i32)
           local.get 0
@@ -1935,7 +1935,7 @@
           call 11
           local.set 2
           local.get 2
-          i32.const 16
+          i32.const 28
           i32.store
           local.get 2
           call 17
@@ -1965,7 +1965,7 @@
           call 11
           local.set 2
           local.get 2
-          i32.const 18
+          i32.const 30
           i32.store
           local.get 2
           call 19

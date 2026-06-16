@@ -1,3 +1,8 @@
+{- A row-widening combinator (`bindEither`) called in a checked position
+   with an inline-lambda continuation (`\_n -> pureEither 7`). The errors
+   compose into `(EA | EB)`. `oa = Left EA`, so the chain short-circuits to
+   `EA` and it prints `A`. -}
+
 import IO.Stdout
 
 type EA = EA
@@ -7,12 +12,6 @@ type EB = EB
 oa : Either EA Int32
 oa = Left EA
 
--- Regression: a row-widening combinator (bindEither) called in a checked
--- position with an inline-lambda continuation whose body makes synth-first
--- fail (so checkExpr takes the spine fallback) must still be
--- row-monomorphised — the fallback has to substitute the call head so the
--- Left payload is tagged. Otherwise the row-case mis-dispatches and the
--- five backends diverge (crash / wrong arm / JS undefined).
 cBare : Either (EA | EB) Int32
 cBare = bindEither oa (\_n -> pureEither 7)
 

@@ -1,6 +1,5 @@
-{- `let` between two `<-` binds: lifted helper must capture both the
-   previous bind and the let-binder, and keep the let in scope through
-   the rest of the do-block. -}
+{- A `let` between two `<-` binds in a `do`-block: the let-binding stays in
+   scope through the rest of the block. -}
 
 import IO.Stdout
 
@@ -21,14 +20,15 @@ run start = do
   b <- step2 a
   prefix ++ showInt32 b
 
-renderErr : (String | StringTooLong) -> Either StringTooLong String
-renderErr e = case e of
-  (s : String) -> "err: " ++ s
-  StringTooLong -> Right "STRING_TOO_LONG"
+res : Either (String | StringTooLong) String
+res = run 5
+
+onError : (String | StringTooLong) -> IO Never Unit
+onError e = case e of
+  (s : String) -> IO.Stdout.print s
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
-main = case run 5 of
-  Left e -> case renderErr e of
-    Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-    Right out -> IO.Stdout.print out
-  Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError

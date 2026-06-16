@@ -1,10 +1,8 @@
-{- `mapLeft` whose transform targets a row: `f : e1 -> (row)`. `mapLeft`
-   itself does not union rows (`Either e1 a -> (e1 -> e2) -> Either e2 a`),
-   so the row tag is produced inside `f` and `mapLeft` must carry it out
-   on the `Left` unchanged. Covers a plain source mapped to each row
+{- `mapLeft` whose transform targets a row (`f : e1 -> (row)`): `mapLeft`
+   does not union rows, so the row tag is produced inside `f` and carried
+   out on the `Left` unchanged. Covers a plain source mapped to each row
    alternative, a `Right` (transform not called), and a row source
-   remapped to a wider row (`f` dispatches on the incoming row).
-   Output is `label=value` per line. -}
+   remapped to a wider row. Prints `label=value` per line. -}
 
 import IO.Stdout
 
@@ -90,11 +88,11 @@ render = do
   r04 <- appendTagged r03 "remappedX" (showABC remappedX)
   appendTagged r04 "remappedY" (showABC remappedY)
 
-printErr : StringTooLong -> IO Never Unit
-printErr e = case e of
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
 main = eitherToIO render
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printErr
+  |> handleErrorIO onError

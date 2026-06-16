@@ -7,14 +7,18 @@ render b = case b of
   True -> "T"
   False -> "F"
 
+res : Either StringTooLong String
+res = do
+  s0 <- render (eqUInt32 minUInt32 minUInt32) ++ render (eqUInt32 maxUInt32 maxUInt32)
+  s1 <- s0 ++ render (eqUInt32 maxUInt32 minUInt32)
+  s2 <- s1 ++ render (eqUInt32 2_147_483_648 2_147_483_648)
+  s2 ++ render (eqUInt32 2_147_483_648 2_147_483_647)
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- render (eqUInt32 minUInt32 minUInt32) ++ render (eqUInt32 maxUInt32 maxUInt32)
-        s1 <- s0 ++ render (eqUInt32 maxUInt32 minUInt32)
-        s2 <- s1 ++ render (eqUInt32 2_147_483_648 2_147_483_648)
-        s2 ++ render (eqUInt32 2_147_483_648 2_147_483_647)
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

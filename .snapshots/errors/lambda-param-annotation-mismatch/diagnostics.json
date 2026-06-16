@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":12,"startCol":36,"endLine":12,"endCol":49,"message":"Lambda parameter annotated as String but the surrounding context requires Int32.","fixes":[]}]

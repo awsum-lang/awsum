@@ -24,13 +24,13 @@
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
       switch (v__k[0]) {
-        case 16: {
+        case 28: {
           return v__x;
         }
-        case 17: {
-          const v__pk_17 = v__k[1];
+        case 29: {
+          const v__pk_29 = v__k[1];
           v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_17;
+          v__k = v__pk_29;
           continue;
         }
       }
@@ -61,13 +61,13 @@
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [17, v__k, v_s];
+          v__k = [29, v__k, v_s];
           v_io = v_next;
           continue;
         }
         case 9: {
           const v_cont = v_io[1];
-          return v__apply__df_handleErrorIO_0(v__k, [9, [10, v_cont]]);
+          return v__apply__df_handleErrorIO_0(v__k, [9, [22, v_cont]]);
         }
       }
     }
@@ -76,13 +76,13 @@
   const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
     while (true) {
       switch (v__k[0]) {
-        case 18: {
+        case 30: {
           return v__x;
         }
-        case 19: {
-          const v__pk_19 = v__k[1];
+        case 31: {
+          const v__pk_31 = v__k[1];
           v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_19;
+          v__k = v__pk_31;
           continue;
         }
       }
@@ -104,13 +104,13 @@
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [19, v__k, v_s];
+          v__k = [31, v__k, v_s];
           v_io = v_next;
           continue;
         }
         case 9: {
           const v_cont = v_io[1];
-          return v__apply__df__rowmono_0_andThenIO_4(v__k, [9, [11, v_cont]]);
+          return v__apply__df__rowmono_0_andThenIO_4(v__k, [9, [23, v_cont]]);
         }
       }
     }
@@ -119,17 +119,17 @@
   const v__apply__scc__apply1__df__lam_10_2__df__lam_14_6 = (v__k, v__x) => {
     while (true) {
       switch (v__k[0]) {
-        case 20: {
+        case 32: {
           return v__x;
         }
-        case 21: {
+        case 33: {
           v__k = v__k[1];
-          v__x = v__cps__df_handleErrorIO_0(v__x, [16]);
+          v__x = v__cps__df_handleErrorIO_0(v__x, [28]);
           continue;
         }
-        case 22: {
+        case 34: {
           v__k = v__k[1];
-          v__x = v__cps__df__rowmono_0_andThenIO_4(v__x, [18]);
+          v__x = v__cps__df__rowmono_0_andThenIO_4(v__x, [30]);
           continue;
         }
       }
@@ -139,19 +139,19 @@
   const v__cps__scc__apply1__df__lam_10_2__df__lam_14_6 = (v__args, v__k) => {
     while (true) {
       switch (v__args[0]) {
-        case 13: {
+        case 25: {
           const v__cl = v__args[1];
           const v__arg0 = v__args[2];
           switch (v__cl[0]) {
-            case 10: {
-              v__args = (v__args[0] = 14, v__args[1] = v__cl[1], v__args);
+            case 22: {
+              v__args = (v__args[0] = 26, v__args[1] = v__cl[1], v__args);
               continue;
             }
-            case 11: {
-              v__args = (v__args[0] = 15, v__args[1] = v__cl[1], v__args);
+            case 23: {
+              v__args = (v__args[0] = 27, v__args[1] = v__cl[1], v__args);
               continue;
             }
-            case 12: {
+            case 24: {
               return v__apply__scc__apply1__df__lam_10_2__df__lam_14_6(
                 v__k,
                 (s => {
@@ -168,14 +168,14 @@
             }
           }
         }
-        case 14: {
-          v__args = (v__args[0] = 13, v__args);
-          v__k = [21, v__k];
+        case 26: {
+          v__args = (v__args[0] = 25, v__args);
+          v__k = [33, v__k];
           continue;
         }
-        case 15: {
-          v__args = (v__args[0] = 13, v__args);
-          v__k = [22, v__k];
+        case 27: {
+          v__args = (v__args[0] = 25, v__args);
+          v__k = [34, v__k];
           continue;
         }
       }
@@ -196,8 +196,8 @@
         case 9: {
           const __t0 = (v__inl5__arg0 =>
             v__cps__scc__apply1__df__lam_10_2__df__lam_14_6(
-              [13, v_io[1], v__inl5__arg0],
-              [20]
+              [25, v_io[1], v__inl5__arg0],
+              [32]
             ))(__stdinReadAll());
           v_io = __t0;
           continue;
@@ -207,8 +207,8 @@
   };
 
   const main = v__cps__df_handleErrorIO_0(
-    v__cps__df__rowmono_0_andThenIO_4([9, [12]], [18]),
-    [16]
+    v__cps__df__rowmono_0_andThenIO_4([9, [24]], [30]),
+    [28]
   );
 
   if (typeof require !== "undefined" && require.main === module) {

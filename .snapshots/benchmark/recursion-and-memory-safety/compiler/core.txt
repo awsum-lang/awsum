@@ -58,7 +58,7 @@ CoreProgram
             )
         , CValDef "runDemo"
             ( CLet "$inl5$depth"
-                ( CIntLit 100000 TInt32 )
+                ( CIntLit 5000000 TInt32 )
                 ( CDrop DropFreeUnchecked "$inl5$depth"
                     ( CJoin "$join6" [ "$inl7$scrut" ]
                         ( CCase
@@ -74,7 +74,7 @@ CoreProgram
                                 , CCase
                                     ( CCall
                                         ( CVar "mirrorN" )
-                                        [ CIntLit 500 TInt32
+                                        [ CIntLit 25 TInt32
                                         , CProj "$inl7$scrut" 1
                                         ]
                                     )

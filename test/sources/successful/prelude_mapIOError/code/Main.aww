@@ -11,10 +11,11 @@ type ErrB = ErrB
 action : IO ErrA Unit
 action = failIO ErrA
 
-handler : ErrB -> IO Never Unit
-handler _b = IO.Stdout.print "ErrB"
+onError : ErrB -> IO Never Unit
+onError e = case e of
+  ErrB -> IO.Stdout.print "ErrB"
 
 main : IO Never Unit
 main =
   let renamed : IO ErrB Unit = mapIOError action (\_a -> ErrB)
-   in renamed |> handleErrorIO handler
+   in renamed |> handleErrorIO onError

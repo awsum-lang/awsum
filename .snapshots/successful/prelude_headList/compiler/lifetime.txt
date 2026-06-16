@@ -5,35 +5,65 @@ runIO:
   case-pattern    next                            count=0
   let             $inl0$eff                       count=0
 
+res:
+  let             $inl51$xs                       count=0
+  case-pattern    $inl49$h                        count=0
+  case-pattern    $inl50$_t                       count=0
+  let             $inl75$noElems                  count=0
+  let             $inl52$xs                       count=0
+  case-pattern    $inl53$h                        count=0
+  case-pattern    $inl54$_t                       count=0
+  let             $inl55$single                   count=0
+  let             $inl56$xs                       count=0
+  case-pattern    $inl57$h                        count=0
+  case-pattern    $inl58$_t                       count=0
+  let             $inl59$multi                    count=0
+  case-pattern    $inl60$s                        count=0
+  case-pattern    $inl61$$do_e_5                  count=1
+  case-pattern    $inl62$a                        count=1
+  case-pattern    $inl63$s                        count=0
+  case-pattern    $inl64$$do_e_4                  count=1
+  case-pattern    $inl65$b                        count=1
+  case-pattern    $inl66$s                        count=0
+  case-pattern    $inl67$$do_e_3                  count=1
+  case-pattern    $inl68$c                        count=1
+  case-pattern    $inl69$$do_e_2                  count=1
+  case-pattern    $inl70$s0                       count=1
+  case-pattern    $inl71$$do_e_1                  count=1
+  case-pattern    $inl72$s1                       count=1
+  case-pattern    $inl73$$do_e_0                  count=1
+  case-pattern    $inl74$s2                       count=1
+
 main:
-  let             $inl63$xs                       count=0
-  case-pattern    $inl61$h                        count=0
-  case-pattern    $inl62$_t                       count=0
-  let             $inl91$noElems                  count=0
-  let             $inl64$xs                       count=0
-  case-pattern    $inl65$h                        count=0
-  case-pattern    $inl66$_t                       count=0
-  let             $inl67$single                   count=0
-  let             $inl68$xs                       count=0
-  case-pattern    $inl69$h                        count=0
-  case-pattern    $inl70$_t                       count=0
-  let             $inl71$multi                    count=0
-  join-param      $inl73$scrut                    count=2
-  case-pattern    $inl74$__w0                     count=0
-  case-pattern    $inl75$s                        count=0
-  case-pattern    $inl76$s                        count=0
-  case-pattern    $inl77$$do_e_5                  count=0
-  case-pattern    $inl78$a                        count=1
-  case-pattern    $inl79$s                        count=0
-  case-pattern    $inl80$$do_e_4                  count=1
-  case-pattern    $inl81$b                        count=1
-  case-pattern    $inl82$s                        count=0
-  case-pattern    $inl83$$do_e_3                  count=1
-  case-pattern    $inl84$c                        count=1
-  case-pattern    $inl85$$do_e_2                  count=1
-  case-pattern    $inl86$s0                       count=1
-  case-pattern    $inl87$$do_e_1                  count=1
-  case-pattern    $inl88$s1                       count=1
-  case-pattern    $inl89$$do_e_0                  count=1
-  case-pattern    $inl90$s2                       count=1
+  let             $inl78$x                        count=0
+  case-pattern    $inl76$e                        count=0
+  case-pattern    $inl77$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_21                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_23                          count=0
+  case-pattern    s                               count=0
 

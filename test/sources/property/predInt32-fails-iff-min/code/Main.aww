@@ -1,7 +1,6 @@
 {- Property: `predInt32 x` fails iff `x == minInt32`. Symmetric to
-   `succInt32-fails-iff-max`. Property uses the result of `predInt32`
-   as data (success-vs-failure), so it doesn't desugar through `do`
-   — the inner `case` inspects the `Either` directly. -}
+   `succInt32-fails-iff-max`. Single Int32 input; the only error path
+   is a parse failure. -}
 
 import IO.Stdout
 import IO.Stdin
@@ -11,22 +10,19 @@ property x = case predInt32 x of
   Left _ -> eqInt32 x minInt32
   Right _ -> not (eqInt32 x minInt32)
 
-runMain : Either (StringTooLong | InvalidUtf8) String -> IO Never Unit
-runMain rawArg =
-  let res : Either (StringTooLong | InvalidUtf8 | ParseError) Bool = (do
-        raw <- rawArg
-        x <- parseInt32 raw
-        pureEither (property x)
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
-        Right True -> IO.Stdout.print "OK"
-        Right False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\s -> runMain (Right s))
-  |> handleErrorIO (\e -> runMain (Left e))
+  |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
+  |> andThenIO (\x -> IO.Stdout.print (showOutcome (property x)))
+  |> handleErrorIO onError
+
+onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  InvalidUtf8 -> IO.Stdout.print "INVALID_UTF8"
+  ParseError -> IO.Stdout.print "PARSE_ERROR"

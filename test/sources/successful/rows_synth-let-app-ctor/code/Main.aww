@@ -1,14 +1,7 @@
-{- Same row-tag-dispatch invariant as `rows_synth-app-ctor`, but the
-   non-nullary constructor application reaches the case-binder through
-   a `let`. `let m = Just "world"` requires `synthLabelType` on the
-   RHS to resolve to `Maybe String`, which writes that into the
-   binder's type entry and lets the inner `case m of Just x -> …`
-   recover `x : String`.
-
-   Without the EApp synth fix, `m`'s type would fall back to the
-   `_letBind` placeholder, the inner case-binder `x` would type at
-   `TyVar "a"`, and `dispatch x` would dispatch against the first
-   row label (`Int32`) regardless of `x`'s actual runtime type. -}
+{- A case-binder destructured from a non-nullary constructor that reaches
+   the case through a `let` (`let m = Just "world"`), then dispatched into
+   a row `(Int32 | String)`. `m` holds `Just "world"`, so `x : String` and
+   `dispatch x` takes the `String` alternative — it prints `s`. -}
 
 import IO.Stdout
 

@@ -1,3 +1,8 @@
+{- A self-tail loop that rebuilds a list cell (`MyCons 7 t`) each iteration
+   and threads the previous list through as the next accumulator. When the
+   fuel runs out the accumulator is shown, so it must read back intact.
+   Prints `1`. -}
+
 import IO.Stdout
 
 type MyList = MyNil | MyCons Int32 MyList

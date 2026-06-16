@@ -2,15 +2,19 @@
 
 import IO.Stdout
 
+res : Either StringTooLong String
+res = do
+  s0 <- showBool (not True) ++ showBool (not False)
+  s1 <- s0 ++ showBool (and True False)
+  s2 <- s1 ++ showBool (and True True)
+  s3 <- s2 ++ showBool (or False False)
+  s3 ++ showBool (or True False)
+
 main : IO Never Unit
-main =
-  let res : Either StringTooLong String = (do
-        s0 <- showBool (not True) ++ showBool (not False)
-        s1 <- s0 ++ showBool (and True False)
-        s2 <- s1 ++ showBool (and True True)
-        s3 <- s2 ++ showBool (or False False)
-        s3 ++ showBool (or True False)
-      )
-   in case res of
-        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

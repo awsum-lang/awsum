@@ -27,9 +27,9 @@ $cps$$df$handleErrorIO$0:
   param           $k                              count=3
   case-pattern    a                               count=0
   case-pattern    e                               count=0
-  row-case        $inl0$_b                        count=0
-  row-case        $inl1$_u                        count=0
-  row-case        $inl2$_s                        count=0
+  row-case        $inl0$__rw                      count=0
+  row-case        $inl1$__rw                      count=0
+  row-case        $inl2$__rw                      count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont$u0                         count=0

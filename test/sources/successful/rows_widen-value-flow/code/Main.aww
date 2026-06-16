@@ -1,11 +1,7 @@
-{- Row union by /value flow/, not by a combinator: a bare narrow-error
-   `Either` value (a variable, not a fresh `Left …` construction and not
-   a constructor field) is used where a wider row is expected — as a def
-   body, a `let` body, a `case`-arm body, and nested `case`-arm bodies.
-   Each such position must inject the row tag so the error survives;
-   every case takes a `Left` path (or a `Right`) and is matched back by
-   row ascription. The union here is formed directly by value flow into
-   the wider-row binding, not by `do` or an explicit combinator. Output
+{- Row union by value flow, not by a combinator: a bare narrow-error
+   `Either` value (a variable, not a fresh `Left …`) is used where a wider
+   row is expected — as a def body, a `let` body, a `case`-arm body, and
+   nested `case`-arm bodies. Each is matched back by row ascription. Output
    is `label=value` per line. -}
 
 import IO.Stdout
@@ -109,11 +105,11 @@ render = do
   r08 <- appendTagged r07 "nestedJustFalse" (showTwoA (nestedUnion (Just False)))
   appendTagged r08 "strWiden" (showStrA strWiden)
 
-printErr : StringTooLong -> IO Never Unit
-printErr e = case e of
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
   StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
 
 main : IO Never Unit
 main = eitherToIO render
   |> andThenIO IO.Stdout.print
-  |> handleErrorIO printErr
+  |> handleErrorIO onError

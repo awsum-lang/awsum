@@ -28,7 +28,7 @@
   const v__scc_stepA_stepB_stepC = v__args => {
     while (true) {
       switch (v__args[0]) {
-        case 8: {
+        case 18: {
           const v_n = v__args[1];
           {
             const __s = __eqInt32(v_n, 0 | 0);
@@ -46,7 +46,7 @@
                     }
                     case 4: {
                       const v_m = __s[1];
-                      v__args = (v__args[0] = 9, v__args[1] = v_m, v__args);
+                      v__args = (v__args[0] = 19, v__args[1] = v_m, v__args);
                       continue;
                     }
                   }
@@ -55,7 +55,7 @@
             }
           }
         }
-        case 9: {
+        case 19: {
           const v_n = v__args[1];
           {
             const __s = __eqInt32(v_n, 0 | 0);
@@ -73,7 +73,7 @@
                     }
                     case 4: {
                       const v_m = __s[1];
-                      v__args = (v__args[0] = 10, v__args[1] = v_m, v__args);
+                      v__args = (v__args[0] = 20, v__args[1] = v_m, v__args);
                       continue;
                     }
                   }
@@ -82,7 +82,7 @@
             }
           }
         }
-        case 10: {
+        case 20: {
           const v_n = v__args[1];
           {
             const __s = __eqInt32(v_n, 0 | 0);
@@ -100,7 +100,7 @@
                     }
                     case 4: {
                       const v_m = __s[1];
-                      v__args = (v__args[0] = 8, v__args[1] = v_m, v__args);
+                      v__args = (v__args[0] = 18, v__args[1] = v_m, v__args);
                       continue;
                     }
                   }
@@ -113,17 +113,98 @@
     }
   };
 
-  const main = (s => {
-    switch (s[0]) {
-      case 3: {
-        return [7, "UnderflowError", [5, [0]]];
-      }
-      case 4: {
-        const v_v = s[1];
-        return [7, String(v_v), [5, [0]]];
+  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 21: {
+          return v__x;
+        }
+        case 22: {
+          const v__pk_22 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_22;
+          continue;
+        }
       }
     }
-  })(v__scc_stepA_stepB_stepC([8, 1000000 | 0]));
+  };
+
+  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_handleErrorIO_0(v__k, v_io);
+        }
+        case 6: {
+          return v__apply__df_handleErrorIO_0(
+            v__k,
+            [7, "UnderflowError", [5, [0]]]
+          );
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [22, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+    while (true) {
+      switch (v__k[0]) {
+        case 23: {
+          return v__x;
+        }
+        case 24: {
+          const v__pk_24 = v__k[1];
+          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
+          v__k = v__pk_24;
+          continue;
+        }
+      }
+    }
+  };
+
+  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+    while (true) {
+      switch (v_io[0]) {
+        case 5: {
+          return v__apply__df_andThenIO_4(v__k, [7, String(v_io[1]), [5, [0]]]);
+        }
+        case 6: {
+          return v__apply__df_andThenIO_4(v__k, v_io);
+        }
+        case 7: {
+          const v_s = v_io[1];
+          const v_next = v_io[2];
+          v__k = [24, v__k, v_s];
+          v_io = v_next;
+          continue;
+        }
+      }
+    }
+  };
+
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df_andThenIO_4(
+      (v__inl3_x =>
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [6, v__inl3_x[1]];
+            }
+            case 4: {
+              return [5, v__inl3_x[1]];
+            }
+          }
+        })(v__inl3_x))(v__scc_stepA_stepB_stepC([18, 1000000 | 0])),
+      [23]
+    ),
+    [21]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {
