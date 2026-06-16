@@ -1351,15 +1351,9 @@ attachDocs declsNE = case go [] (toList declsNE) of
       where
         walkBack _ attached [] = ([], attached)
         walkBack anchor attached (c : older) =
-          if isAdjacent (declSpan c) anchor
+          if spansAdjacent (declSpan c) anchor
             then walkBack (declSpan c) (c : attached) older
             else (reverse (c : older), attached)
-
-    -- Comment ends on line L; next thing starts on line M.
-    -- Adjacent iff M - L <= 1 (same line, or next line — at most one EOL
-    -- between them, i.e. no blank line).
-    isAdjacent :: SrcSpan -> SrcSpan -> Bool
-    isAdjacent before after = spanStartLine after - spanEndLine before <= 1
 
     joinedDocText :: [Decl] -> Text
     joinedDocText cs = T.strip (T.intercalate "\n" (map oneDocText cs))

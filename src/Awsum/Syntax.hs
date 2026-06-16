@@ -8,6 +8,7 @@ module Awsum.Syntax
     SrcSpan (..),
     noSpan,
     spanBetween,
+    spansAdjacent,
     exprSpan,
     Program (..),
     ImportDecl (..),
@@ -68,6 +69,17 @@ noSpan = SrcSpan 0 0 0 0
 -- | Combine two spans into one covering both.
 spanBetween :: SrcSpan -> SrcSpan -> SrcSpan
 spanBetween a b = SrcSpan (spanStartLine a) (spanStartCol a) (spanEndLine b) (spanEndCol b)
+
+-- | True when no blank line separates @before@ from @after@: @after@ starts on
+--   the same line @before@ ends, or the very next one (@M - L <= 1@). The
+--   parser uses it to decide whether a comment attaches to the next
+--   declaration as its docstring; the formatter uses it to keep a run of
+--   source-adjacent top-level comments together instead of wedging a blank
+--   line between every line. Relies on a comment span ending /before/ its
+--   trailing newline (see 'Awsum.Parser.pTopComment'), so the off-by-one
+--   between "adjacent" and "one blank line apart" is honest.
+spansAdjacent :: SrcSpan -> SrcSpan -> Bool
+spansAdjacent before after = spanStartLine after - spanEndLine before <= 1
 
 -- | Extract the source span from an expression.
 exprSpan :: Expr -> SrcSpan

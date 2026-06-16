@@ -94,17 +94,32 @@ renderProgram Program {moduleComment, imports, decls} =
       Just txt -> "{-" <> pretty txt <> "-}" <> hardline <> hardline <> afterHeader
 
 -- | Group a type signature with the immediately following definition
---   (when they share the same name) so they render as a single block.
---   All other top-level items become their own blocks. Blocks are then
+--   (when they share the same name) so they render as a single block, and
+--   group a run of source-adjacent top-level comments (no blank line
+--   between them — e.g. a commented-out definition) into one block so the
+--   blank-line block separator doesn't wedge a gap between every line. All
+--   other top-level items become their own blocks. Blocks are then
 --   separated by a blank line by 'renderProgram'.
 groupDeclBlocks :: [Decl] -> [Doc ann]
 groupDeclBlocks = \case
   (sig@(Sig _ n _ _ _) : def@(FunDef _ n' _ _ _ _) : rest)
     | n == n' ->
         (declDoc sig <> hardline <> declDoc def) : groupDeclBlocks rest
+  (c@(CommentDecl _ _) : rest) ->
+    -- A blank line in the source breaks the run, so the author's paragraph
+    -- break between two comment blocks survives as a block boundary.
+    let (more, rest') = takeAdjacentComments (declSpan c) rest
+     in vsepHard (map declDoc (c : more)) : groupDeclBlocks rest'
   (d : rest) ->
     declDoc d : groupDeclBlocks rest
   [] -> []
+  where
+    takeAdjacentComments :: SrcSpan -> [Decl] -> ([Decl], [Decl])
+    takeAdjacentComments prev (c@(CommentDecl _ _) : rest)
+      | spansAdjacent prev (declSpan c) =
+          let (more, rest') = takeAdjacentComments (declSpan c) rest
+           in (c : more, rest')
+    takeAdjacentComments _ rest = ([], rest)
 
 -- | Render a single import (with optional leading comments and trailing comment).
 renderImport :: ImportDecl -> Doc ann

@@ -25,13 +25,9 @@ show c = case c of
   -- trailing case comment
 
 -- showAll : Color -> String
-
 -- showAll c = case c of
-
 --   Red -> "Red"
-
 --   Green -> "Green"
-
 --   Blue -> "Blue"
 
 {- before main sig -}
