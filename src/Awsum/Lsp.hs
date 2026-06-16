@@ -16,12 +16,24 @@
 --     cursor (markdown).
 module Awsum.Lsp
   ( runLspServer,
-    -- Internals exported for testing — the snapshot tests need to
-    -- drive 'hoverForPosition' end-to-end (parse → typecheck →
-    -- position lookup) on small fixtures without spinning up a real
-    -- LSP client.
+    runLspServerWithHandles,
+    -- Internals exported for testing. 'Awsum.HoverSpec' drives
+    -- 'hoverForPosition' on small fixtures; 'Awsum.LspSpec' drives the
+    -- rest of the request logic directly (formatting edits, diagnostics,
+    -- symbols, code actions, version check, client hints) and the whole
+    -- server end-to-end through 'runLspServerWithHandles'.
     compileToTypedProgram,
     hoverForPosition,
+    formatEdits,
+    compileToDiagnostics,
+    awsumDiagToLsp,
+    documentSymbolsForSource,
+    fixToCodeAction,
+    workspaceSymbolsForFile,
+    looksLikeSemver,
+    shouldWarnVersionMismatch,
+    extractClientHints,
+    ClientHints (..),
   )
 where
 
@@ -55,6 +67,7 @@ import Control.Lens ((^.))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as AesonKey
 import Data.Aeson.KeyMap qualified as AesonKeyMap
+import Data.Algorithm.Diff qualified as Diff
 import Data.Char (isDigit)
 import Data.List (minimumBy)
 import Data.Map.Strict qualified as Map
@@ -685,6 +698,13 @@ awsumSymbolToLsp (ASym.Symbol k n r sr cs) =
       _children = Just (map awsumSymbolToLsp cs)
     }
 
+-- | Source text → document symbols (outline). Empty on parse error —
+--   the same fallback the @textDocument/documentSymbol@ handler uses.
+documentSymbolsForSource :: Text -> [DocumentSymbol]
+documentSymbolsForSource src = case parseProgramDiagnostic src of
+  Left _ -> []
+  Right prog -> map awsumSymbolToLsp (ASym.symbolsOfProgram prog)
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Compile pipeline
 -- ════════════════════════════════════════════════════════════════════════════
@@ -846,66 +866,60 @@ checkVersionOnInitialized st = do
   hints <- liftIO $ readIORef (ssClientHints st)
   let compiler = ssCompilerVersion st
   whenJust (chExpectedAwsumVersion hints) $ \expectedVer ->
-    when
-      ( looksLikeSemver expectedVer
-          && looksLikeSemver compiler
-          && expectedVer
-          /= compiler
-      )
-      $ do
-        -- Both branches use @window/showMessageRequest@, not
-        -- @window/showMessage@: a /request/ stays visible until the
-        -- user actively dismisses, while a /notification/ is
-        -- transient and gets auto-cleared by clients like Zed within
-        -- a few seconds — too short to read, let alone click. The
-        -- two branches differ only in /how/ they surface the install
-        -- URL (button vs inline).
-        let installUrl :: Text
-            installUrl = "https://awsum-lang.org/install"
-            installLabel :: Text
-            installLabel = "Open install page"
-            preferButtons = chPreferButtonsOverLinks hints
-            messageBody :: Text
-            messageBody =
-              "Awsum version mismatch: the client expected awsum "
-                <> expectedVer
-                <> ", but this server is awsum "
-                <> compiler
-                <> ". Update awsum"
-                -- URL inline only when no working action button is
-                -- on offer. Otherwise it's redundant noise next to
-                -- the button.
-                <> (if preferButtons then "" else " (" <> installUrl <> ")")
-                <> " or install a matching client; behaviour may be unpredictable until they match."
-            -- Button on clients that have a working
-            -- @window/showDocument@ for external URLs (VS Code). For
-            -- clients without that capability (Zed today), no button:
-            -- a non-functional button is worse than none, and the
-            -- inline URL above carries the same payload.
-            actions = [MessageActionItem installLabel | preferButtons]
-            params =
-              ShowMessageRequestParams
-                { _type_ = MessageType_Warning,
-                  _message = messageBody,
-                  _actions = Just actions
-                }
-        void $ sendRequest SMethod_WindowShowMessageRequest params $ \case
-          Right (InL (MessageActionItem chosen))
-            | chosen == installLabel ->
-                -- Client picked the install action. Open the page in
-                -- the user's browser via the standard LSP show-doc
-                -- mechanism.
-                void
-                  $ sendRequest
-                    SMethod_WindowShowDocument
-                    ShowDocumentParams
-                      { _uri = Uri installUrl,
-                        _external = Just True,
-                        _takeFocus = Nothing,
-                        _selection = Nothing
-                      }
-                  $ const pass
-          _ -> pass
+    when (shouldWarnVersionMismatch expectedVer compiler) $ do
+      -- Both branches use @window/showMessageRequest@, not
+      -- @window/showMessage@: a /request/ stays visible until the
+      -- user actively dismisses, while a /notification/ is
+      -- transient and gets auto-cleared by clients like Zed within
+      -- a few seconds — too short to read, let alone click. The
+      -- two branches differ only in /how/ they surface the install
+      -- URL (button vs inline).
+      let installUrl :: Text
+          installUrl = "https://awsum-lang.org/install"
+          installLabel :: Text
+          installLabel = "Open install page"
+          preferButtons = chPreferButtonsOverLinks hints
+          messageBody :: Text
+          messageBody =
+            "Awsum version mismatch: the client expected awsum "
+              <> expectedVer
+              <> ", but this server is awsum "
+              <> compiler
+              <> ". Update awsum"
+              -- URL inline only when no working action button is
+              -- on offer. Otherwise it's redundant noise next to
+              -- the button.
+              <> (if preferButtons then "" else " (" <> installUrl <> ")")
+              <> " or install a matching client; behaviour may be unpredictable until they match."
+          -- Button on clients that have a working
+          -- @window/showDocument@ for external URLs (VS Code). For
+          -- clients without that capability (Zed today), no button:
+          -- a non-functional button is worse than none, and the
+          -- inline URL above carries the same payload.
+          actions = [MessageActionItem installLabel | preferButtons]
+          params =
+            ShowMessageRequestParams
+              { _type_ = MessageType_Warning,
+                _message = messageBody,
+                _actions = Just actions
+              }
+      void $ sendRequest SMethod_WindowShowMessageRequest params $ \case
+        Right (InL (MessageActionItem chosen))
+          | chosen == installLabel ->
+              -- Client picked the install action. Open the page in
+              -- the user's browser via the standard LSP show-doc
+              -- mechanism.
+              void
+                $ sendRequest
+                  SMethod_WindowShowDocument
+                  ShowDocumentParams
+                    { _uri = Uri installUrl,
+                      _external = Just True,
+                      _takeFocus = Nothing,
+                      _selection = Nothing
+                    }
+                $ const pass
+        _ -> pass
 
 -- | True iff the text is exactly an @A.B.C@ triple (digits only).
 --   Anything richer (pre-release tag, dirty git suffix) opts out of the
@@ -915,6 +929,16 @@ looksLikeSemver :: Text -> Bool
 looksLikeSemver t = case T.splitOn "." t of
   [a, b, c] -> not (any T.null [a, b, c]) && all (T.all isDigit) [a, b, c]
   _ -> False
+
+-- | Should the server warn about a client/compiler version mismatch?
+--   Only when both sides are @A.B.C@ release versions and they differ;
+--   a dev-mode (non-@A.B.C@) version on either side opts out.
+shouldWarnVersionMismatch :: Text -> Text -> Bool
+shouldWarnVersionMismatch expectedVer compiler =
+  looksLikeSemver expectedVer
+    && looksLikeSemver compiler
+    && expectedVer
+    /= compiler
 
 -- | Pull every recognised hint field out of @initializationOptions@,
 --   substituting defaults for absent / wrong-shape fields. Tolerant
@@ -988,36 +1012,23 @@ serverHandlers st =
                 qf <- fromMaybe [] (Map.lookup (uri, rangeKey (d ^. L.range)) fixesIdx)
               ]
         responder (Right (InL actions)),
-      -- Formatting: re-render via Awsum.Format. The whole-document edit
-      -- replaces the entire buffer; the client is expected to merge.
+      -- Formatting: re-render via Awsum.Format and return the minimal
+      -- list of line-range edits ('formatEdits') — never a whole-buffer
+      -- replace. An already-canonical document yields no edits, so the
+      -- client leaves the buffer (folds, cursor, undo) untouched, the
+      -- same way 'awsum format -i' skips an unchanged write.
       requestHandler SMethod_TextDocumentFormatting $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
         mtxt <- readDocText uri
         case mtxt of
           Nothing -> responder (Right (InR Null))
-          Just src -> case formatSource src of
-            -- Format failure (parse error) — return no edits rather than
-            -- erroring out; diagnostics already surfaced the parse problem.
-            Left _err -> responder (Right (InR Null))
-            Right formatted ->
-              responder
-                ( Right
-                    ( InL
-                        [TextEdit (wholeDocumentRange src) formatted]
-                    )
-                ),
+          Just src -> responder (Right (InL (formatEdits src))),
       -- Outline / breadcrumbs / symbol search inside a file.
       requestHandler SMethod_TextDocumentDocumentSymbol $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
         mtxt <- readDocText uri
         let syms :: [DocumentSymbol]
-            syms = case mtxt of
-              Nothing -> []
-              Just src -> case parseProgramDiagnostic src of
-                -- Parse error: outline is empty until the user fixes the
-                -- syntax. The diagnostics path tells them what's wrong.
-                Left _ -> []
-                Right prog -> map awsumSymbolToLsp (ASym.symbolsOfProgram prog)
+            syms = maybe [] documentSymbolsForSource mtxt
             -- lsp-types orders the union as `SymbolInformation[] | DocumentSymbol[] | null`
             -- (legacy alternative first, then DocumentSymbol[], then null).
             -- We always pick the DocumentSymbol[] branch.
@@ -1097,19 +1108,88 @@ mkWorkspaceEdit uri edits =
       _changeAnnotations = Nothing
     }
 
--- | A 'Range' covering the entire document text. Used by the formatter to
---   replace the buffer in one edit.
-wholeDocumentRange :: Text -> Range
-wholeDocumentRange src =
-  let ls = T.splitOn "\n" src
-      lastLineLen = maybe 0 T.length (viaNonEmpty last ls)
-      lineCount = length ls
-   in Range
-        (Position 0 0)
-        ( Position
-            (fromIntegral (max 0 (lineCount - 1)))
-            (fromIntegral lastLineLen)
-        )
+-- ════════════════════════════════════════════════════════════════════════════
+-- Formatting edits
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Source text → the 'TextEdit's that turn it into its canonical form.
+--   Empty list when the source is already canonical, or fails to parse
+--   (diagnostics already report the parse error). Returning targeted
+--   line-range edits rather than one whole-document replace lets the
+--   client leave untouched regions — and their folds, cursor, and undo
+--   history — alone, and gives an already-formatted buffer no edit at all
+--   (the LSP analogue of 'awsum format -i' skipping an unchanged write).
+formatEdits :: Text -> [TextEdit]
+formatEdits src = case formatSource src of
+  Left _err -> []
+  Right formatted
+    | formatted == src -> []
+    | otherwise -> diffEdits src formatted
+
+-- | Line-level diff of @src@ → @formatted@ as one 'TextEdit' per changed
+--   hunk. Each line is modelled with its own trailing newline
+--   ('linesWithNL') so a hunk's replacement is the plain concatenation of
+--   the formatted lines it introduces and every range start is a line
+--   start (@Position l 0@). The single non-line-start coordinate is the
+--   end of a hunk reaching a @src@ with no final newline: there the range
+--   ends just past the last character, counted in UTF-16 code units
+--   ('utf16Len') — the unit LSP 'Position' columns use, not the code
+--   points 'T.length' would give.
+--
+--   Invariant: applying the result to @src@ reproduces @formatted@.
+diffEdits :: Text -> Text -> [TextEdit]
+diffEdits src formatted = go 0 (Diff.getGroupedDiff srcLines fmtLines)
+  where
+    srcLines = linesWithNL src
+    fmtLines = linesWithNL formatted
+    srcCount = length srcLines
+    srcEndsInNewline = "\n" `T.isSuffixOf` src
+
+    -- End anchor for a hunk that consumed source lines up to index @j@
+    -- (0-based, exclusive): the start of line @j@ when it exists, the
+    -- end of the buffer otherwise.
+    endAt :: Int -> Position
+    endAt j
+      | j < srcCount = Position (fromIntegral j) 0
+      | srcEndsInNewline || srcCount == 0 = Position (fromIntegral srcCount) 0
+      | otherwise =
+          Position
+            (fromIntegral (srcCount - 1))
+            (utf16Len (fromMaybe "" (viaNonEmpty last srcLines)))
+
+    go :: Int -> [Diff.Diff [Text]] -> [TextEdit]
+    go _ [] = []
+    go s (Diff.Both common _ : rest) = go (s + length common) rest
+    go s groups =
+      let (deleted, added, rest) = takeHunk groups
+          end = s + length deleted
+          edit = TextEdit (Range (Position (fromIntegral s) 0) (endAt end)) (T.concat added)
+       in edit : go end rest
+
+    -- Fold the maximal run of non-'Both' groups into one hunk: 'First'
+    -- lines are deletions from @src@, 'Second' lines insertions from
+    -- @formatted@.
+    takeHunk :: [Diff.Diff [Text]] -> ([Text], [Text], [Diff.Diff [Text]])
+    takeHunk (Diff.First xs : rest) = let (dels, adds, r) = takeHunk rest in (xs <> dels, adds, r)
+    takeHunk (Diff.Second ys : rest) = let (dels, adds, r) = takeHunk rest in (dels, ys <> adds, r)
+    takeHunk rest = ([], [], rest)
+
+-- | Split text into lines that each keep their trailing newline, so
+--   @T.concat (linesWithNL t) == t@. The last element lacks a newline
+--   iff @t@ doesn't end in one; empty text yields no lines.
+linesWithNL :: Text -> [Text]
+linesWithNL t
+  | T.null t = []
+  | otherwise = case T.breakOn "\n" t of
+      (before, rest) -> case T.stripPrefix "\n" rest of
+        Just after -> (before <> "\n") : linesWithNL after
+        Nothing -> [before]
+
+-- | Length of a line in UTF-16 code units — the unit LSP 'Position'
+--   columns are measured in. A code point above the BMP (e.g. an emoji)
+--   is two code units; everything else is one.
+utf16Len :: Text -> UInt
+utf16Len = fromIntegral . T.foldl' (\n ch -> n + if ord ch > 0xFFFF then 2 else (1 :: Int)) 0
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Workspace symbol scan
@@ -1198,61 +1278,76 @@ workspaceSymbolsForFile q file = do
 runLspServer :: Text -> IO Int
 runLspServer compilerVersion = do
   st <- newServerState compilerVersion
-  runServer
-    ServerDefinition
-      { defaultConfig = (),
-        configSection = "awsum",
-        parseConfig = \_ _ -> Right (),
-        onConfigChange = const pass,
-        doInitialize = \env req -> do
-          -- Capture workspace folders for workspace/symbol scans.
-          let folders = case req ^. L.params . L.workspaceFolders of
-                Just (InL fs) -> [uriToFilePathOrEmpty (f ^. L.uri) | f <- fs]
-                _ -> case req ^. L.params . L.rootUri of
-                  InL u -> maybeToList (uriToFilePath u)
-                  _ -> case req ^. L.params . L.rootPath of
-                    Just (InL p) -> [toString p]
-                    _ -> []
-          writeIORef (ssWorkspaceRoots st) folders
-          -- Capture the client's hints (expected awsum version, UX
-          -- preference for the mismatch warning). Deferred to the
-          -- @initialized@ handler for the actual comparison — we
-          -- can't push notifications from within @doInitialize@.
-          writeIORef
-            (ssClientHints st)
-            (extractClientHints (req ^. L.params . L.initializationOptions))
-          pure (Right env),
-        staticHandlers = \_caps -> serverHandlers st,
-        interpretHandler = \env -> Iso (runLspT env) liftIO,
-        -- Explicitly advertise text-document synchronization. Without
-        -- this, VS Code (and other strict LSP clients) skip sending
-        -- didOpen / didChange / didSave / didClose entirely — the
-        -- server starts, capabilities respond, the client confirms,
-        -- and then no document ever arrives. Symbols/format/diagnostics
-        -- silently never fire because there's nothing to fire on.
-        options =
-          defaultOptions
-            { -- Advertise the compiler version. Editor extensions read
-              -- this from the `initialize` response's `serverInfo` and
-              -- warn the user when it doesn't match their own version
-              -- (lockstep `awsum-vscode A.B.C` ↔ `awsum A.B.C`).
-              optServerInfo = Just (ServerInfo "awsum" (Just compilerVersion)),
-              optTextDocumentSync =
-                Just
-                  TextDocumentSyncOptions
-                    { _openClose = Just True,
-                      -- Full-document sync is more bandwidth than
-                      -- Incremental on every keystroke, but our pipeline
-                      -- typechecks the whole file regardless — there's
-                      -- no incremental advantage server-side, and the
-                      -- code path is simpler.
-                      _change = Just TextDocumentSyncKind_Full,
-                      _willSave = Nothing,
-                      _willSaveWaitUntil = Nothing,
-                      _save = Just (InR (SaveOptions {_includeText = Just False}))
-                    }
-            }
-      }
+  runServer (serverDefinition st compilerVersion)
+
+-- | Run the server reading from @hin@ and writing to @hout@ instead of
+--   stdio, with logging silenced. Lets 'Awsum.LspSpec' drive a real
+--   server in-process over a pair of pipes ('lsp-test'), exercising the
+--   actual handler registration and JSON-RPC envelopes rather than only
+--   the extracted request logic.
+runLspServerWithHandles :: Handle -> Handle -> Text -> IO Int
+runLspServerWithHandles hin hout compilerVersion = do
+  st <- newServerState compilerVersion
+  runServerWithHandles mempty mempty hin hout (serverDefinition st compilerVersion)
+
+-- | The 'ServerDefinition' shared by the stdio and handle-driven entry
+--   points.
+serverDefinition :: ServerState -> Text -> ServerDefinition ()
+serverDefinition st compilerVersion =
+  ServerDefinition
+    { defaultConfig = (),
+      configSection = "awsum",
+      parseConfig = \_ _ -> Right (),
+      onConfigChange = const pass,
+      doInitialize = \env req -> do
+        -- Capture workspace folders for workspace/symbol scans.
+        let folders = case req ^. L.params . L.workspaceFolders of
+              Just (InL fs) -> [uriToFilePathOrEmpty (f ^. L.uri) | f <- fs]
+              _ -> case req ^. L.params . L.rootUri of
+                InL u -> maybeToList (uriToFilePath u)
+                _ -> case req ^. L.params . L.rootPath of
+                  Just (InL p) -> [toString p]
+                  _ -> []
+        writeIORef (ssWorkspaceRoots st) folders
+        -- Capture the client's hints (expected awsum version, UX
+        -- preference for the mismatch warning). Deferred to the
+        -- @initialized@ handler for the actual comparison — we
+        -- can't push notifications from within @doInitialize@.
+        writeIORef
+          (ssClientHints st)
+          (extractClientHints (req ^. L.params . L.initializationOptions))
+        pure (Right env),
+      staticHandlers = \_caps -> serverHandlers st,
+      interpretHandler = \env -> Iso (runLspT env) liftIO,
+      -- Explicitly advertise text-document synchronization. Without
+      -- this, VS Code (and other strict LSP clients) skip sending
+      -- didOpen / didChange / didSave / didClose entirely — the
+      -- server starts, capabilities respond, the client confirms,
+      -- and then no document ever arrives. Symbols/format/diagnostics
+      -- silently never fire because there's nothing to fire on.
+      options =
+        defaultOptions
+          { -- Advertise the compiler version. Editor extensions read
+            -- this from the `initialize` response's `serverInfo` and
+            -- warn the user when it doesn't match their own version
+            -- (lockstep `awsum-vscode A.B.C` ↔ `awsum A.B.C`).
+            optServerInfo = Just (ServerInfo "awsum" (Just compilerVersion)),
+            optTextDocumentSync =
+              Just
+                TextDocumentSyncOptions
+                  { _openClose = Just True,
+                    -- Full-document sync is more bandwidth than
+                    -- Incremental on every keystroke, but our pipeline
+                    -- typechecks the whole file regardless — there's
+                    -- no incremental advantage server-side, and the
+                    -- code path is simpler.
+                    _change = Just TextDocumentSyncKind_Full,
+                    _willSave = Nothing,
+                    _willSaveWaitUntil = Nothing,
+                    _save = Just (InR (SaveOptions {_includeText = Just False}))
+                  }
+          }
+    }
   where
     uriToFilePathOrEmpty :: Uri -> FilePath
     uriToFilePathOrEmpty u = fromMaybe "" (uriToFilePath u)

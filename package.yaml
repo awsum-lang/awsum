@@ -81,6 +81,7 @@ library:
     - aeson # for parsing initializationOptions JSON in Awsum.Lsp
     - bytestring # for JVM bytecode assembler
     - containers # for Data.Graph SCC analysis (unused-top-level warning)
+    - Diff # line-level diff for textDocument/formatting edits in Awsum.Lsp
     - directory # for workspace symbol scan in Awsum.Lsp
     - file-embed # for bundling stdlib/Prelude.aww into the compiler binary
     - filepath # for workspace symbol scan in Awsum.Lsp
@@ -202,6 +203,7 @@ tests:
       - filepath # for codegen tests
       - hspec # for unit tests
       - hspec-golden # for snapshot tests
+      - lsp-test # in-process end-to-end LSP tests (Awsum.LspSpec.EndToEnd) drive a real server over a pipe pair
       - lsp-types # for HoverSpec — it exercises Awsum.Lsp.hoverForPosition end-to-end and needs the LSP Position / Hover / MarkupContent record types
       - pretty-simple # for pretty-printing snapshots
       - process # for codegen tests

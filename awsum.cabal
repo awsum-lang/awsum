@@ -108,7 +108,8 @@ library
       OverloadedStrings
   ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
   build-depends:
-      aeson
+      Diff
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -212,6 +213,8 @@ test-suite awsum-test
       Awsum.HoverSpec
       Awsum.JvmFarBranchSpec
       Awsum.JvmMethodLimitSpec
+      Awsum.LspSpec
+      Awsum.LspSpec.EndToEnd
       Awsum.NoSimplifySpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
@@ -244,6 +247,7 @@ test-suite awsum-test
     , filepath
     , hspec
     , hspec-golden
+    , lsp-test
     , lsp-types
     , pretty-simple
     , process
