@@ -776,7 +776,7 @@
     (local i32)
     (local i32)
     (local i32)
-    i32.const 100000
+    i32.const 5000000
     call 8
     local.set 3
     block (result i32)
@@ -929,7 +929,7 @@
           call 13
           local.get 7
         else
-          i32.const 500
+          i32.const 25
           call 8
           local.get 11
           i32.load offset=4

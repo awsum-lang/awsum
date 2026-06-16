@@ -1,6 +1,6 @@
 Program
-    { moduleComment = Just " This demo program builds an immutable tree of depth 100_000,
-         mirrors it 500 times (causing heavy allocation pressure),
+    { moduleComment = Just " This demo program builds an immutable tree of depth 5_000_000,
+         mirrors it 25 times (causing allocation pressure),
          and displays the deepest value on the left path.
 
          Every recursion shape is stack-safe on every target, including JVM and JS
@@ -405,7 +405,7 @@ Program
                         { spanStartLine = 22
                         , spanStartCol = 3
                         , spanEndLine = 22
-                        , spanEndCol = 28
+                        , spanEndCol = 30
                         }
                     )
                     ( PVar
@@ -422,7 +422,7 @@ Program
                             { spanStartLine = 22
                             , spanStartCol = 11
                             , spanEndLine = 22
-                            , spanEndCol = 28
+                            , spanEndCol = 30
                             }
                         )
                         ( EVar
@@ -440,10 +440,10 @@ Program
                                 { spanStartLine = 22
                                 , spanStartCol = 21
                                 , spanEndLine = 22
-                                , spanEndCol = 28
+                                , spanEndCol = 30
                                 }
                             )
-                            ( LInt 100000 )
+                            ( LInt 5000000 )
                         )
                     )
                 , DoBind
@@ -451,7 +451,7 @@ Program
                         { spanStartLine = 23
                         , spanStartCol = 3
                         , spanEndLine = 23
-                        , spanEndCol = 31
+                        , spanEndCol = 30
                         }
                     )
                     ( PVar
@@ -468,7 +468,7 @@ Program
                             { spanStartLine = 23
                             , spanStartCol = 15
                             , spanEndLine = 23
-                            , spanEndCol = 31
+                            , spanEndCol = 30
                             }
                         )
                         ( EApp
@@ -476,7 +476,7 @@ Program
                                 { spanStartLine = 23
                                 , spanStartCol = 15
                                 , spanEndLine = 23
-                                , spanEndCol = 27
+                                , spanEndCol = 26
                                 }
                             )
                             ( EVar
@@ -494,18 +494,18 @@ Program
                                     { spanStartLine = 23
                                     , spanStartCol = 23
                                     , spanEndLine = 23
-                                    , spanEndCol = 27
+                                    , spanEndCol = 26
                                     }
                                 )
-                                ( LInt 500 )
+                                ( LInt 25 )
                             )
                         )
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 23
-                                , spanStartCol = 27
+                                , spanStartCol = 26
                                 , spanEndLine = 23
-                                , spanEndCol = 31
+                                , spanEndCol = 30
                                 }
                             )
                             ( QName [] "tree" )
@@ -2225,7 +2225,7 @@ Program
                 { spanStartLine = 52
                 , spanStartCol = 1
                 , spanEndLine = 56
-                , spanEndCol = 54
+                , spanEndCol = 48
                 }
             ) "mirrorN"
             [ Param
@@ -2250,7 +2250,7 @@ Program
                     { spanStartLine = 52
                     , spanStartCol = 19
                     , spanEndLine = 56
-                    , spanEndCol = 54
+                    , spanEndCol = 48
                     }
                 )
                 ( EApp
@@ -2489,7 +2489,7 @@ Program
                                 )
                             ]
                         )
-                        ( Just " heavy allocation pressure" )
+                        ( Just " allocation pressure" )
                     ]
                 ) []
             ) Nothing Nothing

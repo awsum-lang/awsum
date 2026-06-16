@@ -236,7 +236,7 @@ L_join2:
 .method static v_runDemo()Ljava/lang/Object;
   .limit stack 8
   .limit locals 8
-  ldc 100000
+  ldc 5000000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   astore_0
   aload_0
@@ -368,7 +368,7 @@ L_jbody4:
   aload_1
   goto L_join9
 L_arm10:
-  sipush 500
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aload_1
   checkcast [Ljava/lang/Object;

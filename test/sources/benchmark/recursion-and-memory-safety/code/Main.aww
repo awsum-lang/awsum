@@ -1,5 +1,5 @@
-{- This demo program builds an immutable tree of depth 100_000,
-   mirrors it 500 times (causing heavy allocation pressure),
+{- This demo program builds an immutable tree of depth 5_000_000,
+   mirrors it 25 times (causing allocation pressure),
    and displays the deepest value on the left path.
 
    Every recursion shape is stack-safe on every target, including JVM and JS
@@ -19,8 +19,8 @@ main = case runDemo of
 
 runDemo : Either UnderflowError Int32
 runDemo = do
-  tree <- buildTree 100_000
-  mirrored <- mirrorN 500 tree
+  tree <- buildTree 5_000_000
+  mirrored <- mirrorN 25 tree
   Right (deepestLeftA 0 mirrored)
 
 buildTree : Int32 -> Either UnderflowError (Tree Int32)
@@ -53,7 +53,7 @@ mirrorN times t = case eqInt32 times 0 of
   True -> Right t
   False -> do
     m <- predInt32 times
-    mirrorN m (mirror t) -- heavy allocation pressure
+    mirrorN m (mirror t) -- allocation pressure
 
 deepestLeftA : a -> Tree a -> a
 deepestLeftA lastV t = case t of
