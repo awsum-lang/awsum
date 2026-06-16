@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":10,"startCol":8,"endLine":10,"endCol":20,"message":"Type annotations on top-level parameters are not allowed: the parameter type comes from the function's signature. Drop the annotation.","fixes":[]}]

@@ -331,6 +331,30 @@ data TypeError
     --   collision, so 'typeErrorSpan' prefers it over the labels'
     --   usage spans. The message names both labels regardless.
     RowTagCollision Type' Type' Word32 (Maybe SrcSpan)
+  | -- | A @case@ arm on a nominal scrutinee used a non-constructor
+    --   pattern. Nominal sums are matched by enumerating constructors:
+    --   a @(x : T)@ ascription pattern only discriminates a
+    --   structural-sum scrutinee, and binding the whole value (a
+    --   catch-all) is not allowed. Carries the offending pattern's span
+    --   and the scrutinee type. Replaces a span-less internal error that
+    --   used to localise to @1:1@; also reached by the desugared forms
+    --   @let (x : T) = e@ and a nominal-typed @\\(x : T) -> e@ that the
+    --   lambda-annotation path does not claim.
+    NonConstructorNominalArm SrcSpan Type'
+  | -- | A lambda parameter annotation @\\(x : T) -> …@ disagreed with
+    --   the parameter type the surrounding context requires. Carries the
+    --   annotation span, the annotated type, and the expected type.
+    LambdaParamAnnotationMismatch SrcSpan Type' Type'
+  | -- | A type annotation on a top-level definition's parameter
+    --   (@f (x : T) = …@). The parameter type is fixed by the mandatory
+    --   signature, so the annotation is a redundant restatement that can
+    --   only agree or conflict — rejected. Lambdas (which have no
+    --   signature) accept the annotation; top-level definitions do not.
+    TopLevelParamAnnotation SrcSpan
+  | -- | A destructuring parameter was type-ascribed
+    --   (@\\((Tuple2 a b) : T) -> …@). Mirrors 'PatternLetAscription':
+    --   ascribe a simple binder, or destructure without an annotation.
+    AscribedDestructuringParam SrcSpan
   deriving stock (Show, Eq)
 
 -- | If @e@ is a fully-applied constructor expression
@@ -428,6 +452,10 @@ typeErrorSpan = \case
           Nothing -> case realSp (typeSpan l2) of
             Just sp -> Just sp
             Nothing -> realSp (typeSpan l1)
+  NonConstructorNominalArm sp _ -> Just sp
+  LambdaParamAnnotationMismatch sp _ _ -> Just sp
+  TopLevelParamAnnotation sp -> Just sp
+  AscribedDestructuringParam sp -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -574,6 +602,27 @@ prettyPrintTypeError = \case
       <> toText (showHex32 tag)
       <> ". Rename one of them so the runtime can tell row "
       <> "alternatives apart."
+  NonConstructorNominalArm _ ty ->
+    "Case on a nominal type requires constructor patterns. A '(x : T)' "
+      <> "ascription pattern discriminates a structural-sum scrutinee, "
+      <> "not a nominal type like "
+      <> showType ty
+      <> "; binding the whole value (a catch-all) is not allowed. Match "
+      <> "each constructor."
+  LambdaParamAnnotationMismatch _ annotated expected ->
+    "Lambda parameter annotated as "
+      <> showType annotated
+      <> " but the surrounding context requires "
+      <> showType expected
+      <> "."
+  TopLevelParamAnnotation _ ->
+    "Type annotations on top-level parameters are not allowed: the "
+      <> "parameter type comes from the function's signature. Drop the "
+      <> "annotation."
+  AscribedDestructuringParam _ ->
+    "A destructuring parameter cannot be type-ascribed. Annotate a "
+      <> "simple binder ('\\(x : T) -> …') or destructure without an "
+      <> "annotation ('\\(Tuple2 a b) -> …')."
   where
     showType :: Type' -> Text
     showType = \case
@@ -985,6 +1034,16 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
       $ when (length argTys /= length args)
       $ Left (ArityMismatch sp n (length argTys) (length args))
 
+    -- A type annotation on a top-level parameter (@f (x : T) = …@) is
+    -- rejected: the parameter type is fixed by the mandatory signature,
+    -- so the annotation can only restate or contradict it. (Destructuring
+    -- params are already rewritten to a @case@ by 'Awsum.Desugar'; only
+    -- annotation params survive as a 'ParamPat' here.) Lambdas keep the
+    -- annotation — see 'resolveLamParamsChecked'.
+    forM_ args $ \case
+      ParamPat psp (PAscribe {}) -> Left (TopLevelParamAnnotation psp)
+      _ -> Right ()
+
     -- For built-in alias-form decls, check the builtin's registered type
     -- against the declared signature up-front. If they disagree, surface
     -- a dedicated 'BuiltInTypeMismatch' (with both spans) rather than the
@@ -1204,6 +1263,74 @@ checkNoShadow env crossModuleExempt = foldM_ addOne env
       | otherwise =
           Right (M.insert (qLocal n) (TyCon noSpan "<binder>") acc)
 
+-- | A lambda parameter after classification: a plain binder (@x@ / @_@)
+--   or an annotated binder @(x : T)@ / @(_ : T)@. 'Awsum.Desugar'
+--   rewrites destructuring @ParamPat@s (@\\(Tuple2 a b) -> …@) to a
+--   @case@ before typecheck, but passes annotation @ParamPat@s through
+--   untouched — a top-down parameter type for a lambda has no other
+--   surface form. Each clause that types an 'ELam' classifies its
+--   params through this, so the three sites (check, spine, synthesis)
+--   stay in step.
+data LamParam
+  = LamPlain SrcSpan Name
+  | LamAnnot SrcSpan Name Type'
+
+classifyLamParam :: Param -> Either TypeError LamParam
+classifyLamParam = \case
+  Param sp n -> Right (LamPlain sp n)
+  ParamPat sp (PAscribe _ (PVar _ n) annT) -> Right (LamAnnot sp n annT)
+  ParamPat sp (PAscribe _ (PWild _) annT) -> Right (LamAnnot sp "_" annT)
+  ParamPat sp (PAscribe {}) -> Left (AscribedDestructuringParam sp)
+  -- Defensive: destructuring @ParamPat@s are rewritten to a @case@ by
+  -- 'Awsum.Desugar' before typecheck, so any other shape reaching here
+  -- is an internal pipeline error.
+  ParamPat sp _ ->
+    Left (TELowering ("internal: un-desugared parameter pattern at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+
+lamParamName :: LamParam -> Name
+lamParamName (LamPlain _ n) = n
+lamParamName (LamAnnot _ n _) = n
+
+lamParamSpan :: LamParam -> SrcSpan
+lamParamSpan (LamPlain sp _) = sp
+lamParamSpan (LamAnnot sp _ _) = sp
+
+-- | No-shadow entries for a lambda's params. A bare @_@ binds nothing
+--   (so repeated @\\_ _ -> …@ does not self-collide); every other name
+--   — including @_foo@, which is bound but unreferenceable — is checked.
+lamParamShadowEntries :: [LamParam] -> [(SrcSpan, Name)]
+lamParamShadowEntries =
+  mapMaybe (\lp -> if lamParamName lp == "_" then Nothing else Just (lamParamSpan lp, lamParamName lp))
+
+-- | Resolve classified params against the expected param types from the
+--   surrounding context (check / spine modes). A plain binder takes the
+--   expected type; an annotated binder must unify with it — a mismatch
+--   is 'LambdaParamAnnotationMismatch' pointing at the annotation. The
+--   binder is bound at the /resolved/ type @applySubst s annT@ (the more
+--   concrete of the two), so the body sees the annotated type and a
+--   wrong body use is reported inside the lambda rather than at a
+--   sibling argument. The accumulated substitution is returned so the
+--   caller can pin a context type variable the annotation resolves — in
+--   the spine, that lets @apply (\\(n : Int32) -> …) 5@ check @5@ against
+--   @Int32@. The substitution threads left-to-right across params so
+--   shared variables (@\\(x : a) (y : a) -> …@) stay consistent.
+resolveLamParamsChecked :: [LamParam] -> [Type'] -> Check ([(Name, Type')], [TParam], Subst)
+resolveLamParamsChecked = go mempty [] []
+  where
+    go s accB accT (lp : lps) (ty0 : tys) =
+      let ty = applySubst s ty0
+       in case lp of
+            LamPlain sp n -> go s ((n, ty) : accB) (TParam sp ty n : accT) lps tys
+            LamAnnot sp n annT -> case unify (applySubst s annT) ty of
+              Right s2 ->
+                let s' = s2 <> s
+                    rt = applySubst s' annT
+                 in go s' ((n, rt) : accB) (TParam sp rt n : accT) lps tys
+              Left _ -> throwTE (LambdaParamAnnotationMismatch sp annT ty)
+    -- 'lps' and 'tys' always have equal length (both derived from the
+    -- same parameter list); the base case fires when both are empty.
+    go s accB accT _ _ = pure (reverse accB, reverse accT, s)
+
 -- | Check that an expression has the given expected type.
 --
 -- Used at the /boundary/ where the expected type is known — currently the
@@ -1232,13 +1359,16 @@ checkExpr conEnv tcm crossExempt env expected = \case
     (paramTypes, resultTy) <- case zipParamsToArrow expected (length params) of
       Just split -> pure split
       Nothing -> throwTE (LambdaShapeMismatch sp expected (length params))
+    lps <- liftEither (mapM classifyLamParam params)
     -- Reject parameters that shadow existing bindings.
-    liftEither (checkNoShadow env crossExempt [(s, n) | Param s n <- params])
-    let bindings = zip (map paramName params) paramTypes
-        env' = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
-    bodyE <- checkExpr conEnv tcm crossExempt env' resultTy body
-    let tparams = [TParam (paramSpan p) t (paramName p) | (p, t) <- zip params paramTypes]
-    pure (TLam sp expected tparams bodyE)
+    liftEither (checkNoShadow env crossExempt (lamParamShadowEntries lps))
+    -- A @(x : T)@ param must agree with the expected type; a plain param
+    -- takes it directly. Any substitution the annotations resolve is
+    -- pushed into the result type before checking the body.
+    (bindings, tparams, s) <- resolveLamParamsChecked lps paramTypes
+    let env' = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+    bodyE <- checkExpr conEnv tcm crossExempt env' (applySubst s resultTy) body
+    pure (TLam sp (applySubst s expected) tparams bodyE)
   -- 'do'-blocks are rewritten to nested 'bindEither' / 'case' by
   -- 'Awsum.Desugar' before typechecking — both the lowering path and
   -- the LSP trace path desugar first, so no 'EDo' reaches here. The
@@ -1561,12 +1691,17 @@ checkExpr conEnv tcm crossExempt env expected = \case
         (paramTypes, resultTy) <- case zipParamsToArrow argExpected (length params) of
           Just split -> pure split
           Nothing -> throwTE (LambdaShapeMismatch sp argExpected (length params))
-        liftEither (checkNoShadow env' crossExempt [(s, n) | Param s n <- params])
-        let paramBindings = zip (map paramName params) paramTypes
-            envInner = M.union (M.fromList [(qLocal n, t) | (n, t) <- paramBindings]) env'
-        (bodyE, s) <- checkArgSubst cEnv tcm' envInner resultTy body
-        let tparams = [TParam (paramSpan p) t (paramName p) | (p, t) <- zip params paramTypes]
-        pure (TLam sp argExpected tparams bodyE, s)
+        lps <- liftEither (mapM classifyLamParam params)
+        liftEither (checkNoShadow env' crossExempt (lamParamShadowEntries lps))
+        -- The annotations' substitution is returned with the body's, so a
+        -- context variable an annotation pins (apply's @a@ in
+        -- @apply (\\(n : Int32) -> …) 5@) is visible to sibling arguments
+        -- the spine checks after this one.
+        (paramBindings, tparams, sParams) <- resolveLamParamsChecked lps paramTypes
+        let envInner = M.union (M.fromList [(qLocal n, t) | (n, t) <- paramBindings]) env'
+        (bodyE, sBody) <- checkArgSubst cEnv tcm' envInner (applySubst sParams resultTy) body
+        let s = sBody <> sParams
+        pure (TLam sp (applySubst s argExpected) tparams bodyE, s)
       arg -> do
         argE <- checkExpr cEnv tcm' crossExempt env' argExpected arg
         -- The synthesised type is used only for spine-subst chaining;
@@ -1594,7 +1729,16 @@ argSubstT :: Type' -> TExpr -> Subst
 argSubstT expected = \case
   TLam _ _ params body ->
     case zipParamsToArrow expected (length params) of
-      Just (_, resultTy) -> argSubstT resultTy body
+      Just (paramTys, resultTy) ->
+        -- Recover what the params pin on the callee's tyvars before
+        -- descending into the body. For a plain param the typed param's
+        -- type already /is/ the expected one, so this unifies to nothing;
+        -- an annotated param @\\(n : Int32) -> …@ carries the concrete
+        -- annotation, which pins the callee's @a@ — letting a sibling
+        -- bare-literal argument (@apply (\\(n : Int32) -> …) 5@) be checked
+        -- against that concrete type rather than an open variable.
+        let sParams = mconcat (zipWith (\pty (TParam _ pt _) -> fromRight mempty (unify pty pt)) paramTys params)
+         in sParams <> argSubstT (applySubst sParams resultTy) body
       Nothing -> mempty
   e -> fromRight mempty (unify expected (texprType e))
 
@@ -1991,17 +2135,25 @@ typeOfExpr conEnv tcm env = \case
   -- polymorphism for closed lambdas without the full HM-monad
   -- threading.
   ELam sp params body -> do
-    liftEither (checkNoShadow env S.empty [(s, n) | Param s n <- params])
+    lps <- liftEither (mapM classifyLamParam params)
+    liftEither (checkNoShadow env S.empty (lamParamShadowEntries lps))
+    -- In synthesis position no expected type flows in, so a plain param
+    -- gets a fresh (span-suffixed, so distinct uses of a polymorphic
+    -- lambda don't interact) tyvar. An annotated param contributes its
+    -- annotation as the parameter type instead — the only way to pin a
+    -- synthesis-position lambda's input (e.g. @let f = \\(n : Int32) -> …@)
+    -- without spelling out the whole arrow, since body-driven
+    -- constraints are not threaded back into the arrow type here.
     let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
-        paramTys =
-          [ TyVar pSp (n <> suffix)
-          | Param pSp n <- params
-          ]
-        bindings = zip (map paramName params) paramTys
+        resolveSynth (LamPlain pSp n) = (pSp, n, TyVar pSp (n <> suffix))
+        resolveSynth (LamAnnot pSp n annT) = (pSp, n, annT)
+        resolved = map resolveSynth lps
+        paramTys = [t | (_, _, t) <- resolved]
+        bindings = [(n, t) | (_, n, t) <- resolved]
         env' = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
     bodyE <- typeOfExpr conEnv tcm env' body
     let arrowTy = foldr (TyArrow noSpan) (texprType bodyE) paramTys
-        tparams = [TParam (paramSpan p) t (paramName p) | (p, t) <- zip params paramTys]
+        tparams = [TParam pSp t n | (pSp, n, t) <- resolved]
     pure (TLam sp arrowTy tparams bodyE)
   -- 'let n = e in body' (or 'let n : T = e in body'): if the user
   -- provided an annotation, check @e@ against it and bind @n@ at
@@ -2147,8 +2299,8 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
         bodyE <- runBody envWithBindings body
         let talt = TAlt (elabPattern conEnv (PCon patSp cName pats) scrutTy) bodyE
         pure (talts <> [talt], patterns <> [currentPattern])
-      _ ->
-        throwTE (TELowering "only constructor patterns are supported")
+      other ->
+        throwTE (NonConstructorNominalArm (patternSpan other) scrutTy)
 
 -- | Specialised case-arm handling for structural-sum scrutinees. A row
 --   case accepts 'PAscribe' arms (one per row label, exhaustive) and
@@ -2416,6 +2568,15 @@ collectPatternVars = concatMap go
     go (PWild _) = []
     go (PCon _ _ inner) = concatMap go inner
     go (PAscribe _ inner _) = go inner
+
+-- | The source span of a pattern's own node (constructor name,
+--   identifier, underscore, or the whole parenthesised ascription).
+patternSpan :: Pattern -> SrcSpan
+patternSpan = \case
+  PCon sp _ _ -> sp
+  PVar sp _ -> sp
+  PWild sp -> sp
+  PAscribe sp _ _ -> sp
 
 -- | Build a typed pattern ('TPattern') from a surface 'Pattern' and the
 --   type it matches. Mirrors 'patternBindings'\'s recursion: a 'PCon'

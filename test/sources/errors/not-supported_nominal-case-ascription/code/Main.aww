@@ -1,0 +1,13 @@
+{- A `(x : T)` ascription pattern discriminates an alternative of a
+   structural-sum scrutinee; it is not a way to bind a nominal-typed
+   scrutinee. A `case` on a nominal type (`Bool` here) must match its
+   constructors. -}
+
+import IO.Stdout
+
+describe : Bool -> String
+describe b = case b of
+  (holds : Bool) -> showBool holds
+
+main : IO Never Unit
+main = IO.Stdout.print (describe True)

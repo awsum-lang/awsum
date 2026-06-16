@@ -1,0 +1,23 @@
+{- Lambda parameter type annotation `\(n : Int32) -> …`. A `let`-bound
+   lambda is in synthesis position, where no expected type flows in, so
+   the annotation supplies the parameter type: `double 5` then checks the
+   bare literal against `Int32` and the result type stays inferred.
+   Without the annotation the parameter would be an unsolved variable and
+   `5` would be rejected. Prints `10`. -}
+
+import IO.Stdout
+
+res : Either (UnderflowError | OverflowError) String
+res =
+  let double = \(n : Int32) -> addInt32 n n
+   in mapRight (double 5) showInt32
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"

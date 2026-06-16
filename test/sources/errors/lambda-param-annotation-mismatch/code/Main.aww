@@ -1,0 +1,12 @@
+{- A lambda parameter annotation must agree with the type the context
+   requires. Here `applyInt` expects an `Int32 -> String` function, but
+   the lambda annotates its parameter as `String`, so the annotation and
+   the expected parameter type disagree. -}
+
+import IO.Stdout
+
+applyInt : (Int32 -> String) -> String
+applyInt f = f 7
+
+main : IO Never Unit
+main = IO.Stdout.print (applyInt (\(s : String) -> s))

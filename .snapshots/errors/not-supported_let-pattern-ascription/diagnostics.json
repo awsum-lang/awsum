@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":10,"startCol":7,"endLine":10,"endCol":22,"message":"Case on a nominal type requires constructor patterns. A '(x : T)' ascription pattern discriminates a structural-sum scrutinee, not a nominal type like Bool; binding the whole value (a catch-all) is not allowed. Match each constructor.","fixes":[]}]

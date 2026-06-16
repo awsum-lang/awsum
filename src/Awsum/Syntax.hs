@@ -126,16 +126,20 @@ data Comment
 --
 --   The two constructors mirror the two surface shapes:
 --
---     * @Param sp n@ — a plain name (@f x = …@). The common case;
---       the typechecker and lowering only ever see this variant.
---     * @ParamPat sp pat@ — a destructuring pattern
---       (@f (Tuple3 a b c) = …@). The 'Awsum.Desugar' pass
---       rewrites every 'ParamPat' to a fresh 'Param' plus a
---       single-arm 'ECase' wrapping the body, so by the time the
---       AST reaches typecheck only 'Param' remains. Keeping
---       'ParamPat' in the AST (rather than desugaring at parse
---       time) lets the renderer round-trip the original source
---       shape.
+--     * @Param sp n@ — a plain name (@f x = …@). The common case.
+--     * @ParamPat sp pat@ — a parens-wrapped pattern. Two sub-shapes,
+--       which 'Awsum.Desugar' treats differently:
+--         - A /destructuring/ pattern (@f (Tuple3 a b c) = …@) is
+--           rewritten to a fresh 'Param' plus a single-arm 'ECase'
+--           wrapping the body, so it never reaches typecheck.
+--         - A /type-ascription/ pattern @(x : T)@ is a parameter
+--           annotation, not a destructure; it is passed through to the
+--           typechecker, which resolves it against the param type from
+--           context (lambda) or rejects it (top-level def). It is
+--           reduced to a plain typed param ('TParam') at the typed-AST
+--           boundary, so lowering still only ever sees simple params.
+--       Keeping 'ParamPat' in the surface AST (rather than desugaring at
+--       parse time) lets the renderer round-trip the original shape.
 data Param
   = Param SrcSpan Name
   | ParamPat SrcSpan Pattern

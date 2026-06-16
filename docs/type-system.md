@@ -18,7 +18,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 | Implicit injection into a row        | done                                                          |
 | `do`-notation for `Either`           | done                                                          |
 | `IO e a` as lazy data + `bindIO`/`mapIO` | done                                                       |
-| Lambda expressions `\x -> e`         | done — closed lambdas, `do`-block continuations, and closures over outer parameters |
+| Lambda expressions `\x -> e`         | done — closed lambdas, `do`-block continuations, closures over outer parameters, and parameter type annotations `\(x : T) -> e` |
 | Open-row `(A \| r) ~ (A \| B \| r')` | partial — singleton tyvar / row only                          |
 | Row-typed `let`-generalisation       | not yet — every top-level def needs a signature               |
 | Type classes / dispatch              | not yet — `do` is hard-coded to `Either`                      |
@@ -229,6 +229,20 @@ both n s =
 ```
 
 The same path covers a lambda as the head of an application (`(\x -> x) 5`). Top-level definitions still need an explicit signature — `noContext = \n -> n` is rejected for the missing signature, not the lambda.
+
+**Parameter type annotations.** A lambda parameter may carry its type: `\(n : T) -> e`. In synthesis position — a `let`-bound lambda, or one passed to a polymorphic HOF — this is load-bearing: the parameter would otherwise be an unsolved variable (body-driven constraints are not threaded back into the arrow), and the annotation supplies the type. It pins only the input, leaving the result inferred — the one form that does so without restating the whole arrow:
+
+```awsum
+-- ok: '(n : Int32)' pins the input; the 'Either (…) Int32' result is inferred.
+doubled : Either (UnderflowError | OverflowError) Int32
+doubled =
+  let double = \(n : Int32) -> addInt32 n n
+   in double 5
+```
+
+The annotation also pins a higher-order callee's type variable, so a sibling bare literal resolves: `apply (\(n : Int32) -> addInt32 n n) 5` checks `5` against `Int32`. In **check** position, where context already fixes the parameter type, the annotation is verified against it — a disagreement (`applyInt (\(s : String) -> s)` where `applyInt` expects `Int32 -> _`) is rejected at the annotation.
+
+The inner pattern must be a simple binder (`(n : T)` or `(_ : T)`); an ascribed destructure (`\((Tuple2 a b) : T) -> …`) is rejected — destructure without an annotation instead. Top-level definition parameters do **not** take annotations: `f (n : Int32) = …` is rejected because the parameter type already comes from `f`'s mandatory signature.
 
 **Closures.** A lambda may close over an outer-function parameter; the captured value follows the lambda wherever it flows.
 

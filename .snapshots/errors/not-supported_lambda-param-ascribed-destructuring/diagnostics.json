@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":14,"startCol":44,"endLine":14,"endCol":64,"message":"A destructuring parameter cannot be type-ascribed. Annotate a simple binder ('\\(x : T) -> …') or destructure without an annotation ('\\(Tuple2 a b) -> …').","fixes":[]}]

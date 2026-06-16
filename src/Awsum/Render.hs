@@ -551,6 +551,10 @@ renderParam (Param _ n) = pretty n
 -- canonicalises @(x)@ back to a bare binder); render it without
 -- parens so the formatter is idempotent at the text level.
 renderParam (ParamPat _ (PVar _ n)) = pretty n
+-- A type-ascription parameter @(x : T)@ is already self-parenthesised
+-- by 'renderPattern' (the @PAscribe@ case wraps in parens), so adding
+-- another pair would print @((x : T))@.
+renderParam (ParamPat _ p@(PAscribe {})) = renderPattern p
 renderParam (ParamPat _ pat) = "(" <> renderPattern pat <> ")"
 
 -- | Renderer-side companion: @True@ iff the rendered text spans

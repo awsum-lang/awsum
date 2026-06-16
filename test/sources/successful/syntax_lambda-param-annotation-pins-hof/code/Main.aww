@@ -1,0 +1,23 @@
+{- A lambda parameter annotation pins a higher-order function's type
+   variable. In `apply (\(n : Int32) -> addInt32 n n) 5` the annotation
+   fixes `apply`'s `a` to `Int32`, so the sibling bare literal `5` is
+   checked against `Int32`. Without the annotation `a` stays open and `5`
+   is rejected. Prints `10`. -}
+
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+res : Either (UnderflowError | OverflowError) String
+res = mapRight (apply (\(n : Int32) -> addInt32 n n) 5) showInt32
+
+main : IO Never Unit
+main = eitherToIO res
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"
