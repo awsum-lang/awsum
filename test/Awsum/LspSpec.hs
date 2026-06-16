@@ -174,6 +174,7 @@ columnConversionSpec = describe "span (display width) ↔ LSP Position (UTF-16)"
     -- columns must survive display → UTF-16 → display unchanged (the hover
     -- handler converts the client's UTF-16 cursor back to a span column).
     let line = toText [chr 0x732B, 'x', chr 0x1D400, 'y']
+        boundaries :: [Int]
         boundaries = [1, 3, 4, 5, 6]
     map (Width.utf16ColToDisplay line . Width.displayColToUtf16 line) boundaries
       `shouldBe` boundaries
