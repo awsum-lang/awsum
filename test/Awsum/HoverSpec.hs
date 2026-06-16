@@ -32,7 +32,7 @@ hoverAt src position = do
   prog <- case parseProgram src of
     Left _ -> Nothing
     Right p -> Just p
-  Hover (InL (MarkupContent _ md)) _ <- hoverForPosition (compileToTypedProgram src) prog position
+  Hover (InL (MarkupContent _ md)) _ <- hoverForPosition (lines src) (compileToTypedProgram src) prog position
   pure md
 
 spec :: Spec

@@ -60,6 +60,7 @@ import Awsum.TExpr
     tdeclName,
   )
 import Awsum.Typing (emptyTypeNamesInProgram, markEmptyTypesInDecl, typecheckProgram)
+import Awsum.Width qualified as Width
 import Common.File (readFileTextUtf8)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (catch)
@@ -163,16 +164,32 @@ newServerState compilerVersion =
 -- Awsum ↔ LSP type conversions
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Awsum spans are 1-based @(line, col)@; LSP 'Range's are 0-based
---   @(line, character)@. The @-1@ shift is the only translation needed.
-spanToRange :: ASyn.SrcSpan -> Range
-spanToRange (ASyn.SrcSpan sl sc el ec) =
+-- | Document text split on newlines; 1-based span line numbers index into
+--   it. Carried by every range producer because the column-unit conversion
+--   below needs the source line.
+type SrcLines = [Text]
+
+docLines :: Text -> SrcLines
+docLines = lines
+
+-- | Awsum spans are 1-based @(line, col)@ with columns in /display width/
+--   (Megaparsec advances two columns per wide character — see "Awsum.Width");
+--   LSP 'Range's are 0-based @(line, character)@ with @character@ in /UTF-16
+--   code units/. Lines just shift by one; columns convert through the source
+--   line, because display width and UTF-16 width can't be turned into one
+--   another without it (display width 2 is one wide char or two narrow ones).
+spanToRange :: SrcLines -> ASyn.SrcSpan -> Range
+spanToRange ls (ASyn.SrcSpan sl sc el ec) =
   Range
-    (Position (toUInt (sl - 1)) (toUInt (sc - 1)))
-    (Position (toUInt (el - 1)) (toUInt (ec - 1)))
+    (Position (line sl) (character sl sc))
+    (Position (line el) (character el ec))
   where
-    toUInt :: Int -> UInt
-    toUInt = fromIntegral . max 0
+    line :: Int -> UInt
+    line n = fromIntegral (max 0 (n - 1))
+    character :: Int -> Int -> UInt
+    character ln col = fromIntegral (Width.displayColToUtf16 (lineAt ln) col)
+    lineAt :: Int -> Text
+    lineAt n = fromMaybe "" (ls !!? (n - 1))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Hover type index
@@ -364,10 +381,11 @@ bodyRecords tp =
 --   The type index is 'Nothing' when the program does not typecheck
 --   (or hasn't been elaborated): hover then degrades to doc-only, which
 --   the AST walks still serve.
-hoverForPosition :: Maybe TypedProgram -> ASyn.Program -> Position -> Maybe Hover
-hoverForPosition mtp prog (Position l c) =
+hoverForPosition :: SrcLines -> Maybe TypedProgram -> ASyn.Program -> Position -> Maybe Hover
+hoverForPosition ls mtp prog (Position l c) =
   let line = fromIntegral l + 1
-      col = fromIntegral c + 1
+      lineText = fromMaybe "" (ls !!? (line - 1))
+      col = Width.utf16ColToDisplay lineText (fromIntegral c)
       userDecls = toList (ASyn.decls prog)
       -- User decls are listed first so that, when both the user
       -- program and the prelude define a name (e.g. the user
@@ -426,7 +444,7 @@ hoverForPosition mtp prog (Position l c) =
               Just
                 Hover
                   { _contents = InL (MarkupContent MarkupKind_Markdown (T.intercalate "\n\n" parts)),
-                    _range = Just (spanToRange sp)
+                    _range = Just (spanToRange ls sp)
                   }
 
     -- Index lookup keyed by the AST span. The 'TExpr' reference nodes
@@ -662,10 +680,10 @@ severityToLsp = \case
   AD.SevError -> DiagnosticSeverity_Error
   AD.SevWarning -> DiagnosticSeverity_Warning
 
-awsumDiagToLsp :: AD.Diagnostic -> Diagnostic
-awsumDiagToLsp (AD.Diagnostic sev sp msg _fixes) =
+awsumDiagToLsp :: SrcLines -> AD.Diagnostic -> Diagnostic
+awsumDiagToLsp ls (AD.Diagnostic sev sp msg _fixes) =
   Diagnostic
-    { _range = spanToRange sp,
+    { _range = spanToRange ls sp,
       _severity = Just (severityToLsp sev),
       _code = Nothing,
       _codeDescription = Nothing,
@@ -685,17 +703,17 @@ awsumSymbolKindToLsp = \case
   ASym.SkType -> SymbolKind_Enum
 
 -- | Recursive translation, depth-first.
-awsumSymbolToLsp :: ASym.Symbol -> DocumentSymbol
-awsumSymbolToLsp (ASym.Symbol k n r sr cs) =
+awsumSymbolToLsp :: SrcLines -> ASym.Symbol -> DocumentSymbol
+awsumSymbolToLsp ls (ASym.Symbol k n r sr cs) =
   DocumentSymbol
     { _name = n,
       _detail = Nothing,
       _kind = awsumSymbolKindToLsp k,
       _tags = Nothing,
       _deprecated = Nothing,
-      _range = spanToRange r,
-      _selectionRange = spanToRange sr,
-      _children = Just (map awsumSymbolToLsp cs)
+      _range = spanToRange ls r,
+      _selectionRange = spanToRange ls sr,
+      _children = Just (map (awsumSymbolToLsp ls) cs)
     }
 
 -- | Source text → document symbols (outline). Empty on parse error —
@@ -703,7 +721,7 @@ awsumSymbolToLsp (ASym.Symbol k n r sr cs) =
 documentSymbolsForSource :: Text -> [DocumentSymbol]
 documentSymbolsForSource src = case parseProgramDiagnostic src of
   Left _ -> []
-  Right prog -> map awsumSymbolToLsp (ASym.symbolsOfProgram prog)
+  Right prog -> map (awsumSymbolToLsp (docLines src)) (ASym.symbolsOfProgram prog)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Compile pipeline
@@ -769,10 +787,11 @@ publishCheckResult ::
   Text ->
   LspM () ()
 publishCheckResult st uri mVersion src = do
-  let diags = compileToDiagnostics src
-      lspDiags = map awsumDiagToLsp diags
+  let ls = docLines src
+      diags = compileToDiagnostics src
+      lspDiags = map (awsumDiagToLsp ls) diags
       newFixEntries =
-        [ ((uri, rangeKey (spanToRange (AD.diagSpan d))), AD.diagFixes d)
+        [ ((uri, rangeKey (spanToRange ls (AD.diagSpan d))), AD.diagFixes d)
         | d <- diags,
           not (null (AD.diagFixes d))
         ]
@@ -1005,9 +1024,11 @@ serverHandlers st =
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
             ctxDiags = req ^. L.params . L.context . L.diagnostics
         fixesIdx <- liftIO $ readIORef (ssFixes st)
-        let actions :: [Command |? CodeAction]
+        mtxt <- readDocText uri
+        let ls = maybe [] docLines mtxt
+            actions :: [Command |? CodeAction]
             actions =
-              [ InR (fixToCodeAction uri d qf)
+              [ InR (fixToCodeAction ls uri d qf)
               | d <- ctxDiags,
                 qf <- fromMaybe [] (Map.lookup (uri, rangeKey (d ^. L.range)) fixesIdx)
               ]
@@ -1062,7 +1083,7 @@ serverHandlers st =
                   -- 'publishCheckResult' path but keeps the hover
                   -- handler synchronous; for typical hover frequency
                   -- (a few per second at most) the cost is invisible.
-                  case hoverForPosition (compileToTypedProgram src) prog pos of
+                  case hoverForPosition (docLines src) (compileToTypedProgram src) prog pos of
                     Nothing -> InR Null
                     Just h -> InL h
         responder (Right result),
@@ -1082,27 +1103,27 @@ serverHandlers st =
 -- | Convert one Awsum 'AD.Fix' into an LSP 'CodeAction'. The diagnostic the
 --   action came from is tucked into @diagnostics@ so VS Code shows it
 --   inline next to the lightbulb.
-fixToCodeAction :: NormalizedUri -> Diagnostic -> AD.Fix -> CodeAction
-fixToCodeAction uri d (AD.Fix title edits) =
+fixToCodeAction :: SrcLines -> NormalizedUri -> Diagnostic -> AD.Fix -> CodeAction
+fixToCodeAction ls uri d (AD.Fix title edits) =
   CodeAction
     { _title = title,
       _kind = Just CodeActionKind_QuickFix,
       _diagnostics = Just [d],
       _isPreferred = Just True,
       _disabled = Nothing,
-      _edit = Just (mkWorkspaceEdit uri edits),
+      _edit = Just (mkWorkspaceEdit ls uri edits),
       _command = Nothing,
       _data_ = Nothing
     }
 
-mkWorkspaceEdit :: NormalizedUri -> [AD.Edit] -> WorkspaceEdit
-mkWorkspaceEdit uri edits =
+mkWorkspaceEdit :: SrcLines -> NormalizedUri -> [AD.Edit] -> WorkspaceEdit
+mkWorkspaceEdit ls uri edits =
   WorkspaceEdit
     { _changes =
         Just
           ( Map.singleton
               (fromNormalizedUri uri)
-              [TextEdit (spanToRange sp) newText | AD.Edit sp newText <- edits]
+              [TextEdit (spanToRange ls sp) newText | AD.Edit sp newText <- edits]
           ),
       _documentChanges = Nothing,
       _changeAnnotations = Nothing
@@ -1243,14 +1264,15 @@ workspaceSymbolsForFile q file = do
     Just src -> case parseProgramDiagnostic src of
       Left _ -> []
       Right prog ->
-        let syms = flattenSymbols (ASym.symbolsOfProgram prog)
+        let ls = docLines src
+            syms = flattenSymbols (ASym.symbolsOfProgram prog)
             fileUri = filePathToUri file
          in [ SymbolInformation
                 { _name = n,
                   _kind = awsumSymbolKindToLsp k,
                   _tags = Nothing,
                   _deprecated = Nothing,
-                  _location = Location {_uri = fileUri, _range = spanToRange r},
+                  _location = Location {_uri = fileUri, _range = spanToRange ls r},
                   _containerName = Nothing
                 }
             | ASym.Symbol k n r _sr _cs <- syms,

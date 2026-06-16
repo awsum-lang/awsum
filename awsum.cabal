@@ -94,6 +94,7 @@ library
       Awsum.Typing
       Awsum.UniquifyLocals
       Awsum.Version
+      Awsum.Width
       Common.File
   other-modules:
       Paths_awsum

@@ -20,6 +20,7 @@ import Awsum.Format (formatSource)
 import Awsum.Lsp
 import Awsum.LspSpec.EndToEnd qualified as EndToEnd
 import Awsum.Syntax (SrcSpan (..))
+import Awsum.Width qualified as Width
 import Data.Aeson ((.=))
 import Data.Aeson qualified as Aeson
 import Data.List (lookup)
@@ -48,6 +49,7 @@ spec :: Spec
 spec = describe "Awsum.Lsp" $ do
   formatEditsSpec
   diagnosticsSpec
+  columnConversionSpec
   documentSymbolsSpec
   codeActionSpec
   workspaceSymbolsSpec
@@ -135,11 +137,46 @@ diagnosticsSpec = describe "compileToDiagnostics / awsumDiagToLsp" $ do
       Nothing -> expectationFailure "expected an unused-parameter warning carrying a fix"
 
   it "maps Awsum severity to the LSP severity field" $ do
-    let lsp = awsumDiagToLsp (AD.Diagnostic AD.SevWarning (SrcSpan 1 1 1 2) "w" [])
+    let lsp = awsumDiagToLsp [] (AD.Diagnostic AD.SevWarning (SrcSpan 1 1 1 2) "w" [])
     case lsp of
       Diagnostic {_severity = sev, _source = src} -> do
         sev `shouldBe` Just DiagnosticSeverity_Warning
         src `shouldBe` Just "awsum"
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Column units: Awsum span columns are display width (Megaparsec counts a wide
+-- char as two); LSP Position columns are UTF-16 code units. The boundary
+-- converts against the source line — these pin both directions.
+-- ════════════════════════════════════════════════════════════════════════════
+
+columnConversionSpec :: Spec
+columnConversionSpec = describe "span (display width) ↔ LSP Position (UTF-16)" $ do
+  -- A wide CJK char: two display columns, one UTF-16 unit.
+  -- A math-bold letter: one display column, two UTF-16 units (supplementary).
+  let wideThenX = toText [chr 0x732B, 'x']
+      mathThenX = toText [chr 0x1D400, 'x']
+      rangeOf src sc ec =
+        case awsumDiagToLsp [src] (AD.Diagnostic AD.SevError (SrcSpan 1 sc 1 ec) "e" []) of
+          Diagnostic {_range = Range (Position _ s) (Position _ e)} -> (s, e)
+
+  it "emits UTF-16 columns after a wide char (2 cols, 1 unit)"
+    -- 'x' is at display col 3 (the wide char spans cols 1..2) → UTF-16 offset 1.
+    $ rangeOf wideThenX 3 4
+    `shouldBe` (1, 2)
+
+  it "emits UTF-16 columns after a supplementary char (1 col, 2 units)"
+    -- 'x' is at display col 2 → UTF-16 offset 2 (the math char is a surrogate pair).
+    $ rangeOf mathThenX 2 3
+    `shouldBe` (2, 3)
+
+  it "incoming UTF-16 columns invert to the display columns spans use" $ do
+    -- Mixed line: wide, narrow, supplementary, narrow. Char-boundary display
+    -- columns must survive display → UTF-16 → display unchanged (the hover
+    -- handler converts the client's UTF-16 cursor back to a span column).
+    let line = toText [chr 0x732B, 'x', chr 0x1D400, 'y']
+        boundaries = [1, 3, 4, 5, 6]
+    map (Width.utf16ColToDisplay line . Width.displayColToUtf16 line) boundaries
+      `shouldBe` boundaries
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- textDocument/documentSymbol → documentSymbolsForSource
@@ -169,7 +206,7 @@ codeActionSpec = describe "fixToCodeAction"
   $ case mapMaybe firstFix (compileToDiagnostics unusedParamProg) of
     ((d, qf) : _) -> do
       let uri = toNormalizedUri (filePathToUri "/x/Main.aww")
-      case fixToCodeAction uri (awsumDiagToLsp d) qf of
+      case fixToCodeAction (lines unusedParamProg) uri (awsumDiagToLsp (lines unusedParamProg) d) qf of
         CodeAction {_kind = k, _edit = edit, _diagnostics = ds} -> do
           k `shouldBe` Just CodeActionKind_QuickFix
           (length <$> ds) `shouldBe` Just 1
