@@ -29,6 +29,6 @@ b n = case eqInt32 n 0 of
     Right m -> a m
 
 main : IO Never Unit
-main = case a 1_000_000 of
-  Left _e -> IO.Stdout.print "underflow"
-  Right v -> IO.Stdout.print (showInt32 v)
+main = eitherToIO (a 1_000_000)
+  |> andThenIO (\v -> IO.Stdout.print (showInt32 v))
+  |> handleErrorIO (\_e -> IO.Stdout.print "underflow")
