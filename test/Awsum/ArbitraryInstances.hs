@@ -288,6 +288,36 @@ instance Arbitrary Pattern where
           <> [PCon noSpan n ps' | ps' <- shrinkList shrink ps]
     PAscribe _ p t -> p : [PAscribe noSpan p' t | p' <- shrink p] <> [PAscribe noSpan p t' | t' <- shrink t]
 
+-- | A function or lambda parameter: mostly a plain name, with an
+--   occasional destructuring / type-ascribed 'ParamPat'. Shared by the
+--   'Decl' ('FunDef') and 'Expr' (lambda) generators so both exercise the
+--   same parameter surface — including the type-ascription form @(n : T)@,
+--   which both @f (n : T) = …@ and @\\(n : T) -> …@ accept.
+--
+--   The parser canonicalises @(x)@ back to a bare 'Param' (see
+--   'paramBinderG' in the parser); the normaliser ('normalizeParam')
+--   matches that on the AST side and runs on lambda params too, so any
+--   'ParamPat' shape — @PVar@, @PWild@, @PCon@, @PAscribe@ — round-trips
+--   through @parse∘render@ once both sides are normalised.
+genParam :: Gen Param
+genParam =
+  frequency
+    [ (8, Param noSpan <$> genLIdent),
+      (1, ParamPat noSpan <$> genParamPat)
+    ]
+
+genParamPat :: Gen Pattern
+genParamPat =
+  oneof
+    [ PVar noSpan <$> genLIdent,
+      pure (PWild noSpan),
+      PCon noSpan <$> genUIdent <*> pure [],
+      do
+        k <- chooseInt (1, 2)
+        PCon noSpan <$> genUIdent <*> vectorOf k (resize 1 arbitrary),
+      PAscribe noSpan <$> resize 1 arbitrary <*> resize 2 arbitrary
+    ]
+
 instance Arbitrary ConDef where
   arbitrary = sized $ \n -> do
     name <- genUIdent
@@ -411,7 +441,6 @@ instance Arbitrary Expr where
         rhs <- go n
         body <- go n
         pure (ELet noSpan (PVar noSpan name) ann rhs body)
-      genParam = Param noSpan <$> genLIdent
   shrink = \case
     ELit _sp (LString t) -> [ELit noSpan (LString t') | t' <- shrinkIdent t]
     ELit _sp (LInt n) -> [ELit noSpan (LInt n') | n' <- shrink n]
@@ -468,27 +497,6 @@ instance Arbitrary Decl where
         (1, CommentDecl noSpan <$> genCommentNode)
       ]
     where
-      -- Mostly plain-name parameters; an occasional destructuring
-      -- 'ParamPat'. The parser canonicalises @(x)@ back to a bare
-      -- 'Param' (see 'paramBinderG' in the parser); the normaliser
-      -- ('normalizeParam') matches that on the AST side, so any
-      -- 'ParamPat' shape — including @PVar@ or @PWild@ — round-trips
-      -- through @parse∘render@ once both sides are normalised.
-      genParam =
-        frequency
-          [ (8, Param noSpan <$> genLIdent),
-            (1, ParamPat noSpan <$> genParamPat)
-          ]
-      genParamPat =
-        oneof
-          [ PVar noSpan <$> genLIdent,
-            pure (PWild noSpan),
-            PCon noSpan <$> genUIdent <*> pure [],
-            do
-              k <- chooseInt (1, 2)
-              PCon noSpan <$> genUIdent <*> vectorOf k (resize 1 arbitrary),
-            PAscribe noSpan <$> resize 1 arbitrary <*> resize 2 arbitrary
-          ]
       genFunDef = sized $ \n -> do
         name <- genLIdent
         k <- chooseInt (0, min 3 (max 0 n))

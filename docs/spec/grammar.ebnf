@@ -36,15 +36,19 @@ ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = DeclName , ":" , Type , [ TrailingLineComment ] ;
 FunDef              = DeclName , { ParamBinder } , "=" , Expr , [ TrailingLineComment ] ;
-(* Function parameters: either a simple name, or a parens-wrapped
-   destructuring pattern (single-constructor types pass
-   exhaustiveness trivially; refutable patterns from
-   multi-constructor types raise NonExhaustiveCase). The parens
-   around a pattern are syntactically required to distinguish a
-   destructuring parameter from a sequence of bare-name
-   parameters — `f Tuple3 a b c` is four parameters, not one
-   pattern with three fields. *)
-ParamBinder         = LIdent | "(" , Pattern , ")" ;
+(* Function parameters: a simple name, a parens-wrapped
+   destructuring pattern, or a parens-wrapped type ascription
+   `(p : T)` (single-constructor types pass exhaustiveness
+   trivially; refutable patterns from multi-constructor types raise
+   NonExhaustiveCase). The parens around a pattern are syntactically
+   required to distinguish a destructuring parameter from a sequence
+   of bare-name parameters — `f Tuple3 a b c` is four parameters,
+   not one pattern with three fields. The ascription form is
+   meaningful on a lambda parameter (it pins the parameter type in
+   synthesis position); on a top-level definition parameter the
+   typechecker rejects it, since the type comes from the signature —
+   but the grammar admits it uniformly. *)
+ParamBinder         = LIdent | "(" , Pattern , ")" | "(" , Pattern , ":" , Type , ")" ;
 
 (* Name of a top-level declaration. The parenthesised "++" form is how the
    bundled prelude spells the concatenation operator itself
@@ -88,7 +92,11 @@ Pipe                = PipeOp , { "|>" , PipeOp } ;
    itself — that's what makes '|>' left-associative without giving up
    the right-greedy reach of Lambda / LetIn / DoBlock / CaseExpr. *)
 PipeOp              = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
-Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
+(* Lambda parameters are the same binders as a function definition's
+   (ParamBinder): a bare name, a destructuring pattern, or a type
+   ascription `(n : T)` — the latter pins the parameter type where no
+   expected type flows in from context. *)
+Lambda              = "\\" , ParamBinder , { ParamBinder } , "->" , Expr ;
 (* Two surface shapes are accepted for 'let':
    - Inline single binding:  let n = e in body
    - Layout multi-binding:   let n1 = e1 (NEWLINE  ni = ei)*
