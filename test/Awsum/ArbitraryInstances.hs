@@ -3,7 +3,15 @@
 module Awsum.ArbitraryInstances () where
 
 import Awsum.Syntax
-import Data.Char (isAsciiLower, isAsciiUpper, isDigit, toLower, toUpper)
+import Data.Char
+  ( GeneralCategory (LineSeparator, ParagraphSeparator, Surrogate),
+    generalCategory,
+    isAsciiLower,
+    isAsciiUpper,
+    isControl,
+    toLower,
+    toUpper,
+  )
 import Data.Text qualified as T
 import Relude
 import Test.QuickCheck
@@ -148,19 +156,36 @@ instance Arbitrary QName where
     [QName (take i ms) n | i <- [0 .. length ms - 1]]
       <> [QName ms n' | n' <- shrinkIdent n]
 
+-- | Text for string literals and comments. Spans the width classes that
+--   matter for layout — narrow, wide East-Asian (two display columns), and
+--   supplementary (two UTF-16 code units) — so the round-trip and idempotency
+--   properties exercise the display-width alignment in 'Awsum.Render' (shared
+--   with 'Awsum.Lsp'), not only ASCII. Excludes what breaks the round-trip for
+--   reasons unrelated to width: control characters and line or paragraph
+--   separators (a literal newline would split a line comment), the
+--   block-comment delimiters @{@ and @}@, and quote or backslash.
 genStr :: Gen Text
 genStr = do
   k <- chooseInt (0, 8)
-  -- ASCII only ('c <= \DEL'). The renderer measures layout columns in code
-  -- points (prettyprinter's 'T.length' — one per character) while the parser
-  -- measures them in display columns (a wide East-Asian character counts as
-  -- two); the two agree only on narrow characters. That divergence corrupts
-  -- 'render ∘ parse' when a wide character sits on the same line before a
-  -- layout anchor (the first binding on a `let` line), so generated string
-  -- literals stay ASCII. The display-column divergence is tracked as a
-  -- separate discovered problem.
-  let ok c = isAsciiUpper c || isAsciiLower c || isDigit c || c == ' ' || c == '_' || c == '-' -- avoid quotes/backslash; ASCII (narrow) only
-  toText <$> vectorOf k (suchThat arbitrary ok)
+  toText <$> vectorOf k genStrChar
+
+genStrChar :: Gen Char
+genStrChar = suchThat gen ok
+  where
+    gen =
+      frequency
+        [ (5, chr <$> chooseInt (0x20, 0x7E)), -- printable ASCII (narrow)
+          (2, chr <$> chooseInt (0x3000, 0x9FFF)), -- wide BMP (CJK & co.)
+          (1, chr <$> chooseInt (0x00A1, 0x024F)), -- narrow non-ASCII BMP
+          (1, chr <$> chooseInt (0x1D400, 0x1D7FF)), -- narrow supplementary
+          (1, chr <$> chooseInt (0x20000, 0x2A6DF)) -- wide supplementary
+        ]
+    ok c =
+      not (isControl c)
+        && generalCategory c
+        `notElem` [LineSeparator, ParagraphSeparator, Surrogate]
+        && c
+        `notElem` ['{', '}', '"', '\\']
 
 -- | Single-line comment text. Empty texts are valid in the AST but
 --   the renderer emits them as a bare @--@ that the parser

@@ -38,6 +38,7 @@ where
 
 import Awsum.Pretty (layoutUnbounded, vsepBlank, vsepHard)
 import Awsum.Syntax
+import Awsum.Width (displayWidth, isWideChar)
 import Data.Char qualified as Char
 import Data.Text qualified as T
 import Prettyprinter
@@ -47,10 +48,30 @@ import Prettyprinter
     hsep,
     nest,
     parens,
-    pretty,
     rparen,
+    vsep,
   )
+import Prettyprinter.Internal qualified as PPI
 import Relude
+
+-- | Like prettyprinter's 'pretty' for 'Text', but reports each line's
+--   /display width/ — a wide East-Asian character counts as two columns
+--   ('Awsum.Width.displayWidth') — to the layout engine, instead of the
+--   code-point 'Data.Text.length' that 'pretty' caches. The renderer's only
+--   column-sensitive combinator is 'align' (in 'renderLetBlock'); feeding it
+--   display widths makes the nesting it pins match the columns the Awsum
+--   parser tracks on a re-parse (Megaparsec advances two columns per wide
+--   character), so @parse ∘ render@ stays the identity even when a wide
+--   character precedes a layout anchor. For all-narrow text 'dtext' builds the
+--   same nodes 'pretty' would, so output is byte-for-byte unchanged there.
+dtext :: Text -> Doc ann
+dtext = vsep . map lineDoc . T.splitOn "\n"
+  where
+    lineDoc :: Text -> Doc ann
+    lineDoc t = case toString t of
+      [] -> PPI.Empty
+      [c] -> if isWideChar c then PPI.Text 2 t else PPI.Char c
+      _ -> PPI.Text (displayWidth t) t
 
 -- ── Public fragment renderers ───────────────────────────────────────────────
 -- These project the internal 'Doc' builders to text. 'renderProgram' (below)
@@ -71,7 +92,7 @@ renderExpr = layoutUnbounded . exprDoc
 
 -- | A trailing @-- comment@, or nothing.
 renderTrailingComment :: Maybe Text -> Doc ann
-renderTrailingComment = maybe mempty (\c -> " --" <> pretty c)
+renderTrailingComment = maybe mempty (\c -> " --" <> dtext c)
 
 -- ── Program ─────────────────────────────────────────────────────────────────
 
@@ -92,7 +113,7 @@ renderProgram Program {moduleComment, imports, decls} =
       _ -> vsepHard ims <> hardline <> hardline <> body
     doc = case moduleComment of
       Nothing -> afterHeader
-      Just txt -> "{-" <> pretty txt <> "-}" <> hardline <> hardline <> afterHeader
+      Just txt -> "{-" <> dtext txt <> "-}" <> hardline <> hardline <> afterHeader
 
 -- | Group a type signature with the immediately following definition
 --   (when they share the same name) so they render as a single block, and
@@ -126,7 +147,7 @@ groupDeclBlocks = \case
 renderImport :: ImportDecl -> Doc ann
 renderImport (ImportDecl comments mods tcom) =
   let commentLines = map renderComment comments
-      importLine = "import " <> pretty (T.intercalate "." (toList mods)) <> renderTrailingComment tcom
+      importLine = "import " <> dtext (T.intercalate "." (toList mods)) <> renderTrailingComment tcom
    in case commentLines of
         [] -> importLine
         _ -> vsepHard commentLines <> hardline <> importLine
@@ -190,8 +211,8 @@ declDoc = \case
           NotEmpty -> "type "
         head' =
           prefix
-            <> pretty name
-            <> (if null tvars then "" else " " <> hsep (map (pretty . paramName) tvars))
+            <> dtext name
+            <> (if null tvars then "" else " " <> hsep (map (dtext . paramName) tvars))
         body = case cons of
           [] -> ""
           [c] -> " = " <> renderConDef c
@@ -205,7 +226,7 @@ declDoc = \case
   CommentDecl _sp c ->
     renderComment c
   where
-    renderConDef (ConDef _ n []) = pretty n
+    renderConDef (ConDef _ n []) = dtext n
     -- Constructor fields are parsed by 'pTypeAtomNoLineComments' — only
     -- atomic types (TyVar / TyCon / parenthesised). Anything more
     -- complex (TyApp like @IO e a@, TyArrow, TyOr) MUST be parenthesised
@@ -213,25 +234,25 @@ declDoc = \case
     -- (e.g. @Con String IO e a@ would become four single-token fields
     -- instead of @[String, IO e a]@). Using precedence 4 (atom) here
     -- forces the renderer to wrap any non-atom in parens.
-    renderConDef (ConDef _ n fs) = pretty n <> " " <> hsep (map (typeDocPrec 4) fs)
+    renderConDef (ConDef _ n fs) = dtext n <> " " <> hsep (map (typeDocPrec 4) fs)
 
 -- | Wrap a top-level declaration name in parens when it's an operator
 --   (e.g. @"++"@ renders as @(++)@), so @renderProgram . parseProgram@ is
 --   a fixpoint on files that declare operators in the prelude style.
 declDocName :: Name -> Doc ann
 declDocName n
-  | T.null n = pretty n
-  | isBinderStart (T.head n) = pretty n
-  | otherwise = "(" <> pretty n <> ")"
+  | T.null n = dtext n
+  | isBinderStart (T.head n) = dtext n
+  | otherwise = "(" <> dtext n <> ")"
   where
     isBinderStart c = Char.isLower c || c == '_'
 
 renderComment :: Comment -> Doc ann
 renderComment = \case
-  LineComment t -> "--" <> pretty t
+  LineComment t -> "--" <> dtext t
   BlockComment t ->
     let trimmed = T.strip t
-     in if T.null trimmed then "{- -}" else "{- " <> pretty trimmed <> " -}"
+     in if T.null trimmed then "{- -}" else "{- " <> dtext trimmed <> " -}"
 
 -- | Render an attached doc comment as a single @{- text -}@ block
 --   followed by a newline (so the next declaration starts on its own
@@ -240,7 +261,7 @@ renderComment = \case
 --   formatter does not reflow markdown.
 renderDocComment :: Maybe Text -> Doc ann
 renderDocComment Nothing = ""
-renderDocComment (Just t) = "{- " <> pretty t <> " -}" <> hardline
+renderDocComment (Just t) = "{- " <> dtext t <> " -}" <> hardline
 
 -- ── Types ───────────────────────────────────────────────────────────────────
 
@@ -253,13 +274,13 @@ typeDoc = typeDocPrec 0
 --   We parenthesize when the inner precedence is strictly lower than the context.
 typeDocPrec :: Int -> Type' -> Doc ann
 typeDocPrec ctx = \case
-  TyVar _ n -> pretty n
-  TyCon _ n -> pretty n
+  TyVar _ n -> dtext n
+  TyCon _ n -> dtext n
   -- 'TyEmpty' renders as the user-written name. The @empty@ keyword
   -- only appears at the type's /declaration/ site (handled by the
   -- 'TypeDecl' branch above); references in signatures and
   -- expressions look like ordinary type-constructor references.
-  TyEmpty _ n -> pretty n
+  TyEmpty _ n -> dtext n
   TyApp _ f x ->
     let s = typeDocPrec 3 f <> " " <> typeDocPrec 4 x
      in if 3 < ctx then parens s else s
@@ -377,10 +398,10 @@ exprDocPrec ctx e =
     _ ->
       let (prec, s) = case e of
             EVar _sp' q -> (3, renderQName q)
-            ELit _sp' (LString t) -> (3, pretty ("\"" <> escape t <> "\""))
-            ELit _sp' (LInt n) -> (3, pretty (renderInteger n))
-            ECon _sp' n -> (3, pretty n)
-            EBuiltIn _sp' n -> (3, "BuiltIn." <> pretty n)
+            ELit _sp' (LString t) -> (3, dtext ("\"" <> escape t <> "\""))
+            ELit _sp' (LInt n) -> (3, dtext (renderInteger n))
+            ECon _sp' n -> (3, dtext n)
+            EBuiltIn _sp' n -> (3, "BuiltIn." <> dtext n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
             EApp _sp' f x ->
@@ -600,9 +621,9 @@ renderLetInlineChain bodyCtx binds finalBody =
 
 renderPattern :: Pattern -> Doc ann
 renderPattern = \case
-  PCon _ n [] -> pretty n
-  PCon _ n ps -> pretty n <> " " <> hsep (map renderPatternAtom ps)
-  PVar _ n -> pretty n
+  PCon _ n [] -> dtext n
+  PCon _ n ps -> dtext n <> " " <> hsep (map renderPatternAtom ps)
+  PVar _ n -> dtext n
   PWild _ -> "_"
   PAscribe _ p ty -> "(" <> renderPattern p <> " : " <> typeDoc ty <> ")"
 
@@ -619,11 +640,11 @@ renderPatternAtom p = renderPattern p
 --   syntactically required at the param-binder level so the pattern can
 --   be distinguished from a sequence of bare-name parameters.
 renderParam :: Param -> Doc ann
-renderParam (Param _ n) = pretty n
+renderParam (Param _ n) = dtext n
 -- 'ParamPat (PVar n)' is equivalent to 'Param n' (the parser
 -- canonicalises @(x)@ back to a bare binder); render it without
 -- parens so the formatter is idempotent at the text level.
-renderParam (ParamPat _ (PVar _ n)) = pretty n
+renderParam (ParamPat _ (PVar _ n)) = dtext n
 -- A type-ascription parameter @(x : T)@ is already self-parenthesised
 -- by 'renderPattern' (the @PAscribe@ case wraps in parens), so adding
 -- another pair would print @((x : T))@.
@@ -702,8 +723,8 @@ collectPipeChain e = e :| []
 renderQName :: QName -> Doc ann
 renderQName (QName mods n) =
   case mods of
-    [] -> pretty n
-    _ -> pretty (T.intercalate "." (mods <> [n]))
+    [] -> dtext n
+    _ -> dtext (T.intercalate "." (mods <> [n]))
 
 -- | Canonical form for an integer literal in source.
 --   Decimal digits, grouped by 3 from the right, with '_' between groups.
