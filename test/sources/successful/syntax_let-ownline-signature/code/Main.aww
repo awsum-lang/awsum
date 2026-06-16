@@ -1,0 +1,32 @@
+{- Own-line `let` signature: `res : T` on its own line, then `res = e`
+   below it. Pins a do-block's row-union exactly like the inline form;
+   prints `2`. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+opA : Either ErrA Int32
+opA = Right 1
+
+opB : Either ErrB Int32
+opB = Right 2
+
+onError : (ParseError | ErrA | ErrB) -> IO Never Unit
+onError e = case e of
+  ParseError -> IO.Stdout.print "PARSE_ERROR"
+  ErrA -> IO.Stdout.print "ERR_A"
+  ErrB -> IO.Stdout.print "ERR_B"
+
+main : IO Never Unit
+main =
+  let res : Either (ParseError | ErrA | ErrB) Int32
+      res = do
+        a <- opA
+        b <- opB
+        pureEither b
+   in eitherToIO res
+        |> andThenIO (\n -> IO.Stdout.print (showInt32 n))
+        |> handleErrorIO onError

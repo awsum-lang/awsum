@@ -376,6 +376,7 @@ Program
                                 }
                             ) "Int32"
                         )
+                    , InlineSig
                     )
                 )
                 ( EParens

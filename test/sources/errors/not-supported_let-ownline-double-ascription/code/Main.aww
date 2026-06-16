@@ -1,0 +1,11 @@
+{- One ascription per binding: a binder may carry either an own-line
+   signature OR an inline `: T` on its definition, not both. Here `res`
+   has a signature line AND an inline ascription — rejected at parse. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main =
+  let res : Int32
+      res : Int32 = 2
+   in IO.Stdout.print "x"

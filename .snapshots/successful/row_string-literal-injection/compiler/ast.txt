@@ -526,6 +526,7 @@ Program
                                 }
                             ) "String"
                         )
+                    , InlineSig
                     )
                 )
                 ( ELit

@@ -23,6 +23,7 @@ module Awsum.Syntax
     QName (..),
     Op' (..),
     Literal (..),
+    LetSigLayout (..),
     Expr (..),
     DoStmt (..),
     CaseAlt (..),
@@ -352,6 +353,21 @@ data Literal
   deriving stock (Show, Eq)
 
 -- | Surface expressions.
+-- | How the type ascription of a let-binding was written in source, so
+--   the formatter can reproduce the author's choice. Neither form is
+--   canonical — both are legitimate, so the formatter preserves whichever
+--   was written rather than normalising (unlike int literals / docstrings).
+--   Lives /inside/ a let-binding's @Just@ annotation: a binding with no
+--   ascription has no layout choice, so @OwnLineSig@-without-a-type is
+--   unrepresentable.
+data LetSigLayout
+  = -- | @let n : T = e@ — signature and binding on one line.
+    InlineSig
+  | -- | @let n : T@ then @n = e@ — signature on its own line above the
+    --   binding (top-level / Haskell / Elm style).
+    OwnLineSig
+  deriving stock (Show, Eq)
+
 data Expr
   = -- | Variable or qualified function name.
     EVar SrcSpan QName
@@ -413,7 +429,12 @@ data Expr
     --   @do@-blocks containing @let@ desugar to nested 'ELet's
     --   wrapping the rest of the block (one 'ELet' per @let@
     --   statement); see 'Awsum.Desugar'.
-    ELet SrcSpan Pattern (Maybe Type') Expr Expr
+    --
+    --   The annotation pairs the user-written 'Type'' with its
+    --   'LetSigLayout' (inline @n : T = e@ vs own-line @n : T@ / @n = e@)
+    --   so the formatter round-trips the source shape; only the 'Type''
+    --   matters downstream of the formatter.
+    ELet SrcSpan Pattern (Maybe (Type', LetSigLayout)) Expr Expr
   | -- | Expression-level type ascription: @(e : T)@. Carries the
     --   user-written @Type'@ verbatim so the formatter can round-trip
     --   the source unchanged. Bidirectional checker treats it as
@@ -446,7 +467,7 @@ data Expr
 --     since we have no @>>@ analogue without a unit type at the row.
 data DoStmt
   = DoBind SrcSpan Pattern Expr
-  | DoLet SrcSpan Pattern (Maybe Type') Expr
+  | DoLet SrcSpan Pattern (Maybe (Type', LetSigLayout)) Expr
   | DoExpr SrcSpan Expr
   deriving stock (Show, Eq)
 

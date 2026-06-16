@@ -275,7 +275,7 @@ liftParamPatterns params body = do
 --
 --   Shared by both standalone 'let-in' and 'do { let … }', so the
 --   rewrite happens exactly once regardless of source shape.
-rewriteLet :: SrcSpan -> Pattern -> Maybe Type' -> Expr -> Expr -> DesugarM Expr
+rewriteLet :: SrcSpan -> Pattern -> Maybe (Type', LetSigLayout) -> Expr -> Expr -> DesugarM Expr
 rewriteLet sp pat mAnnot e' body' = case pat of
   PVar _ _ -> pure (ELet sp pat mAnnot e' body')
   PWild _ -> pure (ELet sp pat mAnnot e' body')

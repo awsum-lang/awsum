@@ -96,9 +96,12 @@ Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
    In the layout form, all 'ni' must align at the column where 'n1'
    started; 'in' must appear at a column strictly less than that
    bindings column ('in' is dedented relative to the bindings,
-   Haskell-style). Both shapes parse to a chain of nested 'ELet'
-   nodes — the renderer collapses chains visually but the AST is
-   single-binding throughout. *)
+   Haskell-style). Blank lines between bindings (and before 'in') are
+   tolerated as separators — the formatter emits one to fence an
+   own-line-signature binding (see LetBinding); the run ends only at the
+   dedented 'in'. Both shapes parse to a chain of nested 'ELet' nodes —
+   the renderer collapses chains visually but the AST is single-binding
+   throughout. *)
 LetIn               = "let" , LetBinding , { NEWLINE , LetBinding } ,
                       [ NEWLINE ] , "in" , Expr ;
 (* The let-binding's LHS is a pattern, so destructuring forms
@@ -114,12 +117,24 @@ LetIn               = "let" , LetBinding , { NEWLINE , LetBinding } ,
    be reconciled bottom-up) it reports `MissingLetAnnotation`,
    requiring the user to spell out the expected type. The
    same rules apply to the LetBindingDoStmt form below. *)
-LetBinding          = Pattern , [ ":" , Type ] , "=" , Expr ;
+(* A binding is either inline (optional ascription, then '=' on one
+   line) or own-line: a 'PVar' signature line, then the SAME binder
+   repeated with its '=' on the next line at the bindings column
+   (directly below — strict adjacency, no blank line between). The two
+   forms are mutually exclusive per binding; a signature line followed by
+   a definition that also carries an inline ':' is rejected. Own-line is
+   'PVar'-only (a destructuring pattern can't carry a signature line). *)
+LetBinding          = Pattern , [ ":" , Type ] , "=" , Expr
+                    | LIdent , ":" , Type , NEWLINE , LIdent , "=" , Expr ;
 DoBlock             = "do" , NEWLINE , DoStmt , { Terminator , DoStmt } ;
 DoStmt              = Pattern , "<-" , Expr
                     | "let" , LetBindingDoStmt
                     | Expr ;
-LetBindingDoStmt    = Pattern , [ ":" , Type ] , "=" , Expr ;
+(* Same two forms as LetBinding. In a do-block the own-line definition
+   aligns at the binder column (after 'let '), deeper than the
+   do-statement column, so the layout doesn't read it as a new statement. *)
+LetBindingDoStmt    = Pattern , [ ":" , Type ] , "=" , Expr
+                    | LIdent , ":" , Type , NEWLINE , LIdent , "=" , Expr ;
 Concat              = App , { "++" , App } ;
 App                 = Atom , { Atom } ;
 Atom                = QName | UIdent | "(" , Expr , ")" | String | Int ;

@@ -1376,7 +1376,7 @@ checkExpr conEnv tcm crossExempt env expected = \case
   -- 'ECase' by 'Awsum.Desugar' before typecheck — this clause
   -- only sees 'PVar' / 'PWild' bindings.
   ELet lsp pat mAnnot e body ->
-    elabLet conEnv tcm crossExempt env lsp pat mAnnot e $ \envNext -> do
+    elabLet conEnv tcm crossExempt env lsp pat (fmap fst mAnnot) e $ \envNext -> do
       bodyE <- checkExpr conEnv tcm crossExempt envNext expected body
       pure (bodyE, expected)
   ELit sp (LInt n) ->
@@ -2157,7 +2157,7 @@ typeOfExpr conEnv tcm env = \case
   -- path (no @crossExempt@ is in scope here, so we use 'S.empty'
   -- — same as the synth-mode 'ECase' branch above).
   ELet lsp pat mAnnot e body ->
-    elabLet conEnv tcm S.empty env lsp pat mAnnot e $ \envNext -> do
+    elabLet conEnv tcm S.empty env lsp pat (fmap fst mAnnot) e $ \envNext -> do
       bodyE <- typeOfExpr conEnv tcm envNext body
       pure (bodyE, texprType bodyE)
   -- 'do'-blocks also need an expected type — the desugaring goes

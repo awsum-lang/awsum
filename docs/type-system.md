@@ -6,23 +6,23 @@ User-facing description of Awsum's type system — concepts and examples of prog
 
 ## Quick map of concepts
 
-| Concept                              | Status                                                        |
-| ------------------------------------ | ------------------------------------------------------------- |
-| Primitives (`String`, `Int32`, …)    | done                                                          |
-| Nominal sum types (`type T = …`)     | done                                                          |
-| Polymorphic type variables           | done                                                          |
-| Function types `a -> b`              | done                                                          |
-| Pattern matching, exhaustiveness     | done                                                          |
-| Structural sums `(A \| B)`           | done                                                          |
-| Type ascription `(e : T)` / `(p : T)` | done — expression-position pins the type; pattern-position also binds `p` |
-| Implicit injection into a row        | done                                                          |
-| `do`-notation for `Either`           | done                                                          |
-| `IO e a` as lazy data + `bindIO`/`mapIO` | done                                                       |
-| Lambda expressions `\x -> e`         | done — closed lambdas, `do`-block continuations, closures over outer parameters, and parameter type annotations `\(x : T) -> e` |
-| Open-row `(A \| r) ~ (A \| B \| r')` | partial — singleton tyvar / row only                          |
-| Row-typed `let`-generalisation       | not yet — every top-level def needs a signature               |
-| Type classes / dispatch              | not yet — `do` is hard-coded to `Either`                      |
-| Comments and docstrings              | done — `--` line or `{- -}` block; adjacent to a decl = doc, blank line breaks the link |
+| Concept                                  | Status                                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Primitives (`String`, `Int32`, …)        | done                                                                                                                            |
+| Nominal sum types (`type T = …`)         | done                                                                                                                            |
+| Polymorphic type variables               | done                                                                                                                            |
+| Function types `a -> b`                  | done                                                                                                                            |
+| Pattern matching, exhaustiveness         | done                                                                                                                            |
+| Structural sums `(A \| B)`               | done                                                                                                                            |
+| Type ascription `(e : T)` / `(p : T)`    | done — expression-position pins the type; pattern-position also binds `p`                                                       |
+| Implicit injection into a row            | done                                                                                                                            |
+| `do`-notation for `Either`               | done                                                                                                                            |
+| `IO e a` as lazy data + `bindIO`/`mapIO` | done                                                                                                                            |
+| Lambda expressions `\x -> e`             | done — closed lambdas, `do`-block continuations, closures over outer parameters, and parameter type annotations `\(x : T) -> e` |
+| Open-row `(A \| r) ~ (A \| B \| r')`     | partial — singleton tyvar / row only                                                                                            |
+| Row-typed `let`-generalisation           | not yet — every top-level def needs a signature                                                                                 |
+| Type classes / dispatch                  | not yet — `do` is hard-coded to `Either`                                                                                        |
+| Comments and docstrings                  | done — `--` line or `{- -}` block; adjacent to a decl = doc, blank line breaks the link                                         |
 
 ---
 
@@ -346,11 +346,11 @@ An unused non-`_` name is a warning with a quick-fix to add the underscore. `aws
 
 ## Pattern matching
 
-| Pattern               | Matches                   | Notes                                         |
-| --------------------- | ------------------------- | --------------------------------------------- |
-| `True`, `Nothing`, …  | nullary constructors      | tag-equal at runtime                          |
-| `Just x`, `Cons x xs` | constructor with bindings | binds each field to a name                    |
-| `Just _`              | constructor, ignore field | wildcard — no binding                         |
+| Pattern               | Matches                   | Notes                                                                                                                        |
+| --------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `True`, `Nothing`, …  | nullary constructors      | tag-equal at runtime                                                                                                         |
+| `Just x`, `Cons x xs` | constructor with bindings | binds each field to a name                                                                                                   |
+| `Just _`              | constructor, ignore field | wildcard — no binding                                                                                                        |
 | `(p : T)`             | type-ascription pattern   | see [Type ascription](#type-ascription) below; row-elimination form covered in [Structural sums](#structural-sums-row-types) |
 
 Nested patterns work as expected.
@@ -590,7 +590,7 @@ run = do
   pureEither b
 ```
 
-The form is `let n = e` (no `in` — the rest of the block _is_ the body). Optional ascription `let n : T = e` applies when synthesis can't pin `e` — typically when the RHS is itself a `do`-block with mixed-row errors. The standalone `let n = e in body` (and ascribed variant) is also available outside `do` (see [`let` bindings](#let-bindings)); both desugar identically.
+The form is `let n = e` (no `in` — the rest of the block _is_ the body). Optional ascription `let n : T = e` applies when synthesis can't pin `e` — typically when the RHS is itself a `do`-block with mixed-row errors. The ascription may also stand on its own line (`let n : T` then `n = e`, the definition indented under the binder) — handy for pinning a value with an explicit type before binding it with `<-`. The standalone `let n = e in body` (and both ascription layouts) is also available outside `do` (see [`let` bindings](#let-bindings)); all desugar identically.
 
 ### Destructuring patterns on the LHS of `<-`
 
@@ -621,7 +621,20 @@ labelOf m =
 
 - **No defaulting on the RHS.** `let n = 1 in body` is rejected — annotate (`let n : Int32 = 1`) or use an expression whose type is known.
 - **Optional ascription.** `let n : T = e` checks `e` against `T`. Without ascription the typechecker synthesises `e`; failure raises `MissingLetAnnotation`. Common trigger: a `do`-block whose `<-` steps return `Either` with different error labels — the row-union can't be inferred bottom-up, but it can be checked top-down with an annotation.
-- **Destructuring on the LHS.** `let (Tuple3 a b c) = e` binds three fields in one step (also inside `do`). Refutable patterns raise `NonExhaustiveCase`. Ascribing a destructuring let is rejected (`PatternLetAscription`) — ascribe the RHS instead.
+- **Signature on its own line.** An ascribed binding may put its signature on a separate line above the definition — the same shape as a top-level definition (and the form Haskell / Elm developers reach for):
+
+  ```awsum
+  let res : Either (ErrA | ErrB) Int32
+      res = do
+        a <- opA
+        b <- opB
+        pureEither b
+   in …
+  ```
+
+  Inline `n : T = e` and own-line `n : T` / `n = e` are both accepted, and `awsum format` preserves whichever you wrote — neither is canonical, so the formatter doesn't rewrite one into the other. Three constraints: the signature sits **directly** above its definition naming the **same binder** (no blank line, no other binding between); the two placements are mutually exclusive per binding (a signature line plus an inline `: T` on the definition is rejected); and the own-line form is for a single binder (`PVar`) only — a destructuring binding has no signature-line form (see the next bullet). In a multi-binding `let`, a two-line binding is fenced by a blank line on each side while single-line bindings pack together.
+
+- **Destructuring on the LHS.** `let (Tuple3 a b c) = e` binds three fields in one step (also inside `do`). Refutable patterns raise `NonExhaustiveCase`. Ascribing a destructuring let is rejected (`PatternLetAscription`) — ascribe the RHS instead. There is likewise no own-line signature for a destructuring binding: a signature line names one binder, so name the value first (`let v : T` / `v = e`) and destructure it inside the body, or annotate the RHS with `(e : T)`.
 - **No shadowing.** `let n = …` cannot reuse a name in scope at the let site.
 - **The RHS is evaluated once.** Multiple references to `n` in `body` do not re-evaluate `e`.
 - **A polymorphic row combinator can't be bound unannotated.** `let pb = bindEither oa in …` binds `pb` to a partially-applied row combinator whose result-row variable is still free — `pb` could be used at several error rows, but Awsum monomorphises rows per call-site with no runtime row evidence, so one shared closure over a partial combinator can't be specialised. The typechecker rejects it (`Cannot monomorphise let-binding 'pb' …`) and asks for an annotation; `let pb : (Int32 -> Either EB Int32) -> Either (EA | EB) Int32 = bindEither oa` compiles. A value with no such row variable — a genuinely-polymorphic `let id = \x -> x`, or a single-variable-error partial like `let m = mapLeft oa` — is unaffected.
@@ -736,15 +749,15 @@ Both bypass every host's argv decoder — `sun.jnu.encoding` on the JVM, the OEM
 
 Compose `IO` values through the prelude functions, exactly mirroring the `Either` family:
 
-| Either                                           | IO                                            |
-| ------------------------------------------------ | --------------------------------------------- |
-| `bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 \| e2) b` | `bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 \| e2) b` |
+| Either                                                                     | IO                                                         |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 \| e2) b`    | `bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 \| e2) b`    |
 | `andThenEither : (a -> Either e2 b) -> Either e1 a -> Either (e1 \| e2) b` | `andThenIO : (a -> IO e2 b) -> IO e1 a -> IO (e1 \| e2) b` |
-| `pureEither : a -> Either e a`                   | `pureIO : a -> IO e a`                        |
-| —                                                | `failIO : e -> IO e a`                        |
-| `mapRight : Either e a -> (a -> b) -> Either e b` | `mapIO : IO e a -> (a -> b) -> IO e b`        |
-| `mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a` | `mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a` |
-| —                                                | `handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a` |
+| `pureEither : a -> Either e a`                                             | `pureIO : a -> IO e a`                                     |
+| —                                                                          | `failIO : e -> IO e a`                                     |
+| `mapRight : Either e a -> (a -> b) -> Either e b`                          | `mapIO : IO e a -> (a -> b) -> IO e b`                     |
+| `mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a`                       | `mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a`            |
+| —                                                                          | `handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a`    |
 
 Sequencing two prints:
 

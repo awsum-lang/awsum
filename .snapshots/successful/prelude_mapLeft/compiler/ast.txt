@@ -339,6 +339,7 @@ Program
                                 }
                             ) "Int32"
                         )
+                    , InlineSig
                     )
                 )
                 ( EApp
@@ -477,6 +478,7 @@ Program
                                     }
                                 ) "Int32"
                             )
+                        , InlineSig
                         )
                     )
                     ( EApp
@@ -615,6 +617,7 @@ Program
                                         }
                                     ) "String"
                                 )
+                            , InlineSig
                             )
                         )
                         ( EParens

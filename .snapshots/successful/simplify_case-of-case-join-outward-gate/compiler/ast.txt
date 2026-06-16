@@ -855,6 +855,7 @@ Program
                             , spanEndCol = 17
                             }
                         ) "Int32"
+                    , InlineSig
                     )
                 )
                 ( ECase

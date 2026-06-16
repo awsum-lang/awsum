@@ -42,6 +42,7 @@ import Data.Char qualified as Char
 import Data.Text qualified as T
 import Prettyprinter
   ( Doc,
+    align,
     hardline,
     hsep,
     nest,
@@ -364,9 +365,14 @@ exprDocPrec ctx e =
       -- let-block body ends on its own line.
       let (binds, finalBody) = collectLetChain e
           bodyCtx = if 0 < ctx then 1 else 0
-          s = case binds of
-            [single] -> renderLetBlock bodyCtx [single] finalBody
-            _ -> renderLetInlineChain bodyCtx binds finalBody
+          -- An own-line signature forces the vertical block layout (the
+          -- inline chain has nowhere to put a separate signature line);
+          -- otherwise a single binding still gets the 2-line block and a
+          -- multi-binding chain stays compact on one line.
+          s
+            | any isOwnLineBind binds = renderLetBlock bodyCtx binds finalBody
+            | [single] <- binds = renderLetBlock bodyCtx [single] finalBody
+            | otherwise = renderLetInlineChain bodyCtx binds finalBody
        in if 0 < ctx then "(" <> s <> hardline <> rparen else s
     _ ->
       let (prec, s) = case e of
@@ -466,8 +472,17 @@ renderDoStmt :: DoStmt -> Doc ann
 renderDoStmt = \case
   DoBind _ pat e -> renderPattern pat <> " <- " <> exprDocPrec 0 e
   DoLet _ pat mAnnot e ->
-    let annot = maybe "" (\t -> " : " <> typeDoc t) mAnnot
-     in "let " <> renderPatternAtom pat <> annot <> " = " <> exprDocPrec 0 e
+    let patD = renderPatternAtom pat
+        rhsD = exprDocPrec 0 e
+     in case mAnnot of
+          -- Own-line signature: the definition aligns under the binder
+          -- (one nest deeper than the do-statement column), matching the
+          -- parser's 'refCol' so it round-trips and the layout doesn't
+          -- read the definition line as a new statement.
+          Just (t, OwnLineSig) ->
+            "let " <> patD <> " : " <> typeDoc t <> nest 4 (hardline <> patD <> " = " <> rhsD)
+          Just (t, InlineSig) -> "let " <> patD <> " : " <> typeDoc t <> " = " <> rhsD
+          Nothing -> "let " <> patD <> " = " <> rhsD
   -- ctx=1 so block forms at the head of a DoExpr (specifically ELet)
   -- get wrapped in parens. Without that wrap, the parser's 'pDoLet'
   -- greedily consumes 'let pat = expr' as a do-block-let and leaves
@@ -480,12 +495,20 @@ renderDoStmt = \case
 -- | Walk a chain of nested 'ELet's and return the bindings in source
 --   order plus the eventual non-'ELet' body. Each binding carries
 --   its optional type ascription.
-collectLetChain :: Expr -> ([(SrcSpan, Pattern, Maybe Type', Expr)], Expr)
+collectLetChain :: Expr -> ([(SrcSpan, Pattern, Maybe (Type', LetSigLayout), Expr)], Expr)
 collectLetChain = \case
   ELet sp pat mAnnot rhs body ->
     let (rest, finalBody) = collectLetChain body
      in ((sp, pat, mAnnot, rhs) : rest, finalBody)
   other -> ([], other)
+
+-- | Does this binding carry an own-line signature (rendered over two
+--   lines)? A let-chain with any such binding stays in the vertical block
+--   layout — the inline-chain form has no place for a separate signature
+--   line.
+isOwnLineBind :: (SrcSpan, Pattern, Maybe (Type', LetSigLayout), Expr) -> Bool
+isOwnLineBind (_, _, Just (_, OwnLineSig), _) = True
+isOwnLineBind _ = False
 
 -- | Render a let-block in Haskell-style layout. The caller positions the
 --   @let@ keyword; everything else is offset from the /nesting baseline/
@@ -499,17 +522,41 @@ collectLetChain = \case
 --
 --   Single-binding still gets the 2-line shape — the user opted in to
 --   "split into 2 lines" for every let.
-renderLetBlock :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Doc ann
-renderLetBlock bodyCtx binds finalBody =
-  "let "
-    <> nest 4 (bindText firstBind)
-    <> mconcat [nest 4 (hardline <> bindText b) | b <- restBinds]
-    -- "in" sits one column in from the baseline; "in " is three chars,
-    -- so the body begins at baseline+4 — 'nest 3' (atop the enclosing
-    -- 'nest 1') puts the body's own breaks there too.
-    <> nest 1 (hardline <> "in " <> nest 3 (exprDocPrec bodyCtx finalBody))
+renderLetBlock :: Int -> [(SrcSpan, Pattern, Maybe (Type', LetSigLayout), Expr)] -> Expr -> Doc ann
+renderLetBlock bodyCtx binds finalBody = wrap letBlock
   where
-    annotText = maybe "" (\t -> " : " <> typeDoc t)
+    -- An own-line-signature binding needs its definition line at the
+    -- binder column exactly. 'align' pins the block's nesting to the
+    -- column where 'let' starts, so that holds in a nested expression
+    -- position too (where the starting column isn't the ambient nesting
+    -- level). InlineSig-only blocks have no second binding line to align
+    -- and render exactly as before, so the common case is untouched.
+    wrap = if any isOwnLineBind binds then align else id
+    letBlock =
+      "let "
+        <> nest 4 bindsBlock
+        -- "in" sits one column in from the baseline; "in " is three chars,
+        -- so the body begins at baseline+4 — 'nest 3' (atop the enclosing
+        -- 'nest 1') puts the body's own breaks there too.
+        <> nest 1 (hardline <> "in " <> nest 3 (exprDocPrec bodyCtx finalBody))
+    -- First binding follows "let " on the same line; each subsequent
+    -- binding lands on a fresh line at the binding column (baseline+4).
+    -- An own-line-signature binding (rendered over two lines) is fenced
+    -- by a blank line on each interior side: we break twice between two
+    -- bindings when either neighbour is two-line, once otherwise — so
+    -- single-line bindings pack and a two-line one reads as its own
+    -- paragraph. The 'let' head and the dedented 'in' are the outer
+    -- bounds, so no blank line leads the first binding or trails the last.
+    bindsBlock = case binds of
+      [] -> error "renderLetBlock called with no bindings"
+      (b0 : _) ->
+        bindDoc b0
+          <> mconcat
+            [ (if twoLine prev || twoLine cur then hardline <> hardline else hardline) <> bindDoc cur
+            | (prev, cur) <- zip binds (drop 1 binds)
+            ]
+    twoLine (_, _, Just (_, OwnLineSig), _) = True
+    twoLine _ = False
     -- Bind RHS at ctx=0 — like a function body after '=' — so a block-form RHS
     -- (do / case / let / lambda) and a '|>' chain render without enclosing
     -- parens; the 'in' on its own dedented line (and the next binding) is
@@ -517,18 +564,26 @@ renderLetBlock bodyCtx binds finalBody =
     -- bare '--' comment: the 'NoLineComments' RHS parser stops at the comment
     -- and never reaches the 'in', so 'tailHasComment' forces ctx=1 (parens)
     -- there, and only there. (Explicit user parens are preserved — see EParens.)
-    bindText (_, pat, mAnnot, rhs) =
-      renderPatternAtom pat <> annotText mAnnot <> " = " <> exprDocPrec (if tailHasComment rhs then 1 else 0) rhs
-    firstBind = case binds of
-      (b : _) -> b
-      [] -> error "renderLetBlock called with no bindings"
-    restBinds = drop 1 binds
+    --
+    -- 'OwnLineSig' puts the signature on its own line above the binding (both
+    -- at the binding column); 'InlineSig' keeps 'n : T = e' on one line. The
+    -- author's choice is preserved, not normalised.
+    bindDoc (_, pat, mAnnot, rhs) =
+      let patD = renderPatternAtom pat
+          rhsD = exprDocPrec (if tailHasComment rhs then 1 else 0) rhs
+       in case mAnnot of
+            Just (t, OwnLineSig) ->
+              patD <> " : " <> typeDoc t <> hardline <> patD <> " = " <> rhsD
+            Just (t, InlineSig) ->
+              patD <> " : " <> typeDoc t <> " = " <> rhsD
+            Nothing ->
+              patD <> " = " <> rhsD
 
 -- | Render a chain of 'ELet's as a single inline string @let n1 = e1
 --   in let n2 = e2 in body@. Used when the chain appears in a nested
 --   position (function argument, infix operand, etc.) where the
 --   layout form would be hard to align without column tracking.
-renderLetInlineChain :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Doc ann
+renderLetInlineChain :: Int -> [(SrcSpan, Pattern, Maybe (Type', LetSigLayout), Expr)] -> Expr -> Doc ann
 renderLetInlineChain bodyCtx binds finalBody =
   mconcat
     -- RHS at ctx=1: the inline ' in ' follows on the same line, so a block-form
@@ -538,7 +593,10 @@ renderLetInlineChain bodyCtx binds finalBody =
     ]
     <> exprDocPrec bodyCtx finalBody
   where
-    annotText = maybe "" (\t -> " : " <> typeDoc t)
+    -- Only reached for chains with no own-line signature (those route to
+    -- 'renderLetBlock'), so the layout tag is always 'InlineSig' here —
+    -- the ascription renders on the same line either way.
+    annotText = maybe "" (\(t, _) -> " : " <> typeDoc t)
 
 renderPattern :: Pattern -> Doc ann
 renderPattern = \case

@@ -918,6 +918,7 @@ Program
                                 }
                             ) "Int32"
                         )
+                    , InlineSig
                     )
                 )
                 ( EVar

@@ -110,6 +110,7 @@ Program
                                 }
                             ) "UInt8"
                         )
+                    , InlineSig
                     )
                 )
                 ( EApp

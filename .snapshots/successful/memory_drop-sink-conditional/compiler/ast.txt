@@ -814,6 +814,7 @@ Program
                             , spanEndCol = 18
                             }
                         ) "Bool"
+                    , InlineSig
                     )
                 )
                 ( ECase

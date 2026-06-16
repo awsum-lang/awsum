@@ -386,6 +386,7 @@ Program
                                 }
                             ) "String"
                         )
+                    , InlineSig
                     )
                 )
                 ( EApp
@@ -496,6 +497,7 @@ Program
                                     }
                                 ) "String"
                             )
+                        , InlineSig
                         )
                     )
                     ( EApp
@@ -634,6 +636,7 @@ Program
                                         }
                                     ) "String"
                                 )
+                            , InlineSig
                             )
                         )
                         ( EDo
@@ -919,6 +922,7 @@ Program
                                             }
                                         ) "String"
                                     )
+                                , InlineSig
                                 )
                             )
                             ( EDo

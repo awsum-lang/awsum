@@ -839,14 +839,21 @@ pLetNoLineComments = do
   firstBind <- pLetBinding
   restBinds <- P.many $ try $ do
     void C.eol
+    skipBlankLinesNoComments
     hspaceNoComments
     lvl <- L.indentLevel
     guard (lvl == refCol)
     pLetBinding
   -- 'in' is either inline after the last binding's RHS, or on a
   -- new line at any column strictly less than the bindings column.
+  -- Blank lines between bindings (and before 'in') are tolerated as
+  -- separators, not terminators — the formatter emits one to fence an
+  -- own-line-signature binding; the binding run ends only at the
+  -- dedented 'in'. (Deliberately unlike 'case', where a blank line
+  -- terminates the block.)
   let pInDedented = try $ do
         void C.eol
+        skipBlankLinesNoComments
         hspaceNoComments
         lvl <- L.indentLevel
         guard (lvl < refCol)
@@ -866,17 +873,89 @@ pLetNoLineComments = do
     -- the RHS as before; non-'PVar'-let desugars to a
     -- single-arm 'ECase' which the standard exhaustiveness
     -- check then validates.
-    pLetBinding :: Parser (SrcSpan, Pattern, Maybe Type', Expr)
+    pLetBinding :: Parser (SrcSpan, Pattern, Maybe (Type', LetSigLayout), Expr)
     pLetBinding = do
       bspS <- P.getSourcePos
       pat <- pPatternNoLineComments
-      mAnnot <- P.optional $ try $ do
+      mTy <- P.optional $ try $ do
         _ <- symNoLine ":"
         pTypeNoLineComments
-      _ <- symNoLine "="
-      e <- pExprNoLineComments
+      (mAnnot, e) <- case mTy of
+        Nothing -> do
+          _ <- symNoLine "="
+          e <- pExprNoLineComments
+          pure (Nothing, e)
+        Just ty -> pAscribedBindingRhs pat ty
       bspE <- P.getSourcePos
       pure (toSrcSpan bspS bspE, pat, mAnnot, e)
+
+-- | Parse the right-hand side of an ascribed binding (its @: T@ already
+--   consumed). Two forms: inline @n : T = e@ (commit as soon as @=@
+--   follows the type) or own-line @n : T@ then @n = e@ with the definition
+--   on the next line. Shared by @let … in@ bindings and @do@-block @let@
+--   statements. The own-line definition is matched by binder name rather
+--   than by an exact column, so it composes with the layout in either
+--   position; the formatter still aligns it under the signature.
+pAscribedBindingRhs :: Pattern -> Type' -> Parser (Maybe (Type', LetSigLayout), Expr)
+pAscribedBindingRhs pat ty = inlineForm <|> ownLineForm
+  where
+    inlineForm = do
+      _ <- try (symNoLine "=")
+      e <- pExprNoLineComments
+      pure (Just (ty, InlineSig), e)
+    ownLineForm = do
+      sigName <- requirePVar pat
+      void C.eol
+      hspaceNoComments
+      -- The signature must be followed, on the next line, by its own
+      -- definition: the same binder, then '='. A different binder, 'in',
+      -- or end-of-input orphans the signature. The binder is matched by
+      -- name, not by an exact column — the definition is unambiguously
+      -- this binder's (we are mid-parse), and a column check would be
+      -- brittle against how the formatter measures any wide characters
+      -- earlier on the signature line (the formatter still aligns it).
+      sawDef <- P.optional (try (matchBinder sigName))
+      when (isNothing sawDef) (fail (orphanSigMsg sigName))
+      -- No second ascription: 'n : T' (own line) followed by 'n : T = e'
+      -- would ascribe twice. One form per binding.
+      redundant <- P.optional (P.lookAhead (symNoLine ":"))
+      when (isJust redundant) (fail (doubleAscMsg sigName))
+      _ <- symNoLine "="
+      e <- pExprNoLineComments
+      pure (Just (ty, OwnLineSig), e)
+
+-- | The signature line of an own-line binding names a single binder;
+--   ascribing a destructuring pattern is rejected (ascribe the RHS
+--   instead, or keep it inline).
+requirePVar :: Pattern -> Parser Name
+requirePVar = \case
+  PVar _ n -> pure n
+  _ -> fail "A separate-line type signature is only allowed for a simple binder; ascribe the right-hand side instead, or keep the binding on one line."
+
+-- | Consume the definition binder of an own-line binding when it matches
+--   the signature's name; fail (so the enclosing 'try' backtracks to an
+--   orphaned-signature error) on a different binder, 'in', or anything
+--   that isn't a simple binder.
+matchBinder :: Name -> Parser ()
+matchBinder sigName = do
+  defPat <- pPatternNoLineComments
+  case defPat of
+    PVar _ n | n == sigName -> pass
+    _ -> fail "definition binder does not match the signature line"
+
+orphanSigMsg :: Name -> String
+orphanSigMsg sigName =
+  "The signature line for '"
+    <> toString sigName
+    <> "' must be followed by its definition '"
+    <> toString sigName
+    <> " = …' on the next line."
+
+doubleAscMsg :: Name -> String
+doubleAscMsg sigName =
+  "Binding '"
+    <> toString sigName
+    <> "' already has a signature line; remove the inline ': …' from its definition (one ascription per binding)."
 
 -- | Lambda abstraction: @\\x y -> body@. At least one parameter; the
 --   body extends as far right as possible (same precedence as 'case').
@@ -1086,11 +1165,15 @@ pDoStmtNoLineComments =
       start <- P.getSourcePos
       rwordNoLine "let"
       pat <- pPatternNoLineComments
-      mAnnot <- P.optional $ try $ do
+      mTy <- P.optional $ try $ do
         _ <- symNoLine ":"
         pTypeNoLineComments
-      _ <- symNoLine "="
-      e <- pExprNoLineComments
+      (mAnnot, e) <- case mTy of
+        Nothing -> do
+          _ <- symNoLine "="
+          e <- pExprNoLineComments
+          pure (Nothing, e)
+        Just ty -> pAscribedBindingRhs pat ty
       end <- P.getSourcePos
       pure (DoLet (toSrcSpan start end) pat mAnnot e)
     pDoExpr = do

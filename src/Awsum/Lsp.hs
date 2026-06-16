@@ -564,7 +564,7 @@ hoverForPosition mtp prog (Position l c) =
           ASyn.EDo _ stmts -> firstJust (refInDoStmt line col) stmts
           ASyn.ELet _ pat mty rhs body ->
             refInPattern line col pat
-              <|> (mty >>= refInType line col)
+              <|> (mty >>= refInType line col . fst)
               <|> refInExpr line col rhs
               <|> refInExpr line col body
           ASyn.EAscribe _ inner ty ->
@@ -581,7 +581,7 @@ hoverForPosition mtp prog (Position l c) =
         refInPattern line col pat <|> refInExpr line col e
       ASyn.DoLet _ pat mty e ->
         refInPattern line col pat
-          <|> (mty >>= refInType line col)
+          <|> (mty >>= refInType line col . fst)
           <|> refInExpr line col e
       ASyn.DoExpr _ e -> refInExpr line col e
 

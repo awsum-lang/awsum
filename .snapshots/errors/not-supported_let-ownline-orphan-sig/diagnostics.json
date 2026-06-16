@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":10,"startCol":7,"endLine":10,"endCol":7,"message":"The signature line for 'res' must be followed by its definition 'res = …' on the next line.","fixes":[]}]
