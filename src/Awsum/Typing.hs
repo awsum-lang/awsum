@@ -1347,7 +1347,28 @@ checkExpr conEnv tcm crossExempt env expected = \case
   e@(EApp {}) ->
     let (appHead, spineArgs) = appSpine e
         spine = do
-          headE <- typeOfExpr conEnv tcm env appHead
+          headE0 <- typeOfExpr conEnv tcm env appHead
+          -- Freshen the head's /instantiated/ scheme variables with a
+          -- per-application-span suffix. 'typeOfExpr' returns a polymorphic
+          -- reference (@TVar decl inst@) whose @inst@ slot still carries the
+          -- combinator's own scheme names (@a@, @e1@, @e2@, @b@ for
+          -- @andThenIO@). Two nested applications of the /same/ combinator
+          -- — @andThenIO c2 (andThenIO c1 z)@ — would otherwise share those
+          -- names, and the spine threads substitutions positionally
+          -- (@argTy' = applySubst subst' argTy@): the inner step binding
+          -- @a := T@ from its operand then leaks into the outer step's @a@
+          -- (its result element), so the outer continuation is checked
+          -- against the inner input type. (The synthesis path is immune —
+          -- it resolves each subtree to a concrete type bottom-up before
+          -- combining — but a continuation it cannot synthesise, e.g. a
+          -- destructuring @\\(Tuple2 a b) -> …@, falls to this spine.) The
+          -- @decl@ slot is left untouched so 'Awsum.MonomorphizeRows' still
+          -- sees the original scheme. The suffix keys off the /head
+          -- occurrence's/ span, not the application's: a left-nested @|>@
+          -- chain rewrites every step to an 'EApp' sharing the leftmost
+          -- operand's start position, so @exprSpan e@ would collide across
+          -- steps, whereas each @andThenIO@ token sits at its own position.
+          let headE = freshenHeadInst (exprSpan appHead) headE0
           case zipParamsToArrow (texprType headE) (length spineArgs) of
             Just (argTys, resultTy) -> do
               -- Validate the result shape, but do /not/ keep unify's
@@ -1484,6 +1505,22 @@ checkExpr conEnv tcm crossExempt env expected = \case
         go acc (EApp _ f x) = go (x : acc) f
         go acc (EParens _ inner) = go acc inner
         go acc h = (h, acc)
+
+    -- Freshen the /instantiated/ slot of a spine head's type with a suffix
+    -- unique to the application's span, so nested applications of the same
+    -- polymorphic combinator do not share scheme-variable names (see the
+    -- call site). The /declared/ slot is preserved — 'Awsum.MonomorphizeRows'
+    -- recovers the per-call-site instantiation from @unify declared inst@,
+    -- which renaming the inst side leaves intact. A monomorphic head
+    -- ('TBuiltIn') and non-reference heads (e.g. a 'TLam', whose parameters
+    -- already carry span-unique names) are returned unchanged.
+    freshenHeadInst :: SrcSpan -> TExpr -> TExpr
+    freshenHeadInst sp =
+      let suffix = "$spine" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
+       in \case
+            TVar vsp decl inst q -> TVar vsp decl (freshenType suffix inst) q
+            TConRef csp decl inst n -> TConRef csp decl (freshenType suffix inst) n
+            other -> other
 
     -- An argument with no synthesised type of its own: an inline lambda /
     -- @do@ continuation (defers its row coercions against an abstract result

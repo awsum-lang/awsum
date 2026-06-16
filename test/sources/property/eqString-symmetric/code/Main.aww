@@ -13,15 +13,15 @@ property a b = case eqString a b of
     True -> False
     False -> True
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInput raw))
-  |> andThenIO (\(Tuple2 a b) -> printOutcome (property a b))
+  |> andThenIO (\(Tuple2 a b) -> IO.Stdout.print (showOutcome (property a b)))
   |> handleErrorIO onError
 
 parseInput : String -> Either ParseError (Tuple2 String String)

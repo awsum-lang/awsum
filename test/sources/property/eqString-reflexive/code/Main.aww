@@ -11,14 +11,14 @@ import IO.Stdin
 property : String -> Bool
 property s = eqString s s
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
-  |> andThenIO (\raw -> printOutcome (property raw))
+  |> andThenIO (\raw -> IO.Stdout.print (showOutcome (property raw)))
   |> handleErrorIO onError
 
 onError : (StringTooLong | InvalidUtf8) -> IO Never Unit

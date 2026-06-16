@@ -9,15 +9,15 @@ property x = case succInt32 x of
   Left _ -> eqInt32 x maxInt32
   Right _ -> not (eqInt32 x maxInt32)
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
-  |> andThenIO (\x -> printOutcome (property x))
+  |> andThenIO (\x -> IO.Stdout.print (showOutcome (property x)))
   |> handleErrorIO onError
 
 onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit

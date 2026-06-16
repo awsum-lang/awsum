@@ -12,16 +12,16 @@ property a b = do
   ba <- mulInt32 b a
   pureEither (eqInt32 ab ba)
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInput raw))
   |> andThenIO (\(Tuple2 a b) -> eitherToIO (property a b))
-  |> andThenIO printOutcome
+  |> andThenIO (\holds -> IO.Stdout.print (showOutcome holds))
   |> handleErrorIO onError
 
 parseInput : String -> Either ParseError (Tuple2 Int32 Int32)

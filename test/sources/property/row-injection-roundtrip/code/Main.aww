@@ -25,15 +25,15 @@ d2 x = case x of
 property : Int32 -> Bool
 property a = and (and (eqString (d (intToRow a)) (showInt32 a)) (eqString (d2 (intToRow a)) (showInt32 a))) (eqString (d (strToRow (showInt32 a))) (showInt32 a))
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
-  |> andThenIO (\a -> printOutcome (property a))
+  |> andThenIO (\a -> IO.Stdout.print (showOutcome (property a)))
   |> handleErrorIO onError
 
 onError : (StringTooLong | InvalidUtf8 | ParseError) -> IO Never Unit

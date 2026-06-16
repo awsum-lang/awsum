@@ -14,16 +14,16 @@ property a b c = do
   aBc <- addUInt8 a bc
   pureEither (eqUInt8 abc aBc)
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInput raw))
   |> andThenIO (\(Tuple3 a b c) -> eitherToIO (property a b c))
-  |> andThenIO printOutcome
+  |> andThenIO (\holds -> IO.Stdout.print (showOutcome holds))
   |> handleErrorIO onError
 
 parseInput : String -> Either ParseError (Tuple3 UInt8 UInt8 UInt8)

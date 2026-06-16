@@ -12,16 +12,16 @@ property x = do
   s <- succInt32 p
   pureEither (eqInt32 s x)
 
-printOutcome : Bool -> IO Never Unit
-printOutcome holds = case holds of
-  True -> IO.Stdout.print "OK"
-  False -> IO.Stdout.print "FAIL"
+showOutcome : Bool -> String
+showOutcome holds = case holds of
+  True -> "OK"
+  False -> "FAIL"
 
 main : IO Never Unit
 main = IO.Stdin.readAllString
   |> andThenIO (\raw -> eitherToIO (parseInt32 raw))
   |> andThenIO (\x -> eitherToIO (property x))
-  |> andThenIO printOutcome
+  |> andThenIO (\holds -> IO.Stdout.print (showOutcome holds))
   |> handleErrorIO onError
 
 onError : (StringTooLong | InvalidUtf8 | ParseError | UnderflowError | OverflowError) -> IO Never Unit

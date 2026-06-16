@@ -1,0 +1,22 @@
+{- A nested `andThenIO` chain whose first continuation destructures a
+   `Tuple2` with a constructor pattern and whose downstream consumer is
+   itself an inline lambda. The destructuring step's result type is taken
+   from the continuation body (`Int32`), not from the destructured input
+   (`Tuple2 Int32 Int32`). Prints `8` — the sum of the pair's components,
+   3 and 5. -}
+
+import IO.Stdout
+
+pair : Either (UnderflowError | OverflowError) (Tuple2 Int32 Int32)
+pair = pureEither (Tuple2 (3 : Int32) (5 : Int32))
+
+onError : (UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"
+
+main : IO Never Unit
+main = eitherToIO pair
+  |> andThenIO (\(Tuple2 a b) -> eitherToIO (addInt32 a b))
+  |> andThenIO (\sum -> IO.Stdout.print (showInt32 sum))
+  |> handleErrorIO onError
