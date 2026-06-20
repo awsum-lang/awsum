@@ -95,7 +95,7 @@ freeVars = \case
   CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
-  CDrop _ n b -> Set.delete n (freeVars b)
+  CDrop n b -> Set.delete n (freeVars b)
   CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
   CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
   CProj n _ -> Set.singleton n
@@ -412,9 +412,9 @@ alphaRename from to = go
       CRowCase s alts -> CRowCase (go s) (map goRowAlt alts)
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
-      CDrop k n b
-        | n == from -> CDrop k n b -- the drop kills 'from'; stop descending
-        | otherwise -> CDrop k n (go b)
+      CDrop n b
+        | n == from -> CDrop n b -- the drop kills 'from'; stop descending
+        | otherwise -> CDrop n (go b)
       CReuse rm n t fs
         | n == from -> CReuse rm to t (map go fs)
         | otherwise -> CReuse rm n t (map go fs)

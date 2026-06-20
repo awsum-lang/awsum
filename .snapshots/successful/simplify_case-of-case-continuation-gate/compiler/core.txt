@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -37,7 +37,7 @@ CoreProgram
                     ( CBuiltIn "parseInt32" )
                     [ CString "41" ]
                 )
-                ( CDrop DropFreeUnchecked "$inl3$r"
+                ( CDrop "$inl3$r"
                     ( CJoin "$join15" [ "$inl16$scrut" ]
                         ( CCase
                             ( CVar "$inl16$scrut" )
@@ -101,7 +101,7 @@ CoreProgram
                                             ( CBuiltIn "parseInt32" )
                                             [ CString "x" ]
                                         )
-                                        ( CDrop DropFreeUnchecked "$inl6$r"
+                                        ( CDrop "$inl6$r"
                                             ( CCase
                                                 ( CCase
                                                     ( CVar "$inl6$r" )
@@ -138,7 +138,7 @@ CoreProgram
                                                             ( CBuiltIn "parseInt32" )
                                                             [ CString "43" ]
                                                         )
-                                                        ( CDrop DropFreeUnchecked "$inl9$r"
+                                                        ( CDrop "$inl9$r"
                                                             ( CCase
                                                                 ( CCase
                                                                     ( CVar "$inl9$r" )
@@ -175,7 +175,7 @@ CoreProgram
                                                                             ( CBuiltIn "parseInt32" )
                                                                             [ CString "44" ]
                                                                         )
-                                                                        ( CDrop DropFreeUnchecked "$inl12$r"
+                                                                        ( CDrop "$inl12$r"
                                                                             ( CCase
                                                                                 ( CCase
                                                                                     ( CVar "$inl12$r" )

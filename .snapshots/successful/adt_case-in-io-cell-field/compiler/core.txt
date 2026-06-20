@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -36,7 +36,7 @@ CoreProgram
                 ( CCon 12
                     [ CIntLit 1 TInt32 ]
                 )
-                ( CDrop DropFreeUnchecked "$inl2$x"
+                ( CDrop "$inl2$x"
                     ( CCon 7
                         [ CCase
                             ( CVar "$inl2$x" )

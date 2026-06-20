@@ -367,7 +367,7 @@ stringsInExpr = \case
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
-  CDrop _ _ body -> stringsInExpr body
+  CDrop _ body -> stringsInExpr body
   CReuse _ _ _ fs -> concatMap stringsInExpr fs
   CLet _ rhs body -> stringsInExpr rhs <> stringsInExpr body
   CProj _ _ -> []
@@ -810,7 +810,7 @@ exprMaxConDepth = \case
   CCall f xs -> foldl' max (exprMaxConDepth f) (map exprMaxConDepth xs)
   CLoop b -> exprMaxConDepth b
   CContinue xs -> foldl' max 0 (map exprMaxConDepth xs)
-  CDrop _ _ b -> exprMaxConDepth b
+  CDrop _ b -> exprMaxConDepth b
   CLet _ rhs b -> max (exprMaxConDepth rhs) (exprMaxConDepth b)
   -- A guarded reuse carries a copy-on-write branch that allocates a fresh
   -- cell — size it like the 'CCon' it falls back to.
@@ -847,7 +847,7 @@ exprNeedsScrutSlot valDefs funDefs = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> any go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CLet _ rhs b -> go rhs || go b
       CReuse _ _ _ fs -> any go fs
       CJoin _ _ body inner -> go body || go inner
@@ -871,7 +871,7 @@ exprMaxBoundVars = \case
   CCon _ fs -> foldl' max 0 (map exprMaxBoundVars fs)
   CLoop b -> exprMaxBoundVars b
   CContinue xs -> foldl' max 0 (map exprMaxBoundVars xs)
-  CDrop _ _ b -> exprMaxBoundVars b
+  CDrop _ b -> exprMaxBoundVars b
   CLet _ rhs b -> max (exprMaxBoundVars rhs) (1 + exprMaxBoundVars b)
   CReuse _ _ _ fs -> foldl' max 0 (map exprMaxBoundVars fs)
   -- A join body's binds start from the same base as the inner's: the two
@@ -904,7 +904,7 @@ exprMaxFreshScrutDepth = \case
   CCon _ fs -> foldl' max 0 (map exprMaxFreshScrutDepth fs)
   CLoop b -> exprMaxFreshScrutDepth b
   CContinue xs -> foldl' max 0 (map exprMaxFreshScrutDepth xs)
-  CDrop _ _ b -> exprMaxFreshScrutDepth b
+  CDrop _ b -> exprMaxFreshScrutDepth b
   CReuse _ _ _ fs -> foldl' max 0 (map exprMaxFreshScrutDepth fs)
   CLet _ rhs b -> max (exprMaxFreshScrutDepth rhs) (exprMaxFreshScrutDepth b)
   -- The body resumes at the stash depth recorded at the node (every jump
@@ -929,7 +929,7 @@ exprJoinParams = \case
   CRowCase s alts -> exprJoinParams s <> concatMap (\(_, _, b) -> exprJoinParams b) alts
   CLoop b -> exprJoinParams b
   CContinue xs -> concatMap exprJoinParams xs
-  CDrop _ _ b -> exprJoinParams b
+  CDrop _ b -> exprJoinParams b
   CLet _ rhs b -> exprJoinParams rhs <> exprJoinParams b
   CReuse _ _ _ fs -> concatMap exprJoinParams fs
   _ -> []
@@ -948,7 +948,7 @@ exprMaxJoinDepth = \case
   CRowCase s alts -> foldl' max (exprMaxJoinDepth s) [exprMaxJoinDepth b | (_, _, b) <- alts]
   CLoop b -> exprMaxJoinDepth b
   CContinue xs -> foldl' max 0 (map exprMaxJoinDepth xs)
-  CDrop _ _ b -> exprMaxJoinDepth b
+  CDrop _ b -> exprMaxJoinDepth b
   CLet _ rhs b -> max (exprMaxJoinDepth rhs) (exprMaxJoinDepth b)
   CReuse _ _ _ fs -> foldl' max 0 (map exprMaxJoinDepth fs)
   _ -> 0
@@ -1055,7 +1055,7 @@ sourceCVarBin = \case
   -- 'CDrop' emission /owned/ (the move-inc fired before the dec), so it
   -- is not a borrow source. Any other tail passes through, as does a
   -- let's body.
-  CDrop _ n body -> case sourceCVarBin body of
+  CDrop n body -> case sourceCVarBin body of
     Just m | m == n -> Nothing
     other -> other
   CLet _ _ body -> sourceCVarBin body
@@ -1073,7 +1073,7 @@ isHeapBorrow :: ExprCtx -> CExpr -> Bool
 isHeapBorrow ctx = \case
   CVar n -> not (Set.member n ctx.ecValDefs || Set.member n ctx.ecFunDefs)
   -- Mirrors 'sourceCVarBin': the move shape leaves the drop owned.
-  CDrop _ n body -> case sourceCVarBin body of
+  CDrop n body -> case sourceCVarBin body of
     Just m | m == n -> False
     _ -> isHeapBorrow ctx body
   CLet _ _ body -> isHeapBorrow ctx body
@@ -1370,7 +1370,7 @@ emitExprI ctx = \case
   -- the same binder we're about to dec), inc the result first so
   -- the dec balances and the returned cell stays alive (the
   -- move-semantics rule for a returned binder).
-  CDrop _ n body ->
+  CDrop n body ->
     let bodyBytes = emitExprI ctx body
         slot = lookupBinderSlot ctx n
         moveInc = case sourceCVarBin body of
@@ -1570,7 +1570,7 @@ emitJoinExprI ctx j ps body inner =
          in letCode <> goInner ctx' pending b
       -- A drop above the dispatch (a let binder whose scope is the whole
       -- inner expression): the dec joins the per-path releases below.
-      CDrop _ n b -> goInner ctxN (n : pending) b
+      CDrop n b -> goInner ctxN (n : pending) b
       -- Degenerate inner — the fusion's case collapsed afterwards to a
       -- bare jump or a plain value.
       other -> armBody ctxN pending (0 :: Int) other
@@ -1626,7 +1626,7 @@ emitJoinExprI ctx j ps body inner =
 -- released at the jump, after the argument incs.
 peelJoinDrops :: CExpr -> ([Text], CExpr)
 peelJoinDrops = \case
-  CDrop _ n b -> first (n :) (peelJoinDrops b)
+  CDrop n b -> first (n :) (peelJoinDrops b)
   e -> ([], e)
 
 -- | Dispatch source of a case: the variable's own slot when the scrutinee
@@ -1807,7 +1807,7 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] 0
          in scrutCode <> goCaseChain ctx depth dispatchSlot scrutName pending freshScrutDepth' sorted
       CRowCase scrut alts ->
         go ctx depth pending freshScrutDepth (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-      CDrop _ n body -> go ctx depth (n : pending) freshScrutDepth body
+      CDrop n body -> go ctx depth (n : pending) freshScrutDepth body
       CLet x rhs body ->
         let (bindCode, ctx') = bindLetI ctx x rhs
          in bindCode <> go ctx' depth pending freshScrutDepth body
@@ -1975,7 +1975,7 @@ emitTailPendingI tcoTempBase params depth ctx pending freshScrutDepth = \case
   CRowCase scrut alts ->
     emitTailPendingI tcoTempBase params depth ctx pending freshScrutDepth (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   -- Push the drop onto the pending stack; drain at terminator.
-  CDrop _ n body -> emitTailPendingI tcoTempBase params depth ctx (n : pending) freshScrutDepth body
+  CDrop n body -> emitTailPendingI tcoTempBase params depth ctx (n : pending) freshScrutDepth body
   -- Bind, then the body continues in tail position (its 'CDrop' for the
   -- binder lands on the pending stack like any other).
   CLet x rhs body ->

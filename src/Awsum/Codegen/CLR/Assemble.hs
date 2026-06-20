@@ -286,7 +286,7 @@ exprLocalsNeeded valDefs funDefs = go
       CCon _ fields -> 1 + foldl' max 0 (map go fields)
       CLoop b -> go b
       CContinue xs -> foldl' max 0 (map go xs)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       -- Cell reuse: same locals budget as CCon.
       CReuse _ _ _ fs -> 1 + foldl' max 0 (map go fs)
       -- One slot for the binder, live across the body; the rhs evaluates
@@ -950,7 +950,7 @@ emitExprI ctx = \case
   -- only a loop-private 'ReuseUnique' pack/continuation mutates in place.
   CReuse ReuseGuarded _ tag fields -> emitCellI ctx tag fields
   CReuse ReuseUnique n tag fields -> emitReuseI ctx n tag fields
-  CDrop _ _ body -> emitExprI ctx body
+  CDrop _ body -> emitExprI ctx body
   CCall f xs -> emitCallI ctx f xs
   CCase scrut alts -> emitCaseI ctx scrut alts
   CRowCase scrut alts -> emitCaseI ctx scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
@@ -1179,7 +1179,7 @@ emitJoinI ctx j ps body inner = do
             ctx' = ctxJ {eLocals = Map.insert x slot ctxJ.eLocals, eNextScratch = slot + 1}
         bodyI <- goInner ctx' afterLbl b
         pure (rhsI <> [Stloc slot] <> bodyI)
-      CDrop _ _ b -> goInner ctxJ afterLbl b
+      CDrop _ b -> goInner ctxJ afterLbl b
       CCase scrut alts -> goInnerCase ctxJ afterLbl scrut alts
       CRowCase scrut alts ->
         goInnerCase ctxJ afterLbl scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
@@ -1230,7 +1230,7 @@ emitJoinI ctx j ps body inner = do
         pure (valI <> [Br (LabelId afterLbl)])
     peelDrops :: CExpr -> CExpr
     peelDrops = \case
-      CDrop _ _ b -> peelDrops b
+      CDrop _ b -> peelDrops b
       e -> e
 
 -- | Tail-position emitter for a 'CLoop' body. The loop head is @loopLbl@
@@ -1259,7 +1259,7 @@ emitTailI baseCtx params loopLbl = go baseCtx []
         pure (concat argCodes <> drainDrops ctx dropsNotRebound <> stargs <> [Br (LabelId loopLbl)])
       CCase scrut alts -> tailCase ctx pending scrut alts
       CRowCase scrut alts -> tailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      CDrop _ n body -> go ctx (n : pending) body
+      CDrop n body -> go ctx (n : pending) body
       CLet x rhs body -> do
         rhsI <- emitExprI ctx rhs
         let slot = ctx.eNextScratch

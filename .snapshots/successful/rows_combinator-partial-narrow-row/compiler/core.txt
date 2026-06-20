@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -41,7 +41,7 @@ CoreProgram
                     ( CLet "$inl16$x"
                         ( CLet "$inl13$__input"
                             ( CVar "oa" )
-                            ( CDrop DropFreeUnchecked "$inl13$__input"
+                            ( CDrop "$inl13$__input"
                                 ( CCase
                                     ( CVar "$inl13$__input" )
                                     [
@@ -61,7 +61,7 @@ CoreProgram
                                 )
                             )
                         )
-                        ( CDrop DropFreeUnchecked "$inl16$x"
+                        ( CDrop "$inl16$x"
                             ( CCase
                                 ( CVar "$inl16$x" )
                                 [
@@ -76,7 +76,7 @@ CoreProgram
                                         ( CCon 3
                                             [ CCon 25 [] ]
                                         )
-                                        ( CDrop DropFreeUnchecked "$inl19$__input"
+                                        ( CDrop "$inl19$__input"
                                             ( CCase
                                                 ( CVar "$inl19$__input" )
                                                 [
@@ -100,7 +100,7 @@ CoreProgram
                             )
                         )
                     )
-                    ( CDrop DropFreeUnchecked "$inl26$r"
+                    ( CDrop "$inl26$r"
                         ( CCase
                             ( CVar "$inl26$r" )
                             [

@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -49,9 +49,9 @@ CoreProgram
                             [ "s"
                             , "rest"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "rest"
-                                ( CDrop DropFreeUnchecked "acc"
+                        , CDrop "s"
+                            ( CDrop "rest"
+                                ( CDrop "acc"
                                     ( CContinue
                                         [ CVar "rest"
                                         , CReuse ReuseGuarded "lst" 25
@@ -99,9 +99,9 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CDrop DropFreeUnchecked "m"
-                                    ( CDrop DropFreeUnchecked "n"
-                                        ( CDrop DropFreeUnchecked "acc"
+                                , CDrop "m"
+                                    ( CDrop "n"
+                                        ( CDrop "acc"
                                             ( CContinue
                                                 [ CVar "m"
                                                 , CCon 25
@@ -128,7 +128,7 @@ CoreProgram
                     , CCon 24 []
                     ]
                 )
-                ( CDrop DropFreeUnchecked "$inl37$xs"
+                ( CDrop "$inl37$xs"
                     ( CCon 7
                         [ CCase
                             ( CCall

@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -50,7 +50,7 @@ CoreProgram
             ( CCon 7
                 [ CLet "$inl7$r"
                     ( CVar "result" )
-                    ( CDrop DropFreeUnchecked "$inl7$r"
+                    ( CDrop "$inl7$r"
                         ( CCase
                             ( CVar "$inl7$r" )
                             [
@@ -97,14 +97,14 @@ CoreProgram
                             [ "$cl"
                             , "$arg0"
                             ]
-                        , CDrop DropFreeUnchecked "$cl"
-                            ( CDrop DropFreeUnchecked "$arg0"
+                        , CDrop "$cl"
+                            ( CDrop "$arg0"
                                 ( CCase
                                     ( CVar "$cl" )
                                     [
                                         ( 8
                                         , [ "$cap8_0" ]
-                                        , CDrop DropFreeUnchecked "$k"
+                                        , CDrop "$k"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 11
                                                     [ CProj "$cl" 1
@@ -134,14 +134,14 @@ CoreProgram
                             [ "x"
                             , "k"
                             ]
-                        , CDrop DropFreeUnchecked "k"
+                        , CDrop "k"
                             ( CCase
                                 ( CVar "x" )
                                 [
                                     ( 3
                                     , [ "e" ]
-                                    , CDrop DropFreeUnchecked "x"
-                                        ( CDrop DropFreeUnchecked "e"
+                                    , CDrop "x"
+                                        ( CDrop "e"
                                             ( CCall
                                                 ( CVar "$apply$$scc$$apply1_$rowmono$0$bindEither" )
                                                 [ CVar "$k"
@@ -156,8 +156,8 @@ CoreProgram
                                 ,
                                     ( 4
                                     , [ "a" ]
-                                    , CDrop DropFreeUnchecked "a"
-                                        ( CDrop DropFreeUnchecked "$k"
+                                    , CDrop "a"
+                                        ( CDrop "$k"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 10
                                                     [ CVar "k"
@@ -190,7 +190,7 @@ CoreProgram
                     ,
                         ( 13
                         , [ "$pk_13" ]
-                        , CDrop DropFreeUnchecked "$x"
+                        , CDrop "$x"
                             ( CContinue
                                 [ CProj "$k" 1
                                 , CCase
@@ -198,7 +198,7 @@ CoreProgram
                                     [
                                         ( 3
                                         , [ "$inl1$__f0" ]
-                                        , CDrop DropFreeUnchecked "$inl1$__f0"
+                                        , CDrop "$inl1$__f0"
                                             ( CReuse ReuseUnique "$k" 3
                                                 [ CRow 2269767818
                                                     ( CVar "$inl1$__f0" )

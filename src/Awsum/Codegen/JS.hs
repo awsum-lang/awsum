@@ -593,7 +593,7 @@ stmtBody apv0 params = go apv0 Map.empty []
         switchOn apv scrut (\scrutE -> map (stmtAlt apv (scrutName scrut) scrutE joins pending) alts)
       CRowCase scrut alts ->
         switchOn apv scrut (\scrutE -> map (stmtRowAlt apv scrutE joins pending) alts)
-      CDrop _ n body -> go apv joins (n : pending) body
+      CDrop n body -> go apv joins (n : pending) body
       -- A let in tail position binds a block-scoped @const@ and the body
       -- continues the statement spine (so arm-tail returns, continues and
       -- pending drops all flow through unchanged).
@@ -672,7 +672,7 @@ exprE apv = \case
   CBuiltIn n -> error ("JS codegen: CBuiltIn '" <> n <> "' in term position (invariant: only in CCall callee)")
   CCon tag fields -> EArray (ENum (toInteger tag) : map (exprE apv) fields)
   CRow tag v -> EArray [ENum (toInteger tag), exprE apv v]
-  CDrop _ _ body -> exprE apv body
+  CDrop _ body -> exprE apv body
   -- A guarded reuse cannot mutate here: the cell may be shared (the caller
   -- can retain the structure) and there is no refcount header to check, so
   -- it lowers as the allocation it replaced. Only a 'ReuseUnique' cell — an

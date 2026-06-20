@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -38,7 +38,7 @@ CoreProgram
         , CValDef "res"
             ( CLet "$inl24$x"
                 ( CVar "oa" )
-                ( CDrop DropFreeUnchecked "$inl24$x"
+                ( CDrop "$inl24$x"
                     ( CCase
                         ( CVar "$inl24$x" )
                         [
@@ -56,7 +56,7 @@ CoreProgram
                                 ( CCon 4
                                     [ CProj "$inl24$x" 1 ]
                                 )
-                                ( CDrop DropFreeUnchecked "$inl18$x"
+                                ( CDrop "$inl18$x"
                                     ( CCase
                                         ( CVar "$inl18$x" )
                                         [
@@ -71,7 +71,7 @@ CoreProgram
                                                 ( CCon 3
                                                     [ CCon 26 [] ]
                                                 )
-                                                ( CDrop DropFreeUnchecked "$inl21$__input"
+                                                ( CDrop "$inl21$__input"
                                                     ( CCase
                                                         ( CVar "$inl21$__input" )
                                                         [
@@ -103,7 +103,7 @@ CoreProgram
             ( CCon 7
                 [ CLet "$inl29$r"
                     ( CVar "res" )
-                    ( CDrop DropFreeUnchecked "$inl29$r"
+                    ( CDrop "$inl29$r"
                         ( CCase
                             ( CVar "$inl29$r" )
                             [

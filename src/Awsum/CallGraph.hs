@@ -66,7 +66,7 @@ buildCallGraph (CoreProgram ds) =
       CVar n -> Set.singleton n
       CLoop b -> calls b
       CContinue xs -> foldMap calls xs
-      CDrop _ _ b -> calls b
+      CDrop _ b -> calls b
       CReuse _ _ _ fs -> foldMap calls fs
       CLet _ rhs body -> calls rhs <> calls body
       -- The join name is a label, not a top-level reference — only the
@@ -103,7 +103,7 @@ hasNonTailSelfCall f = inTail
       CCon _ fs -> any inNonTail fs
       CLoop b -> inTail b
       CContinue xs -> any inNonTail xs
-      CDrop _ _ b -> inTail b
+      CDrop _ b -> inTail b
       CReuse _ _ _ fs -> any inNonTail fs
       CLet _ rhs body -> inNonTail rhs || inTail body
       -- Control transfers from the inner expression's jump tails into the
@@ -126,7 +126,7 @@ hasNonTailSelfCall f = inTail
       CCon _ fs -> any inNonTail fs
       CLoop b -> inNonTail b
       CContinue xs -> any inNonTail xs
-      CDrop _ _ b -> inNonTail b
+      CDrop _ b -> inNonTail b
       CReuse _ _ _ fs -> any inNonTail fs
       CLet _ rhs body -> inNonTail rhs || inNonTail body
       CJoin _ _ body inner -> inNonTail body || inNonTail inner

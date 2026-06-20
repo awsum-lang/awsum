@@ -381,9 +381,9 @@ etaExpandBuiltInValues = goValue
       CContinue args ->
         let (args', ns) = unzipFold (map goValue args)
          in (CContinue args', ns)
-      CDrop k n b ->
+      CDrop n b ->
         let (b', ns) = goValue b
-         in (CDrop k n b', ns)
+         in (CDrop n b', ns)
       CReuse rm n t fs ->
         let (fs', ns) = unzipFold (map goValue fs)
          in (CReuse rm n t fs', ns)
@@ -681,7 +681,7 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
   --    freely rewrite bodies and would otherwise have to preserve
   --    drops through every transformation.
   -- 13) Cell reuse: rewrites the canonical
-  --    'CCase (CVar n) [..., (t, vs, CDrop _ n inner), ...]' +
+  --    'CCase (CVar n) [..., (t, vs, CDrop n inner), ...]' +
   --    matching-arity 'CCon' inside 'inner' into 'CReuse'. Runs
   --    after 'insertDrops' so it can rely on the drop placement as
   --    a proxy for linear-use of the scrutinee.
@@ -887,7 +887,7 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
           [(t, v, rewriteExpr e) | (t, v, e) <- alts]
       CLoop body -> CLoop (rewriteExpr body)
       CContinue args -> CContinue (map rewriteExpr args)
-      CDrop k n body -> CDrop k n (rewriteExpr body)
+      CDrop n body -> CDrop n (rewriteExpr body)
       CReuse rm n t fs -> CReuse rm n t (map rewriteExpr fs)
       CLet x rhs body -> CLet x (rewriteExpr rhs) (rewriteExpr body)
       CJoin {} -> error "ElaborateLower: CJoin is minted by Awsum.Simplify, which runs later"
@@ -1069,7 +1069,7 @@ guardedTags cs rs = go
       CCall f xs -> go f <> foldMap go xs
       CLoop b -> go b
       CContinue xs -> foldMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CLet _ rhs body -> go rhs <> go body
       CJoin _ _ body inner -> go body <> go inner
       CJump _ args -> foldMap go args
@@ -1109,7 +1109,7 @@ pruneDeadArms conTags rowTags = go
       CRow t v -> CRow t (go v)
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
-      CDrop k n b -> CDrop k n (go b)
+      CDrop n b -> CDrop n (go b)
       CReuse rm n t fs -> CReuse rm n t (map go fs)
       CLet x rhs body -> CLet x (go rhs) (go body)
       CJoin j ps body inner -> CJoin j ps (go body) (go inner)
@@ -1205,7 +1205,7 @@ saturateExpr am locals = go
       -- Same story: 'CDrop' is produced by 'Awsum.Lifetime.insertDrops'
       -- after Tco, so saturate never sees it. Transparent passthrough
       -- keeps the pattern match exhaustive.
-      CDrop k n b -> CDrop k n <$> go b
+      CDrop n b -> CDrop n <$> go b
       -- 'CReuse' is also produced after Tco; passthrough.
       CReuse rm n t fs -> CReuse rm n t <$> traverse go fs
       CLet x rhs body -> CLet x <$> go rhs <*> go body
@@ -1265,7 +1265,7 @@ freeVars = \case
   CCall f xs -> freeVars f <> foldMap freeVars xs
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
-  CDrop _ n b -> Set.delete n (freeVars b)
+  CDrop n b -> Set.delete n (freeVars b)
   CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
   CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
   CProj n _ -> one n

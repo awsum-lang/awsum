@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -66,9 +66,9 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CDrop DropFreeUnchecked "m"
-                                    ( CDrop DropFreeUnchecked "n"
-                                        ( CDrop DropFreeUnchecked "acc"
+                                , CDrop "m"
+                                    ( CDrop "n"
+                                        ( CDrop "acc"
                                             ( CContinue
                                                 [ CVar "m"
                                                 , CCon 25
@@ -116,9 +116,9 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "a" ]
-                                , CDrop DropFreeUnchecked "a"
-                                    ( CDrop DropFreeUnchecked "xs"
-                                        ( CDrop DropFreeUnchecked "acc"
+                                , CDrop "a"
+                                    ( CDrop "xs"
+                                        ( CDrop "acc"
                                             ( CContinue
                                                 [ CProj "xs" 2
                                                 , CVar "a"
@@ -166,7 +166,7 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "i" ]
-                                , CDrop DropFreeUnchecked "i"
+                                , CDrop "i"
                                     ( CCase
                                         ( CCall
                                             ( CBuiltIn "addInt32" )
@@ -190,10 +190,10 @@ CoreProgram
                                         ,
                                             ( 4
                                             , [ "s" ]
-                                            , CDrop DropFreeUnchecked "s"
-                                                ( CDrop DropFreeUnchecked "iters"
-                                                    ( CDrop DropFreeUnchecked "listLen"
-                                                        ( CDrop DropFreeUnchecked "accSum"
+                                            , CDrop "s"
+                                                ( CDrop "iters"
+                                                    ( CDrop "listLen"
+                                                        ( CDrop "accSum"
                                                             ( CContinue
                                                                 [ CVar "i"
                                                                 , CVar "listLen"

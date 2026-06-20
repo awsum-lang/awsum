@@ -3063,8 +3063,8 @@ patternSpan = \case
 --   field's type is derived by unifying the constructor's freshened
 --   return type with the matched type and substituting into its field
 --   types; a 'PAscribe' overrides the matched type with the ascribed
---   alternative. Each binder ('TPVar') carries its resolved type so
---   lowering can pick its 'Awsum.Core.CDropKind'.
+--   alternative. Each binder ('TPVar') carries its resolved type,
+--   consumed by lowering.
 elabPattern :: ConEnv -> Pattern -> Type' -> TPattern
 elabPattern conEnv = go
   where

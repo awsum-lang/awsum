@@ -4,7 +4,7 @@
 -- (specifically by its 'addContinueDrops' step) under a linear case-scrutinee:
 --
 -- @
---   CCase (CVar n) [..., (tag_in, [v1..vk], CDrop _ n inner), ...]
+--   CCase (CVar n) [..., (tag_in, [v1..vk], CDrop n inner), ...]
 -- @
 --
 -- where @inner@ contains a @CCon t fields@ with
@@ -62,7 +62,7 @@ reuseExpr mintedFloor = goE
       CRow t v -> CRow t (goE v)
       CLoop b -> CLoop (goE b)
       CContinue xs -> CContinue (map goE xs)
-      CDrop k m b -> CDrop k m (goE b)
+      CDrop m b -> CDrop m (goE b)
       CReuse m n t fs -> CReuse m n t (map goE fs)
       CLet x rhs body -> CLet x (goE rhs) (goE body)
       -- Self-contained patterns inside the join body and the inner expression
@@ -128,13 +128,13 @@ findAndReuseScrutDrop mode scrut k = go
       -- Found scrut drop in this path. Strip it; the inner is the
       -- post-drop expression that 'rewriteFirstCCon' searches for a
       -- matching 'CCon' to redirect.
-      CDrop _ n inner
+      CDrop n inner
         | n == scrut ->
             rewriteFirstCCon mode scrut k inner
       -- Other 'CDrop' (arm-binder, transient param). Preserve and
       -- recurse — the scrut drop may be further down.
-      CDrop dk m inner ->
-        CDrop dk m <$> go inner
+      CDrop m inner ->
+        CDrop m <$> go inner
       -- A 'CLet' (function inlining is the producer) is transparent for the
       -- search when its right-hand side does not touch the scrut: the body
       -- may hold the scrut drop. A right-hand side reading the scrut keeps
@@ -248,7 +248,7 @@ rewriteFirstCCon mode n k = go
         case goRowAlts alts of
           Just alts' -> Just (CRowCase scrut alts')
           Nothing -> Nothing
-      CDrop dk m b -> CDrop dk m <$> go b
+      CDrop m b -> CDrop m <$> go b
       CLet x rhs b
         | not (binderUsedIn n rhs) -> CLet x rhs <$> go b
       _ -> Nothing

@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -42,7 +42,7 @@ CoreProgram
                         , CIntLit 9 TUInt32
                         ]
                     )
-                    ( CDrop DropFreeUnchecked "$inl5$b"
+                    ( CDrop "$inl5$b"
                         ( CJoin "$join3" [ "$inl4$scrut" ]
                             ( CCase
                                 ( CVar "$inl4$scrut" )

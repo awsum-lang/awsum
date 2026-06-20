@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -35,10 +35,10 @@ CoreProgram
             ( CLet "$inl28$g"
                 ( CLet "$inl17$$cl"
                     ( CCon 10 [] )
-                    ( CDrop DropFreeUnchecked "$inl17$$cl"
+                    ( CDrop "$inl17$$cl"
                         ( CLet "$inl18$$arg0"
                             ( CIntLit 7 TInt32 )
-                            ( CDrop DropFreeUnchecked "$inl18$$arg0"
+                            ( CDrop "$inl18$$arg0"
                                 ( CCase
                                     ( CVar "$inl17$$cl" )
                                     [
@@ -69,11 +69,11 @@ CoreProgram
                         )
                     )
                 )
-                ( CDrop DropFreeUnchecked "$inl28$g"
+                ( CDrop "$inl28$g"
                     ( CLet "$inl23$h"
                         ( CLet "$inl19$$arg0"
                             ( CIntLit 8 TInt32 )
-                            ( CDrop DropFreeUnchecked "$inl19$$arg0"
+                            ( CDrop "$inl19$$arg0"
                                 ( CCase
                                     ( CVar "$inl28$g" )
                                     [
@@ -102,13 +102,13 @@ CoreProgram
                                 )
                             )
                         )
-                        ( CDrop DropFreeUnchecked "$inl23$h"
+                        ( CDrop "$inl23$h"
                             ( CCon 7
                                 [ CCall
                                     ( CBuiltIn "showInt32" )
                                     [ CLet "$inl24$$arg0"
                                         ( CIntLit 9 TInt32 )
-                                        ( CDrop DropFreeUnchecked "$inl24$$arg0"
+                                        ( CDrop "$inl24$$arg0"
                                             ( CCase
                                                 ( CVar "$inl23$h" )
                                                 [

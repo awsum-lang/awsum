@@ -22,8 +22,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -110,8 +110,8 @@ CoreProgram
                             [ "x"
                             , "$df$andThenEither$0$cap0$0"
                             ]
-                        , CDrop DropFreeUnchecked "x"
-                            ( CDrop DropFreeUnchecked "$df$andThenEither$0$cap0$0"
+                        , CDrop "x"
+                            ( CDrop "$df$andThenEither$0$cap0$0"
                                 ( CCase
                                     ( CVar "x" )
                                     [
@@ -139,8 +139,8 @@ CoreProgram
                             [ "m"
                             , "doubled"
                             ]
-                        , CDrop DropFreeUnchecked "m"
-                            ( CDrop DropFreeUnchecked "doubled"
+                        , CDrop "m"
+                            ( CDrop "doubled"
                                 ( CContinue
                                     [ CReuse ReuseUnique "$args" 10
                                         [ CVar "m"
@@ -156,8 +156,8 @@ CoreProgram
                             [ "n"
                             , "acc"
                             ]
-                        , CDrop DropFreeUnchecked "n"
-                            ( CDrop DropFreeUnchecked "acc"
+                        , CDrop "n"
+                            ( CDrop "acc"
                                 ( CCase
                                     ( CCall
                                         ( CBuiltIn "predUInt32" )
@@ -172,7 +172,7 @@ CoreProgram
                                     ,
                                         ( 4
                                         , [ "m" ]
-                                        , CDrop DropFreeUnchecked "m"
+                                        , CDrop "m"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 8
                                                     [ CCall

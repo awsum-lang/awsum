@@ -23,9 +23,7 @@ module Awsum.Core
     CDecl (..),
     CoreProgram (..),
     PreludeTags (..),
-    CDropKind (..),
     ReuseMode (..),
-    BinderKindMap,
     usedBuiltIns,
     usesIntLit,
     nextFreshConTag,
@@ -70,28 +68,6 @@ intTypeName = \case
   TUInt8 -> "UInt8"
   TUInt32 -> "UInt32"
 
--- | How a 'CDrop' should be lowered by codegen. The kind is set at
---   the point a binder is introduced (function parameter,
---   case-pattern binder, row-case binder) based on the binder's
---   type-erased runtime shape, and propagated through every synthetic
---   pass that mints fresh binders.
---
---     * 'DropFreeUnchecked' — binder holds a heap pointer that is
---       known to be heap-allocated (ADT cell, boxed primitive).
---       Codegen emits the per-target free directly (LLVM
---       @call free@, WASM freelist return, JVM/CLR/JS slot nullify).
---     * 'DropFreeStringChecked' — binder holds a 'String' pointer
---       that may be either a static-data literal (@.str.N@ on LLVM,
---       data-section on WASM) or a heap allocation. Codegen emits
---       the per-target safe free helper that reads the cell's flag
---       header and frees only when the block is heap-allocated.
---       JVM/CLR/JS use plain nullify (no header on managed-runtime
---       strings).
---     * 'DropNoop' — binder is an unboxed scalar ('Int32', 'UInt8',
---       …). No memory to reclaim; codegen emits nothing.
-data CDropKind = DropFreeUnchecked | DropFreeStringChecked | DropNoop
-  deriving stock (Show, Eq, Ord)
-
 -- | How a 'CReuse' may take its cell — the static uniqueness evidence
 --   'Awsum.Reuse.insertReuse' attaches when it rewrites.
 --
@@ -111,19 +87,6 @@ data CDropKind = DropFreeUnchecked | DropFreeStringChecked | DropNoop
 --       refcount header to check and allocate a fresh cell instead.
 data ReuseMode = ReuseUnique | ReuseGuarded
   deriving stock (Show, Eq, Ord)
-
--- | Side table mapping every binder name in a Core program — function
---   parameter, case-pattern binder, row-case binder — to its
---   'CDropKind'. Built up during lowering and synthetic passes
---   (everywhere a binder is introduced, the producing pass knows the
---   binder's type-erased shape and records it here) and consumed by
---   'Awsum.Lifetime.insertDrops' to attach the right kind to every
---   emitted 'CDrop'.
---
---   Names in Core are unique within a top-level declaration's scope
---   (source-level no-shadowing + fresh-mint counters in synthetic
---   passes), so a flat name-keyed map suffices.
-type BinderKindMap = Map Name CDropKind
 
 -- | Core expressions.
 data CExpr
@@ -176,18 +139,10 @@ data CExpr
     --   call. Arity must match the enclosing function's parameter list.
     CContinue [CExpr]
   | -- | Liveness annotation produced by 'Awsum.Lifetime.insertDrops':
-    --   @CDrop k n body@ asserts that the binder @n@ becomes dead
+    --   @CDrop n body@ asserts that the binder @n@ becomes dead
     --   /after/ @body@ has been fully evaluated. The expression's
     --   value is the value of @body@. Codegen emits the per-target
-    --   reclaim for @n@ after @body@'s value has been produced,
-    --   dispatching on @k@ ('DropFreeUnchecked' → immediate free;
-    --   'DropFreeStringChecked' → safe header-checking free;
-    --   'DropNoop' → emit nothing).
-    --
-    --   The kind is redundant with the kind annotation on @n@'s
-    --   binder declaration (function parameter, case-pattern binder,
-    --   row-case binder); it is duplicated here so codegen does not
-    --   need to maintain a binder-name → kind lookup.
+    --   reclaim for @n@ after @body@'s value has been produced.
     --
     --   Semantics: "n dead /after/ body", so the same placement is
     --   safe under both linear free (LLVM/WASM) and slot-nullify
@@ -195,7 +150,7 @@ data CExpr
     --   and ownership discipline (CCall/CCon/CContinue arg uses
     --   transfer ownership; no drop is emitted for transferred
     --   binders).
-    CDrop CDropKind Name CExpr
+    CDrop Name CExpr
   | -- | Cell reuse à la Lean 4. @CReuse mode n tag fields@ writes @tag@
     --   into slot 0 of the existing user-pointer at @n@ and the
     --   @fields@ values into slots 1, 2, …, length fields. The result
@@ -227,9 +182,6 @@ data CExpr
     --   @rhs@ is evaluated once. @rhs@ is in non-tail position, @body@ is in
     --   tail position iff the @CLet@ itself is (so 'Awsum.Cps' / 'Awsum.Tco'
     --   recurse into @body@ as a tail and @rhs@ as a non-tail).
-    --
-    --   The binder's 'CDropKind' lives in the 'BinderKindMap' keyed by @n@,
-    --   like any case-pattern / parameter binder — not inline on the node.
     --
     --   Part of the ANF representation of case-binding: a case scrutinee and
     --   its pattern fields become @let@s (the latter bound to a 'CProj').
@@ -339,7 +291,7 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
       CRowCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
       CLoop b -> exprBuiltIns b
       CContinue xs -> foldMap exprBuiltIns xs
-      CDrop _ _ b -> exprBuiltIns b
+      CDrop _ b -> exprBuiltIns b
       CReuse _ _ _ fs -> foldMap exprBuiltIns fs
       CLet _ rhs body -> exprBuiltIns rhs <> exprBuiltIns body
       CProj _ _ -> mempty
@@ -375,7 +327,7 @@ nextFreshConTag (CoreProgram ds) =
       CRowCase s alts -> exprConTags s <> concatMap (\(_, _, b) -> exprConTags b) alts
       CLoop b -> exprConTags b
       CContinue xs -> concatMap exprConTags xs
-      CDrop _ _ b -> exprConTags b
+      CDrop _ b -> exprConTags b
       CReuse _ _ t fs -> t : concatMap exprConTags fs
       CLet _ rhs body -> exprConTags rhs <> exprConTags body
       CProj _ _ -> []
@@ -406,7 +358,7 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
       CRowCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
       CLoop b -> exprHasInt b
       CContinue xs -> any exprHasInt xs
-      CDrop _ _ b -> exprHasInt b
+      CDrop _ b -> exprHasInt b
       CReuse _ _ _ fs -> any exprHasInt fs
       CLet _ rhs body -> exprHasInt rhs || exprHasInt body
       CProj _ _ -> False
@@ -442,7 +394,7 @@ binderUsedIn v = go
       CLoop b -> go b
       CContinue xs -> any go xs
       CLet n rhs b -> go rhs || (n /= v && go b)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ n _ fs -> n == v || any go fs
       -- The join name is a minted @$join$…@, never a value binder, so only
       -- the params shadow @v@ — and only inside the join body.
@@ -482,7 +434,7 @@ effectfulIn = goE
       CLoop b -> goE b
       CContinue xs -> any goE xs
       CLet _ rhs b -> goE rhs || goE b
-      CDrop _ _ b -> goE b
+      CDrop _ b -> goE b
       CReuse _ _ _ fs -> any goE fs
       CJoin _ _ body inner -> goE body || goE inner
       CJump _ args -> any goE args
@@ -515,6 +467,6 @@ reusedBinders = goE
       CLoop b -> goE b
       CContinue xs -> concatMap goE xs
       CLet _ rhs b -> goE rhs <> goE b
-      CDrop _ _ b -> goE b
+      CDrop _ b -> goE b
       CJoin _ _ body inner -> goE body <> goE inner
       CJump _ args -> concatMap goE args

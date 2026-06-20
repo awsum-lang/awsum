@@ -993,7 +993,7 @@ exprMaxLocals valDefs funDefs = go
       CContinue xs ->
         let save = if all noMultiArmCase xs then 0 else length xs
          in save + foldl' max 0 (map go xs)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs ->
         let save = if all noMultiArmCase fs then 0 else length fs
          in save + foldl' max 0 (map go fs)
@@ -1025,7 +1025,7 @@ exprContainsCase = \case
   CRow _ v -> exprContainsCase v
   CCall f xs -> exprContainsCase f || any exprContainsCase xs
   CCon _ fs -> any exprContainsCase fs
-  CDrop _ _ b -> exprContainsCase b
+  CDrop _ b -> exprContainsCase b
   CReuse _ _ _ fs -> any exprContainsCase fs
   CLoop b -> exprContainsCase b
   CContinue xs -> any exprContainsCase xs
@@ -1057,7 +1057,7 @@ emitIOk = \case
   -- 'f' is a builtin or known function (the indirect MethodHandle path is dead
   -- after LowerClosures), so it carries no case.
   CCall f xs -> not (exprContainsCase f) && all emitIOk xs
-  CDrop _ _ b -> emitIOk b
+  CDrop _ b -> emitIOk b
   CLet _ rhs b -> emitIOk rhs && emitIOk b
   -- The gates police stack discipline only; a jump's positional legality
   -- (tail of its join's inner) is the emitters' loud-error job, exactly as
@@ -1086,7 +1086,7 @@ noMultiArmCase = \case
   CCall f xs -> noMultiArmCase f && all noMultiArmCase xs
   CCon _ fs -> all noMultiArmCase fs
   CReuse _ _ _ fs -> all noMultiArmCase fs
-  CDrop _ _ b -> noMultiArmCase b
+  CDrop _ b -> noMultiArmCase b
   CLoop b -> noMultiArmCase b
   CContinue xs -> all noMultiArmCase xs
   CLet _ rhs b -> noMultiArmCase rhs && noMultiArmCase b
@@ -1103,7 +1103,7 @@ emitTailIOk = \case
   CContinue xs -> all emitIOk xs
   CCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitTailIOk b) alts
   CRowCase s alts -> not (null alts) && emitIOk s && all (\(_, _, b) -> emitTailIOk b) alts
-  CDrop _ _ b -> emitTailIOk b
+  CDrop _ b -> emitTailIOk b
   CLet _ rhs b -> emitIOk rhs && emitTailIOk b
   -- Inner and body continue the tail walk (their arms may continue the
   -- loop, return, or jump); jump arguments are ordinary value expressions.
@@ -1186,7 +1186,7 @@ exprMaxStack = \case
      in foldl' max (length xs + 1) [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
   -- Liveness annotation; codegen-transparent (no extra stack slots).
   -- Stack budget == wrapped body's.
-  CDrop _ _ b -> exprMaxStack b
+  CDrop _ b -> exprMaxStack b
   -- Cell reuse. On the JVM it falls through to 'CCon' (fresh
   -- alloc), so stack budget matches an equivalent 'CCon tag fs'.
   CReuse _ _ tag fs -> exprMaxStack (CCon tag fs)
@@ -1296,7 +1296,7 @@ namedSlotAssignments base e =
       CRowCase s alts -> go s <> concatMap (\(_, _, b) -> go b) alts
       CLoop b -> go b
       CContinue xs -> concatMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> concatMap go fs
       CVar _ -> []
       CProj _ _ -> []
@@ -1409,7 +1409,7 @@ emitExprI ctx = \case
         emitCellI ctx cellA (fromIntegral tag) fields
   CCall f xs -> emitCallI ctx f xs
   CRow tag v -> emitExprI ctx (CCon (fromIntegral tag) [v])
-  CDrop _ _ body -> emitExprI ctx body
+  CDrop _ body -> emitExprI ctx body
   -- Single-arm case: exhaustive over one constructor, so no @if_icmpne@, no
   -- join, no branch targets — hence no StackMapTable. No compare reads a
   -- tag, so none is extracted ('caseHeadI'); the fields are bound and the
@@ -1702,7 +1702,7 @@ emitJoinExprI ctx j ps body inner = do
         (bindI, ctx') <- emitLetBindI ctxJ x rhs
         bodyI <- goInner ctx' afterLbl b
         pure (bindI <> bodyI)
-      CDrop _ _ b -> goInner ctxJ afterLbl b
+      CDrop _ b -> goInner ctxJ afterLbl b
       CCase scrut alts -> goInnerCase ctxJ afterLbl scrut alts
       CRowCase scrut alts ->
         goInnerCase ctxJ afterLbl scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
@@ -1754,7 +1754,7 @@ emitJoinExprI ctx j ps body inner = do
         pure (valI <> [Goto afterLbl])
     peelDrops :: CExpr -> CExpr
     peelDrops = \case
-      CDrop _ _ b -> peelDrops b
+      CDrop _ b -> peelDrops b
       e -> e
 
 -- | Shared cell builder for 'CCon' / 'CReuse': @<allocOrLoad>@ leaves the
@@ -1933,7 +1933,7 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
       CContinue newArgs -> emitContinue ctx pending newArgs
       CCase scrut alts -> emitTailCase ctx pending scrut alts
       CRowCase scrut alts -> emitTailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      CDrop _ n body -> goTop ctx (n : pending) body
+      CDrop n body -> goTop ctx (n : pending) body
       CLet x rhs body -> do
         (bindI, ctx') <- emitLetBindI ctx x rhs
         bodyI <- goTop ctx' pending body

@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -37,7 +37,7 @@ CoreProgram
                     ( CRow 2711245919
                         ( CIntLit 5 TInt32 )
                     )
-                    ( CDrop DropFreeUnchecked "$inl1$x"
+                    ( CDrop "$inl1$x"
                         ( CCall
                             ( CBuiltIn "showInt32" )
                             [ CProj "$inl1$x" 1 ]

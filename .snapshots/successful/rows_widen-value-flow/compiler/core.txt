@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -58,7 +58,7 @@ CoreProgram
         , CValDef "defBodyLeft"
             ( CLet "$inl21$__input"
                 ( CVar "vErrA" )
-                ( CDrop DropFreeUnchecked "$inl21$__input"
+                ( CDrop "$inl21$__input"
                     ( CCase
                         ( CVar "$inl21$__input" )
                         [
@@ -81,7 +81,7 @@ CoreProgram
         , CValDef "defBodyRight"
             ( CLet "$inl24$__input"
                 ( CVar "vOkA" )
-                ( CDrop DropFreeUnchecked "$inl24$__input"
+                ( CDrop "$inl24$__input"
                     ( CCase
                         ( CVar "$inl24$__input" )
                         [
@@ -104,7 +104,7 @@ CoreProgram
         , CValDef "letBody"
             ( CLet "$inl29$x"
                 ( CVar "vErrB" )
-                ( CDrop DropFreeUnchecked "$inl29$x"
+                ( CDrop "$inl29$x"
                     ( CCase
                         ( CVar "$inl29$x" )
                         [
@@ -132,7 +132,7 @@ CoreProgram
                     , []
                     , CLet "$inl15$__input"
                         ( CVar "vErrA" )
-                        ( CDrop DropFreeUnchecked "$inl15$__input"
+                        ( CDrop "$inl15$__input"
                             ( CCase
                                 ( CVar "$inl15$__input" )
                                 [
@@ -157,7 +157,7 @@ CoreProgram
                     , []
                     , CLet "$inl18$__input"
                         ( CVar "vErrB" )
-                        ( CDrop DropFreeUnchecked "$inl18$__input"
+                        ( CDrop "$inl18$__input"
                             ( CCase
                                 ( CVar "$inl18$__input" )
                                 [
@@ -187,7 +187,7 @@ CoreProgram
                     , []
                     , CLet "$inl6$__input"
                         ( CVar "vFirst" )
-                        ( CDrop DropFreeUnchecked "$inl6$__input"
+                        ( CDrop "$inl6$__input"
                             ( CCase
                                 ( CVar "$inl6$__input" )
                                 [
@@ -217,7 +217,7 @@ CoreProgram
                             , []
                             , CLet "$inl9$__input"
                                 ( CVar "vErrA" )
-                                ( CDrop DropFreeUnchecked "$inl9$__input"
+                                ( CDrop "$inl9$__input"
                                     ( CCase
                                         ( CVar "$inl9$__input" )
                                         [
@@ -242,7 +242,7 @@ CoreProgram
                             , []
                             , CLet "$inl12$__input"
                                 ( CVar "vSecond" )
-                                ( CDrop DropFreeUnchecked "$inl12$__input"
+                                ( CDrop "$inl12$__input"
                                     ( CCase
                                         ( CVar "$inl12$__input" )
                                         [
@@ -269,7 +269,7 @@ CoreProgram
         , CValDef "strWiden"
             ( CLet "$inl3$__input"
                 ( CVar "vStr" )
-                ( CDrop DropFreeUnchecked "$inl3$__input"
+                ( CDrop "$inl3$__input"
                     ( CCase
                         ( CVar "$inl3$__input" )
                         [
@@ -303,7 +303,7 @@ CoreProgram
                 [
                     ( 3
                     , [ "$do_e_1" ]
-                    , CDrop DropFreeUnchecked "$do_e_1"
+                    , CDrop "$do_e_1"
                         ( CCon 3
                             [ CVar "$do_e_1" ]
                         )
@@ -311,7 +311,7 @@ CoreProgram
                 ,
                     ( 4
                     , [ "a" ]
-                    , CDrop DropFreeUnchecked "a"
+                    , CDrop "a"
                         ( CCase
                             ( CCall
                                 ( CBuiltIn "concatString" )
@@ -322,7 +322,7 @@ CoreProgram
                             [
                                 ( 3
                                 , [ "$do_e_0" ]
-                                , CDrop DropFreeUnchecked "$do_e_0"
+                                , CDrop "$do_e_0"
                                     ( CCon 3
                                         [ CVar "$do_e_0" ]
                                     )
@@ -330,7 +330,7 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "b" ]
-                                , CDrop DropFreeUnchecked "b"
+                                , CDrop "b"
                                     ( CCall
                                         ( CBuiltIn "concatString" )
                                         [ CVar "b"
@@ -351,7 +351,7 @@ CoreProgram
                     [ CString "defBodyLeft"
                     , CLet "$inl34$e"
                         ( CVar "defBodyLeft" )
-                        ( CDrop DropFreeUnchecked "$inl34$e"
+                        ( CDrop "$inl34$e"
                             ( CCase
                                 ( CVar "$inl34$e" )
                                 [
@@ -475,13 +475,13 @@ CoreProgram
                                                                                                                 [ CString "strWiden"
                                                                                                                 , CLet "$inl88$e"
                                                                                                                     ( CVar "strWiden" )
-                                                                                                                    ( CDrop DropFreeUnchecked "$inl88$e"
+                                                                                                                    ( CDrop "$inl88$e"
                                                                                                                         ( CCase
                                                                                                                             ( CVar "$inl88$e" )
                                                                                                                             [
                                                                                                                                 ( 3
                                                                                                                                 , [ "$inl84$__pa0" ]
-                                                                                                                                , CDrop DropFreeUnchecked "$inl84$__pa0"
+                                                                                                                                , CDrop "$inl84$__pa0"
                                                                                                                                     ( CRowCase
                                                                                                                                         ( CVar "$inl84$__pa0" )
                                                                                                                                         [
@@ -512,7 +512,7 @@ CoreProgram
                                                                                                             [
                                                                                                                 ( 3
                                                                                                                 , [ "$inl89$$do_e_2" ]
-                                                                                                                , CDrop DropFreeUnchecked "$inl89$$do_e_2"
+                                                                                                                , CDrop "$inl89$$do_e_2"
                                                                                                                     ( CCon 3
                                                                                                                         [ CVar "$inl89$$do_e_2" ]
                                                                                                                     )
@@ -520,7 +520,7 @@ CoreProgram
                                                                                                             ,
                                                                                                                 ( 4
                                                                                                                 , [ "$inl90$line" ]
-                                                                                                                , CDrop DropFreeUnchecked "$inl90$line"
+                                                                                                                , CDrop "$inl90$line"
                                                                                                                     ( CCall
                                                                                                                         ( CBuiltIn "concatString" )
                                                                                                                         [ CProj "$inl104$scrut" 1
@@ -543,13 +543,13 @@ CoreProgram
                                                                                                                     [ CCon 2 [] ]
                                                                                                                 ]
                                                                                                             )
-                                                                                                            ( CDrop DropFreeUnchecked "$inl81$e"
+                                                                                                            ( CDrop "$inl81$e"
                                                                                                                 ( CCase
                                                                                                                     ( CVar "$inl81$e" )
                                                                                                                     [
                                                                                                                         ( 3
                                                                                                                         , [ "$inl77$__pa0" ]
-                                                                                                                        , CDrop DropFreeUnchecked "$inl77$__pa0"
+                                                                                                                        , CDrop "$inl77$__pa0"
                                                                                                                             ( CRowCase
                                                                                                                                 ( CVar "$inl77$__pa0" )
                                                                                                                                 [
@@ -592,7 +592,7 @@ CoreProgram
                                                                                                     [
                                                                                                         ( 3
                                                                                                         , [ "$inl82$$do_e_2" ]
-                                                                                                        , CDrop DropFreeUnchecked "$inl82$$do_e_2"
+                                                                                                        , CDrop "$inl82$$do_e_2"
                                                                                                             ( CCon 3
                                                                                                                 [ CVar "$inl82$$do_e_2" ]
                                                                                                             )
@@ -600,7 +600,7 @@ CoreProgram
                                                                                                     ,
                                                                                                         ( 4
                                                                                                         , [ "$inl83$line" ]
-                                                                                                        , CDrop DropFreeUnchecked "$inl83$line"
+                                                                                                        , CDrop "$inl83$line"
                                                                                                             ( CJump "$join103"
                                                                                                                 [ CCall
                                                                                                                     ( CBuiltIn "concatString" )
@@ -626,13 +626,13 @@ CoreProgram
                                                                                                         [ CCon 1 [] ]
                                                                                                     ]
                                                                                                 )
-                                                                                                ( CDrop DropFreeUnchecked "$inl74$e"
+                                                                                                ( CDrop "$inl74$e"
                                                                                                     ( CCase
                                                                                                         ( CVar "$inl74$e" )
                                                                                                         [
                                                                                                             ( 3
                                                                                                             , [ "$inl70$__pa0" ]
-                                                                                                            , CDrop DropFreeUnchecked "$inl70$__pa0"
+                                                                                                            , CDrop "$inl70$__pa0"
                                                                                                                 ( CRowCase
                                                                                                                     ( CVar "$inl70$__pa0" )
                                                                                                                     [
@@ -675,7 +675,7 @@ CoreProgram
                                                                                         [
                                                                                             ( 3
                                                                                             , [ "$inl75$$do_e_2" ]
-                                                                                            , CDrop DropFreeUnchecked "$inl75$$do_e_2"
+                                                                                            , CDrop "$inl75$$do_e_2"
                                                                                                 ( CCon 3
                                                                                                     [ CVar "$inl75$$do_e_2" ]
                                                                                                 )
@@ -683,7 +683,7 @@ CoreProgram
                                                                                         ,
                                                                                             ( 4
                                                                                             , [ "$inl76$line" ]
-                                                                                            , CDrop DropFreeUnchecked "$inl76$line"
+                                                                                            , CDrop "$inl76$line"
                                                                                                 ( CJump "$join101"
                                                                                                     [ CCall
                                                                                                         ( CBuiltIn "concatString" )
@@ -707,13 +707,13 @@ CoreProgram
                                                                                         ( CVar "nestedUnion" )
                                                                                         [ CCon 11 [] ]
                                                                                     )
-                                                                                    ( CDrop DropFreeUnchecked "$inl67$e"
+                                                                                    ( CDrop "$inl67$e"
                                                                                         ( CCase
                                                                                             ( CVar "$inl67$e" )
                                                                                             [
                                                                                                 ( 3
                                                                                                 , [ "$inl63$__pa0" ]
-                                                                                                , CDrop DropFreeUnchecked "$inl63$__pa0"
+                                                                                                , CDrop "$inl63$__pa0"
                                                                                                     ( CRowCase
                                                                                                         ( CVar "$inl63$__pa0" )
                                                                                                         [
@@ -756,7 +756,7 @@ CoreProgram
                                                                             [
                                                                                 ( 3
                                                                                 , [ "$inl68$$do_e_2" ]
-                                                                                , CDrop DropFreeUnchecked "$inl68$$do_e_2"
+                                                                                , CDrop "$inl68$$do_e_2"
                                                                                     ( CCon 3
                                                                                         [ CVar "$inl68$$do_e_2" ]
                                                                                     )
@@ -764,7 +764,7 @@ CoreProgram
                                                                             ,
                                                                                 ( 4
                                                                                 , [ "$inl69$line" ]
-                                                                                , CDrop DropFreeUnchecked "$inl69$line"
+                                                                                , CDrop "$inl69$line"
                                                                                     ( CJump "$join99"
                                                                                         [ CCall
                                                                                             ( CBuiltIn "concatString" )
@@ -788,7 +788,7 @@ CoreProgram
                                                                             ( CVar "caseUnion" )
                                                                             [ CCon 2 [] ]
                                                                         )
-                                                                        ( CDrop DropFreeUnchecked "$inl60$e"
+                                                                        ( CDrop "$inl60$e"
                                                                             ( CCase
                                                                                 ( CVar "$inl60$e" )
                                                                                 [
@@ -823,7 +823,7 @@ CoreProgram
                                                                 [
                                                                     ( 3
                                                                     , [ "$inl61$$do_e_2" ]
-                                                                    , CDrop DropFreeUnchecked "$inl61$$do_e_2"
+                                                                    , CDrop "$inl61$$do_e_2"
                                                                         ( CCon 3
                                                                             [ CVar "$inl61$$do_e_2" ]
                                                                         )
@@ -831,7 +831,7 @@ CoreProgram
                                                                 ,
                                                                     ( 4
                                                                     , [ "$inl62$line" ]
-                                                                    , CDrop DropFreeUnchecked "$inl62$line"
+                                                                    , CDrop "$inl62$line"
                                                                         ( CJump "$join97"
                                                                             [ CCall
                                                                                 ( CBuiltIn "concatString" )
@@ -855,7 +855,7 @@ CoreProgram
                                                                 ( CVar "caseUnion" )
                                                                 [ CCon 1 [] ]
                                                             )
-                                                            ( CDrop DropFreeUnchecked "$inl53$e"
+                                                            ( CDrop "$inl53$e"
                                                                 ( CCase
                                                                     ( CVar "$inl53$e" )
                                                                     [
@@ -890,7 +890,7 @@ CoreProgram
                                                     [
                                                         ( 3
                                                         , [ "$inl54$$do_e_2" ]
-                                                        , CDrop DropFreeUnchecked "$inl54$$do_e_2"
+                                                        , CDrop "$inl54$$do_e_2"
                                                             ( CCon 3
                                                                 [ CVar "$inl54$$do_e_2" ]
                                                             )
@@ -898,7 +898,7 @@ CoreProgram
                                                     ,
                                                         ( 4
                                                         , [ "$inl55$line" ]
-                                                        , CDrop DropFreeUnchecked "$inl55$line"
+                                                        , CDrop "$inl55$line"
                                                             ( CJump "$join95"
                                                                 [ CCall
                                                                     ( CBuiltIn "concatString" )
@@ -919,7 +919,7 @@ CoreProgram
                                             [ CString "letBody"
                                             , CLet "$inl46$e"
                                                 ( CVar "letBody" )
-                                                ( CDrop DropFreeUnchecked "$inl46$e"
+                                                ( CDrop "$inl46$e"
                                                     ( CCase
                                                         ( CVar "$inl46$e" )
                                                         [
@@ -954,7 +954,7 @@ CoreProgram
                                         [
                                             ( 3
                                             , [ "$inl47$$do_e_2" ]
-                                            , CDrop DropFreeUnchecked "$inl47$$do_e_2"
+                                            , CDrop "$inl47$$do_e_2"
                                                 ( CCon 3
                                                     [ CVar "$inl47$$do_e_2" ]
                                                 )
@@ -962,7 +962,7 @@ CoreProgram
                                         ,
                                             ( 4
                                             , [ "$inl48$line" ]
-                                            , CDrop DropFreeUnchecked "$inl48$line"
+                                            , CDrop "$inl48$line"
                                                 ( CJump "$join93"
                                                     [ CCall
                                                         ( CBuiltIn "concatString" )
@@ -983,7 +983,7 @@ CoreProgram
                                 [ CString "defBodyRight"
                                 , CLet "$inl39$e"
                                     ( CVar "defBodyRight" )
-                                    ( CDrop DropFreeUnchecked "$inl39$e"
+                                    ( CDrop "$inl39$e"
                                         ( CCase
                                             ( CVar "$inl39$e" )
                                             [
@@ -1044,7 +1044,7 @@ CoreProgram
                     ( CVar "$cps$$df$andThenIO$4" )
                     [ CLet "$inl107$x"
                         ( CVar "render" )
-                        ( CDrop DropFreeUnchecked "$inl107$x"
+                        ( CDrop "$inl107$x"
                             ( CCase
                                 ( CVar "$inl107$x" )
                                 [
@@ -1102,9 +1102,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 29
@@ -1137,9 +1137,9 @@ CoreProgram
                             [ "$pk_29"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_29"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_29"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_29"
                                         , CReuse ReuseUnique "$k" 7
@@ -1189,9 +1189,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 31
@@ -1224,9 +1224,9 @@ CoreProgram
                             [ "$pk_31"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_31"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_31"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_31"
                                         , CReuse ReuseUnique "$k" 7

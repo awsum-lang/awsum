@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -50,9 +50,9 @@ CoreProgram
                             , "v"
                             , "r"
                             ]
-                        , CDrop DropFreeUnchecked "l"
-                            ( CDrop DropFreeUnchecked "v"
-                                ( CDrop DropFreeUnchecked "acc"
+                        , CDrop "l"
+                            ( CDrop "v"
+                                ( CDrop "acc"
                                     ( CContinue
                                         [ CVar "l"
                                         , CReuse ReuseGuarded "t" 25
@@ -101,9 +101,9 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CDrop DropFreeUnchecked "m"
-                                    ( CDrop DropFreeUnchecked "n"
-                                        ( CDrop DropFreeUnchecked "acc"
+                                , CDrop "m"
+                                    ( CDrop "n"
+                                        ( CDrop "acc"
                                             ( CContinue
                                                 [ CVar "m"
                                                 , CCon 25
@@ -131,7 +131,7 @@ CoreProgram
                     , CCon 24 []
                     ]
                 )
-                ( CDrop DropFreeUnchecked "$inl27$s"
+                ( CDrop "$inl27$s"
                     ( CCall
                         ( CVar "$cps$$df$andThenIO$0" )
                         [ CCon 7
@@ -142,7 +142,7 @@ CoreProgram
                                     , CCon 24 []
                                     ]
                                 )
-                                ( CDrop DropFreeUnchecked "$inl23$t2"
+                                ( CDrop "$inl23$t2"
                                     ( CCase
                                         ( CVar "$inl23$t2" )
                                         [
@@ -202,7 +202,7 @@ CoreProgram
                                             ]
                                         , CLet "$inl15$t2"
                                             ( CProj "$df$andThenIO$0$cap0$0" 3 )
-                                            ( CDrop DropFreeUnchecked "$inl15$t2"
+                                            ( CDrop "$inl15$t2"
                                                 ( CCase
                                                     ( CVar "$inl15$t2" )
                                                     [
@@ -235,10 +235,10 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$df$andThenIO$0$cap0$0"
-                                    ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$df$andThenIO$0$cap0$0"
+                                    ( CDrop "$k"
                                         ( CContinue
                                             [ CVar "next"
                                             , CVar "$df$andThenIO$0$cap0$0"
@@ -273,9 +273,9 @@ CoreProgram
                             [ "$pk_27"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_27"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_27"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_27"
                                         , CReuse ReuseUnique "$k" 7

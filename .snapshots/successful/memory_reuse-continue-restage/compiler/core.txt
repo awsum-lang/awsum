@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -99,7 +99,7 @@ CoreProgram
                                     [ "_h"
                                     , "t"
                                     ]
-                                , CDrop DropFreeUnchecked "t"
+                                , CDrop "t"
                                     ( CCase
                                         ( CCall
                                             ( CBuiltIn "predInt32" )
@@ -130,10 +130,10 @@ CoreProgram
                                         ,
                                             ( 4
                                             , [ "f2" ]
-                                            , CDrop DropFreeUnchecked "f2"
-                                                ( CDrop DropFreeUnchecked "fuel"
-                                                    ( CDrop DropFreeUnchecked "xs"
-                                                        ( CDrop DropFreeUnchecked "acc"
+                                            , CDrop "f2"
+                                                ( CDrop "fuel"
+                                                    ( CDrop "xs"
+                                                        ( CDrop "acc"
                                                             ( CContinue
                                                                 [ CVar "f2"
                                                                 , CCon 25

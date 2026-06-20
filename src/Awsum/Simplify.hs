@@ -438,7 +438,7 @@ simplifyExpr pt params valDefs vals = go Set.empty Map.empty
               Just fs -> Map.insert n fs conEnv
               Nothing -> conEnv
         finishLet valDefs n rhs' <$> go (sinkExtend [n] b sk) conEnv' b
-      CDrop k n b -> CDrop k n <$> go sk conEnv b
+      CDrop n b -> CDrop n <$> go sk conEnv b
       CReuse rm n t fs -> CReuse rm n t <$> traverse (go sk conEnv) fs
       CJoin j ps body inner -> CJoin j ps <$> go sk conEnv body <*> go sk conEnv inner
       CJump j args -> CJump j <$> traverse (go sk conEnv) args
@@ -819,7 +819,7 @@ foreignTransferIn = go Set.empty
       CCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CRowCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CLet _ rhs b -> go declared rhs || go declared b
-      CDrop _ _ b -> go declared b
+      CDrop _ b -> go declared b
       CReuse _ _ _ fs -> any (go declared) fs
       CVar _ -> False
       CProj _ _ -> False
@@ -849,7 +849,7 @@ jumpsOutwardIn = go Set.empty
       CCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CRowCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CLet _ rhs b -> go declared rhs || go declared b
-      CDrop _ _ b -> go declared b
+      CDrop _ b -> go declared b
       CReuse _ _ _ fs -> any (go declared) fs
       CVar _ -> False
       CProj _ _ -> False
@@ -872,7 +872,7 @@ containsCase = go
       CLoop b -> go b
       CContinue xs -> any go xs
       CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> any go fs
       CJump _ args -> any go args
       CVar _ -> False
@@ -919,7 +919,7 @@ inlineCalls valDefs env = go
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> traverse go xs
       CLet x rhs b -> CLet x <$> go rhs <*> go b
-      CDrop k x b -> CDrop k x <$> go b
+      CDrop x b -> CDrop x <$> go b
       CReuse rm x t fs -> CReuse rm x t <$> traverse go fs
       CJoin j ps body inner -> CJoin j ps <$> go body <*> go inner
       CJump j args -> CJump j <$> traverse go args
@@ -1047,7 +1047,7 @@ freshenBinders = go Map.empty
         rhs' <- go env rhs
         (x', env') <- bind env x
         CLet x' rhs' <$> go env' b
-      CDrop k x b -> CDrop k (ref env x) <$> go env b
+      CDrop x b -> CDrop (ref env x) <$> go env b
       -- A join name is a binder too — an inlined body copied twice must not
       -- declare the same label twice. It freshens with its own minter (the
       -- value-name env carries the mapping; the namespaces cannot collide)
@@ -1083,7 +1083,7 @@ renameVarFull old new = go
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
       CLet x rhs b -> CLet x (go rhs) (if x == old then b else go b)
-      CDrop k x b -> CDrop k (rn x) (go b)
+      CDrop x b -> CDrop (rn x) (go b)
       -- Join names live in their own namespace; only the parameters can
       -- shadow a value name, and only inside the join body.
       CJoin j ps body inner -> CJoin j ps (if old `elem` ps then body else go body) (go inner)
@@ -1121,7 +1121,7 @@ programRefs (CoreProgram ds) = foldl' (Map.unionWith plus) Map.empty (map declRe
       CLoop b -> go b
       CContinue xs -> goMany xs
       CLet _ rhs b -> Map.unionWith plus (go rhs) (go b)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       -- A jump's target is a label, not a top-level reference.
       CJoin _ _ body inner -> Map.unionWith plus (go body) (go inner)
       CJump _ args -> goMany args
@@ -1143,7 +1143,7 @@ exprSize = go
       CLoop b -> 1 + go b
       CContinue xs -> 1 + sum (map go xs)
       CLet _ rhs b -> 1 + go rhs + go b
-      CDrop _ _ b -> 1 + go b
+      CDrop _ b -> 1 + go b
       CReuse _ _ _ fs -> 1 + sum (map go fs)
       CJoin _ _ body inner -> 1 + go body + go inner
       CJump _ args -> 1 + sum (map go args)
@@ -1167,7 +1167,7 @@ hasLoopOrContinue = go
       CCase s alts -> go s || any (\(_, _, b) -> go b) alts
       CRowCase s alts -> go s || any (\(_, _, b) -> go b) alts
       CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> any go fs
       CJoin _ _ body inner -> go body || go inner
       CJump _ args -> any go args
@@ -1356,7 +1356,7 @@ rewriteIdentity p scrut = goR
           CRowCase s alts -> CRowCase (goR s) [(t, w, goR b) | (t, w, b) <- alts]
           CLoop b -> CLoop (goR b)
           CContinue xs -> CContinue (map goR xs)
-          CDrop k m b -> CDrop k m (goR b)
+          CDrop m b -> CDrop m (goR b)
           CReuse rm m t fs -> CReuse rm m t (map goR fs)
           CLet x rhs b -> CLet x (goR rhs) (goR b)
           CJoin j ps jb inner -> CJoin j ps (goR jb) (goR inner)
@@ -1418,7 +1418,7 @@ reconstructsSameArity arity = go
       CLoop b -> go b
       CContinue xs -> any go xs
       CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> any go fs
       CJoin _ _ body inner -> go body || go inner
       CJump _ args -> any go args
@@ -1464,7 +1464,7 @@ boundNamesIn = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> foldMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> foldMap go fs
       -- The join parameters are value binders; the join name is a label in
       -- its own namespace and cannot capture a value name.
@@ -1507,7 +1507,7 @@ occurrences = go
       CLoop b -> go b
       CContinue xs -> goList xs
       CLet n rhs b -> merge (go rhs) (shadow [n] (go b))
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       -- The join name is a label, not a value occurrence; the parameters
       -- shadow inside the join body only.
       CJoin _ ps body inner -> merge (shadow ps (go body)) (go inner)
@@ -1545,7 +1545,7 @@ substVars = go
       CLoop b -> CLoop (go sub b)
       CContinue xs -> CContinue (map (go sub) xs)
       CLet n rhs b -> CLet n (go sub rhs) (go (Map.delete n sub) b)
-      CDrop k n b -> CDrop k n (go sub b)
+      CDrop n b -> CDrop n (go sub b)
       CReuse rm n t fs -> CReuse rm n t (map (go sub) fs)
       CJoin j ps body inner -> CJoin j ps (go (foldr Map.delete sub ps) body) (go sub inner)
       CJump j args -> CJump j (map (go sub) args)

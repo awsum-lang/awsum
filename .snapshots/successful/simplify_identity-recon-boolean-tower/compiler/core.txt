@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -46,7 +46,7 @@ CoreProgram
         , CValDef "result"
             ( CLet "$inl2$s0"
                 ( CVar "seed" )
-                ( CDrop DropFreeUnchecked "$inl2$s0"
+                ( CDrop "$inl2$s0"
                     ( CCase
                         ( CCase
                             ( CVar "$inl2$s0" )

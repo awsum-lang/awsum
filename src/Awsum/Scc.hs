@@ -176,7 +176,7 @@ rewriteCrossCalls memberSet mergedName memberOrder tagOf = go
       CRowCase s alts -> CRowCase (go s) [(t, v, go b) | (t, v, b) <- alts]
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
-      CDrop k n b -> CDrop k n (go b)
+      CDrop n b -> CDrop n (go b)
       CReuse rm n t fs -> CReuse rm n t (map go fs)
       CLet x rhs body -> CLet x (go rhs) (go body)
       CJoin {} -> error "Scc: CJoin is minted by Awsum.Simplify, which runs later"

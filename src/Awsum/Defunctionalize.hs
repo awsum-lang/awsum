@@ -211,7 +211,7 @@ transformExpr env = go
         pure (CRowCase s' alts')
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> traverse go xs
-      CDrop k n b -> CDrop k n <$> go b
+      CDrop n b -> CDrop n <$> go b
       CReuse rm n t fs -> CReuse rm n t <$> traverse go fs
       CLet x rhs body -> CLet x <$> go rhs <*> go body
       CProj n i -> pure (CProj n i)
