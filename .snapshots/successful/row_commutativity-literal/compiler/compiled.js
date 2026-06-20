@@ -23,7 +23,8 @@
 
   const v_mk = [1615808600, "comm"];
 
-  const main = [7, (v__inl1_x => v__inl1_x[1])(v_mk), [5, [0]]];
+  const v__inl1_x = v_mk;
+  const main = [7, v__inl1_x[1], [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

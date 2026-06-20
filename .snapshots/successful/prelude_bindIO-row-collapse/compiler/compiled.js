@@ -282,29 +282,29 @@
           return v__apply__df_handleErrorIO_92(v__k, v_io);
         }
         case 6: {
+          const v__inl3_e = v_io[1];
           return v__apply__df_handleErrorIO_92(
             v__k,
-            (v__inl3_e =>
-              (s => {
-                switch (s[0]) {
-                  case 925038822: {
-                    {
-                      const __s = v__inl3_e[1];
-                      switch (__s[0]) {
-                        case 26: {
-                          return [7, "First", [5, [0]]];
-                        }
-                        case 27: {
-                          return [7, "Second", [5, [0]]];
-                        }
+            (s => {
+              switch (s[0]) {
+                case 925038822: {
+                  {
+                    const __s = v__inl3_e[1];
+                    switch (__s[0]) {
+                      case 26: {
+                        return [7, "First", [5, [0]]];
+                      }
+                      case 27: {
+                        return [7, "Second", [5, [0]]];
                       }
                     }
                   }
-                  case 2252990199: {
-                    return [7, "ErrA", [5, [0]]];
-                  }
                 }
-              })(v__inl3_e))(v_io[1])
+                case 2252990199: {
+                  return [7, "ErrA", [5, [0]]];
+                }
+              }
+            })(v__inl3_e)
           );
         }
         case 7: {
@@ -389,19 +389,19 @@
           return v__apply__df_handleErrorIO_76(v__k, v_io);
         }
         case 6: {
+          const v__inl8_e = v_io[1];
           return v__apply__df_handleErrorIO_76(
             v__k,
-            (v__inl8_e =>
-              (s => {
-                switch (s[0]) {
-                  case 1615808600: {
-                    return [7, v__inl8_e[1], [5, [0]]];
-                  }
-                  case 2252990199: {
-                    return [7, "ErrA", [5, [0]]];
-                  }
+            (s => {
+              switch (s[0]) {
+                case 1615808600: {
+                  return [7, v__inl8_e[1], [5, [0]]];
                 }
-              })(v__inl8_e))(v_io[1])
+                case 2252990199: {
+                  return [7, "ErrA", [5, [0]]];
+                }
+              }
+            })(v__inl8_e)
           );
         }
         case 7: {
@@ -558,32 +558,32 @@
           return v__apply__df_handleErrorIO_100(v__k, v_io);
         }
         case 6: {
+          const v__inl12_e = v_io[1];
           return v__apply__df_handleErrorIO_100(
             v__k,
-            (v__inl12_e =>
-              (s => {
-                switch (s[0]) {
-                  case 925038822: {
-                    {
-                      const __s = v__inl12_e[1];
-                      switch (__s[0]) {
-                        case 26: {
-                          return [7, "First", [5, [0]]];
-                        }
-                        case 27: {
-                          return [7, "Second", [5, [0]]];
-                        }
+            (s => {
+              switch (s[0]) {
+                case 925038822: {
+                  {
+                    const __s = v__inl12_e[1];
+                    switch (__s[0]) {
+                      case 26: {
+                        return [7, "First", [5, [0]]];
+                      }
+                      case 27: {
+                        return [7, "Second", [5, [0]]];
                       }
                     }
                   }
-                  case 1615808600: {
-                    return [7, v__inl12_e[1], [5, [0]]];
-                  }
-                  case 2252990199: {
-                    return [7, "ErrA", [5, [0]]];
-                  }
                 }
-              })(v__inl12_e))(v_io[1])
+                case 1615808600: {
+                  return [7, v__inl12_e[1], [5, [0]]];
+                }
+                case 2252990199: {
+                  return [7, "ErrA", [5, [0]]];
+                }
+              }
+            })(v__inl12_e)
           );
         }
         case 7: {

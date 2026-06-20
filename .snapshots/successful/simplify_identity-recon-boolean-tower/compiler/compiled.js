@@ -27,28 +27,28 @@
     }
   };
 
-  const v_result = (v__inl2_s0 =>
+  const v__inl2_s0 = v_seed;
+  const v_result = (s => {
+    switch (s[0]) {
+      case 1: {
+        return "F";
+      }
+      case 2: {
+        return "T";
+      }
+    }
+  })(
     (s => {
       switch (s[0]) {
         case 1: {
-          return "F";
+          return __eqUInt32(__lengthUtf8Bytes("xyz"), 3 >>> 0);
         }
         case 2: {
-          return "T";
+          return v__inl2_s0;
         }
       }
-    })(
-      (s => {
-        switch (s[0]) {
-          case 1: {
-            return __eqUInt32(__lengthUtf8Bytes("xyz"), 3 >>> 0);
-          }
-          case 2: {
-            return v__inl2_s0;
-          }
-        }
-      })(v__inl2_s0)
-    ))(v_seed);
+    })(v__inl2_s0)
+  );
 
   const main = [7, v_result, [5, [0]]];
 

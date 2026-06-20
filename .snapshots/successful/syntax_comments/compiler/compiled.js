@@ -115,19 +115,19 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl6_args = v_io[1];
           return v__apply__df__rowmono_0_andThenIO_4(
             v__k,
-            (v__inl6_args =>
-              (s => {
-                switch (s[0]) {
-                  case 13: {
-                    return [7, "NO_ARG", [5, [0]]];
-                  }
-                  case 14: {
-                    return [7, v__inl6_args[1], [5, [0]]];
-                  }
+            (s => {
+              switch (s[0]) {
+                case 13: {
+                  return [7, "NO_ARG", [5, [0]]];
                 }
-              })(v__inl6_args))(v_io[1])
+                case 14: {
+                  return [7, v__inl6_args[1], [5, [0]]];
+                }
+              }
+            })(v__inl6_args)
           );
         }
         case 6: {
@@ -226,11 +226,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl10__arg0 =>
-            v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl10__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
               [24, v_io[1], v__inl10__arg0],
               [31]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

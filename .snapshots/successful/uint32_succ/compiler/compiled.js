@@ -30,125 +30,124 @@
 
   const v_maxUInt32 = 4294967295 >>> 0;
 
-  const v_res = (v__inl3_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          const v__do_e_8 = s[1];
-          return [3, v__do_e_8];
-        }
-        case 4: {
-          const v_a = s[1];
-          const v__inl6_r = [4, 4294967295 >>> 0];
-          {
-            const __s = (s => {
-              switch (s[0]) {
-                case 3: {
-                  return __concat("overflow: ", "OverflowError");
-                }
-                case 4: {
-                  return __concat("ok: ", String(v__inl6_r[1]));
-                }
-              }
-            })(v__inl6_r);
-            switch (__s[0]) {
+  const v__inl3_r = __succUInt32(v_maxUInt32);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        const v__do_e_8 = s[1];
+        return [3, v__do_e_8];
+      }
+      case 4: {
+        const v_a = s[1];
+        const v__inl6_r = [4, 4294967295 >>> 0];
+        {
+          const __s = (s => {
+            switch (s[0]) {
               case 3: {
-                const v__do_e_7 = __s[1];
-                return [3, v__do_e_7];
+                return __concat("overflow: ", "OverflowError");
               }
               case 4: {
-                const v_b = __s[1];
-                const v__inl9_r = [4, 2147483648 >>> 0];
-                {
-                  const __s = (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        return __concat("overflow: ", "OverflowError");
-                      }
-                      case 4: {
-                        return __concat("ok: ", String(v__inl9_r[1]));
-                      }
-                    }
-                  })(v__inl9_r);
-                  switch (__s[0]) {
+                return __concat("ok: ", String(v__inl6_r[1]));
+              }
+            }
+          })(v__inl6_r);
+          switch (__s[0]) {
+            case 3: {
+              const v__do_e_7 = __s[1];
+              return [3, v__do_e_7];
+            }
+            case 4: {
+              const v_b = __s[1];
+              const v__inl9_r = [4, 2147483648 >>> 0];
+              {
+                const __s = (s => {
+                  switch (s[0]) {
                     case 3: {
-                      const v__do_e_6 = __s[1];
-                      return [3, v__do_e_6];
+                      return __concat("overflow: ", "OverflowError");
                     }
                     case 4: {
-                      const v_c = __s[1];
-                      const v__inl12_r = __succUInt32(v_minUInt32);
-                      {
-                        const __s = (s => {
-                          switch (s[0]) {
-                            case 3: {
-                              return __concat("overflow: ", "OverflowError");
-                            }
-                            case 4: {
-                              return __concat("ok: ", String(v__inl12_r[1]));
-                            }
-                          }
-                        })(v__inl12_r);
-                        switch (__s[0]) {
+                      return __concat("ok: ", String(v__inl9_r[1]));
+                    }
+                  }
+                })(v__inl9_r);
+                switch (__s[0]) {
+                  case 3: {
+                    const v__do_e_6 = __s[1];
+                    return [3, v__do_e_6];
+                  }
+                  case 4: {
+                    const v_c = __s[1];
+                    const v__inl12_r = __succUInt32(v_minUInt32);
+                    {
+                      const __s = (s => {
+                        switch (s[0]) {
                           case 3: {
-                            const v__do_e_5 = __s[1];
-                            return [3, v__do_e_5];
+                            return __concat("overflow: ", "OverflowError");
                           }
                           case 4: {
-                            const v_d = __s[1];
-                            {
-                              const __s = __concat(v_a, ", ");
-                              switch (__s[0]) {
-                                case 3: {
-                                  const v__do_e_4 = __s[1];
-                                  return [3, v__do_e_4];
-                                }
-                                case 4: {
-                                  const v_s0 = __s[1];
-                                  {
-                                    const __s = __concat(v_s0, v_b);
-                                    switch (__s[0]) {
-                                      case 3: {
-                                        const v__do_e_3 = __s[1];
-                                        return [3, v__do_e_3];
-                                      }
-                                      case 4: {
-                                        const v_s1 = __s[1];
-                                        {
-                                          const __s = __concat(v_s1, ", ");
-                                          switch (__s[0]) {
-                                            case 3: {
-                                              const v__do_e_2 = __s[1];
-                                              return [3, v__do_e_2];
-                                            }
-                                            case 4: {
-                                              const v_s2 = __s[1];
-                                              {
-                                                const __s = __concat(v_s2, v_c);
-                                                switch (__s[0]) {
-                                                  case 3: {
-                                                    const v__do_e_1 = __s[1];
-                                                    return [3, v__do_e_1];
-                                                  }
-                                                  case 4: {
-                                                    const v_s3 = __s[1];
-                                                    {
-                                                      const __s = __concat(
-                                                        v_s3,
-                                                        ", "
-                                                      );
-                                                      switch (__s[0]) {
-                                                        case 3: {
-                                                          const v__do_e_0 = __s[1];
-                                                          return [3, v__do_e_0];
-                                                        }
-                                                        case 4: {
-                                                          const v_s4 = __s[1];
-                                                          return __concat(
-                                                            v_s4,
-                                                            v_d
-                                                          );
-                                                        }
+                            return __concat("ok: ", String(v__inl12_r[1]));
+                          }
+                        }
+                      })(v__inl12_r);
+                      switch (__s[0]) {
+                        case 3: {
+                          const v__do_e_5 = __s[1];
+                          return [3, v__do_e_5];
+                        }
+                        case 4: {
+                          const v_d = __s[1];
+                          {
+                            const __s = __concat(v_a, ", ");
+                            switch (__s[0]) {
+                              case 3: {
+                                const v__do_e_4 = __s[1];
+                                return [3, v__do_e_4];
+                              }
+                              case 4: {
+                                const v_s0 = __s[1];
+                                {
+                                  const __s = __concat(v_s0, v_b);
+                                  switch (__s[0]) {
+                                    case 3: {
+                                      const v__do_e_3 = __s[1];
+                                      return [3, v__do_e_3];
+                                    }
+                                    case 4: {
+                                      const v_s1 = __s[1];
+                                      {
+                                        const __s = __concat(v_s1, ", ");
+                                        switch (__s[0]) {
+                                          case 3: {
+                                            const v__do_e_2 = __s[1];
+                                            return [3, v__do_e_2];
+                                          }
+                                          case 4: {
+                                            const v_s2 = __s[1];
+                                            {
+                                              const __s = __concat(v_s2, v_c);
+                                              switch (__s[0]) {
+                                                case 3: {
+                                                  const v__do_e_1 = __s[1];
+                                                  return [3, v__do_e_1];
+                                                }
+                                                case 4: {
+                                                  const v_s3 = __s[1];
+                                                  {
+                                                    const __s = __concat(
+                                                      v_s3,
+                                                      ", "
+                                                    );
+                                                    switch (__s[0]) {
+                                                      case 3: {
+                                                        const v__do_e_0 = __s[1];
+                                                        return [3, v__do_e_0];
+                                                      }
+                                                      case 4: {
+                                                        const v_s4 = __s[1];
+                                                        return __concat(
+                                                          v_s4,
+                                                          v_d
+                                                        );
                                                       }
                                                     }
                                                   }
@@ -174,18 +173,19 @@
           }
         }
       }
-    })(
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return __concat("overflow: ", "OverflowError");
-          }
-          case 4: {
-            return __concat("ok: ", String(v__inl3_r[1]));
-          }
+    }
+  })(
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return __concat("overflow: ", "OverflowError");
         }
-      })(v__inl3_r)
-    ))(__succUInt32(v_maxUInt32));
+        case 4: {
+          return __concat("ok: ", String(v__inl3_r[1]));
+        }
+      }
+    })(v__inl3_r)
+  );
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -262,19 +262,19 @@
     }
   };
 
+  const v__inl15_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl15_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl15_x[1]];
-            }
-            case 4: {
-              return [5, v__inl15_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl15_x[1]];
           }
-        })(v__inl15_x))(v_res),
+          case 4: {
+            return [5, v__inl15_x[1]];
+          }
+        }
+      })(v__inl15_x),
       [22]
     ),
     [20]

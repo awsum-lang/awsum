@@ -23,19 +23,19 @@
 
   const v_cBare = [3, [332136403, [24]]];
 
+  const v__inl5_r = v_cBare;
   const main = [
     7,
-    (v__inl5_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return "A";
-          }
-          case 4: {
-            return String(v__inl5_r[1]);
-          }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return "A";
         }
-      })(v__inl5_r))(v_cBare),
+        case 4: {
+          return String(v__inl5_r[1]);
+        }
+      }
+    })(v__inl5_r),
     [5, [0]]
   ];
 

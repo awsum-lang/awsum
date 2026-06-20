@@ -41,13 +41,10 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl6_x = [2711245919, 9 | 0];
           return v__apply__df_andThenIO_8(
             v__k,
-            [
-              7,
-              String((v__inl6_x => v__inl6_x[1])([2711245919, 9 | 0])),
-              [5, [0]]
-            ]
+            [7, String(v__inl6_x[1]), [5, [0]]]
           );
         }
         case 7: {
@@ -81,13 +78,10 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl7_x = [3538687084, 11 >>> 0];
           return v__apply__df_andThenIO_4(
             v__k,
-            [
-              7,
-              String((v__inl7_x => v__inl7_x[1])([3538687084, 11 >>> 0])),
-              [5, [0]]
-            ]
+            [7, String(v__inl7_x[1]), [5, [0]]]
           );
         }
         case 7: {
@@ -121,13 +115,10 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl8_x = [2711245919, 9 | 0];
           return v__apply__df_andThenIO_16(
             v__k,
-            [
-              7,
-              String((v__inl8_x => v__inl8_x[1])([2711245919, 9 | 0])),
-              [5, [0]]
-            ]
+            [7, String(v__inl8_x[1]), [5, [0]]]
           );
         }
         case 7: {
@@ -161,13 +152,10 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl9_x = [2711245919, 7 | 0];
           return v__apply__df_andThenIO_12(
             v__k,
-            [
-              7,
-              String((v__inl9_x => v__inl9_x[1])([2711245919, 7 | 0])),
-              [5, [0]]
-            ]
+            [7, String(v__inl9_x[1]), [5, [0]]]
           );
         }
         case 7: {
@@ -201,13 +189,10 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl10_x = [3538687084, 13 >>> 0];
           return v__apply__df_andThenIO_0(
             v__k,
-            [
-              7,
-              String((v__inl10_x => v__inl10_x[1])([3538687084, 13 >>> 0])),
-              [5, [0]]
-            ]
+            [7, String(v__inl10_x[1]), [5, [0]]]
           );
         }
         case 7: {
@@ -221,18 +206,12 @@
     }
   };
 
+  const v__inl11_x = [2711245919, 7 | 0];
   const main = v__cps__df_andThenIO_0(
     v__cps__df_andThenIO_4(
       v__cps__df_andThenIO_8(
         v__cps__df_andThenIO_12(
-          v__cps__df_andThenIO_16(
-            [
-              7,
-              String((v__inl11_x => v__inl11_x[1])([2711245919, 7 | 0])),
-              [5, [0]]
-            ],
-            [16]
-          ),
+          v__cps__df_andThenIO_16([7, String(v__inl11_x[1]), [5, [0]]], [16]),
           [14]
         ),
         [12]

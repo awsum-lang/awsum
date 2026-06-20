@@ -54,96 +54,97 @@
 
   const v_rightSrc = [4, 5 | 0];
 
-  const v_mappedOk = (v__inl21_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, [27]]];
-        }
-        case 4: {
-          return v__inl21_x;
-        }
+  const v__inl21_x = v_rightSrc;
+  const v_mappedOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, [27]]];
       }
-    })(v__inl21_x))(v_rightSrc);
+      case 4: {
+        return v__inl21_x;
+      }
+    }
+  })(v__inl21_x);
 
   const v_leftY = [3, [3640903312, [26]]];
 
-  const v_remappedY = (v__inl12_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [
-            3,
-            (s => {
-              switch (s[0]) {
-                case 3640903312: {
-                  return [2269767818, [28]];
-                }
-                case 3657680931: {
-                  return [2252990199, [27]];
-                }
+  const v__inl12_x = v_leftY;
+  const v_remappedY = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [
+          3,
+          (s => {
+            switch (s[0]) {
+              case 3640903312: {
+                return [2269767818, [28]];
               }
-            })(v__inl12_x[1])
-          ];
-        }
-        case 4: {
-          return v__inl12_x;
-        }
+              case 3657680931: {
+                return [2252990199, [27]];
+              }
+            }
+          })(v__inl12_x[1])
+        ];
       }
-    })(v__inl12_x))(v_leftY);
+      case 4: {
+        return v__inl12_x;
+      }
+    }
+  })(v__inl12_x);
 
   const v_leftX = [3, [3657680931, [25]]];
 
-  const v_remappedX = (v__inl7_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [
-            3,
-            (s => {
-              switch (s[0]) {
-                case 3640903312: {
-                  return [2269767818, [28]];
-                }
-                case 3657680931: {
-                  return [2252990199, [27]];
-                }
+  const v__inl7_x = v_leftX;
+  const v_remappedX = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [
+          3,
+          (s => {
+            switch (s[0]) {
+              case 3640903312: {
+                return [2269767818, [28]];
               }
-            })(v__inl7_x[1])
-          ];
-        }
-        case 4: {
-          return v__inl7_x;
-        }
+              case 3657680931: {
+                return [2252990199, [27]];
+              }
+            }
+          })(v__inl7_x[1])
+        ];
       }
-    })(v__inl7_x))(v_leftX);
+      case 4: {
+        return v__inl7_x;
+      }
+    }
+  })(v__inl7_x);
 
   const v_leftSrc = [3, [24]];
 
-  const v_mappedA = (v__inl18_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, [27]]];
-        }
-        case 4: {
-          return v__inl18_x;
-        }
+  const v__inl18_x = v_leftSrc;
+  const v_mappedA = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, [27]]];
       }
-    })(v__inl18_x))(v_leftSrc);
-
-  const v_mappedB = (v__inl15_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2269767818, [28]]];
-        }
-        case 4: {
-          return v__inl15_x;
-        }
+      case 4: {
+        return v__inl18_x;
       }
-    })(v__inl15_x))(v_leftSrc);
+    }
+  })(v__inl18_x);
 
+  const v__inl15_x = v_leftSrc;
+  const v_mappedB = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2269767818, [28]]];
+      }
+      case 4: {
+        return v__inl15_x;
+      }
+    }
+  })(v__inl15_x);
+
+  const v__inl26_e = v_mappedA;
   const v_render = (s => {
     switch (s[0]) {
       case 3: {
@@ -154,29 +155,29 @@
         const v_r01 = s[1];
         let v__inl56_scrut;
         $join55: {
+          const v__inl31_e = v_mappedB;
           const __s = v_tagged(
             "mappedB",
-            (v__inl31_e =>
-              (s => {
-                switch (s[0]) {
-                  case 3: {
-                    {
-                      const __s = v__inl31_e[1];
-                      switch (__s[0]) {
-                        case 2252990199: {
-                          return "ErrA";
-                        }
-                        case 2269767818: {
-                          return "ErrB";
-                        }
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  {
+                    const __s = v__inl31_e[1];
+                    switch (__s[0]) {
+                      case 2252990199: {
+                        return "ErrA";
+                      }
+                      case 2269767818: {
+                        return "ErrB";
                       }
                     }
                   }
-                  case 4: {
-                    return String(v__inl31_e[1]);
-                  }
                 }
-              })(v__inl31_e))(v_mappedB)
+                case 4: {
+                  return String(v__inl31_e[1]);
+                }
+              }
+            })(v__inl31_e)
           );
           switch (__s[0]) {
             case 3: {
@@ -197,29 +198,29 @@
           case 4: {
             let v__inl58_scrut;
             $join57: {
+              const v__inl38_e = v_mappedOk;
               const __s = v_tagged(
                 "mappedOk",
-                (v__inl38_e =>
-                  (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        {
-                          const __s = v__inl38_e[1];
-                          switch (__s[0]) {
-                            case 2252990199: {
-                              return "ErrA";
-                            }
-                            case 2269767818: {
-                              return "ErrB";
-                            }
+                (s => {
+                  switch (s[0]) {
+                    case 3: {
+                      {
+                        const __s = v__inl38_e[1];
+                        switch (__s[0]) {
+                          case 2252990199: {
+                            return "ErrA";
+                          }
+                          case 2269767818: {
+                            return "ErrB";
                           }
                         }
                       }
-                      case 4: {
-                        return String(v__inl38_e[1]);
-                      }
                     }
-                  })(v__inl38_e))(v_mappedOk)
+                    case 4: {
+                      return String(v__inl38_e[1]);
+                    }
+                  }
+                })(v__inl38_e)
               );
               switch (__s[0]) {
                 case 3: {
@@ -240,29 +241,29 @@
               case 4: {
                 let v__inl60_scrut;
                 $join59: {
+                  const v__inl45_e = v_remappedX;
                   const __s = v_tagged(
                     "remappedX",
-                    (v__inl45_e =>
-                      (s => {
-                        switch (s[0]) {
-                          case 3: {
-                            {
-                              const __s = v__inl45_e[1];
-                              switch (__s[0]) {
-                                case 2252990199: {
-                                  return "ErrA";
-                                }
-                                case 2269767818: {
-                                  return "ErrB";
-                                }
+                    (s => {
+                      switch (s[0]) {
+                        case 3: {
+                          {
+                            const __s = v__inl45_e[1];
+                            switch (__s[0]) {
+                              case 2252990199: {
+                                return "ErrA";
+                              }
+                              case 2269767818: {
+                                return "ErrB";
                               }
                             }
                           }
-                          case 4: {
-                            return String(v__inl45_e[1]);
-                          }
                         }
-                      })(v__inl45_e))(v_remappedX)
+                        case 4: {
+                          return String(v__inl45_e[1]);
+                        }
+                      }
+                    })(v__inl45_e)
                   );
                   switch (__s[0]) {
                     case 3: {
@@ -285,29 +286,29 @@
                   }
                   case 4: {
                     {
+                      const v__inl52_e = v_remappedY;
                       const __s = v_tagged(
                         "remappedY",
-                        (v__inl52_e =>
-                          (s => {
-                            switch (s[0]) {
-                              case 3: {
-                                {
-                                  const __s = v__inl52_e[1];
-                                  switch (__s[0]) {
-                                    case 2252990199: {
-                                      return "ErrA";
-                                    }
-                                    case 2269767818: {
-                                      return "ErrB";
-                                    }
+                        (s => {
+                          switch (s[0]) {
+                            case 3: {
+                              {
+                                const __s = v__inl52_e[1];
+                                switch (__s[0]) {
+                                  case 2252990199: {
+                                    return "ErrA";
+                                  }
+                                  case 2269767818: {
+                                    return "ErrB";
                                   }
                                 }
                               }
-                              case 4: {
-                                return String(v__inl52_e[1]);
-                              }
                             }
-                          })(v__inl52_e))(v_remappedY)
+                            case 4: {
+                              return String(v__inl52_e[1]);
+                            }
+                          }
+                        })(v__inl52_e)
                       );
                       switch (__s[0]) {
                         case 3: {
@@ -331,27 +332,26 @@
   })(
     v_tagged(
       "mappedA",
-      (v__inl26_e =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              {
-                const __s = v__inl26_e[1];
-                switch (__s[0]) {
-                  case 2252990199: {
-                    return "ErrA";
-                  }
-                  case 2269767818: {
-                    return "ErrB";
-                  }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            {
+              const __s = v__inl26_e[1];
+              switch (__s[0]) {
+                case 2252990199: {
+                  return "ErrA";
+                }
+                case 2269767818: {
+                  return "ErrB";
                 }
               }
             }
-            case 4: {
-              return String(v__inl26_e[1]);
-            }
           }
-        })(v__inl26_e))(v_mappedA)
+          case 4: {
+            return String(v__inl26_e[1]);
+          }
+        }
+      })(v__inl26_e)
     )
   );
 
@@ -430,19 +430,19 @@
     }
   };
 
+  const v__inl63_x = v_render;
   const main = v__cps__df_handleErrorIO_3(
     v__cps__df_andThenIO_7(
-      (v__inl63_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl63_x[1]];
-            }
-            case 4: {
-              return [5, v__inl63_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl63_x[1]];
           }
-        })(v__inl63_x))(v_render),
+          case 4: {
+            return [5, v__inl63_x[1]];
+          }
+        }
+      })(v__inl63_x),
       [31]
     ),
     [29]

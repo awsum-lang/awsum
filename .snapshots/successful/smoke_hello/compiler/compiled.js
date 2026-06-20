@@ -121,54 +121,49 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df__rowmono_1_andThenIO_8(
-            v__k,
-            (v__inl35_args =>
-              (v__inl32_x =>
-                (s => {
-                  switch (s[0]) {
+          const v__inl35_args = v_io[1];
+          const v__inl32_x = (s => {
+            switch (s[0]) {
+              case 13: {
+                return [3, [3864168810, [24]]];
+              }
+              case 14: {
+                {
+                  const __s = __concat("Hello, ", v__inl35_args[1]);
+                  switch (__s[0]) {
                     case 3: {
-                      return [6, v__inl32_x[1]];
+                      const v__inl27__do_e_0 = __s[1];
+                      return [3, [589989748, v__inl27__do_e_0]];
                     }
                     case 4: {
-                      return [5, v__inl32_x[1]];
-                    }
-                  }
-                })(v__inl32_x))(
-                (s => {
-                  switch (s[0]) {
-                    case 13: {
-                      return [3, [3864168810, [24]]];
-                    }
-                    case 14: {
-                      {
-                        const __s = __concat("Hello, ", v__inl35_args[1]);
-                        switch (__s[0]) {
-                          case 3: {
-                            const v__inl27__do_e_0 = __s[1];
-                            return [3, [589989748, v__inl27__do_e_0]];
-                          }
-                          case 4: {
-                            const v__inl28_hello = __s[1];
-                            const v__inl29___input = __concat(
-                              v__inl28_hello,
-                              "!"
-                            );
-                            switch (v__inl29___input[0]) {
-                              case 3: {
-                                return [3, [589989748, v__inl29___input[1]]];
-                              }
-                              case 4: {
-                                return v__inl29___input;
-                              }
-                            }
-                          }
+                      const v__inl28_hello = __s[1];
+                      const v__inl29___input = __concat(v__inl28_hello, "!");
+                      switch (v__inl29___input[0]) {
+                        case 3: {
+                          return [3, [589989748, v__inl29___input[1]]];
+                        }
+                        case 4: {
+                          return v__inl29___input;
                         }
                       }
                     }
                   }
-                })(v__inl35_args)
-              ))(v_io[1])
+                }
+              }
+            }
+          })(v__inl35_args);
+          return v__apply__df__rowmono_1_andThenIO_8(
+            v__k,
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  return [6, v__inl32_x[1]];
+                }
+                case 4: {
+                  return [5, v__inl32_x[1]];
+                }
+              }
+            })(v__inl32_x)
           );
         }
         case 6: {
@@ -330,11 +325,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl39__arg0 =>
-            v__cps__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl39__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_15_5__df__lam_18_9__df__lam_9_1(
               [29, v_io[1], v__inl39__arg0],
               [39]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

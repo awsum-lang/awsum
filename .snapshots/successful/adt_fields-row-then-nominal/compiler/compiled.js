@@ -41,43 +41,43 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl16_w = [26, [2711245919, 1 | 0], [25]];
           return v__apply__df_andThenIO_8(
             v__k,
             [
               7,
-              (v__inl16_w =>
-                (s => {
-                  switch (s[0]) {
-                    case 26: {
-                      const v__inl18___p1 = s[2];
-                      {
-                        const __s = v__inl16_w[1];
-                        switch (__s[0]) {
-                          case 1615808600: {
-                            switch (v__inl18___p1[0]) {
-                              case 24: {
-                                return "sA";
-                              }
-                              case 25: {
-                                return "sB";
-                              }
+              (s => {
+                switch (s[0]) {
+                  case 26: {
+                    const v__inl18___p1 = s[2];
+                    {
+                      const __s = v__inl16_w[1];
+                      switch (__s[0]) {
+                        case 1615808600: {
+                          switch (v__inl18___p1[0]) {
+                            case 24: {
+                              return "sA";
+                            }
+                            case 25: {
+                              return "sB";
                             }
                           }
-                          case 2711245919: {
-                            switch (v__inl18___p1[0]) {
-                              case 24: {
-                                return "iA";
-                              }
-                              case 25: {
-                                return "iB";
-                              }
+                        }
+                        case 2711245919: {
+                          switch (v__inl18___p1[0]) {
+                            case 24: {
+                              return "iA";
+                            }
+                            case 25: {
+                              return "iB";
                             }
                           }
                         }
                       }
                     }
                   }
-                })(v__inl16_w))([26, [2711245919, 1 | 0], [25]]),
+                }
+              })(v__inl16_w),
               [5, [0]]
             ]
           );
@@ -113,43 +113,43 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl21_w = [26, [1615808600, "x"], [24]];
           return v__apply__df_andThenIO_4(
             v__k,
             [
               7,
-              (v__inl21_w =>
-                (s => {
-                  switch (s[0]) {
-                    case 26: {
-                      const v__inl23___p1 = s[2];
-                      {
-                        const __s = v__inl21_w[1];
-                        switch (__s[0]) {
-                          case 1615808600: {
-                            switch (v__inl23___p1[0]) {
-                              case 24: {
-                                return "sA";
-                              }
-                              case 25: {
-                                return "sB";
-                              }
+              (s => {
+                switch (s[0]) {
+                  case 26: {
+                    const v__inl23___p1 = s[2];
+                    {
+                      const __s = v__inl21_w[1];
+                      switch (__s[0]) {
+                        case 1615808600: {
+                          switch (v__inl23___p1[0]) {
+                            case 24: {
+                              return "sA";
+                            }
+                            case 25: {
+                              return "sB";
                             }
                           }
-                          case 2711245919: {
-                            switch (v__inl23___p1[0]) {
-                              case 24: {
-                                return "iA";
-                              }
-                              case 25: {
-                                return "iB";
-                              }
+                        }
+                        case 2711245919: {
+                          switch (v__inl23___p1[0]) {
+                            case 24: {
+                              return "iA";
+                            }
+                            case 25: {
+                              return "iB";
                             }
                           }
                         }
                       }
                     }
                   }
-                })(v__inl21_w))([26, [1615808600, "x"], [24]]),
+                }
+              })(v__inl21_w),
               [5, [0]]
             ]
           );
@@ -185,43 +185,43 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl26_w = [26, [1615808600, "x"], [25]];
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
-              (v__inl26_w =>
-                (s => {
-                  switch (s[0]) {
-                    case 26: {
-                      const v__inl28___p1 = s[2];
-                      {
-                        const __s = v__inl26_w[1];
-                        switch (__s[0]) {
-                          case 1615808600: {
-                            switch (v__inl28___p1[0]) {
-                              case 24: {
-                                return "sA";
-                              }
-                              case 25: {
-                                return "sB";
-                              }
+              (s => {
+                switch (s[0]) {
+                  case 26: {
+                    const v__inl28___p1 = s[2];
+                    {
+                      const __s = v__inl26_w[1];
+                      switch (__s[0]) {
+                        case 1615808600: {
+                          switch (v__inl28___p1[0]) {
+                            case 24: {
+                              return "sA";
+                            }
+                            case 25: {
+                              return "sB";
                             }
                           }
-                          case 2711245919: {
-                            switch (v__inl28___p1[0]) {
-                              case 24: {
-                                return "iA";
-                              }
-                              case 25: {
-                                return "iB";
-                              }
+                        }
+                        case 2711245919: {
+                          switch (v__inl28___p1[0]) {
+                            case 24: {
+                              return "iA";
+                            }
+                            case 25: {
+                              return "iB";
                             }
                           }
                         }
                       }
                     }
                   }
-                })(v__inl26_w))([26, [1615808600, "x"], [25]]),
+                }
+              })(v__inl26_w),
               [5, [0]]
             ]
           );
@@ -237,44 +237,44 @@
     }
   };
 
+  const v__inl35_w = [26, [2711245919, 1 | 0], [24]];
   const main = v__cps__df_andThenIO_0(
     v__cps__df_andThenIO_4(
       v__cps__df_andThenIO_8(
         [
           7,
-          (v__inl35_w =>
-            (s => {
-              switch (s[0]) {
-                case 26: {
-                  const v__inl32___p1 = s[2];
-                  {
-                    const __s = v__inl35_w[1];
-                    switch (__s[0]) {
-                      case 1615808600: {
-                        switch (v__inl32___p1[0]) {
-                          case 24: {
-                            return "sA";
-                          }
-                          case 25: {
-                            return "sB";
-                          }
+          (s => {
+            switch (s[0]) {
+              case 26: {
+                const v__inl32___p1 = s[2];
+                {
+                  const __s = v__inl35_w[1];
+                  switch (__s[0]) {
+                    case 1615808600: {
+                      switch (v__inl32___p1[0]) {
+                        case 24: {
+                          return "sA";
+                        }
+                        case 25: {
+                          return "sB";
                         }
                       }
-                      case 2711245919: {
-                        switch (v__inl32___p1[0]) {
-                          case 24: {
-                            return "iA";
-                          }
-                          case 25: {
-                            return "iB";
-                          }
+                    }
+                    case 2711245919: {
+                      switch (v__inl32___p1[0]) {
+                        case 24: {
+                          return "iA";
+                        }
+                        case 25: {
+                          return "iB";
                         }
                       }
                     }
                   }
                 }
               }
-            })(v__inl35_w))([26, [2711245919, 1 | 0], [24]]),
+            }
+          })(v__inl35_w),
           [5, [0]]
         ],
         [31]

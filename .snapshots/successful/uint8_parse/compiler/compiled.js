@@ -35,362 +35,355 @@
     }
   };
 
-  const v_res = (v__inl3_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          const v__do_e_20 = s[1];
-          return [3, v__do_e_20];
-        }
-        case 4: {
-          const v_a = s[1];
-          const v__inl6_r = __parseUInt8("255");
-          {
-            const __s = (s => {
-              switch (s[0]) {
-                case 3: {
-                  return [4, "err"];
-                }
-                case 4: {
-                  return __concat("ok:", String(v__inl6_r[1]));
-                }
-              }
-            })(v__inl6_r);
-            switch (__s[0]) {
+  const v__inl3_r = __parseUInt8("0");
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        const v__do_e_20 = s[1];
+        return [3, v__do_e_20];
+      }
+      case 4: {
+        const v_a = s[1];
+        const v__inl6_r = __parseUInt8("255");
+        {
+          const __s = (s => {
+            switch (s[0]) {
               case 3: {
-                const v__do_e_19 = __s[1];
-                return [3, v__do_e_19];
+                return [4, "err"];
               }
               case 4: {
-                const v_b = __s[1];
-                const v__inl9_r = __parseUInt8("256");
-                {
-                  const __s = (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        return [4, "err"];
-                      }
-                      case 4: {
-                        return __concat("ok:", String(v__inl9_r[1]));
-                      }
-                    }
-                  })(v__inl9_r);
-                  switch (__s[0]) {
+                return __concat("ok:", String(v__inl6_r[1]));
+              }
+            }
+          })(v__inl6_r);
+          switch (__s[0]) {
+            case 3: {
+              const v__do_e_19 = __s[1];
+              return [3, v__do_e_19];
+            }
+            case 4: {
+              const v_b = __s[1];
+              const v__inl9_r = __parseUInt8("256");
+              {
+                const __s = (s => {
+                  switch (s[0]) {
                     case 3: {
-                      const v__do_e_18 = __s[1];
-                      return [3, v__do_e_18];
+                      return [4, "err"];
                     }
                     case 4: {
-                      const v_c = __s[1];
-                      const v__inl12_r = __parseUInt8("-1");
-                      {
-                        const __s = (s => {
-                          switch (s[0]) {
-                            case 3: {
-                              return [4, "err"];
-                            }
-                            case 4: {
-                              return __concat("ok:", String(v__inl12_r[1]));
-                            }
-                          }
-                        })(v__inl12_r);
-                        switch (__s[0]) {
+                      return __concat("ok:", String(v__inl9_r[1]));
+                    }
+                  }
+                })(v__inl9_r);
+                switch (__s[0]) {
+                  case 3: {
+                    const v__do_e_18 = __s[1];
+                    return [3, v__do_e_18];
+                  }
+                  case 4: {
+                    const v_c = __s[1];
+                    const v__inl12_r = __parseUInt8("-1");
+                    {
+                      const __s = (s => {
+                        switch (s[0]) {
                           case 3: {
-                            const v__do_e_17 = __s[1];
-                            return [3, v__do_e_17];
+                            return [4, "err"];
                           }
                           case 4: {
-                            const v_d = __s[1];
-                            const v__inl15_r = __parseUInt8("");
-                            {
-                              const __s = (s => {
-                                switch (s[0]) {
-                                  case 3: {
-                                    return [4, "err"];
-                                  }
-                                  case 4: {
-                                    return __concat(
-                                      "ok:",
-                                      String(v__inl15_r[1])
-                                    );
-                                  }
-                                }
-                              })(v__inl15_r);
-                              switch (__s[0]) {
+                            return __concat("ok:", String(v__inl12_r[1]));
+                          }
+                        }
+                      })(v__inl12_r);
+                      switch (__s[0]) {
+                        case 3: {
+                          const v__do_e_17 = __s[1];
+                          return [3, v__do_e_17];
+                        }
+                        case 4: {
+                          const v_d = __s[1];
+                          const v__inl15_r = __parseUInt8("");
+                          {
+                            const __s = (s => {
+                              switch (s[0]) {
                                 case 3: {
-                                  const v__do_e_16 = __s[1];
-                                  return [3, v__do_e_16];
+                                  return [4, "err"];
                                 }
                                 case 4: {
-                                  const v_e = __s[1];
-                                  const v__inl18_r = __parseUInt8("abc");
-                                  {
-                                    const __s = (s => {
-                                      switch (s[0]) {
-                                        case 3: {
-                                          return [4, "err"];
-                                        }
-                                        case 4: {
-                                          return __concat(
-                                            "ok:",
-                                            String(v__inl18_r[1])
-                                          );
-                                        }
-                                      }
-                                    })(v__inl18_r);
-                                    switch (__s[0]) {
+                                  return __concat("ok:", String(v__inl15_r[1]));
+                                }
+                              }
+                            })(v__inl15_r);
+                            switch (__s[0]) {
+                              case 3: {
+                                const v__do_e_16 = __s[1];
+                                return [3, v__do_e_16];
+                              }
+                              case 4: {
+                                const v_e = __s[1];
+                                const v__inl18_r = __parseUInt8("abc");
+                                {
+                                  const __s = (s => {
+                                    switch (s[0]) {
                                       case 3: {
-                                        const v__do_e_15 = __s[1];
-                                        return [3, v__do_e_15];
+                                        return [4, "err"];
                                       }
                                       case 4: {
-                                        const v_f = __s[1];
-                                        const v__inl21_r = __parseUInt8(" 5");
-                                        {
-                                          const __s = (s => {
-                                            switch (s[0]) {
-                                              case 3: {
-                                                return [4, "err"];
-                                              }
-                                              case 4: {
-                                                return __concat(
-                                                  "ok:",
-                                                  String(v__inl21_r[1])
-                                                );
-                                              }
-                                            }
-                                          })(v__inl21_r);
-                                          switch (__s[0]) {
+                                        return __concat(
+                                          "ok:",
+                                          String(v__inl18_r[1])
+                                        );
+                                      }
+                                    }
+                                  })(v__inl18_r);
+                                  switch (__s[0]) {
+                                    case 3: {
+                                      const v__do_e_15 = __s[1];
+                                      return [3, v__do_e_15];
+                                    }
+                                    case 4: {
+                                      const v_f = __s[1];
+                                      const v__inl21_r = __parseUInt8(" 5");
+                                      {
+                                        const __s = (s => {
+                                          switch (s[0]) {
                                             case 3: {
-                                              const v__do_e_14 = __s[1];
-                                              return [3, v__do_e_14];
+                                              return [4, "err"];
                                             }
                                             case 4: {
-                                              const v_g = __s[1];
-                                              const v__inl24_r = __parseUInt8(
-                                                "12a"
+                                              return __concat(
+                                                "ok:",
+                                                String(v__inl21_r[1])
                                               );
-                                              {
-                                                const __s = (s => {
-                                                  switch (s[0]) {
-                                                    case 3: {
-                                                      return [4, "err"];
-                                                    }
-                                                    case 4: {
-                                                      return __concat(
-                                                        "ok:",
-                                                        String(v__inl24_r[1])
-                                                      );
-                                                    }
-                                                  }
-                                                })(v__inl24_r);
-                                                switch (__s[0]) {
+                                            }
+                                          }
+                                        })(v__inl21_r);
+                                        switch (__s[0]) {
+                                          case 3: {
+                                            const v__do_e_14 = __s[1];
+                                            return [3, v__do_e_14];
+                                          }
+                                          case 4: {
+                                            const v_g = __s[1];
+                                            const v__inl24_r = __parseUInt8(
+                                              "12a"
+                                            );
+                                            {
+                                              const __s = (s => {
+                                                switch (s[0]) {
                                                   case 3: {
-                                                    const v__do_e_13 = __s[1];
-                                                    return [3, v__do_e_13];
+                                                    return [4, "err"];
                                                   }
                                                   case 4: {
-                                                    const v_h = __s[1];
-                                                    {
-                                                      const __s = __concat(
-                                                        v_a,
-                                                        ", "
-                                                      );
-                                                      switch (__s[0]) {
-                                                        case 3: {
-                                                          const v__do_e_12 = __s[1];
-                                                          return [
-                                                            3,
-                                                            v__do_e_12
-                                                          ];
-                                                        }
-                                                        case 4: {
-                                                          const v_r0 = __s[1];
-                                                          {
-                                                            const __s = __concat(
-                                                              v_r0,
-                                                              v_b
-                                                            );
-                                                            switch (__s[0]) {
-                                                              case 3: {
-                                                                const v__do_e_11 = __s[1];
-                                                                return [
-                                                                  3,
-                                                                  v__do_e_11
-                                                                ];
-                                                              }
-                                                              case 4: {
-                                                                const v_r1 = __s[1];
-                                                                {
-                                                                  const __s = __concat(
-                                                                    v_r1,
-                                                                    ", "
-                                                                  );
-                                                                  switch (__s[0]) {
-                                                                    case 3: {
-                                                                      const v__do_e_10 = __s[1];
-                                                                      return [
-                                                                        3,
-                                                                        v__do_e_10
-                                                                      ];
-                                                                    }
-                                                                    case 4: {
-                                                                      const v_r2 = __s[1];
-                                                                      {
-                                                                        const __s = __concat(
-                                                                          v_r2,
-                                                                          v_c
-                                                                        );
-                                                                        switch (__s[0]) {
-                                                                          case 3: {
-                                                                            const v__do_e_9 = __s[1];
-                                                                            return [
-                                                                              3,
-                                                                              v__do_e_9
-                                                                            ];
-                                                                          }
-                                                                          case 4: {
-                                                                            const v_r3 = __s[1];
-                                                                            {
-                                                                              const __s = __concat(
-                                                                                v_r3,
-                                                                                ", "
-                                                                              );
-                                                                              switch (__s[0]) {
-                                                                                case 3: {
-                                                                                  const v__do_e_8 = __s[1];
-                                                                                  return [
-                                                                                    3,
-                                                                                    v__do_e_8
-                                                                                  ];
-                                                                                }
-                                                                                case 4: {
-                                                                                  const v_r4 = __s[1];
-                                                                                  {
-                                                                                    const __s = __concat(
-                                                                                      v_r4,
-                                                                                      v_d
-                                                                                    );
-                                                                                    switch (__s[0]) {
-                                                                                      case 3: {
-                                                                                        const v__do_e_7 = __s[1];
-                                                                                        return [
-                                                                                          3,
-                                                                                          v__do_e_7
-                                                                                        ];
-                                                                                      }
-                                                                                      case 4: {
-                                                                                        const v_r5 = __s[1];
-                                                                                        {
-                                                                                          const __s = __concat(
-                                                                                            v_r5,
-                                                                                            ", "
-                                                                                          );
-                                                                                          switch (__s[0]) {
-                                                                                            case 3: {
-                                                                                              const v__do_e_6 = __s[1];
-                                                                                              return [
-                                                                                                3,
-                                                                                                v__do_e_6
-                                                                                              ];
-                                                                                            }
-                                                                                            case 4: {
-                                                                                              const v_r6 = __s[1];
-                                                                                              {
-                                                                                                const __s = __concat(
-                                                                                                  v_r6,
-                                                                                                  v_e
-                                                                                                );
-                                                                                                switch (__s[0]) {
-                                                                                                  case 3: {
-                                                                                                    const v__do_e_5 = __s[1];
-                                                                                                    return [
-                                                                                                      3,
-                                                                                                      v__do_e_5
-                                                                                                    ];
-                                                                                                  }
-                                                                                                  case 4: {
-                                                                                                    const v_r7 = __s[1];
-                                                                                                    {
-                                                                                                      const __s = __concat(
-                                                                                                        v_r7,
-                                                                                                        ", "
-                                                                                                      );
-                                                                                                      switch (__s[0]) {
-                                                                                                        case 3: {
-                                                                                                          const v__do_e_4 = __s[1];
-                                                                                                          return [
-                                                                                                            3,
-                                                                                                            v__do_e_4
-                                                                                                          ];
-                                                                                                        }
-                                                                                                        case 4: {
-                                                                                                          const v_r8 = __s[1];
-                                                                                                          {
-                                                                                                            const __s = __concat(
-                                                                                                              v_r8,
-                                                                                                              v_f
-                                                                                                            );
-                                                                                                            switch (__s[0]) {
-                                                                                                              case 3: {
-                                                                                                                const v__do_e_3 = __s[1];
-                                                                                                                return [
-                                                                                                                  3,
-                                                                                                                  v__do_e_3
-                                                                                                                ];
-                                                                                                              }
-                                                                                                              case 4: {
-                                                                                                                const v_r9 = __s[1];
-                                                                                                                {
-                                                                                                                  const __s = __concat(
-                                                                                                                    v_r9,
-                                                                                                                    ", "
-                                                                                                                  );
-                                                                                                                  switch (__s[0]) {
-                                                                                                                    case 3: {
-                                                                                                                      const v__do_e_2 = __s[1];
-                                                                                                                      return [
-                                                                                                                        3,
-                                                                                                                        v__do_e_2
-                                                                                                                      ];
-                                                                                                                    }
-                                                                                                                    case 4: {
-                                                                                                                      const v_r10 = __s[1];
-                                                                                                                      {
-                                                                                                                        const __s = __concat(
-                                                                                                                          v_r10,
-                                                                                                                          v_g
-                                                                                                                        );
-                                                                                                                        switch (__s[0]) {
-                                                                                                                          case 3: {
-                                                                                                                            const v__do_e_1 = __s[1];
-                                                                                                                            return [
-                                                                                                                              3,
-                                                                                                                              v__do_e_1
-                                                                                                                            ];
-                                                                                                                          }
-                                                                                                                          case 4: {
-                                                                                                                            const v_r11 = __s[1];
-                                                                                                                            {
-                                                                                                                              const __s = __concat(
-                                                                                                                                v_r11,
-                                                                                                                                ", "
-                                                                                                                              );
-                                                                                                                              switch (__s[0]) {
-                                                                                                                                case 3: {
-                                                                                                                                  const v__do_e_0 = __s[1];
-                                                                                                                                  return [
-                                                                                                                                    3,
-                                                                                                                                    v__do_e_0
-                                                                                                                                  ];
-                                                                                                                                }
-                                                                                                                                case 4: {
-                                                                                                                                  const v_r12 = __s[1];
-                                                                                                                                  return __concat(
-                                                                                                                                    v_r12,
-                                                                                                                                    v_h
-                                                                                                                                  );
-                                                                                                                                }
+                                                    return __concat(
+                                                      "ok:",
+                                                      String(v__inl24_r[1])
+                                                    );
+                                                  }
+                                                }
+                                              })(v__inl24_r);
+                                              switch (__s[0]) {
+                                                case 3: {
+                                                  const v__do_e_13 = __s[1];
+                                                  return [3, v__do_e_13];
+                                                }
+                                                case 4: {
+                                                  const v_h = __s[1];
+                                                  {
+                                                    const __s = __concat(
+                                                      v_a,
+                                                      ", "
+                                                    );
+                                                    switch (__s[0]) {
+                                                      case 3: {
+                                                        const v__do_e_12 = __s[1];
+                                                        return [3, v__do_e_12];
+                                                      }
+                                                      case 4: {
+                                                        const v_r0 = __s[1];
+                                                        {
+                                                          const __s = __concat(
+                                                            v_r0,
+                                                            v_b
+                                                          );
+                                                          switch (__s[0]) {
+                                                            case 3: {
+                                                              const v__do_e_11 = __s[1];
+                                                              return [
+                                                                3,
+                                                                v__do_e_11
+                                                              ];
+                                                            }
+                                                            case 4: {
+                                                              const v_r1 = __s[1];
+                                                              {
+                                                                const __s = __concat(
+                                                                  v_r1,
+                                                                  ", "
+                                                                );
+                                                                switch (__s[0]) {
+                                                                  case 3: {
+                                                                    const v__do_e_10 = __s[1];
+                                                                    return [
+                                                                      3,
+                                                                      v__do_e_10
+                                                                    ];
+                                                                  }
+                                                                  case 4: {
+                                                                    const v_r2 = __s[1];
+                                                                    {
+                                                                      const __s = __concat(
+                                                                        v_r2,
+                                                                        v_c
+                                                                      );
+                                                                      switch (__s[0]) {
+                                                                        case 3: {
+                                                                          const v__do_e_9 = __s[1];
+                                                                          return [
+                                                                            3,
+                                                                            v__do_e_9
+                                                                          ];
+                                                                        }
+                                                                        case 4: {
+                                                                          const v_r3 = __s[1];
+                                                                          {
+                                                                            const __s = __concat(
+                                                                              v_r3,
+                                                                              ", "
+                                                                            );
+                                                                            switch (__s[0]) {
+                                                                              case 3: {
+                                                                                const v__do_e_8 = __s[1];
+                                                                                return [
+                                                                                  3,
+                                                                                  v__do_e_8
+                                                                                ];
+                                                                              }
+                                                                              case 4: {
+                                                                                const v_r4 = __s[1];
+                                                                                {
+                                                                                  const __s = __concat(
+                                                                                    v_r4,
+                                                                                    v_d
+                                                                                  );
+                                                                                  switch (__s[0]) {
+                                                                                    case 3: {
+                                                                                      const v__do_e_7 = __s[1];
+                                                                                      return [
+                                                                                        3,
+                                                                                        v__do_e_7
+                                                                                      ];
+                                                                                    }
+                                                                                    case 4: {
+                                                                                      const v_r5 = __s[1];
+                                                                                      {
+                                                                                        const __s = __concat(
+                                                                                          v_r5,
+                                                                                          ", "
+                                                                                        );
+                                                                                        switch (__s[0]) {
+                                                                                          case 3: {
+                                                                                            const v__do_e_6 = __s[1];
+                                                                                            return [
+                                                                                              3,
+                                                                                              v__do_e_6
+                                                                                            ];
+                                                                                          }
+                                                                                          case 4: {
+                                                                                            const v_r6 = __s[1];
+                                                                                            {
+                                                                                              const __s = __concat(
+                                                                                                v_r6,
+                                                                                                v_e
+                                                                                              );
+                                                                                              switch (__s[0]) {
+                                                                                                case 3: {
+                                                                                                  const v__do_e_5 = __s[1];
+                                                                                                  return [
+                                                                                                    3,
+                                                                                                    v__do_e_5
+                                                                                                  ];
+                                                                                                }
+                                                                                                case 4: {
+                                                                                                  const v_r7 = __s[1];
+                                                                                                  {
+                                                                                                    const __s = __concat(
+                                                                                                      v_r7,
+                                                                                                      ", "
+                                                                                                    );
+                                                                                                    switch (__s[0]) {
+                                                                                                      case 3: {
+                                                                                                        const v__do_e_4 = __s[1];
+                                                                                                        return [
+                                                                                                          3,
+                                                                                                          v__do_e_4
+                                                                                                        ];
+                                                                                                      }
+                                                                                                      case 4: {
+                                                                                                        const v_r8 = __s[1];
+                                                                                                        {
+                                                                                                          const __s = __concat(
+                                                                                                            v_r8,
+                                                                                                            v_f
+                                                                                                          );
+                                                                                                          switch (__s[0]) {
+                                                                                                            case 3: {
+                                                                                                              const v__do_e_3 = __s[1];
+                                                                                                              return [
+                                                                                                                3,
+                                                                                                                v__do_e_3
+                                                                                                              ];
+                                                                                                            }
+                                                                                                            case 4: {
+                                                                                                              const v_r9 = __s[1];
+                                                                                                              {
+                                                                                                                const __s = __concat(
+                                                                                                                  v_r9,
+                                                                                                                  ", "
+                                                                                                                );
+                                                                                                                switch (__s[0]) {
+                                                                                                                  case 3: {
+                                                                                                                    const v__do_e_2 = __s[1];
+                                                                                                                    return [
+                                                                                                                      3,
+                                                                                                                      v__do_e_2
+                                                                                                                    ];
+                                                                                                                  }
+                                                                                                                  case 4: {
+                                                                                                                    const v_r10 = __s[1];
+                                                                                                                    {
+                                                                                                                      const __s = __concat(
+                                                                                                                        v_r10,
+                                                                                                                        v_g
+                                                                                                                      );
+                                                                                                                      switch (__s[0]) {
+                                                                                                                        case 3: {
+                                                                                                                          const v__do_e_1 = __s[1];
+                                                                                                                          return [
+                                                                                                                            3,
+                                                                                                                            v__do_e_1
+                                                                                                                          ];
+                                                                                                                        }
+                                                                                                                        case 4: {
+                                                                                                                          const v_r11 = __s[1];
+                                                                                                                          {
+                                                                                                                            const __s = __concat(
+                                                                                                                              v_r11,
+                                                                                                                              ", "
+                                                                                                                            );
+                                                                                                                            switch (__s[0]) {
+                                                                                                                              case 3: {
+                                                                                                                                const v__do_e_0 = __s[1];
+                                                                                                                                return [
+                                                                                                                                  3,
+                                                                                                                                  v__do_e_0
+                                                                                                                                ];
+                                                                                                                              }
+                                                                                                                              case 4: {
+                                                                                                                                const v_r12 = __s[1];
+                                                                                                                                return __concat(
+                                                                                                                                  v_r12,
+                                                                                                                                  v_h
+                                                                                                                                );
                                                                                                                               }
                                                                                                                             }
                                                                                                                           }
@@ -452,18 +445,19 @@
           }
         }
       }
-    })(
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return [4, "err"];
-          }
-          case 4: {
-            return __concat("ok:", String(v__inl3_r[1]));
-          }
+    }
+  })(
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return [4, "err"];
         }
-      })(v__inl3_r)
-    ))(__parseUInt8("0"));
+        case 4: {
+          return __concat("ok:", String(v__inl3_r[1]));
+        }
+      }
+    })(v__inl3_r)
+  );
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -540,19 +534,19 @@
     }
   };
 
+  const v__inl27_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl27_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl27_x[1]];
-            }
-            case 4: {
-              return [5, v__inl27_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl27_x[1]];
           }
-        })(v__inl27_x))(v_res),
+          case 4: {
+            return [5, v__inl27_x[1]];
+          }
+        }
+      })(v__inl27_x),
       [22]
     ),
     [20]

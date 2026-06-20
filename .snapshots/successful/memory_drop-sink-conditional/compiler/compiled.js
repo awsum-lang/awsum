@@ -269,11 +269,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl12__arg0 =>
-            v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl12__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
               [29, v_io[1], v__inl12__arg0],
               [36]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

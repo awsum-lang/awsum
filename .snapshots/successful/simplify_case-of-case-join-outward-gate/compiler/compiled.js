@@ -228,71 +228,69 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl24_args = v_io[1];
+          const v__inl18_k2 = (s => {
+            switch (s[0]) {
+              case 13: {
+                return 3 | 0;
+              }
+              case 14: {
+                {
+                  const __s = __parseInt32(v__inl24_args[1]);
+                  switch (__s[0]) {
+                    case 3: {
+                      return 4 | 0;
+                    }
+                    case 4: {
+                      const v__inl17_m = __s[1];
+                      return v__inl17_m;
+                    }
+                  }
+                }
+              }
+            }
+          })(v__inl24_args);
           return v__apply__df__rowmono_0_andThenIO_4(
             v__k,
-            (v__inl24_args =>
-              (v__inl18_k2 =>
-                [
-                  7,
-                  String(
-                    (() => {
-                      let v__inl20_scrut;
-                      $join19: {
-                        const __s = (s => {
-                          switch (s[0]) {
-                            case 1: {
-                              return [11];
-                            }
-                            case 2: {
-                              return v__cps_mkmb(v__inl18_k2, [34]);
-                            }
-                          }
-                        })(__eqInt32(v__inl18_k2, 5 | 0));
-                        switch (__s[0]) {
-                          case 11: {
-                            return 9 | 0;
-                          }
-                          case 12: {
-                            const v__inl23_v = __s[1];
-                            v__inl20_scrut = v__cps_mklist(v__inl23_v, [32]);
-                            break $join19;
-                          }
+            [
+              7,
+              String(
+                (() => {
+                  let v__inl20_scrut;
+                  $join19: {
+                    const __s = (s => {
+                      switch (s[0]) {
+                        case 1: {
+                          return [11];
+                        }
+                        case 2: {
+                          return v__cps_mkmb(v__inl18_k2, [34]);
                         }
                       }
-                      switch (v__inl20_scrut[0]) {
-                        case 24: {
-                          return 0 | 0;
-                        }
-                        case 25: {
-                          return v__inl20_scrut[1];
-                        }
+                    })(__eqInt32(v__inl18_k2, 5 | 0));
+                    switch (__s[0]) {
+                      case 11: {
+                        return 9 | 0;
                       }
-                    })()
-                  ),
-                  [5, [0]]
-                ])(
-                (s => {
-                  switch (s[0]) {
-                    case 13: {
-                      return 3 | 0;
-                    }
-                    case 14: {
-                      {
-                        const __s = __parseInt32(v__inl24_args[1]);
-                        switch (__s[0]) {
-                          case 3: {
-                            return 4 | 0;
-                          }
-                          case 4: {
-                            const v__inl17_m = __s[1];
-                            return v__inl17_m;
-                          }
-                        }
+                      case 12: {
+                        const v__inl23_v = __s[1];
+                        v__inl20_scrut = v__cps_mklist(v__inl23_v, [32]);
+                        break $join19;
                       }
                     }
                   }
-                })(v__inl24_args)
-              ))(v_io[1])
+                  switch (v__inl20_scrut[0]) {
+                    case 24: {
+                      return 0 | 0;
+                    }
+                    case 25: {
+                      return v__inl20_scrut[1];
+                    }
+                  }
+                })()
+              ),
+              [5, [0]]
+            ]
           );
         }
         case 6: {
@@ -391,11 +389,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl28__arg0 =>
-            v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl28__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
               [29, v_io[1], v__inl28__arg0],
               [40]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

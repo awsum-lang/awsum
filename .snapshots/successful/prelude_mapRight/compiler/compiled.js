@@ -26,17 +26,17 @@
 
   const v_ok = [4, 10 | 0];
 
-  const v_res = (v__inl7_mappedOk =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [4, "ok-Err"];
-        }
-        case 4: {
-          return __concat("ok-Right ", String(v__inl7_mappedOk[1]));
-        }
+  const v__inl7_mappedOk = v_ok;
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [4, "ok-Err"];
       }
-    })(v__inl7_mappedOk))(v_ok);
+      case 4: {
+        return __concat("ok-Right ", String(v__inl7_mappedOk[1]));
+      }
+    }
+  })(v__inl7_mappedOk);
 
   const v__apply__df_handleErrorIO_1 = (v__k, v__x) => {
     while (true) {
@@ -113,19 +113,19 @@
     }
   };
 
+  const v__inl10_x = v_res;
   const main = v__cps__df_handleErrorIO_1(
     v__cps__df_andThenIO_5(
-      (v__inl10_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl10_x[1]];
-            }
-            case 4: {
-              return [5, v__inl10_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl10_x[1]];
           }
-        })(v__inl10_x))(v_res),
+          case 4: {
+            return [5, v__inl10_x[1]];
+          }
+        }
+      })(v__inl10_x),
       [27]
     ),
     [25]

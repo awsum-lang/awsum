@@ -43,21 +43,21 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl7_x = [1615808600, "tt"];
           return v__apply__df_andThenIO_4(
             v__k,
             [
               7,
-              (v__inl7_x =>
-                (s => {
-                  switch (s[0]) {
-                    case 1615808600: {
-                      return v__inl7_x[1];
-                    }
-                    case 2711245919: {
-                      return String(v__inl7_x[1]);
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 1615808600: {
+                    return v__inl7_x[1];
                   }
-                })(v__inl7_x))([1615808600, "tt"]),
+                  case 2711245919: {
+                    return String(v__inl7_x[1]);
+                  }
+                }
+              })(v__inl7_x),
               [5, [0]]
             ]
           );
@@ -93,21 +93,21 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl10_x = [2711245919, 2 | 0];
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
-              (v__inl10_x =>
-                (s => {
-                  switch (s[0]) {
-                    case 1615808600: {
-                      return v__inl10_x[1];
-                    }
-                    case 2711245919: {
-                      return String(v__inl10_x[1]);
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 1615808600: {
+                    return v__inl10_x[1];
                   }
-                })(v__inl10_x))([2711245919, 2 | 0]),
+                  case 2711245919: {
+                    return String(v__inl10_x[1]);
+                  }
+                }
+              })(v__inl10_x),
               [5, [0]]
             ]
           );
@@ -123,21 +123,21 @@
     }
   };
 
+  const v__inl15_x = v_asc;
   const main = v__cps__df_andThenIO_0(
     v__cps__df_andThenIO_4(
       [
         7,
-        (v__inl15_x =>
-          (s => {
-            switch (s[0]) {
-              case 1615808600: {
-                return v__inl15_x[1];
-              }
-              case 2711245919: {
-                return String(v__inl15_x[1]);
-              }
+        (s => {
+          switch (s[0]) {
+            case 1615808600: {
+              return v__inl15_x[1];
             }
-          })(v__inl15_x))(v_asc),
+            case 2711245919: {
+              return String(v__inl15_x[1]);
+            }
+          }
+        })(v__inl15_x),
         [5, [0]]
       ],
       [10]

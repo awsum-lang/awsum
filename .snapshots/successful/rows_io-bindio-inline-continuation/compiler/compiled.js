@@ -222,11 +222,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl6__arg0 =>
-            v__cps__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
+          const __t0 = (() => {
+            const v__inl6__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1(
               [28, v_io[1], v__inl6__arg0],
               [35]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

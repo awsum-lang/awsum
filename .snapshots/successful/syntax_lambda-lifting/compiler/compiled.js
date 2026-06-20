@@ -28,52 +28,52 @@
 
   const v_g = [4, 1 | 0];
 
-  const v_res = (v__inl5_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          const v__do_e_3 = s[1];
-          return [3, v__do_e_3];
-        }
-        case 4: {
-          const v_d = s[1];
-          {
-            const __s = __concat(String(v_inc42), " / ");
-            switch (__s[0]) {
-              case 3: {
-                const v__do_e_2 = __s[1];
-                return [3, v__do_e_2];
-              }
-              case 4: {
-                const v_s0 = __s[1];
-                return __concat(v_s0, v_d);
-              }
+  const v__inl5_r = v_g;
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        const v__do_e_3 = s[1];
+        return [3, v__do_e_3];
+      }
+      case 4: {
+        const v_d = s[1];
+        {
+          const __s = __concat(String(v_inc42), " / ");
+          switch (__s[0]) {
+            case 3: {
+              const v__do_e_2 = __s[1];
+              return [3, v__do_e_2];
+            }
+            case 4: {
+              const v_s0 = __s[1];
+              return __concat(v_s0, v_d);
             }
           }
         }
       }
-    })(
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl5_r[1];
-              switch (__s[0]) {
-                case 2252990199: {
-                  return [4, "ErrA"];
-                }
-                case 2269767818: {
-                  return [4, "ErrB"];
-                }
+    }
+  })(
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          {
+            const __s = v__inl5_r[1];
+            switch (__s[0]) {
+              case 2252990199: {
+                return [4, "ErrA"];
+              }
+              case 2269767818: {
+                return [4, "ErrB"];
               }
             }
           }
-          case 4: {
-            return __concat("Ok ", String(v__inl5_r[1]));
-          }
         }
-      })(v__inl5_r)
-    ))(v_g);
+        case 4: {
+          return __concat("Ok ", String(v__inl5_r[1]));
+        }
+      }
+    })(v__inl5_r)
+  );
 
   const v__apply__df_handleErrorIO_1 = (v__k, v__x) => {
     while (true) {
@@ -150,19 +150,19 @@
     }
   };
 
+  const v__inl8_x = v_res;
   const main = v__cps__df_handleErrorIO_1(
     v__cps__df_andThenIO_5(
-      (v__inl8_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl8_x[1]];
-            }
-            case 4: {
-              return [5, v__inl8_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl8_x[1]];
           }
-        })(v__inl8_x))(v_res),
+          case 4: {
+            return [5, v__inl8_x[1]];
+          }
+        }
+      })(v__inl8_x),
       [28]
     ),
     [26]

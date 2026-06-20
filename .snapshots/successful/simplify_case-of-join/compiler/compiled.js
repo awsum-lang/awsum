@@ -174,30 +174,30 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl12_args = v_io[1];
           return v__apply__df__rowmono_0_andThenIO_4(
             v__k,
-            (v__inl12_args =>
-              (s => {
-                switch (s[0]) {
-                  case 13: {
-                    return [7, v_label(3 | 0), [5, [0]]];
-                  }
-                  case 14: {
-                    {
-                      const __s = __parseInt32(v__inl12_args[1]);
-                      switch (__s[0]) {
-                        case 3: {
-                          return [7, "PARSE", [5, [0]]];
-                        }
-                        case 4: {
-                          const v__inl11_n = __s[1];
-                          return [7, v_label(v__inl11_n), [5, [0]]];
-                        }
+            (s => {
+              switch (s[0]) {
+                case 13: {
+                  return [7, v_label(3 | 0), [5, [0]]];
+                }
+                case 14: {
+                  {
+                    const __s = __parseInt32(v__inl12_args[1]);
+                    switch (__s[0]) {
+                      case 3: {
+                        return [7, "PARSE", [5, [0]]];
+                      }
+                      case 4: {
+                        const v__inl11_n = __s[1];
+                        return [7, v_label(v__inl11_n), [5, [0]]];
                       }
                     }
                   }
                 }
-              })(v__inl12_args))(v_io[1])
+              }
+            })(v__inl12_args)
           );
         }
         case 6: {
@@ -296,11 +296,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl16__arg0 =>
-            v__cps__scc__apply1__df__lam_13_5__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl16__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_13_5__df__lam_9_1(
               [33, v_io[1], v__inl16__arg0],
               [40]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

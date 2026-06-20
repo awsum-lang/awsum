@@ -6,19 +6,19 @@
     return [0];
   };
 
+  const v__inl2___input = [12, [1]];
   const v_widened = [
     1454647603,
-    (v__inl2___input =>
-      (s => {
-        switch (s[0]) {
-          case 11: {
-            return v__inl2___input;
-          }
-          case 12: {
-            return [12, [796142685, v__inl2___input[1]]];
-          }
+    (s => {
+      switch (s[0]) {
+        case 11: {
+          return v__inl2___input;
         }
-      })(v__inl2___input))([12, [1]])
+        case 12: {
+          return [12, [796142685, v__inl2___input[1]]];
+        }
+      }
+    })(v__inl2___input)
   ];
 
   const v_runIO = v_io => {
@@ -36,30 +36,30 @@
     }
   };
 
+  const v__inl4_x = v_widened;
   const main = [
     7,
-    (v__inl4_x =>
-      (s => {
-        switch (s[0]) {
-          case 11: {
-            return "N";
-          }
-          case 12: {
-            const v__inl3_inner = s[1];
-            {
-              const __s = v__inl3_inner[1];
-              switch (__s[0]) {
-                case 1: {
-                  return "T";
-                }
-                case 2: {
-                  return "F";
-                }
+    (s => {
+      switch (s[0]) {
+        case 11: {
+          return "N";
+        }
+        case 12: {
+          const v__inl3_inner = s[1];
+          {
+            const __s = v__inl3_inner[1];
+            switch (__s[0]) {
+              case 1: {
+                return "T";
+              }
+              case 2: {
+                return "F";
               }
             }
           }
         }
-      })(v__inl4_x[1]))(v_widened),
+      }
+    })(v__inl4_x[1]),
     [5, [0]]
   ];
 

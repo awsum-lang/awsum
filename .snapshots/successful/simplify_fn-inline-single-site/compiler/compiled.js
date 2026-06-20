@@ -25,38 +25,37 @@
     }
   };
 
+  const v__inl1_n = __lengthUtf8Bytes(String(-2000000000 | 0));
   const main = [
     7,
-    (v__inl1_n =>
-      (s => {
-        switch (s[0]) {
-          case 1: {
-            return "zero";
-          }
-          case 2: {
-            {
-              const __s = __eqUInt32(v__inl1_n, 1 >>> 0);
-              switch (__s[0]) {
-                case 1: {
-                  return "one";
-                }
-                case 2: {
-                  {
-                    const __s = __eqUInt32(v__inl1_n, 2 >>> 0);
-                    switch (__s[0]) {
-                      case 1: {
-                        return "two";
-                      }
-                      case 2: {
-                        {
-                          const __s = __eqUInt32(v__inl1_n, 11 >>> 0);
-                          switch (__s[0]) {
-                            case 1: {
-                              return "eleven";
-                            }
-                            case 2: {
-                              return String(v__inl1_n);
-                            }
+    (s => {
+      switch (s[0]) {
+        case 1: {
+          return "zero";
+        }
+        case 2: {
+          {
+            const __s = __eqUInt32(v__inl1_n, 1 >>> 0);
+            switch (__s[0]) {
+              case 1: {
+                return "one";
+              }
+              case 2: {
+                {
+                  const __s = __eqUInt32(v__inl1_n, 2 >>> 0);
+                  switch (__s[0]) {
+                    case 1: {
+                      return "two";
+                    }
+                    case 2: {
+                      {
+                        const __s = __eqUInt32(v__inl1_n, 11 >>> 0);
+                        switch (__s[0]) {
+                          case 1: {
+                            return "eleven";
+                          }
+                          case 2: {
+                            return String(v__inl1_n);
                           }
                         }
                       }
@@ -67,9 +66,8 @@
             }
           }
         }
-      })(__eqUInt32(v__inl1_n, 0 >>> 0)))(
-      __lengthUtf8Bytes(String(-2000000000 | 0))
-    ),
+      }
+    })(__eqUInt32(v__inl1_n, 0 >>> 0)),
     [5, [0]]
   ];
 

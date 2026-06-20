@@ -128,20 +128,20 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl6_x_u1 = __succInt32(v_io[1]);
           return v__apply__df__rowmono_1_andThenIO_8(
             v__k,
             v__cps__lift_18(
-              (v__inl6_x_u1 =>
-                (s => {
-                  switch (s[0]) {
-                    case 3: {
-                      return [6, v__inl6_x_u1[1]];
-                    }
-                    case 4: {
-                      return [5, v__inl6_x_u1[1]];
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 3: {
+                    return [6, v__inl6_x_u1[1]];
                   }
-                })(v__inl6_x_u1))(__succInt32(v_io[1])),
+                  case 4: {
+                    return [5, v__inl6_x_u1[1]];
+                  }
+                }
+              })(v__inl6_x_u1),
               [19]
             )
           );
@@ -203,20 +203,20 @@
     }
   };
 
+  const v__inl11_x_u1 = [4, 6 | 0];
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df__rowmono_0_andThenIO_4(
       v__cps__df__rowmono_1_andThenIO_8(
-        (v__inl11_x_u1 =>
-          (s => {
-            switch (s[0]) {
-              case 3: {
-                return [6, v__inl11_x_u1[1]];
-              }
-              case 4: {
-                return [5, v__inl11_x_u1[1]];
-              }
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return [6, v__inl11_x_u1[1]];
             }
-          })(v__inl11_x_u1))([4, 6 | 0]),
+            case 4: {
+              return [5, v__inl11_x_u1[1]];
+            }
+          }
+        })(v__inl11_x_u1),
         [25]
       ),
       [23]

@@ -24,6 +24,7 @@
     }
   };
 
+  const v__inl2_x = [24, "hello"];
   const v_res = (s => {
     switch (s[0]) {
       case 3: {
@@ -32,35 +33,34 @@
       }
       case 4: {
         const v_s0 = s[1];
+        const v__inl4_x = [25];
         return __concat(
           v_s0,
-          (v__inl4_x =>
-            (s => {
-              switch (s[0]) {
-                case 24: {
-                  return v__inl4_x[1];
-                }
-                case 25: {
-                  return "not found";
-                }
+          (s => {
+            switch (s[0]) {
+              case 24: {
+                return v__inl4_x[1];
               }
-            })(v__inl4_x))([25])
+              case 25: {
+                return "not found";
+              }
+            }
+          })(v__inl4_x)
         );
       }
     }
   })(
     __concat(
-      (v__inl2_x =>
-        (s => {
-          switch (s[0]) {
-            case 24: {
-              return v__inl2_x[1];
-            }
-            case 25: {
-              return "not found";
-            }
+      (s => {
+        switch (s[0]) {
+          case 24: {
+            return v__inl2_x[1];
           }
-        })(v__inl2_x))([24, "hello"]),
+          case 25: {
+            return "not found";
+          }
+        }
+      })(v__inl2_x),
       ", "
     )
   );
@@ -140,19 +140,19 @@
     }
   };
 
+  const v__inl7_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl7_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl7_x[1]];
-            }
-            case 4: {
-              return [5, v__inl7_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl7_x[1]];
           }
-        })(v__inl7_x))(v_res),
+          case 4: {
+            return [5, v__inl7_x[1]];
+          }
+        }
+      })(v__inl7_x),
       [28]
     ),
     [26]

@@ -194,11 +194,13 @@
           continue;
         }
         case 9: {
-          const __t0 = (v__inl5__arg0 =>
-            v__cps__scc__apply1__df__lam_10_2__df__lam_14_6(
+          const __t0 = (() => {
+            const v__inl5__arg0 = __stdinReadAll();
+            return v__cps__scc__apply1__df__lam_10_2__df__lam_14_6(
               [25, v_io[1], v__inl5__arg0],
               [32]
-            ))(__stdinReadAll());
+            );
+          })();
           v_io = __t0;
           continue;
         }

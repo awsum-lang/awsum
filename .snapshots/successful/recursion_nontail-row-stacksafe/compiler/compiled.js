@@ -330,22 +330,22 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl6_x = v__cps_countRow(1000000 | 0, [17]);
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
               String(
-                (v__inl6_x =>
-                  (s => {
-                    switch (s[0]) {
-                      case 1615808600: {
-                        return 0 | 0;
-                      }
-                      case 2711245919: {
-                        return v__inl6_x[1];
-                      }
+                (s => {
+                  switch (s[0]) {
+                    case 1615808600: {
+                      return 0 | 0;
                     }
-                  })(v__inl6_x))(v__cps_countRow(1000000 | 0, [17]))
+                    case 2711245919: {
+                      return v__inl6_x[1];
+                    }
+                  }
+                })(v__inl6_x)
               ),
               [5, [0]]
             ]

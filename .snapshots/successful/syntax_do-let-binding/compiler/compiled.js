@@ -24,17 +24,17 @@
     }
   };
 
-  const v_res = (v__inl25___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [589989748, v__inl25___input[1]]];
-        }
-        case 4: {
-          return v__inl25___input;
-        }
+  const v__inl25___input = __concat("answer=", String(30 | 0));
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [589989748, v__inl25___input[1]]];
       }
-    })(v__inl25___input))(__concat("answer=", String(30 | 0)));
+      case 4: {
+        return v__inl25___input;
+      }
+    }
+  })(v__inl25___input);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -59,16 +59,16 @@
           return v__apply__df_handleErrorIO_0(v__k, v_io);
         }
         case 6: {
+          const v__inl30_e = v_io[1];
           return v__apply__df_handleErrorIO_0(
             v__k,
-            (v__inl30_e =>
-              (s => {
-                switch (s[0]) {
-                  case 589989748: {
-                    return [7, "STRING_TOO_LONG", [5, [0]]];
-                  }
+            (s => {
+              switch (s[0]) {
+                case 589989748: {
+                  return [7, "STRING_TOO_LONG", [5, [0]]];
                 }
-              })(v__inl30_e))(v_io[1])
+              }
+            })(v__inl30_e)
           );
         }
         case 7: {
@@ -121,19 +121,19 @@
     }
   };
 
+  const v__inl33_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df__rowmono_0_andThenIO_4(
-      (v__inl33_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl33_x[1]];
-            }
-            case 4: {
-              return [5, v__inl33_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl33_x[1]];
           }
-        })(v__inl33_x))(v_res),
+          case 4: {
+            return [5, v__inl33_x[1]];
+          }
+        }
+      })(v__inl33_x),
       [22]
     ),
     [20]

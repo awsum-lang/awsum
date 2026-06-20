@@ -146,19 +146,19 @@
     }
   };
 
+  const v__inl5_x = v_res;
   const main = v__cps__df_handleErrorIO_1(
     v__cps__df_andThenIO_5(
-      (v__inl5_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl5_x[1]];
-            }
-            case 4: {
-              return [5, v__inl5_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl5_x[1]];
           }
-        })(v__inl5_x))(v_res),
+          case 4: {
+            return [5, v__inl5_x[1]];
+          }
+        }
+      })(v__inl5_x),
       [24]
     ),
     [22]

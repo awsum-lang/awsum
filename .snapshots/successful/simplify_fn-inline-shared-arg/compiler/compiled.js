@@ -28,22 +28,20 @@
     }
   };
 
+  const v__inl3_n = __lengthUtf8Bytes(String(-123456 | 0));
   const main = [
     7,
-    (v__inl3_n =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return "OVERFLOW";
-          }
-          case 4: {
-            const v__inl2_d = s[1];
-            return String(v__inl2_d);
-          }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return "OVERFLOW";
         }
-      })(__addUInt32(v__inl3_n, v__inl3_n)))(
-      __lengthUtf8Bytes(String(-123456 | 0))
-    ),
+        case 4: {
+          const v__inl2_d = s[1];
+          return String(v__inl2_d);
+        }
+      }
+    })(__addUInt32(v__inl3_n, v__inl3_n)),
     [5, [0]]
   ];
 

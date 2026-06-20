@@ -146,25 +146,23 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl8__arg_0 = v_run([2], 4 | 0);
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
               String(
-                (v__inl8__arg_0 =>
-                  (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        return 0 | 0;
-                      }
-                      case 4: {
-                        const v__inl10_s = s[1];
-                        return v__inl10_s;
-                      }
+                (s => {
+                  switch (s[0]) {
+                    case 3: {
+                      return 0 | 0;
                     }
-                  })(__addInt32(v__inl8__arg_0[1], v__inl8__arg_0[2])))(
-                  v_run([2], 4 | 0)
-                )
+                    case 4: {
+                      const v__inl10_s = s[1];
+                      return v__inl10_s;
+                    }
+                  }
+                })(__addInt32(v__inl8__arg_0[1], v__inl8__arg_0[2]))
               ),
               [5, [0]]
             ]
@@ -181,24 +179,22 @@
     }
   };
 
+  const v__inl13__arg_0 = v_run([1], 3 | 0);
   const main = v__cps__df_andThenIO_0(
     [
       7,
       String(
-        (v__inl13__arg_0 =>
-          (s => {
-            switch (s[0]) {
-              case 3: {
-                return 0 | 0;
-              }
-              case 4: {
-                const v__inl12_s = s[1];
-                return v__inl12_s;
-              }
+        (s => {
+          switch (s[0]) {
+            case 3: {
+              return 0 | 0;
             }
-          })(__addInt32(v__inl13__arg_0[1], v__inl13__arg_0[2])))(
-          v_run([1], 3 | 0)
-        )
+            case 4: {
+              const v__inl12_s = s[1];
+              return v__inl12_s;
+            }
+          }
+        })(__addInt32(v__inl13__arg_0[1], v__inl13__arg_0[2]))
       ),
       [5, [0]]
     ],

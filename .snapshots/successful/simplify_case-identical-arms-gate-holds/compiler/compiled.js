@@ -99,18 +99,8 @@
           }
         }
       })([15, "ab", "cd"]),
-      (v__inl6_m =>
-        (s => {
-          switch (s[0]) {
-            case 11: {
-              return "none";
-            }
-            case 12: {
-              return String(v__inl6_m[1]);
-            }
-          }
-        })(v__inl6_m))(
-        v_rebuild(
+      (() => {
+        const v__inl6_m = v_rebuild(
           1 >>> 0,
           (s => {
             switch (s[0]) {
@@ -122,8 +112,18 @@
               }
             }
           })(__eqUInt32(__lengthUtf8Bytes("x"), 1 >>> 0))
-        )
-      )
+        );
+        return (s => {
+          switch (s[0]) {
+            case 11: {
+              return "none";
+            }
+            case 12: {
+              return String(v__inl6_m[1]);
+            }
+          }
+        })(v__inl6_m);
+      })()
     )
   );
 

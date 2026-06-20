@@ -25,31 +25,31 @@
     }
   };
 
+  const v__inl5_b = __eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0);
   const main = [
     7,
-    (v__inl5_b =>
-      (() => {
-        let v__inl4_scrut;
-        $join3: {
-          switch (v__inl5_b[0]) {
-            case 1: {
-              v__inl4_scrut = v__inl5_b;
-              break $join3;
-            }
-            case 2: {
-              return "yes";
-            }
-          }
-        }
-        switch (v__inl4_scrut[0]) {
+    (() => {
+      let v__inl4_scrut;
+      $join3: {
+        switch (v__inl5_b[0]) {
           case 1: {
-            return "yes";
+            v__inl4_scrut = v__inl5_b;
+            break $join3;
           }
           case 2: {
-            return "no";
+            return "yes";
           }
         }
-      })())(__eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0)),
+      }
+      switch (v__inl4_scrut[0]) {
+        case 1: {
+          return "yes";
+        }
+        case 2: {
+          return "no";
+        }
+      }
+    })(),
     [5, [0]]
   ];
 

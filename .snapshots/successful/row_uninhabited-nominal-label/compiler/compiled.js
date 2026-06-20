@@ -21,11 +21,8 @@
     }
   };
 
-  const main = [
-    7,
-    (v__inl1_x => String(v__inl1_x[1]))([2711245919, 5 | 0]),
-    [5, [0]]
-  ];
+  const v__inl1_x = [2711245919, 5 | 0];
+  const main = [7, String(v__inl1_x[1]), [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

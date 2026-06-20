@@ -23,26 +23,26 @@
 
   const v_cAt = [3, [365691641, [26]]];
 
+  const v__inl8_r = v_cAt;
   const main = [
     7,
-    (v__inl8_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl8_r[1];
-              switch (__s[0]) {
-                case 365691641: {
-                  return "C";
-                }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          {
+            const __s = v__inl8_r[1];
+            switch (__s[0]) {
+              case 365691641: {
+                return "C";
               }
             }
           }
-          case 4: {
-            return String(v__inl8_r[1]);
-          }
         }
-      })(v__inl8_r))(v_cAt),
+        case 4: {
+          return String(v__inl8_r[1]);
+        }
+      }
+    })(v__inl8_r),
     [5, [0]]
   ];
 

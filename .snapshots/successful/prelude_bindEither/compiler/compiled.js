@@ -26,47 +26,45 @@
 
   const v_opA = [4, 1 | 0];
 
-  const v_res = (v__inl14_chained =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          {
-            const __s = v__inl14_chained[1];
-            switch (__s[0]) {
-              case 2252990199: {
-                return [4, "ErrA"];
-              }
-              case 2269767818: {
-                return [4, "ErrB"];
-              }
-            }
-          }
-        }
-        case 4: {
-          return __concat("Ok ", String(v__inl14_chained[1]));
-        }
+  const v__inl9_x = v_opA;
+  const v__inl14_chained = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, v__inl9_x[1]]];
       }
-    })(v__inl14_chained))(
-    (v__inl9_x =>
-      (s => {
-        switch (s[0]) {
+      case 4: {
+        const v__inl6___input = [4, v__inl9_x[1]];
+        switch (v__inl6___input[0]) {
           case 3: {
-            return [3, [2252990199, v__inl9_x[1]]];
+            return [3, [2269767818, v__inl6___input[1]]];
           }
           case 4: {
-            const v__inl6___input = [4, v__inl9_x[1]];
-            switch (v__inl6___input[0]) {
-              case 3: {
-                return [3, [2269767818, v__inl6___input[1]]];
-              }
-              case 4: {
-                return v__inl6___input;
-              }
+            return v__inl6___input;
+          }
+        }
+      }
+    }
+  })(v__inl9_x);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        {
+          const __s = v__inl14_chained[1];
+          switch (__s[0]) {
+            case 2252990199: {
+              return [4, "ErrA"];
+            }
+            case 2269767818: {
+              return [4, "ErrB"];
             }
           }
         }
-      })(v__inl9_x))(v_opA)
-  );
+      }
+      case 4: {
+        return __concat("Ok ", String(v__inl14_chained[1]));
+      }
+    }
+  })(v__inl14_chained);
 
   const v__apply__df_handleErrorIO_1 = (v__k, v__x) => {
     while (true) {
@@ -143,19 +141,19 @@
     }
   };
 
+  const v__inl17_x = v_res;
   const main = v__cps__df_handleErrorIO_1(
     v__cps__df_andThenIO_5(
-      (v__inl17_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl17_x[1]];
-            }
-            case 4: {
-              return [5, v__inl17_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl17_x[1]];
           }
-        })(v__inl17_x))(v_res),
+          case 4: {
+            return [5, v__inl17_x[1]];
+          }
+        }
+      })(v__inl17_x),
       [22]
     ),
     [20]

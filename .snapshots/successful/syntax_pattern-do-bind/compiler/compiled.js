@@ -132,81 +132,74 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df__rowmono_1_andThenIO_8(
-            v__k,
-            (v__inl41_x =>
-              (s => {
-                switch (s[0]) {
-                  case 3: {
-                    return [6, v__inl41_x[1]];
-                  }
-                  case 4: {
-                    return [5, v__inl41_x[1]];
-                  }
-                }
-              })(v__inl41_x))(
-              (s => {
-                switch (s[0]) {
-                  case 13: {
-                    return [3, [3864168810, [24]]];
-                  }
-                  case 14: {
-                    {
-                      const __s = [4, [16, 1 | 0, 2 | 0, 3 | 0]];
-                      switch (__s[0]) {
-                        case 3: {
-                          const v__inl32__do_e_0 = __s[1];
-                          return [3, [2448244154, v__inl32__do_e_0]];
-                        }
-                        case 4: {
-                          const v__inl33___p0 = __s[1];
-                          switch (v__inl33___p0[0]) {
-                            case 16: {
-                              const v__inl36_c = v__inl33___p0[3];
-                              return [
-                                4,
-                                String(
-                                  (s => {
-                                    switch (s[0]) {
-                                      case 3: {
-                                        return v__inl36_c;
-                                      }
-                                      case 4: {
-                                        const v__inl38_ab = s[1];
-                                        {
-                                          const __s = __addInt32(
-                                            v__inl38_ab,
-                                            v__inl36_c
-                                          );
-                                          switch (__s[0]) {
-                                            case 3: {
-                                              return v__inl36_c;
-                                            }
-                                            case 4: {
-                                              const v__inl40_abc = __s[1];
-                                              return v__inl40_abc;
-                                            }
-                                          }
+          const v__inl41_x = (s => {
+            switch (s[0]) {
+              case 13: {
+                return [3, [3864168810, [24]]];
+              }
+              case 14: {
+                {
+                  const __s = [4, [16, 1 | 0, 2 | 0, 3 | 0]];
+                  switch (__s[0]) {
+                    case 3: {
+                      const v__inl32__do_e_0 = __s[1];
+                      return [3, [2448244154, v__inl32__do_e_0]];
+                    }
+                    case 4: {
+                      const v__inl33___p0 = __s[1];
+                      switch (v__inl33___p0[0]) {
+                        case 16: {
+                          const v__inl36_c = v__inl33___p0[3];
+                          return [
+                            4,
+                            String(
+                              (s => {
+                                switch (s[0]) {
+                                  case 3: {
+                                    return v__inl36_c;
+                                  }
+                                  case 4: {
+                                    const v__inl38_ab = s[1];
+                                    {
+                                      const __s = __addInt32(
+                                        v__inl38_ab,
+                                        v__inl36_c
+                                      );
+                                      switch (__s[0]) {
+                                        case 3: {
+                                          return v__inl36_c;
+                                        }
+                                        case 4: {
+                                          const v__inl40_abc = __s[1];
+                                          return v__inl40_abc;
                                         }
                                       }
                                     }
-                                  })(
-                                    __addInt32(
-                                      v__inl33___p0[1],
-                                      v__inl33___p0[2]
-                                    )
-                                  )
-                                )
-                              ];
-                            }
-                          }
+                                  }
+                                }
+                              })(__addInt32(v__inl33___p0[1], v__inl33___p0[2]))
+                            )
+                          ];
                         }
                       }
                     }
                   }
                 }
-              })(v_io[1])
-            )
+              }
+            }
+          })(v_io[1]);
+          return v__apply__df__rowmono_1_andThenIO_8(
+            v__k,
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  return [6, v__inl41_x[1]];
+                }
+                case 4: {
+                  return [5, v__inl41_x[1]];
+                }
+              }
+            })(v__inl41_x)
           );
         }
         case 6: {
@@ -368,11 +361,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl47__arg0 =>
-            v__cps__scc__apply1__df__lam_14_5__df__lam_17_9__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl47__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_14_5__df__lam_17_9__df__lam_9_1(
               [29, v_io[1], v__inl47__arg0],
               [39]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

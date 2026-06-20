@@ -141,19 +141,19 @@
     }
   };
 
+  const v__inl3_x = v__cps_countWithBox([24, [25]], 1000000 | 0, [26]);
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl3_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl3_x[1]];
-            }
-            case 4: {
-              return [5, v__inl3_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl3_x[1]];
           }
-        })(v__inl3_x))(v__cps_countWithBox([24, [25]], 1000000 | 0, [26])),
+          case 4: {
+            return [5, v__inl3_x[1]];
+          }
+        }
+      })(v__inl3_x),
       [30]
     ),
     [28]

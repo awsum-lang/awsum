@@ -55,8 +55,9 @@
                   case 4: {
                     const v_s0 = __s[1];
                     v__k = v__pk_21;
-                    v__x = (v__inl3___input =>
-                      (s => {
+                    v__x = (() => {
+                      const v__inl3___input = __concat(v_s0, v_s);
+                      return (s => {
                         switch (s[0]) {
                           case 3: {
                             return [3, [589989748, v__inl3___input[1]]];
@@ -65,7 +66,8 @@
                             return v__inl3___input;
                           }
                         }
-                      })(v__inl3___input))(__concat(v_s0, v_s));
+                      })(v__inl3___input);
+                    })();
                     continue;
                   }
                 }
@@ -107,27 +109,27 @@
     }
   };
 
-  const v_res = (v__inl8_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          {
-            const __s = v__inl8_r[1];
-            switch (__s[0]) {
-              case 589989748: {
-                return [4, "STRING_TOO_LONG"];
-              }
-              case 3768445577: {
-                return __concat("left: ", "UnderflowError");
-              }
+  const v__inl8_r = v__cps_countDown(255 & 0xFF, [20]);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        {
+          const __s = v__inl8_r[1];
+          switch (__s[0]) {
+            case 589989748: {
+              return [4, "STRING_TOO_LONG"];
+            }
+            case 3768445577: {
+              return __concat("left: ", "UnderflowError");
             }
           }
         }
-        case 4: {
-          return __concat("right: ", v__inl8_r[1]);
-        }
       }
-    })(v__inl8_r))(v__cps_countDown(255 & 0xFF, [20]));
+      case 4: {
+        return __concat("right: ", v__inl8_r[1]);
+      }
+    }
+  })(v__inl8_r);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -204,19 +206,19 @@
     }
   };
 
+  const v__inl11_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl11_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl11_x[1]];
-            }
-            case 4: {
-              return [5, v__inl11_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl11_x[1]];
           }
-        })(v__inl11_x))(v_res),
+          case 4: {
+            return [5, v__inl11_x[1]];
+          }
+        }
+      })(v__inl11_x),
       [24]
     ),
     [22]

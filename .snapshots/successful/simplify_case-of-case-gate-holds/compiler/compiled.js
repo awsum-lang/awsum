@@ -28,52 +28,52 @@
     }
   };
 
+  const v__inl5_b = __eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0);
   const main = [
     7,
-    (v__inl5_b =>
-      (s => {
-        switch (s[0]) {
-          case 1: {
-            {
-              const __s = __concat("a", "b");
-              switch (__s[0]) {
-                case 3: {
-                  return "overflow";
-                }
-                case 4: {
-                  const v__inl2_ab = __s[1];
-                  {
-                    const __s = __concat(v__inl2_ab, "c");
-                    switch (__s[0]) {
-                      case 3: {
-                        return "overflow2";
-                      }
-                      case 4: {
-                        const v__inl4_abc = __s[1];
-                        return v__inl4_abc;
-                      }
+    (s => {
+      switch (s[0]) {
+        case 1: {
+          {
+            const __s = __concat("a", "b");
+            switch (__s[0]) {
+              case 3: {
+                return "overflow";
+              }
+              case 4: {
+                const v__inl2_ab = __s[1];
+                {
+                  const __s = __concat(v__inl2_ab, "c");
+                  switch (__s[0]) {
+                    case 3: {
+                      return "overflow2";
+                    }
+                    case 4: {
+                      const v__inl4_abc = __s[1];
+                      return v__inl4_abc;
                     }
                   }
                 }
               }
             }
           }
+        }
+        case 2: {
+          return "no";
+        }
+      }
+    })(
+      (s => {
+        switch (s[0]) {
+          case 1: {
+            return v__inl5_b;
+          }
           case 2: {
-            return "no";
+            return [1];
           }
         }
-      })(
-        (s => {
-          switch (s[0]) {
-            case 1: {
-              return v__inl5_b;
-            }
-            case 2: {
-              return [1];
-            }
-          }
-        })(v__inl5_b)
-      ))(__eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0)),
+      })(v__inl5_b)
+    ),
     [5, [0]]
   ];
 

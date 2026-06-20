@@ -2,10 +2,10 @@ benchmark: gc_pressure_clone
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 8.32 (8.20–8.55)         16.2 (16.2–16.2)
-JVM      ok                 1.57 (1.51–1.60)    1101.7 (868.8–1142.2)
-CLR      ok                 4.53 (4.46–4.56)      720.5 (719.5–721.3)
-WASM     ok                 9.19 (9.15–9.27)         19.8 (19.8–19.9)
-JS       ok                 2.36 (2.35–2.39)      233.7 (231.1–234.2)
+LLVM     ok                 8.02 (8.00–8.40)         16.2 (16.2–16.2)
+JVM      ok                 1.57 (1.55–1.59)     876.8 (876.5–1109.9)
+CLR      ok                 4.45 (4.42–4.51)      720.4 (719.7–720.5)
+WASM     ok                 8.94 (8.85–9.01)         19.8 (19.7–27.7)
+JS       ok                 2.36 (2.33–2.43)      231.8 (230.6–233.9)
 
 stdout: 100000

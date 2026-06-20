@@ -28,50 +28,48 @@
 
   const v_bad = [3, [24]];
 
-  const v_res = (v__inl15_renamedGood =>
-    (v__inl11_x =>
-      (s => {
-        switch (s[0]) {
+  const v__inl12_x = v_good;
+  const v__inl15_renamedGood = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [25]];
+      }
+      case 4: {
+        return v__inl12_x;
+      }
+    }
+  })(v__inl12_x);
+  const v__inl11_x = v_bad;
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        switch (v__inl15_renamedGood[0]) {
           case 3: {
-            switch (v__inl15_renamedGood[0]) {
-              case 3: {
-                return [4, "bad-Left bad-Left"];
-              }
-              case 4: {
-                return __concat(
-                  "bad-Left good-Right ",
-                  String(v__inl15_renamedGood[1])
-                );
-              }
-            }
+            return [4, "bad-Left bad-Left"];
           }
           case 4: {
-            return [4, "WAT"];
+            return __concat(
+              "bad-Left good-Right ",
+              String(v__inl15_renamedGood[1])
+            );
           }
         }
-      })(
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [3, [25]];
-            }
-            case 4: {
-              return v__inl11_x;
-            }
-          }
-        })(v__inl11_x)
-      ))(v_bad))(
-    (v__inl12_x =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return [3, [25]];
-          }
-          case 4: {
-            return v__inl12_x;
-          }
+      }
+      case 4: {
+        return [4, "WAT"];
+      }
+    }
+  })(
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return [3, [25]];
         }
-      })(v__inl12_x))(v_good)
+        case 4: {
+          return v__inl11_x;
+        }
+      }
+    })(v__inl11_x)
   );
 
   const v__apply__df_handleErrorIO_1 = (v__k, v__x) => {
@@ -149,19 +147,19 @@
     }
   };
 
+  const v__inl22_x = v_res;
   const main = v__cps__df_handleErrorIO_1(
     v__cps__df_andThenIO_5(
-      (v__inl22_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl22_x[1]];
-            }
-            case 4: {
-              return [5, v__inl22_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl22_x[1]];
           }
-        })(v__inl22_x))(v_res),
+          case 4: {
+            return [5, v__inl22_x[1]];
+          }
+        }
+      })(v__inl22_x),
       [28]
     ),
     [26]

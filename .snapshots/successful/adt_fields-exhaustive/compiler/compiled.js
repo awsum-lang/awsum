@@ -41,21 +41,21 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl2_p = [15, [25], [24]];
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
-              (v__inl2_p =>
-                (s => {
-                  switch (s[0]) {
-                    case 24: {
-                      return "A?";
-                    }
-                    case 25: {
-                      return "B?";
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 24: {
+                    return "A?";
                   }
-                })(v__inl2_p[1]))([15, [25], [24]]),
+                  case 25: {
+                    return "B?";
+                  }
+                }
+              })(v__inl2_p[1]),
               [5, [0]]
             ]
           );
@@ -71,42 +71,42 @@
     }
   };
 
+  const v__inl5_p = [15, [24], [25]];
   const main = v__cps__df_andThenIO_0(
     [
       7,
-      (v__inl5_p =>
-        (s => {
-          switch (s[0]) {
-            case 15: {
-              const v__inl4___p1 = s[2];
-              {
-                const __s = v__inl5_p[1];
-                switch (__s[0]) {
-                  case 24: {
-                    switch (v__inl4___p1[0]) {
-                      case 24: {
-                        return "AA";
-                      }
-                      case 25: {
-                        return "AB";
-                      }
+      (s => {
+        switch (s[0]) {
+          case 15: {
+            const v__inl4___p1 = s[2];
+            {
+              const __s = v__inl5_p[1];
+              switch (__s[0]) {
+                case 24: {
+                  switch (v__inl4___p1[0]) {
+                    case 24: {
+                      return "AA";
+                    }
+                    case 25: {
+                      return "AB";
                     }
                   }
-                  case 25: {
-                    switch (v__inl4___p1[0]) {
-                      case 24: {
-                        return "BA";
-                      }
-                      case 25: {
-                        return "BB";
-                      }
+                }
+                case 25: {
+                  switch (v__inl4___p1[0]) {
+                    case 24: {
+                      return "BA";
+                    }
+                    case 25: {
+                      return "BB";
                     }
                   }
                 }
               }
             }
           }
-        })(v__inl5_p))([15, [24], [25]]),
+        }
+      })(v__inl5_p),
       [5, [0]]
     ],
     [26]

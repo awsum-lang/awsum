@@ -96,21 +96,21 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl4_st2 = v_rev([26, v_make(3 | 0, [24]), [24]]);
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
-              (v__inl4_st2 =>
-                (s => {
-                  switch (s[0]) {
-                    case 24: {
-                      return "empty";
-                    }
-                    case 25: {
-                      return v__inl4_st2[1];
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 24: {
+                    return "empty";
                   }
-                })(v__inl4_st2))(v_rev([26, v_make(3 | 0, [24]), [24]])),
+                  case 25: {
+                    return v__inl4_st2[1];
+                  }
+                }
+              })(v__inl4_st2),
               [5, [0]]
             ]
           );
@@ -126,20 +126,20 @@
     }
   };
 
+  const v__inl9_st2 = v_make(3 | 0, [24]);
   const main = v__cps__df_andThenIO_0(
     [
       7,
-      (v__inl9_st2 =>
-        (s => {
-          switch (s[0]) {
-            case 24: {
-              return "empty";
-            }
-            case 25: {
-              return v__inl9_st2[1];
-            }
+      (s => {
+        switch (s[0]) {
+          case 24: {
+            return "empty";
           }
-        })(v__inl9_st2))(v_make(3 | 0, [24])),
+          case 25: {
+            return v__inl9_st2[1];
+          }
+        }
+      })(v__inl9_st2),
       [5, [0]]
     ],
     [27]

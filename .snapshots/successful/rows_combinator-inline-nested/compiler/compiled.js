@@ -23,38 +23,38 @@
 
   const v_oc = [3, [26]];
 
-  const v_cNested = (v__inl17_x =>
+  const v__inl17_x = v_oc;
+  const v_cNested = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [365691641, v__inl17_x[1]]];
+      }
+      case 4: {
+        return [4, v__inl17_x[1]];
+      }
+    }
+  })(v__inl17_x);
+
+  const v__inl25_r = v_cNested;
+  const main = [
+    7,
     (s => {
       switch (s[0]) {
         case 3: {
-          return [3, [365691641, v__inl17_x[1]]];
-        }
-        case 4: {
-          return [4, v__inl17_x[1]];
-        }
-      }
-    })(v__inl17_x))(v_oc);
-
-  const main = [
-    7,
-    (v__inl25_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl25_r[1];
-              switch (__s[0]) {
-                case 365691641: {
-                  return "C";
-                }
+          {
+            const __s = v__inl25_r[1];
+            switch (__s[0]) {
+              case 365691641: {
+                return "C";
               }
             }
           }
-          case 4: {
-            return String(v__inl25_r[1]);
-          }
         }
-      })(v__inl25_r))(v_cNested),
+        case 4: {
+          return String(v__inl25_r[1]);
+        }
+      }
+    })(v__inl25_r),
     [5, [0]]
   ];
 

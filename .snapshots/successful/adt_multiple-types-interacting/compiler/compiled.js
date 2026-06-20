@@ -24,6 +24,7 @@
     }
   };
 
+  const v__inl2_bc = [27, [24]];
   const v_res = (s => {
     switch (s[0]) {
       case 3: {
@@ -32,36 +33,35 @@
       }
       case 4: {
         const v_s0 = s[1];
+        const v__inl4_r = [28, [27, [25]]];
+        const v__inl3_bc = v__inl4_r[1];
         return __concat(
           v_s0,
-          (v__inl4_r =>
-            (v__inl3_bc =>
-              (s => {
-                switch (s[0]) {
-                  case 24: {
-                    return "red";
-                  }
-                  case 25: {
-                    return "green";
-                  }
-                }
-              })(v__inl3_bc[1]))(v__inl4_r[1]))([28, [27, [25]]])
+          (s => {
+            switch (s[0]) {
+              case 24: {
+                return "red";
+              }
+              case 25: {
+                return "green";
+              }
+            }
+          })(v__inl3_bc[1])
         );
       }
     }
   })(
     __concat(
-      (v__inl2_bc =>
-        (s => {
-          switch (s[0]) {
-            case 24: {
-              return "red";
-            }
-            case 25: {
-              return "green";
-            }
+      (s => {
+        switch (s[0]) {
+          case 24: {
+            return "red";
           }
-        })(v__inl2_bc[1]))([27, [24]]),
+          case 25: {
+            return "green";
+          }
+        }
+      })(v__inl2_bc[1]),
       " "
     )
   );
@@ -141,19 +141,19 @@
     }
   };
 
+  const v__inl7_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl7_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl7_x[1]];
-            }
-            case 4: {
-              return [5, v__inl7_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl7_x[1]];
           }
-        })(v__inl7_x))(v_res),
+          case 4: {
+            return [5, v__inl7_x[1]];
+          }
+        }
+      })(v__inl7_x),
       [31]
     ),
     [29]

@@ -21,17 +21,17 @@
     }
   };
 
+  const v__inl2_b = [24, [24, [24, "hello"]]];
   const main = [
     7,
-    (v__inl2_b =>
-      (s => {
-        switch (s[0]) {
-          case 24: {
-            const v__inl1___p0_p0 = s[1];
-            return v__inl1___p0_p0[1];
-          }
+    (s => {
+      switch (s[0]) {
+        case 24: {
+          const v__inl1___p0_p0 = s[1];
+          return v__inl1___p0_p0[1];
         }
-      })(v__inl2_b[1]))([24, [24, [24, "hello"]]]),
+      }
+    })(v__inl2_b[1]),
     [5, [0]]
   ];
 

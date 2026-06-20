@@ -21,43 +21,41 @@
     }
   };
 
-  const v_res = (v__inl4_x =>
+  const v__inl2___input = [12, [1]];
+  const v__inl4_x = [
+    1454647603,
     (s => {
       switch (s[0]) {
         case 11: {
-          return [4, "Nothing"];
+          return v__inl2___input;
         }
         case 12: {
-          const v__inl3___pa0 = s[1];
-          {
-            const __s = v__inl3___pa0[1];
-            switch (__s[0]) {
-              case 1: {
-                return [4, "Just True"];
-              }
-              case 2: {
-                return [4, "Just False"];
-              }
+          return [12, [796142685, v__inl2___input[1]]];
+        }
+      }
+    })(v__inl2___input)
+  ];
+  const v_res = (s => {
+    switch (s[0]) {
+      case 11: {
+        return [4, "Nothing"];
+      }
+      case 12: {
+        const v__inl3___pa0 = s[1];
+        {
+          const __s = v__inl3___pa0[1];
+          switch (__s[0]) {
+            case 1: {
+              return [4, "Just True"];
+            }
+            case 2: {
+              return [4, "Just False"];
             }
           }
         }
       }
-    })(v__inl4_x[1]))(
-    [
-      1454647603,
-      (v__inl2___input =>
-        (s => {
-          switch (s[0]) {
-            case 11: {
-              return v__inl2___input;
-            }
-            case 12: {
-              return [12, [796142685, v__inl2___input[1]]];
-            }
-          }
-        })(v__inl2___input))([12, [1]])
-    ]
-  );
+    }
+  })(v__inl4_x[1]);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -134,19 +132,19 @@
     }
   };
 
+  const v__inl7_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl7_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl7_x[1]];
-            }
-            case 4: {
-              return [5, v__inl7_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl7_x[1]];
           }
-        })(v__inl7_x))(v_res),
+          case 4: {
+            return [5, v__inl7_x[1]];
+          }
+        }
+      })(v__inl7_x),
       [22]
     ),
     [20]

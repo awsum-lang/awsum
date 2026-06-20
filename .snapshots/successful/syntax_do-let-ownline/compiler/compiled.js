@@ -23,17 +23,17 @@
 
   const v_opB = [4, 3 | 0];
 
-  const v_compute = (v__inl3_temp =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl3_temp;
-        }
-        case 4: {
-          return [4, v__inl3_temp[1]];
-        }
+  const v__inl3_temp = v_opB;
+  const v_compute = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl3_temp;
       }
-    })(v__inl3_temp))(v_opB);
+      case 4: {
+        return [4, v__inl3_temp[1]];
+      }
+    }
+  })(v__inl3_temp);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -107,19 +107,19 @@
     }
   };
 
+  const v__inl6_x = v_compute;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl6_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl6_x[1]];
-            }
-            case 4: {
-              return [5, v__inl6_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl6_x[1]];
           }
-        })(v__inl6_x))(v_compute),
+          case 4: {
+            return [5, v__inl6_x[1]];
+          }
+        }
+      })(v__inl6_x),
       [27]
     ),
     [25]

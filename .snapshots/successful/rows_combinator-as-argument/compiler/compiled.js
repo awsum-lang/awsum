@@ -23,26 +23,26 @@
 
   const v_res = [3, [348914022, [25]]];
 
+  const v__inl7_r = v_res;
   const main = [
     7,
-    (v__inl7_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl7_r[1];
-              switch (__s[0]) {
-                case 348914022: {
-                  return "B";
-                }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          {
+            const __s = v__inl7_r[1];
+            switch (__s[0]) {
+              case 348914022: {
+                return "B";
               }
             }
           }
-          case 4: {
-            return String(v__inl7_r[1]);
-          }
         }
-      })(v__inl7_r))(v_res),
+        case 4: {
+          return String(v__inl7_r[1]);
+        }
+      }
+    })(v__inl7_r),
     [5, [0]]
   ];
 

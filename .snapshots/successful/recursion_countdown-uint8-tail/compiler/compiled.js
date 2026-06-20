@@ -90,27 +90,27 @@
     }
   };
 
-  const v_res = (v__inl8_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          {
-            const __s = v__inl8_r[1];
-            switch (__s[0]) {
-              case 589989748: {
-                return [4, "STRING_TOO_LONG"];
-              }
-              case 3768445577: {
-                return __concat("left: ", "UnderflowError");
-              }
+  const v__inl8_r = v_countDown(255 & 0xFF, "");
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        {
+          const __s = v__inl8_r[1];
+          switch (__s[0]) {
+            case 589989748: {
+              return [4, "STRING_TOO_LONG"];
+            }
+            case 3768445577: {
+              return __concat("left: ", "UnderflowError");
             }
           }
         }
-        case 4: {
-          return __concat("right: ", v__inl8_r[1]);
-        }
       }
-    })(v__inl8_r))(v_countDown(255 & 0xFF, ""));
+      case 4: {
+        return __concat("right: ", v__inl8_r[1]);
+      }
+    }
+  })(v__inl8_r);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -187,19 +187,19 @@
     }
   };
 
+  const v__inl11_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl11_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl11_x[1]];
-            }
-            case 4: {
-              return [5, v__inl11_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl11_x[1]];
           }
-        })(v__inl11_x))(v_res),
+          case 4: {
+            return [5, v__inl11_x[1]];
+          }
+        }
+      })(v__inl11_x),
       [22]
     ),
     [20]
