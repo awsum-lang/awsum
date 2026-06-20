@@ -45,28 +45,28 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl21_x = v_c2;
           return v__apply__df_andThenIO_2(
             v__k,
             [
               7,
-              (v__inl21_x =>
-                (s => {
-                  switch (s[0]) {
-                    case 3: {
-                      {
-                        const __s = v__inl21_x[1];
-                        switch (__s[0]) {
-                          case 332136403: {
-                            return "A";
-                          }
+              (s => {
+                switch (s[0]) {
+                  case 3: {
+                    {
+                      const __s = v__inl21_x[1];
+                      switch (__s[0]) {
+                        case 332136403: {
+                          return "A";
                         }
                       }
                     }
-                    case 4: {
-                      return String(v__inl21_x[1]);
-                    }
                   }
-                })(v__inl21_x))(v_c2),
+                  case 4: {
+                    return String(v__inl21_x[1]);
+                  }
+                }
+              })(v__inl21_x),
               [5, [0]]
             ]
           );
@@ -82,27 +82,27 @@
     }
   };
 
+  const v__inl30_x = v_c1;
   const main = v__cps__df_andThenIO_2(
     [
       7,
-      (v__inl30_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              {
-                const __s = v__inl30_x[1];
-                switch (__s[0]) {
-                  case 332136403: {
-                    return "A";
-                  }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            {
+              const __s = v__inl30_x[1];
+              switch (__s[0]) {
+                case 332136403: {
+                  return "A";
                 }
               }
             }
-            case 4: {
-              return String(v__inl30_x[1]);
-            }
           }
-        })(v__inl30_x))(v_c1),
+          case 4: {
+            return String(v__inl30_x[1]);
+          }
+        }
+      })(v__inl30_x),
       [5, [0]]
     ],
     [25]

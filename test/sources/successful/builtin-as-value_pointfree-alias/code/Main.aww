@@ -1,0 +1,26 @@
+{- Point-free top-level aliases of compiler built-ins (`f = BuiltIn.foo`,
+   where the alias name differs from the built-in name). A one-argument
+   (`renderInt`) and a two-argument (`eqInts`) alias each lower like the
+   hand-written `f x = BuiltIn.foo x`. Prints `42/True`. -}
+
+import IO.Stdout
+
+renderInt : Int32 -> String
+renderInt = BuiltIn.showInt32
+
+eqInts : Int32 -> Int32 -> Bool
+eqInts = BuiltIn.eqInt32
+
+result : Either StringTooLong String
+result = do
+  shown <- renderInt 42 ++ "/"
+  shown ++ showBool (eqInts 7 7)
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+
+main : IO Never Unit
+main = eitherToIO result
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError

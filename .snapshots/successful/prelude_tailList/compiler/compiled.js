@@ -80,109 +80,105 @@
     }
   };
 
-  const v_res = (v__inl66_xs =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          const v__inl70__do_e_8 = s[1];
-          return [3, v__inl70__do_e_8];
-        }
-        case 4: {
-          const v__inl71_a = s[1];
-          const v__inl72_xs = [14, "a", [13]];
-          {
-            const __s = (s => {
-              switch (s[0]) {
-                case 13: {
-                  return [4, "Nothing"];
-                }
-                case 14: {
-                  {
-                    const __s = v__cps_showList(v__inl72_xs[2], [20]);
-                    switch (__s[0]) {
-                      case 3: {
-                        const v__inl75__do_e_2 = __s[1];
-                        return [3, v__inl75__do_e_2];
-                      }
-                      case 4: {
-                        const v__inl76_rendered = __s[1];
-                        return __concat("Just ", v__inl76_rendered);
-                      }
+  const v__inl66_xs = [13];
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        const v__inl70__do_e_8 = s[1];
+        return [3, v__inl70__do_e_8];
+      }
+      case 4: {
+        const v__inl71_a = s[1];
+        const v__inl72_xs = [14, "a", [13]];
+        {
+          const __s = (s => {
+            switch (s[0]) {
+              case 13: {
+                return [4, "Nothing"];
+              }
+              case 14: {
+                {
+                  const __s = v__cps_showList(v__inl72_xs[2], [20]);
+                  switch (__s[0]) {
+                    case 3: {
+                      const v__inl75__do_e_2 = __s[1];
+                      return [3, v__inl75__do_e_2];
+                    }
+                    case 4: {
+                      const v__inl76_rendered = __s[1];
+                      return __concat("Just ", v__inl76_rendered);
                     }
                   }
                 }
               }
-            })(v__inl72_xs);
-            switch (__s[0]) {
-              case 3: {
-                const v__inl77__do_e_7 = __s[1];
-                return [3, v__inl77__do_e_7];
-              }
-              case 4: {
-                const v__inl78_b = __s[1];
-                const v__inl79_xs = [14, "a", [14, "b", [14, "c", [13]]]];
-                {
-                  const __s = (s => {
-                    switch (s[0]) {
-                      case 13: {
-                        return [4, "Nothing"];
-                      }
-                      case 14: {
-                        {
-                          const __s = v__cps_showList(v__inl79_xs[2], [20]);
-                          switch (__s[0]) {
-                            case 3: {
-                              const v__inl82__do_e_2 = __s[1];
-                              return [3, v__inl82__do_e_2];
-                            }
-                            case 4: {
-                              const v__inl83_rendered = __s[1];
-                              return __concat("Just ", v__inl83_rendered);
-                            }
+            }
+          })(v__inl72_xs);
+          switch (__s[0]) {
+            case 3: {
+              const v__inl77__do_e_7 = __s[1];
+              return [3, v__inl77__do_e_7];
+            }
+            case 4: {
+              const v__inl78_b = __s[1];
+              const v__inl79_xs = [14, "a", [14, "b", [14, "c", [13]]]];
+              {
+                const __s = (s => {
+                  switch (s[0]) {
+                    case 13: {
+                      return [4, "Nothing"];
+                    }
+                    case 14: {
+                      {
+                        const __s = v__cps_showList(v__inl79_xs[2], [20]);
+                        switch (__s[0]) {
+                          case 3: {
+                            const v__inl82__do_e_2 = __s[1];
+                            return [3, v__inl82__do_e_2];
+                          }
+                          case 4: {
+                            const v__inl83_rendered = __s[1];
+                            return __concat("Just ", v__inl83_rendered);
                           }
                         }
                       }
                     }
-                  })(v__inl79_xs);
-                  switch (__s[0]) {
-                    case 3: {
-                      const v__inl84__do_e_6 = __s[1];
-                      return [3, v__inl84__do_e_6];
-                    }
-                    case 4: {
-                      const v__inl85_c = __s[1];
-                      {
-                        const __s = __concat(v__inl71_a, "|");
-                        switch (__s[0]) {
-                          case 3: {
-                            const v__inl86__do_e_5 = __s[1];
-                            return [3, v__inl86__do_e_5];
-                          }
-                          case 4: {
-                            const v__inl87_s0 = __s[1];
-                            {
-                              const __s = __concat(v__inl87_s0, v__inl78_b);
-                              switch (__s[0]) {
-                                case 3: {
-                                  const v__inl88__do_e_4 = __s[1];
-                                  return [3, v__inl88__do_e_4];
-                                }
-                                case 4: {
-                                  const v__inl89_s1 = __s[1];
-                                  {
-                                    const __s = __concat(v__inl89_s1, "|");
-                                    switch (__s[0]) {
-                                      case 3: {
-                                        const v__inl90__do_e_3 = __s[1];
-                                        return [3, v__inl90__do_e_3];
-                                      }
-                                      case 4: {
-                                        const v__inl91_s2 = __s[1];
-                                        return __concat(
-                                          v__inl91_s2,
-                                          v__inl85_c
-                                        );
-                                      }
+                  }
+                })(v__inl79_xs);
+                switch (__s[0]) {
+                  case 3: {
+                    const v__inl84__do_e_6 = __s[1];
+                    return [3, v__inl84__do_e_6];
+                  }
+                  case 4: {
+                    const v__inl85_c = __s[1];
+                    {
+                      const __s = __concat(v__inl71_a, "|");
+                      switch (__s[0]) {
+                        case 3: {
+                          const v__inl86__do_e_5 = __s[1];
+                          return [3, v__inl86__do_e_5];
+                        }
+                        case 4: {
+                          const v__inl87_s0 = __s[1];
+                          {
+                            const __s = __concat(v__inl87_s0, v__inl78_b);
+                            switch (__s[0]) {
+                              case 3: {
+                                const v__inl88__do_e_4 = __s[1];
+                                return [3, v__inl88__do_e_4];
+                              }
+                              case 4: {
+                                const v__inl89_s1 = __s[1];
+                                {
+                                  const __s = __concat(v__inl89_s1, "|");
+                                  switch (__s[0]) {
+                                    case 3: {
+                                      const v__inl90__do_e_3 = __s[1];
+                                      return [3, v__inl90__do_e_3];
+                                    }
+                                    case 4: {
+                                      const v__inl91_s2 = __s[1];
+                                      return __concat(v__inl91_s2, v__inl85_c);
                                     }
                                   }
                                 }
@@ -199,30 +195,31 @@
           }
         }
       }
-    })(
-      (s => {
-        switch (s[0]) {
-          case 13: {
-            return [4, "Nothing"];
-          }
-          case 14: {
-            {
-              const __s = v__cps_showList(v__inl66_xs[2], [20]);
-              switch (__s[0]) {
-                case 3: {
-                  const v__inl92__do_e_2 = __s[1];
-                  return [3, v__inl92__do_e_2];
-                }
-                case 4: {
-                  const v__inl93_rendered = __s[1];
-                  return __concat("Just ", v__inl93_rendered);
-                }
+    }
+  })(
+    (s => {
+      switch (s[0]) {
+        case 13: {
+          return [4, "Nothing"];
+        }
+        case 14: {
+          {
+            const __s = v__cps_showList(v__inl66_xs[2], [20]);
+            switch (__s[0]) {
+              case 3: {
+                const v__inl92__do_e_2 = __s[1];
+                return [3, v__inl92__do_e_2];
+              }
+              case 4: {
+                const v__inl93_rendered = __s[1];
+                return __concat("Just ", v__inl93_rendered);
               }
             }
           }
         }
-      })(v__inl66_xs)
-    ))([13]);
+      }
+    })(v__inl66_xs)
+  );
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -299,19 +296,19 @@
     }
   };
 
+  const v__inl96_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl96_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl96_x[1]];
-            }
-            case 4: {
-              return [5, v__inl96_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl96_x[1]];
           }
-        })(v__inl96_x))(v_res),
+          case 4: {
+            return [5, v__inl96_x[1]];
+          }
+        }
+      })(v__inl96_x),
       [24]
     ),
     [22]

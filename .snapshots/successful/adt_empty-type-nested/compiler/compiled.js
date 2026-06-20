@@ -21,7 +21,8 @@
     }
   };
 
-  const main = [7, (v__inl1_r => v__inl1_r[1])([25, "hello"]), [5, [0]]];
+  const v__inl1_r = [25, "hello"];
+  const main = [7, v__inl1_r[1], [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

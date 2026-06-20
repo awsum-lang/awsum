@@ -1,0 +1,17 @@
+{- A nominal alternative of a structural sum can carry an uninhabited
+   constructor: `Maybe (Box Never)`'s `Just` holds `Box Never`, which has no
+   value, so matching only `Nothing` covers the `Maybe (Box Never)`
+   alternative — mirroring how a nominal `case` skips an uninhabited
+   constructor. Prints "5". -}
+
+import IO.Stdout
+
+type Box a = MkBox a
+
+classify : (Maybe (Box Never) | Int32) -> String
+classify x = case x of
+  Nothing -> "no"
+  (i : Int32) -> showInt32 i
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (5 : Int32))

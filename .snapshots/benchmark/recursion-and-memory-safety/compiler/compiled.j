@@ -76,7 +76,7 @@ L_pred_ok:
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -105,8 +105,8 @@ L_eq_i32_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -234,7 +234,7 @@ L_join2:
 
 
 .method static v_runDemo()Ljava/lang/Object;
-  .limit stack 8
+  .limit stack 7
   .limit locals 8
   ldc 5000000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
@@ -646,7 +646,7 @@ L_tarm18:
 
 
 .method static v_mirrorN(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 7
 L_tco19:
   aload_0
@@ -745,8 +745,8 @@ L_tarm21:
 
 
 .method static v__scc_deepestLeftA_deepestLeftB_deepestLeftC(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
-  .limit locals 8
+  .limit stack 4
+  .limit locals 5
 L_tco22:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -938,7 +938,7 @@ L_tarm27:
 
 
 .method static v__scc__apply_mirror__cps_mirror(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 8
+  .limit stack 7
   .limit locals 8
 L_tco28:
   aload_0

@@ -25,32 +25,32 @@
     }
   };
 
+  const v__inl5_s = "abc";
   const main = [
     7,
-    (v__inl5_s =>
-      (() => {
-        let v__inl4_scrut;
-        $join3: {
-          const __s = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 0 >>> 0);
-          switch (__s[0]) {
-            case 1: {
-              return "other";
-            }
-            case 2: {
-              v__inl4_scrut = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 3 >>> 0);
-              break $join3;
-            }
-          }
-        }
-        switch (v__inl4_scrut[0]) {
+    (() => {
+      let v__inl4_scrut;
+      $join3: {
+        const __s = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 0 >>> 0);
+        switch (__s[0]) {
           case 1: {
-            return "len3";
-          }
-          case 2: {
             return "other";
           }
+          case 2: {
+            v__inl4_scrut = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 3 >>> 0);
+            break $join3;
+          }
         }
-      })())("abc"),
+      }
+      switch (v__inl4_scrut[0]) {
+        case 1: {
+          return "len3";
+        }
+        case 2: {
+          return "other";
+        }
+      }
+    })(),
     [5, [0]]
   ];
 

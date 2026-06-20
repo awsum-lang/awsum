@@ -28,8 +28,8 @@
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -231,7 +231,7 @@ L_tarm1:
 
 
 .method static v_nevOk()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedNeverIO()Ljava/lang/Object;
   iconst_1
@@ -247,7 +247,7 @@ L_tarm1:
 
 
 .method static v_nevFail()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedNeverIO()Ljava/lang/Object;
   iconst_1
@@ -263,7 +263,7 @@ L_tarm1:
 
 
 .method static v_nevRightOk()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedAIO()Ljava/lang/Object;
   iconst_1
@@ -279,7 +279,7 @@ L_tarm1:
 
 
 .method static v_nevRightE1()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedLeftAIO()Ljava/lang/Object;
   iconst_1
@@ -295,7 +295,7 @@ L_tarm1:
 
 
 .method static v_pureNever()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedNeverIO()Ljava/lang/Object;
   iconst_1
@@ -311,7 +311,7 @@ L_tarm1:
 
 
 .method static v_strOk()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedSIO()Ljava/lang/Object;
   iconst_1
@@ -327,7 +327,7 @@ L_tarm1:
 
 
 .method static v_strE1()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedLeftSIO()Ljava/lang/Object;
   iconst_1
@@ -343,7 +343,7 @@ L_tarm1:
 
 
 .method static v_strE2()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedSIO()Ljava/lang/Object;
   iconst_1
@@ -359,7 +359,7 @@ L_tarm1:
 
 
 .method static v_strIdem()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedSIO()Ljava/lang/Object;
   iconst_1
@@ -375,7 +375,7 @@ L_tarm1:
 
 
 .method static v_abE1()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedLeftAIO()Ljava/lang/Object;
   iconst_1
@@ -391,7 +391,7 @@ L_tarm1:
 
 
 .method static v_abE2()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedAIO()Ljava/lang/Object;
   iconst_1
@@ -407,7 +407,7 @@ L_tarm1:
 
 
 .method static v_twoFirst()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedFirstIO()Ljava/lang/Object;
   iconst_1
@@ -423,7 +423,7 @@ L_tarm1:
 
 
 .method static v_twoSecond()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedSecondIO()Ljava/lang/Object;
   iconst_1
@@ -439,7 +439,7 @@ L_tarm1:
 
 
 .method static v_twoE2()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -455,7 +455,7 @@ L_tarm1:
 
 
 .method static v_twoOk()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -471,7 +471,7 @@ L_tarm1:
 
 
 .method static v_idemE1()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedLeftAIO()Ljava/lang/Object;
   iconst_1
@@ -487,7 +487,7 @@ L_tarm1:
 
 
 .method static v_idemE2()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedAIO()Ljava/lang/Object;
   iconst_1
@@ -503,7 +503,7 @@ L_tarm1:
 
 
 .method static v_idem2First()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedFirstIO()Ljava/lang/Object;
   iconst_1
@@ -519,7 +519,7 @@ L_tarm1:
 
 
 .method static v_idem2Second()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -535,7 +535,7 @@ L_tarm1:
 
 
 .method static v_wE1()Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedFirstIO()Ljava/lang/Object;
   iconst_1
@@ -559,7 +559,7 @@ L_tarm1:
 
 
 .method static v_wE2str()Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -583,7 +583,7 @@ L_tarm1:
 
 
 .method static v_wE3()Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -607,7 +607,7 @@ L_tarm1:
 
 
 .method static v_wOk()Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_seedTIO()Ljava/lang/Object;
   iconst_1
@@ -631,7 +631,7 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 35
+  .limit stack 10
   .limit locals 0
   iconst_3
   anewarray java/lang/Object
@@ -894,7 +894,7 @@ L_tarm1:
 
 
 .method static v__cps__lift_38(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco2:
   aload_0
@@ -1046,7 +1046,7 @@ L_tarm6:
 
 
 .method static v__cps__lift_42(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco7:
   aload_0
@@ -1198,7 +1198,7 @@ L_tarm11:
 
 
 .method static v__cps__lift_46(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco12:
   aload_0
@@ -1350,7 +1350,7 @@ L_tarm16:
 
 
 .method static v__cps__lift_50(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco17:
   aload_0
@@ -1502,7 +1502,7 @@ L_tarm21:
 
 
 .method static v__cps__lift_54(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco22:
   aload_0
@@ -1654,7 +1654,7 @@ L_tarm26:
 
 
 .method static v__cps__df_bindIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 6
   .limit locals 5
 L_tco27:
   aload_0
@@ -1794,7 +1794,7 @@ L_tarm31:
 
 
 .method static v__cps__df_bindIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco32:
   aload_0
@@ -1937,7 +1937,7 @@ L_tarm36:
 
 
 .method static v__cps__df_bindIO_8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 6
   .limit locals 5
 L_tco37:
   aload_0
@@ -2077,7 +2077,7 @@ L_tarm41:
 
 
 .method static v__cps__df__rowmono_0_bindIO_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco42:
   aload_0
@@ -2250,7 +2250,7 @@ L_tarm46:
 
 
 .method static v__cps__df__rowmono_0_bindIO_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 8
   .limit locals 5
 L_tco47:
   aload_0
@@ -2426,7 +2426,7 @@ L_tarm51:
 
 
 .method static v__cps__df_bindIO_20(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 5
 L_tco52:
   aload_0
@@ -2563,7 +2563,7 @@ L_tarm56:
 
 
 .method static v__cps__df__rowmono_4_bindIO_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 8
   .limit locals 5
 L_tco57:
   aload_0
@@ -2739,7 +2739,7 @@ L_tarm61:
 
 
 .method static v__cps__df__rowmono_8_bindIO_28(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco62:
   aload_0
@@ -2912,7 +2912,7 @@ L_tarm66:
 
 
 .method static v__cps__df__rowmono_8_bindIO_32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 8
   .limit locals 5
 L_tco67:
   aload_0
@@ -3088,7 +3088,7 @@ L_tarm71:
 
 
 .method static v__cps__df_bindIO_36(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco72:
   aload_0
@@ -3231,7 +3231,7 @@ L_tarm76:
 
 
 .method static v__cps__df__rowmono_12_bindIO_40(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 8
+  .limit stack 6
   .limit locals 5
 L_tco77:
   aload_0
@@ -3379,7 +3379,7 @@ L_tarm81:
 
 
 .method static v__cps__df__rowmono_16_bindIO_44(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco82:
   aload_0
@@ -3552,7 +3552,7 @@ L_tarm86:
 
 
 .method static v__cps__df__rowmono_16_bindIO_48(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco87:
   aload_0
@@ -3722,7 +3722,7 @@ L_tarm91:
 
 
 .method static v__cps__df__rowmono_12_bindIO_52(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 8
   .limit locals 5
 L_tco92:
   aload_0
@@ -3873,7 +3873,7 @@ L_tarm96:
 
 
 .method static v__cps__df_handleErrorIO_56(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco97:
   aload_0
@@ -4030,7 +4030,7 @@ L_tarm101:
 
 
 .method static v__cps__df_andThenIO_60(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco102:
   aload_0
@@ -4190,7 +4190,7 @@ L_tarm106:
 
 
 .method static v__cps__df_mapIO_64(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 5
   .limit locals 5
 L_tco107:
   aload_0
@@ -4334,8 +4334,8 @@ L_tarm111:
 
 
 .method static v__cps__df_handleErrorIO_68(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 10
+  .limit stack 10
+  .limit locals 9
 L_tco112:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -4544,7 +4544,7 @@ L_tarm118:
 
 
 .method static v__cps__df_handleErrorIO_72(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco119:
   aload_0
@@ -4704,8 +4704,8 @@ L_tarm123:
 
 
 .method static v__cps__df_handleErrorIO_76(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 10
+  .limit locals 10
 L_tco124:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -4917,7 +4917,7 @@ L_tarm130:
 
 
 .method static v__cps__df__rowmono_20_andThenIO_80(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco131:
   aload_0
@@ -5077,8 +5077,8 @@ L_tarm135:
 
 
 .method static v__cps__df_handleErrorIO_84(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 10
+  .limit locals 10
 L_tco136:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -5287,7 +5287,7 @@ L_tarm142:
 
 
 .method static v__cps__df__rowmono_21_andThenIO_88(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco143:
   aload_0
@@ -5447,8 +5447,8 @@ L_tarm147:
 
 
 .method static v__cps__df_handleErrorIO_92(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 13
+  .limit stack 10
+  .limit locals 12
 L_tco148:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -5706,7 +5706,7 @@ L_tarm156:
 
 
 .method static v__cps__df__rowmono_22_andThenIO_96(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco157:
   aload_0
@@ -5866,8 +5866,8 @@ L_tarm161:
 
 
 .method static v__cps__df_handleErrorIO_100(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 13
+  .limit stack 10
+  .limit locals 12
 L_tco162:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -6164,7 +6164,7 @@ L_tarm171:
 
 
 .method static v__cps__df__rowmono_23_andThenIO_104(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco172:
   aload_0
@@ -6324,7 +6324,7 @@ L_tarm176:
 
 
 .method static v__cps__df_andThenIO_108(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco177:
   aload_0
@@ -6611,7 +6611,7 @@ L_tarm186:
 
 
 .method static v__cps__df_andThenIO_116(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco187:
   aload_0
@@ -6768,7 +6768,7 @@ L_tarm191:
 
 
 .method static v__cps__df_andThenIO_120(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco192:
   aload_0
@@ -6974,7 +6974,7 @@ L_tarm196:
 
 
 .method static v__cps__df_andThenIO_124(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco197:
   aload_0
@@ -7180,7 +7180,7 @@ L_tarm201:
 
 
 .method static v__cps__df_andThenIO_128(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco202:
   aload_0
@@ -7386,7 +7386,7 @@ L_tarm206:
 
 
 .method static v__cps__df_andThenIO_132(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco207:
   aload_0
@@ -7592,7 +7592,7 @@ L_tarm211:
 
 
 .method static v__cps__df_andThenIO_136(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco212:
   aload_0
@@ -7798,7 +7798,7 @@ L_tarm216:
 
 
 .method static v__cps__df_andThenIO_140(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco217:
   aload_0
@@ -8004,7 +8004,7 @@ L_tarm221:
 
 
 .method static v__cps__df_andThenIO_144(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco222:
   aload_0
@@ -8210,7 +8210,7 @@ L_tarm226:
 
 
 .method static v__cps__df_andThenIO_148(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco227:
   aload_0
@@ -8416,7 +8416,7 @@ L_tarm231:
 
 
 .method static v__cps__df_andThenIO_152(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco232:
   aload_0
@@ -8622,7 +8622,7 @@ L_tarm236:
 
 
 .method static v__cps__df_andThenIO_156(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco237:
   aload_0
@@ -8828,7 +8828,7 @@ L_tarm241:
 
 
 .method static v__cps__df_andThenIO_160(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco242:
   aload_0
@@ -9034,7 +9034,7 @@ L_tarm246:
 
 
 .method static v__cps__df_andThenIO_164(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco247:
   aload_0
@@ -9240,7 +9240,7 @@ L_tarm251:
 
 
 .method static v__cps__df_andThenIO_168(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco252:
   aload_0
@@ -9446,7 +9446,7 @@ L_tarm256:
 
 
 .method static v__cps__df_andThenIO_172(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco257:
   aload_0
@@ -9652,7 +9652,7 @@ L_tarm261:
 
 
 .method static v__cps__df_andThenIO_176(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco262:
   aload_0
@@ -9858,7 +9858,7 @@ L_tarm266:
 
 
 .method static v__cps__df_andThenIO_180(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco267:
   aload_0
@@ -10064,7 +10064,7 @@ L_tarm271:
 
 
 .method static v__cps__df_andThenIO_184(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco272:
   aload_0
@@ -10270,7 +10270,7 @@ L_tarm276:
 
 
 .method static v__cps__df_andThenIO_188(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco277:
   aload_0
@@ -10476,7 +10476,7 @@ L_tarm281:
 
 
 .method static v__cps__df_andThenIO_192(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco282:
   aload_0
@@ -10674,7 +10674,7 @@ L_tarm286:
 
 
 .method static v__cps__df_andThenIO_196(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco287:
   aload_0
@@ -10880,7 +10880,7 @@ L_tarm291:
 
 
 .method static v__cps__df_andThenIO_200(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco292:
   aload_0
@@ -11086,7 +11086,7 @@ L_tarm296:
 
 
 .method static v__cps__df_andThenIO_204(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 15
+  .limit stack 11
   .limit locals 5
 L_tco297:
   aload_0

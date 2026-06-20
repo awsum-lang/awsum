@@ -21,38 +21,36 @@
     }
   };
 
+  const v__inl9___input = [3, [25]];
+  const v__inl16_r = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [348914022, v__inl9___input[1]]];
+      }
+      case 4: {
+        return v__inl9___input;
+      }
+    }
+  })(v__inl9___input);
   const main = [
     7,
-    (v__inl16_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl16_r[1];
-              switch (__s[0]) {
-                case 348914022: {
-                  return "B";
-                }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          {
+            const __s = v__inl16_r[1];
+            switch (__s[0]) {
+              case 348914022: {
+                return "B";
               }
             }
           }
-          case 4: {
-            return String(v__inl16_r[1]);
-          }
         }
-      })(v__inl16_r))(
-      (v__inl9___input =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [3, [348914022, v__inl9___input[1]]];
-            }
-            case 4: {
-              return v__inl9___input;
-            }
-          }
-        })(v__inl9___input))([3, [25]])
-    ),
+        case 4: {
+          return String(v__inl16_r[1]);
+        }
+      }
+    })(v__inl16_r),
     [5, [0]]
   ];
 

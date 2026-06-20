@@ -1,0 +1,23 @@
+{- Matrix exhaustiveness accepts every full covering of a two-field
+   constructor: a full enumeration of `T × T` (`combine`) and a
+   first-field split with a wildcard second field (`firstField`). Both
+   compile and run; prints "ABB?". -}
+
+import IO.Stdout
+
+type T = A | B
+
+combine : Tuple2 T T -> String
+combine p = case p of
+  Tuple2 A A -> "AA"
+  Tuple2 A B -> "AB"
+  Tuple2 B A -> "BA"
+  Tuple2 B B -> "BB"
+
+firstField : Tuple2 T T -> String
+firstField p = case p of
+  Tuple2 A _ -> "A?"
+  Tuple2 B _ -> "B?"
+
+main : IO Never Unit
+main = IO.Stdout.print (combine (Tuple2 A B)) |> andThenIO (\_u -> IO.Stdout.print (firstField (Tuple2 B A)))

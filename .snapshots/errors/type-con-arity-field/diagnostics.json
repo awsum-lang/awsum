@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":8,"startCol":13,"endLine":8,"endCol":18,"message":"Type constructor 'Maybe' expects 1 argument, got 2","fixes":[]}]

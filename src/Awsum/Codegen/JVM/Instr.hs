@@ -25,6 +25,10 @@ module Awsum.Codegen.JVM.Instr
     JvmMethod (..),
     renderMethod,
     renderInstr,
+    maxStackOf,
+    maxLocalsOf,
+    methodMaxStack,
+    methodMaxLocals,
     showUInt32Spec,
     eqSpec,
     eqStringSpec,
@@ -62,6 +66,7 @@ module Awsum.Codegen.JVM.Instr
   )
 where
 
+import Data.Map.Strict qualified as Map
 import Relude
 
 -- | A JVM class, by its internal binary name (e.g. @"java/lang/Integer"@).
@@ -179,18 +184,17 @@ data JvmInstr
     Return
   deriving stock (Eq, Show)
 
--- | A method: name, descriptor, declared @max_stack@ / @max_locals@, and body.
---   @jmMaxStack@ / @jmMaxLocals@ are the honest verifier limits, shared by both
---   renderers so the @.limit@ directives and the classfile Code attribute
---   cannot disagree. @jmPublic@ is
---   @True@ only for the entry point @main@ (@public static@, access flags
---   @0x0009@); every other helper is package-private @static@ (@0x0008@).
+-- | A method: name, descriptor, and body. The verifier limits @max_stack@ /
+--   @max_locals@ are not stored — both projections derive them from 'jmBody'
+--   ('methodMaxStack' / 'methodMaxLocals'), so the @.limit@ directives and the
+--   classfile Code attribute cannot disagree and no figure is hand-maintained.
+--   @jmPublic@ is @True@ only for the entry point @main@ (@public static@,
+--   access flags @0x0009@); every other helper is package-private @static@
+--   (@0x0008@).
 data JvmMethod = JvmMethod
   { jmName :: Text,
     jmDesc :: Text,
     jmPublic :: Bool,
-    jmMaxStack :: Int,
-    jmMaxLocals :: Int,
     jmBody :: [JvmInstr]
   }
   deriving stock (Eq, Show)
@@ -201,8 +205,8 @@ renderMethod :: JvmMethod -> Text
 renderMethod m =
   unlines
     $ [ ".method " <> (if jmPublic m then "public static " else "static ") <> jmName m <> jmDesc m,
-        "  .limit stack " <> show (jmMaxStack m),
-        "  .limit locals " <> show (jmMaxLocals m)
+        "  .limit stack " <> show (methodMaxStack m),
+        "  .limit locals " <> show (methodMaxLocals m)
       ]
     <> map renderInstr (jmBody m)
     <> [".end method"]
@@ -301,6 +305,200 @@ slotSuffix n
   | n <= 3 = "_" <> show n
   | otherwise = " " <> show n
 
+-- ── Verifier limits, derived from the emitted instruction stream ─────────────
+
+-- | @max_stack@ (JVM Spec §4.7.3): the deepest the operand stack gets, in
+--   /slots/ (a @long@ occupies two). Abstract interpretation over the body —
+--   sum each instruction's fixed stack delta, remember the depth at every
+--   branch target so a label reached by a jump resumes at the right height, and
+--   treat code after an unconditional @goto@ / @areturn@ / @return@ as dead
+--   until the next label. Because it reads the instructions the method actually
+--   emits, it cannot under-declare the way a second traversal over the source
+--   IR could: every @aconst_null@ a drop-drain pushes over parked continue args,
+--   every loop-tail drain, is already in the stream and counted here.
+maxStackOf :: [JvmInstr] -> Int
+maxStackOf = go (Just 0) 0 mempty
+  where
+    cv :: Maybe Int -> Int
+    cv = fromMaybe 0
+    go :: Maybe Int -> Int -> Map LabelId Int -> [JvmInstr] -> Int
+    go _ mx _ [] = mx
+    go cur mx ed (i : is) = case i of
+      Label l _ ->
+        let d = fromMaybe (cv cur) (Map.lookup l ed)
+         in go (Just d) (max mx d) ed is
+      AReturn -> go Nothing mx ed is
+      Return -> go Nothing mx ed is
+      _ -> case branchTarget i of
+        Just (l, conditional) ->
+          let c' = cv cur + delta i
+              ed' = if Map.member l ed then ed else Map.insert l c' ed
+           in go (if conditional then Just c' else Nothing) (max mx (cv cur)) ed' is
+        Nothing ->
+          let c' = cv cur + delta i in go (Just c') (max mx c') ed is
+    -- @Just (target, isConditional)@ for the branch instructions; an
+    -- unconditional @goto@ is @False@ (control does not fall through).
+    branchTarget :: JvmInstr -> Maybe (LabelId, Bool)
+    branchTarget = \case
+      Goto l -> Just (l, False)
+      Ifeq l -> Just (l, True)
+      Ifne l -> Just (l, True)
+      Iflt l -> Just (l, True)
+      Ifle l -> Just (l, True)
+      Ifgt l -> Just (l, True)
+      IfICmpEq l -> Just (l, True)
+      IfICmpNe l -> Just (l, True)
+      IfICmpLe l -> Just (l, True)
+      IfICmpLt l -> Just (l, True)
+      IfICmpGt l -> Just (l, True)
+      IfICmpGe l -> Just (l, True)
+      _ -> Nothing
+    delta :: JvmInstr -> Int
+    delta = \case
+      Aload _ -> 1
+      Iload _ -> 1
+      Lload _ -> 2
+      Astore _ -> -1
+      Istore _ -> -1
+      Lstore _ -> -2
+      PushInt _ -> 1
+      LoadInt32 _ -> 1
+      AconstNull -> 1
+      LdcString _ -> 1
+      LConst0 -> 2
+      LConst1 -> 2
+      CheckCast _ -> 0
+      ANewArray _ -> 0 -- pops count, pushes the array ref
+      New _ -> 1
+      NewArrayByte -> 0 -- pops count, pushes the array ref
+      Dup -> 1
+      Dup2 -> 2
+      Pop -> -1
+      Pop2 -> -2
+      AAStore -> -3
+      Aaload -> -1
+      Baload -> -1
+      IAdd -> -1
+      ISub -> -1
+      IMul -> -1
+      INeg -> 0
+      IXor -> -1
+      IAnd -> -1
+      I2L -> 1 -- int (1) → long (2)
+      L2I -> -1 -- long (2) → int (1)
+      LAdd -> -2
+      LSub -> -2
+      LMul -> -2
+      LNeg -> 0
+      LShl -> -1 -- long (2) + int (1) → long (2)
+      LCmp -> -3 -- long (2) + long (2) → int (1)
+      ArrayLength -> 0
+      Iinc _ _ -> 0
+      InvokeVirtual mr -> callDelta True mr
+      InvokeSpecial mr -> callDelta True mr
+      InvokeStatic mr -> callDelta False mr
+      GetStatic (FieldRef _ _ d) -> fieldSlots d
+      PutStatic (FieldRef _ _ d) -> negate (fieldSlots d)
+      Ifeq _ -> -1
+      Ifne _ -> -1
+      Iflt _ -> -1
+      Ifle _ -> -1
+      Ifgt _ -> -1
+      IfICmpEq _ -> -2
+      IfICmpNe _ -> -2
+      IfICmpLe _ -> -2
+      IfICmpLt _ -> -2
+      IfICmpGt _ -> -2
+      IfICmpGe _ -> -2
+      Goto _ -> 0
+      -- Handled in 'go' before 'delta' is reached; listed for totality.
+      Label _ _ -> 0
+      AReturn -> -1
+      Return -> 0
+    callDelta :: Bool -> MethodRef -> Int
+    callDelta isInstance (MethodRef _ _ d) =
+      descRetSlots d - descArgSlots d - (if isInstance then 1 else 0)
+
+-- | Slot width of a single field descriptor (@J@/@D@ are two, everything
+--   else — object refs, arrays, @int@-family — is one).
+fieldSlots :: Text -> Int
+fieldSlots d = case toString d of
+  'J' : _ -> 2
+  'D' : _ -> 2
+  _ -> 1
+
+-- | Total slot width of a method descriptor's parameters.
+descArgSlots :: Text -> Int
+descArgSlots d = sumSlots (takeWhile (/= ')') (drop 1 (dropWhile (/= '(') (toString d))))
+
+-- | Slot width of a method descriptor's return type (@V@ is zero).
+descRetSlots :: Text -> Int
+descRetSlots d = case drop 1 (dropWhile (/= ')') (toString d)) of
+  'V' : _ -> 0
+  'J' : _ -> 2
+  'D' : _ -> 2
+  _ -> 1
+
+sumSlots :: String -> Int
+sumSlots [] = 0
+sumSlots s = let (w, r) = oneType s in w + sumSlots r
+
+-- | One field descriptor at the head: its slot width and the rest. An array
+--   (@[…@) is one ref slot regardless of its element type.
+oneType :: String -> (Int, String)
+oneType = \case
+  '[' : r -> let (_, r') = oneType r in (1, r')
+  'L' : r -> (1, drop 1 (dropWhile (/= ';') r))
+  'J' : r -> (2, r)
+  'D' : r -> (2, r)
+  _ : r -> (1, r)
+  [] -> (0, [])
+
+-- | @max_locals@ (JVM Spec §4.7.3): the number of local slots the method
+--   reserves, read off the emitted stream as the max of two demands — one past
+--   the highest slot any instruction loads or stores (slot width counted: a
+--   @long@ at slot @n@ reaches @n + 2@), and the breadth of every StackMapTable
+--   frame. A frame describes locals @0..k@ and may name a slot that no
+--   load/store instruction reaches — a reserved 'VTop', or a 'VLong' whose
+--   reads sit in another method — so @max_locals@ must cover it too, or the
+--   verifier rejects the frame's locals array as @bad type array size@. The
+--   caller floors the result at the parameter count — arguments occupy slots
+--   @0..nParams-1@ on entry whether or not the body reads them back.
+maxLocalsOf :: [JvmInstr] -> Int
+maxLocalsOf = foldl' (\acc i -> max acc (slotsOf i)) 0
+  where
+    slotsOf :: JvmInstr -> Int
+    slotsOf = \case
+      Aload n -> n + 1
+      Astore n -> n + 1
+      Iload n -> n + 1
+      Istore n -> n + 1
+      Iinc n _ -> n + 1
+      Lload n -> n + 2
+      Lstore n -> n + 2
+      Label _ (Just (Frame locals _)) -> foldl' (\a vt -> a + vtypeSlots vt) 0 locals
+      _ -> 0
+    vtypeSlots :: VType -> Int
+    vtypeSlots VLong = 2
+    vtypeSlots _ = 1
+
+-- | The @max_stack@ a method declares: the peak its own body reaches. Both
+--   projections ('renderMethod', 'Awsum.Codegen.JVM.Assemble.assembleMethod')
+--   derive it from 'jmBody' here, so the @.limit@ directive and the classfile
+--   Code attribute cannot disagree, and no hand-written figure can drift from
+--   the instructions — every method, user-lowered or hand-written helper,
+--   shares the one derivation.
+methodMaxStack :: JvmMethod -> Int
+methodMaxStack = maxStackOf . jmBody
+
+-- | The @max_locals@ a method declares: the slots its body touches
+--   ('maxLocalsOf'), floored at the parameter count — the arguments occupy
+--   slots @0..nParams-1@ on entry whether or not the body reads them. All
+--   parameters here are one slot (no @long@/@double@ parameter in any emitted
+--   or hand-written method), so the descriptor's parameter width is the floor.
+methodMaxLocals :: JvmMethod -> Int
+methodMaxLocals m = max (descArgSlots (jmDesc m)) (maxLocalsOf (jmBody m))
+
 -- ── Shared operand/fragment vocabulary ──────────────────────────────────────
 
 objectToObjectDesc :: Text
@@ -345,8 +543,6 @@ showUInt32Spec =
     { jmName = "__showUInt32",
       jmPublic = False,
       jmDesc = objectToObjectDesc,
-      jmMaxStack = 1,
-      jmMaxLocals = 1,
       jmBody =
         [ Aload 0,
           CheckCast integerClass,
@@ -371,8 +567,6 @@ eqSpec name labelBase (trueTag, falseTag) =
         { jmName = name,
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 2,
           jmBody =
             [ Aload 0,
               CheckCast integerClass,
@@ -400,8 +594,6 @@ eqStringSpec (trueTag, falseTag) =
         { jmName = "__eqString",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 2,
           jmBody =
             [ Aload 0,
               CheckCast strCls,
@@ -444,8 +636,6 @@ predSuccSpec name okLabelText boundaryCheck branch (errTag, leftTag, rightTag) o
         { jmName = name,
           jmPublic = False,
           jmDesc = objectToObjectDesc,
-          jmMaxStack = 5,
-          jmMaxLocals = 3,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, Istore 1, Iload 1]
               <> boundaryCheck
@@ -485,8 +675,6 @@ uint8OverflowSpec name okLabel arithOp (errTag, leftTag, rightTag) =
         { jmName = name,
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 3,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, Aload 1, CheckCast integerClass, InvokeVirtual integerIntValue, arithOp, Istore 2, Iload 2, PushInt 255, IfICmpLe ok]
               <> uint8LeftErr errTag leftTag
@@ -511,8 +699,6 @@ subUInt8Spec (errTag, leftTag, rightTag) =
         { jmName = "__subUInt8",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 3,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, Aload 1, CheckCast integerClass, InvokeVirtual integerIntValue, ISub, Istore 2, Iload 2, Iflt under]
               <> uint8RightVal rightTag (Iload 2)
@@ -549,15 +735,13 @@ left1Err errTag leftTag s =
 --   @Right (l2i result)@. The error label carries @append [long]@.
 --   @scratch@ is the boxed-cell slot (4 for add — the long occupies 2/3; 2
 --   for mul — it overwrites the dead long).
-uint32LongSpec :: Text -> Text -> JvmInstr -> Int -> Int -> (Int, Int, Int) -> JvmMethod
-uint32LongSpec name overLabel longArith scratch maxLoc (errTag, leftTag, rightTag) =
+uint32LongSpec :: Text -> Text -> JvmInstr -> Int -> (Int, Int, Int) -> JvmMethod
+uint32LongSpec name overLabel longArith scratch (errTag, leftTag, rightTag) =
   let over = LabelId overLabel
    in JvmMethod
         { jmName = name,
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = maxLoc,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, InvokeStatic integerToUnsignedLong, Aload 1, CheckCast integerClass, InvokeVirtual integerIntValue, InvokeStatic integerToUnsignedLong, longArith, Lstore 2, Lload 2]
               <> u32MaxAsLong
@@ -571,11 +755,11 @@ uint32LongSpec name overLabel longArith scratch maxLoc (errTag, leftTag, rightTa
 
 -- | @__addUInt32@: @sum > u32max@ → @Left OverflowError@, else @Right sum@.
 addUInt32Spec :: (Int, Int, Int) -> JvmMethod
-addUInt32Spec = uint32LongSpec "__addUInt32" "L_addu32_over" LAdd 4 5
+addUInt32Spec = uint32LongSpec "__addUInt32" "L_addu32_over" LAdd 4
 
 -- | @__mulUInt32@: @product > u32max@ → @Left OverflowError@, else @Right product@.
 mulUInt32Spec :: (Int, Int, Int) -> JvmMethod
-mulUInt32Spec = uint32LongSpec "__mulUInt32" "L_mulu32_over" LMul 2 4
+mulUInt32Spec = uint32LongSpec "__mulUInt32" "L_mulu32_over" LMul 2
 
 -- | @__subUInt32@: unsigned @a < b@ (via @Integer.compareUnsigned@) →
 --   @Left UnderflowError@, else @Right (a - b)@ (int @isub@ is bit-correct for
@@ -588,8 +772,6 @@ subUInt32Spec (errTag, leftTag, rightTag) =
         { jmName = "__subUInt32",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 4,
-          jmMaxLocals = 5,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, Istore 2, Aload 1, CheckCast integerClass, InvokeVirtual integerIntValue, Istore 3, Iload 2, Iload 3, InvokeStatic integerCompareUnsigned, Iflt under]
               <> [Iload 2, Iload 3, ISub, InvokeStatic integerValueOf, Astore 4, PushInt 2, ANewArray objectClass, Dup, PushInt 0]
@@ -620,8 +802,6 @@ parseUInt8Spec (parseErrTag, leftTag, rightTag) =
         { jmName = "__parseUInt8",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 4,
-          jmMaxLocals = 6,
           jmBody =
             [ Aload 0,
               CheckCast strCls,
@@ -691,8 +871,6 @@ parseUInt32Spec (parseErrTag, leftTag, rightTag) =
         { jmName = "__parseUInt32",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = 7,
           jmBody =
             [ Aload 0,
               CheckCast strCls,
@@ -769,8 +947,6 @@ parseInt32Spec (parseErrTag, leftTag, rightTag) =
         { jmName = "__parseInt32",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 8,
           jmBody =
             [ Aload 0,
               CheckCast strCls,
@@ -867,8 +1043,6 @@ printSpec unitTag =
     { jmName = "__print",
       jmPublic = False,
       jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-      jmMaxStack = 4,
-      jmMaxLocals = 1,
       jmBody =
         [ GetStatic (FieldRef "java/lang/System" "out" "Ljava/io/PrintStream;"),
           Aload 0,
@@ -902,8 +1076,6 @@ concatSpec (rightTag, leftTag, stlTag) =
         { jmName = "__concat",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 3,
           jmBody =
             [Aload 0]
               <> unboxLen
@@ -948,8 +1120,6 @@ splitOnFirstSpec (nothingTag, tuple2Tag, justTag) =
         { jmName = "__splitOnFirst",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 4,
           jmBody =
             [ Aload 1,
               CheckCast strCls,
@@ -1029,8 +1199,6 @@ entryArgEitherSpec (rightTag, leftTag, stlTag, usTag, stlRowTag, usRowTag) =
         { jmName = "__entryArgEither",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = 8,
           jmBody =
             [ Aload 0,
               CheckCast strCls,
@@ -1115,8 +1283,6 @@ getArgsSpec (nilTag, consTag, rightTag) =
           jmDesc = "()Ljava/lang/Object;",
           -- 5: the Cons build peaks at @aload_3; iconst_1; aaload@
           -- (arr, arr, idx, validated, 1).
-          jmMaxStack = 5,
-          jmMaxLocals = 4,
           jmBody =
             [GetStatic argvField, Astore 0, PushInt 1, ANewArray objectClass, Dup, PushInt 0]
               <> boxedTag nilTag
@@ -1204,8 +1370,6 @@ stdinReadAllSpec =
     { jmName = "__stdinReadAll",
       jmPublic = False,
       jmDesc = "()Ljava/lang/Object;",
-      jmMaxStack = 4,
-      jmMaxLocals = 3,
       jmBody =
         stdinReadLoop "L_stdin"
           <> [ InvokeStatic (MethodRef "AwsumMain" "__stdinDecodeStrict" "([B)Ljava/lang/Object;"),
@@ -1244,8 +1408,6 @@ stdinDecodeStrictSpec (rightTag, leftTag, stlTag, iuTag, stlRowTag, iuRowTag) =
         { jmName = "__stdinDecodeStrict",
           jmPublic = False,
           jmDesc = "([B)Ljava/lang/Object;",
-          jmMaxStack = 5,
-          jmMaxLocals = 8,
           jmBody =
             [ Aload 0,
               InvokeStatic (MethodRef "java/nio/ByteBuffer" "wrap" "([B)Ljava/nio/ByteBuffer;"),
@@ -1301,8 +1463,6 @@ stdinReadAllBytesSpec (nilTag, consTag) =
         { jmName = "__stdinReadAllBytes",
           jmPublic = False,
           jmDesc = "()Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = 3,
           jmBody =
             stdinReadLoop "L_stdinbytes_read"
               <> [ Astore 0,
@@ -1362,8 +1522,6 @@ mainSpec mangledMain mangledRunIO =
     { jmName = "main",
       jmDesc = "([Ljava/lang/String;)V",
       jmPublic = True,
-      jmMaxStack = 5,
-      jmMaxLocals = 1,
       jmBody =
         [ New (ClassRef "java/io/PrintStream"),
           Dup,
@@ -1391,8 +1549,6 @@ lengthCodePointsSpec =
     { jmName = "__lengthCodePoints",
       jmPublic = False,
       jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-      jmMaxStack = 3,
-      jmMaxLocals = 2,
       jmBody =
         [ Aload 0,
           CheckCast (ClassRef "java/lang/String"),
@@ -1415,8 +1571,6 @@ lengthUtf16CodeUnitsSpec =
     { jmName = "__lengthUtf16CodeUnits",
       jmPublic = False,
       jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-      jmMaxStack = 2,
-      jmMaxLocals = 1,
       jmBody =
         [ Aload 0,
           CheckCast (ClassRef "java/lang/String"),
@@ -1435,8 +1589,6 @@ lengthUtf8BytesSpec =
     { jmName = "__lengthUtf8Bytes",
       jmPublic = False,
       jmDesc = "(Ljava/lang/Object;)Ljava/lang/Object;",
-      jmMaxStack = 2,
-      jmMaxLocals = 1,
       jmBody =
         [ Aload 0,
           CheckCast (ClassRef "java/lang/String"),
@@ -1496,8 +1648,6 @@ addSubInt32Spec name labelBase arithOp xorDetect (overCtor, underCtor, leftTag, 
         { jmName = name,
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = 6,
           jmBody =
             [ Aload 0,
               CheckCast integerClass,
@@ -1555,8 +1705,6 @@ mulInt32Spec (overCtor, underCtor, leftTag, rightTag, overRow, underRow) =
         { jmName = "__mulInt32",
           jmPublic = False,
           jmDesc = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-          jmMaxStack = 6,
-          jmMaxLocals = 3,
           jmBody =
             [Aload 0, CheckCast integerClass, InvokeVirtual integerIntValue, I2L, Aload 1, CheckCast integerClass, InvokeVirtual integerIntValue, I2L, LMul]
               <> [Dup2, LoadInt32 2147483647, I2L, LCmp, Ifgt over]

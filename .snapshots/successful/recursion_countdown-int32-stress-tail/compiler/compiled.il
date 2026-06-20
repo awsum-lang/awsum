@@ -273,7 +273,7 @@
   .method private hidebysig static object v_res() cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1)
+    .locals init (object[] V_0)
     ldc.i4 100000
     box [System.Runtime]System.Int32
     call object AwsumMain::v_countDown(object)

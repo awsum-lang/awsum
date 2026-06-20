@@ -169,7 +169,7 @@ reuseSlotElided externOk scrut vars body =
           CRowCase s alts -> goN s + sum [goN b | (_, _, b) <- alts]
           CLoop b -> goN b
           CContinue xs -> sum (map goN xs)
-          CDrop _ _ b -> goN b
+          CDrop _ b -> goN b
           CLet _ rhs b -> goN rhs + goN b
           CJoin _ _ jb inner -> goN jb + goN inner
           CJump _ args -> sum (map goN args)

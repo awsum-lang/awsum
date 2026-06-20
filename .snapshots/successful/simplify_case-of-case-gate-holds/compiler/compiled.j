@@ -86,7 +86,7 @@ L_concat_too_long:
 .end method
 
 .method static __eqUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -127,8 +127,8 @@ L_eq_u32_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -164,7 +164,7 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 7
   .limit locals 11
   ldc "x"
   invokestatic AwsumMain/__lengthUtf8Bytes(Ljava/lang/Object;)Ljava/lang/Object;

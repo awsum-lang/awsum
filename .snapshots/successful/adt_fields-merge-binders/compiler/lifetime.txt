@@ -1,0 +1,56 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+main:
+  case-pattern    $inl13$__p0                     count=1
+  case-pattern    $inl14$__p1                     count=0
+
+$cps$$df$andThenIO$0:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    $inl11$__pa0                    count=0
+  case-pattern    $inl12$__p1                     count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_30                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    $inl9$__pa0                     count=0
+  case-pattern    $inl10$__p1                     count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_32                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$8:
+  param           io                              count=2
+  param           $k                              count=1
+  case-pattern    a                               count=0
+  case-pattern    $inl7$__p0                      count=0
+  case-pattern    $inl8$__p1                      count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$8:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_34                          count=0
+  case-pattern    s                               count=0
+

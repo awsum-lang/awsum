@@ -101,13 +101,13 @@ There is **no catch-all** (`_ -> …`). When a type gains a new constructor, a c
 
 ### Uninhabited types
 
-A type with zero constructors has no values. You can declare one and write a function that takes it (well-typed but never callable), but you cannot construct one.
+A `type` with zero constructors has no values. You can declare one and write a function that takes it (well-typed but never callable), but you cannot construct one — it is a distinct nominal type that happens to be empty, useful as a phantom.
 
 ```awsum
-type Never                            -- empty type — useful as a phantom
+type Void                             -- zero constructors: uninhabited, a distinct label
 
 -- ok: signature is fine; the function is unreachable at runtime.
-absurd : Never -> String
+absurd : Void -> String
 absurd _x = "unreachable"
 ```
 
@@ -121,6 +121,12 @@ describe : Container -> String
 describe x = case x of
   Empty -> "empty"   -- ok: 'Full' is unreachable because 'Box Never' is uninhabited
 ```
+
+#### `Never` — the one empty type (the row identity)
+
+The prelude declares exactly one type with the `empty type` keyword: `Never`. The keyword marks it as the **row identity** — an uninhabited type whose (nonexistent) value subsumes into any expected row position. That is what lets `IO Never a` flow where `IO (e | …) a` is wanted, and what makes `Never` drop out of a row (a value of `A` flows into `(Never | A)`, and a `case` on `(Never | A)` need only handle `A`).
+
+Every empty type is interchangeable up to its name, so there is only ever one of them, and the `empty type` keyword is **reserved to the standard library** — user code cannot declare its own (it would only alias `Never` under a different name, looking distinct while being identical). Reach for `Never` where you need the row identity, or a plain `type X` (above) for a distinct uninhabited nominal type.
 
 ---
 

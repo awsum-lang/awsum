@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":14,"startCol":11,"endLine":18,"endCol":34,"message":"Non-exhaustive case on Wrap | String: no arm matches Wrap (Pair True False)","fixes":[]}]

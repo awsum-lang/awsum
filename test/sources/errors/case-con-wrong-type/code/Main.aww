@@ -1,0 +1,18 @@
+{- An arm names a constructor of another type: `Just` (a `Maybe`
+   constructor) on a scrutinee of type `T`. Even though `A` and `B` already
+   cover `T`, the wrong constructor is rejected (`is not a constructor of
+   T`) rather than silently accepted as an extra arm. Match a constructor of
+   `T`. -}
+
+import IO.Stdout
+
+type T = A | B
+
+classify : T -> String
+classify x = case x of
+  A -> "a"
+  B -> "b"
+  Just _y -> "j"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify A)

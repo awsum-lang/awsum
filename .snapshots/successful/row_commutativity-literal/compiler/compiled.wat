@@ -410,7 +410,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
       i32.load
@@ -420,27 +419,27 @@
         block (result i32)
           local.get 0
           i32.load offset=4
-          local.tee 6
+          local.tee 2
           call 8
-          local.get 6
-          local.set 5
+          local.get 2
+          local.set 2
           local.get 0
           call 9
-          local.get 5
+          local.get 2
         end
       else
         local.get 0
         i32.load offset=4
-        local.tee 6
+        local.tee 3
         call 8
-        local.get 6
+        local.get 3
         call 6
         local.set 3
         local.get 0
         i32.load offset=8
-        local.tee 6
+        local.tee 5
         call 8
-        local.get 6
+        local.get 5
         local.set 4
         local.get 0
         call 9
@@ -453,8 +452,6 @@
     end)
 
   (func $v_mk (result i32)
-    (local i32)
-    (local i32)
     (local i32)
     i32.const 8
     i32.const 1
@@ -472,9 +469,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
     i32.const 12
     i32.const 2
     call 7
@@ -484,17 +478,17 @@
     i32.store
     local.get 0
     call 12
-    local.set 3
+    local.set 1
     block (result i32)
-      local.get 3
+      local.get 1
       i32.load offset=4
-      local.tee 5
+      local.tee 2
       call 8
-      local.get 5
-      local.set 4
-      local.get 3
+      local.get 2
+      local.set 2
+      local.get 1
       call 9
-      local.get 4
+      local.get 2
     end
     i32.store offset=4
     local.get 0

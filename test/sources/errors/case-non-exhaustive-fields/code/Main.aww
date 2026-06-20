@@ -1,0 +1,16 @@
+{- A two-field constructor whose arms cover each field column
+   independently (`Tuple2 A A` / `Tuple2 B B`) is not exhaustive: the
+   combination `Tuple2 A B` matches no arm. Matrix exhaustiveness rejects
+   it, naming an uncovered combination. -}
+
+import IO.Stdout
+
+type T = A | B
+
+label : Tuple2 T T -> String
+label p = case p of
+  Tuple2 A A -> "AA"
+  Tuple2 B B -> "BB"
+
+main : IO Never Unit
+main = IO.Stdout.print (label (Tuple2 A B))

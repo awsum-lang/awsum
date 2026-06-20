@@ -1,0 +1,15 @@
+{- An ascription pattern on a genuinely-polymorphic field: `Box`'s field is
+   the type parameter `a`. A `(x : T)` ascription discriminates a structural
+   sum, but an abstract type variable is not a sum, so it is rejected
+   (`Case on non-sum type`). Bind the field with a name instead. -}
+
+import IO.Stdout
+
+type Box a = Box a
+
+describe : Box a -> String
+describe x = case x of
+  Box (_y : Int32) -> "i"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (Box True))

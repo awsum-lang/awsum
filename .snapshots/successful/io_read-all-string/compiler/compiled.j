@@ -28,8 +28,8 @@
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 6
+  .limit stack 5
+  .limit locals 4
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -99,7 +99,7 @@ L_tarm2:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 7
   .limit locals 0
   iconst_2
   anewarray java/lang/Object
@@ -139,8 +139,8 @@ L_tarm2:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 10
+  .limit locals 10
 L_tco3:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -386,7 +386,7 @@ L_tarm10:
 
 
 .method static v__cps__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco11:
   aload_0
@@ -583,8 +583,8 @@ L_tarm16:
 
 
 .method static v__cps__scc__apply1__df__lam_10_2__df__lam_14_6(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 12
+  .limit stack 5
+  .limit locals 11
 L_tco17:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -790,8 +790,8 @@ L_tarm19:
 
 
 .method static v__apply__scc__apply1__df__lam_10_2__df__lam_14_6(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 4
+  .limit stack 6
+  .limit locals 3
 L_tco24:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -877,7 +877,7 @@ L_stdin_done:
 .end method
 
 .method static __stdinDecodeStrict([B)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 8
   aload_0
   invokestatic java/nio/ByteBuffer/wrap([B)Ljava/nio/ByteBuffer;

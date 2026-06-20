@@ -1,0 +1,15 @@
+{- A `case` over a non-regular (nested) recursive type: the tail of `Nest a`
+   is `Nest (Tuple2 a a)`, so the type argument grows each level. Built from
+   the base constructor `NestNil`; prints `nil`. -}
+
+import IO.Stdout
+
+type Nest a = NestCons a (Nest (Tuple2 a a)) | NestNil
+
+describeNest : Nest Int32 -> String
+describeNest n = case n of
+  NestCons _head _rest -> "cons"
+  NestNil -> "nil"
+
+main : IO Never Unit
+main = IO.Stdout.print (describeNest NestNil)

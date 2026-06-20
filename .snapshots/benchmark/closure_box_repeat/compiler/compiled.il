@@ -250,7 +250,6 @@
   .method private hidebysig static object v__apply_countWithBox(object,object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1)
   IL_tco_loop:
     ldarg.0
     castclass object[]

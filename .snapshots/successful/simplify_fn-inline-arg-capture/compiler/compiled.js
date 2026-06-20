@@ -117,40 +117,40 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl6_a = __eqString("x", "x");
           return v__apply__df__rowmono_0_andThenIO_4(
             v__k,
-            (v__inl6_a =>
+            (s => {
+              switch (s[0]) {
+                case 1: {
+                  return [7, "T", [5, [0]]];
+                }
+                case 2: {
+                  return [7, "F", [5, [0]]];
+                }
+              }
+            })(
               (s => {
                 switch (s[0]) {
                   case 1: {
-                    return [7, "T", [5, [0]]];
-                  }
-                  case 2: {
-                    return [7, "F", [5, [0]]];
-                  }
-                }
-              })(
-                (s => {
-                  switch (s[0]) {
-                    case 1: {
-                      {
-                        const __s = v_io[1];
-                        switch (__s[0]) {
-                          case 13: {
-                            return v__inl6_a;
-                          }
-                          case 14: {
-                            return [2];
-                          }
+                    {
+                      const __s = v_io[1];
+                      switch (__s[0]) {
+                        case 13: {
+                          return v__inl6_a;
+                        }
+                        case 14: {
+                          return [2];
                         }
                       }
                     }
-                    case 2: {
-                      return v__inl6_a;
-                    }
                   }
-                })(v__inl6_a)
-              ))(__eqString("x", "x"))
+                  case 2: {
+                    return v__inl6_a;
+                  }
+                }
+              })(v__inl6_a)
+            )
           );
         }
         case 6: {
@@ -249,11 +249,13 @@
           continue;
         }
         case 8: {
-          const __t0 = (v__inl12__arg0 =>
-            v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
+          const __t0 = (() => {
+            const v__inl12__arg0 = __getArgs();
+            return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
               [24, v_io[1], v__inl12__arg0],
               [31]
-            ))(__getArgs());
+            );
+          })();
           v_io = __t0;
           continue;
         }

@@ -473,6 +473,49 @@ spec = do
           applySubst s (TyVar noSpan "a") `shouldBe` TyCon noSpan "Int32"
         Left err -> expectationFailure ("unexpected " <> show err)
 
+  describe "Awsum.HM.unify (empty type is the row identity)" $ do
+    -- 'Never' (and any empty type) is the row identity: it drops out of a
+    -- row, so '(Never | A)' unifies with 'A'. Before the fix the
+    -- differing-cardinality path counted 'Never' as an unabsorbable extra
+    -- label and rejected the pair. These are not reachable from surface
+    -- '.aww' (the typechecker's acceptance boundary is 'rowSubsume', which
+    -- already handles empties), so the unifier-level law is pinned here.
+    let never = TyEmpty noSpan "Never"
+        a = TyCon noSpan "A"
+        idSubst = Right mempty :: Either UnifyError Subst
+
+    it "(Never | A) ~ A"
+      $ unify (TyOr noSpan never a) a
+      `shouldBe` idSubst
+
+    it "A ~ (Never | A) (symmetry)"
+      $ unify a (TyOr noSpan never a)
+      `shouldBe` idSubst
+
+    it "(Never | A) ~ (Never | A)"
+      $ unify (TyOr noSpan never a) (TyOr noSpan never a)
+      `shouldBe` idSubst
+
+    it "folds two distinct empty names: (Never | Whatever | A) ~ (Never | A)" $ do
+      let whatever = TyEmpty noSpan "Whatever"
+      unify (TyOr noSpan never (TyOr noSpan whatever a)) (TyOr noSpan never a)
+        `shouldBe` idSubst
+
+    it "binds a tyvar past a dropped empty: (Never | a) ~ A ⇒ a ↦ A"
+      $ case unify (TyOr noSpan never (TyVar noSpan "a")) a of
+        Right s -> applySubst s (TyVar noSpan "a") `shouldBe` a
+        Left err -> expectationFailure ("unexpected " <> show err)
+
+    it "a lone empty is still not a populated type: Never !~ A"
+      $ case unify never a of
+        Left (CannotUnify _ _) -> pass
+        other -> expectationFailure ("expected CannotUnify, got: " <> show other)
+
+    it "differing non-empty labels still fail: (Never | A) !~ B"
+      $ case unify (TyOr noSpan never a) (TyCon noSpan "B") of
+        Left (CannotUnify _ _) -> pass
+        other -> expectationFailure ("expected CannotUnify, got: " <> show other)
+
   describe "Awsum.HM.unify (set-semantic laws via QuickCheck)" $ do
     -- Property tests over arbitrary 'Type'' values (instance from
     -- 'Awsum.ArbitraryInstances'). They cover the laws that the

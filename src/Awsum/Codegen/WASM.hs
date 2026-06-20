@@ -141,7 +141,7 @@ stringsInExpr = \case
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
-  CDrop _ _ body -> stringsInExpr body
+  CDrop _ body -> stringsInExpr body
   CReuse _ _ _ fs -> concatMap stringsInExpr fs
   CLet _ rhs body -> stringsInExpr rhs <> stringsInExpr body
   CProj _ _ -> []

@@ -196,19 +196,19 @@
     }
   };
 
+  const v__inl13_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df__rowmono_0_andThenIO_4(
-      (v__inl13_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl13_x[1]];
-            }
-            case 4: {
-              return [5, v__inl13_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl13_x[1]];
           }
-        })(v__inl13_x))(v_res),
+          case 4: {
+            return [5, v__inl13_x[1]];
+          }
+        }
+      })(v__inl13_x),
       [29]
     ),
     [27]

@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -38,7 +38,7 @@ CoreProgram
         , CValDef "cNested"
             ( CLet "$inl17$x"
                 ( CVar "oc" )
-                ( CDrop DropFreeUnchecked "$inl17$x"
+                ( CDrop "$inl17$x"
                     ( CCase
                         ( CVar "$inl17$x" )
                         [
@@ -63,7 +63,7 @@ CoreProgram
             ( CCon 7
                 [ CLet "$inl25$r"
                     ( CVar "cNested" )
-                    ( CDrop DropFreeUnchecked "$inl25$r"
+                    ( CDrop "$inl25$r"
                         ( CCase
                             ( CVar "$inl25$r" )
                             [

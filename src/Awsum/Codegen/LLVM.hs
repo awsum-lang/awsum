@@ -236,7 +236,7 @@ joinParamsIn = go
       CLoop b -> go b
       CContinue xs -> concatMap go xs
       CLet _ rhs b -> go rhs <> go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> concatMap go fs
       CVar _ -> []
       CProj _ _ -> []
@@ -250,7 +250,7 @@ joinParamsIn = go
 -- detect.
 peelDrops :: CExpr -> ([Name], CExpr)
 peelDrops = \case
-  CDrop _ n b -> first (n :) (peelDrops b)
+  CDrop n b -> first (n :) (peelDrops b)
   e -> ([], e)
 
 -- | Scaffolding the 'CFunDef' prologue sets up so 'emitTail' can emit
@@ -315,7 +315,7 @@ stringsInExpr = \case
   CProj _ _ -> []
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
-  CDrop _ _ body -> stringsInExpr body
+  CDrop _ body -> stringsInExpr body
   CReuse _ _ _ fs -> concatMap stringsInExpr fs
   CJoin _ _ body inner -> stringsInExpr body <> stringsInExpr inner
   CJump _ args -> concatMap stringsInExpr args
@@ -2856,7 +2856,7 @@ emitJoinInnerExpr ctx afterLbl pendingDecs = \case
     pure (ri <> emitIncIfCVar ctx rhs rv <> bi, ends)
   -- A drop above the dispatch (a let binder whose scope is the whole
   -- inner expression): the dec joins the per-path releases below.
-  CDrop _ n body ->
+  CDrop n body ->
     emitJoinInnerExpr ctx afterLbl (pendingDecs <> emitFree ctx n) body
   CCase scrut alts -> do
     (instrS, resS) <- emitExpr ctx scrut
@@ -2963,7 +2963,7 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
       CCase scrut alts -> goCase ctx pending freshScruts scrut alts
       CRowCase scrut alts ->
         goCase ctx pending freshScruts scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      CDrop _ n body -> go ctx (n : pending) freshScruts body
+      CDrop n body -> go ctx (n : pending) freshScruts body
       CLet x rhs body -> do
         (ri, rv) <- emitExpr ctx rhs
         let ctx' = ctx {locals = Map.insert x rv ctx.locals}
@@ -3190,7 +3190,7 @@ emitTail ctx expr = case ctx.loopCtx of
           <> defBlock
       CRowCase scrut alts ->
         go ctx' lctx pending freshScruts (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-      CDrop _ n body -> go ctx' lctx (n : pending) freshScruts body
+      CDrop n body -> go ctx' lctx (n : pending) freshScruts body
       -- Bind, then the body continues in tail position (the binder's
       -- 'CDrop' joins the pending stack like any other).
       CLet x rhs body -> do
@@ -3323,7 +3323,7 @@ borrowedSource ctx = \case
   -- the 'CDrop' emission inc'd the result before the dec, so the value
   -- leaves the drop /owned/ — a consumer must not inc it again. Any other
   -- tail passes through.
-  CDrop _ n body -> case borrowedSource ctx body of
+  CDrop n body -> case borrowedSource ctx body of
     Just m | m == n -> Nothing
     other -> other
   -- A let's value is its body's value.
@@ -3340,7 +3340,7 @@ borrowedSource ctx = \case
 sourceCVarStripDrops :: CExpr -> Maybe Name
 sourceCVarStripDrops = \case
   CVar n -> Just n
-  CDrop _ _ body -> sourceCVarStripDrops body
+  CDrop _ body -> sourceCVarStripDrops body
   _ -> Nothing
 
 -- | Does the expression contain a 'CReuse' anywhere? Such a field of an
@@ -3357,7 +3357,7 @@ containsCReuse = \case
   CLet _ rhs b -> containsCReuse rhs || containsCReuse b
   CLoop b -> containsCReuse b
   CContinue xs -> any containsCReuse xs
-  CDrop _ _ b -> containsCReuse b
+  CDrop _ b -> containsCReuse b
   CJoin _ _ body inner -> containsCReuse body || containsCReuse inner
   CJump _ args -> any containsCReuse args
   CVar _ -> False
@@ -3501,7 +3501,7 @@ emitExpr ctx = \case
   -- result first so the dec balances out (move-semantics on
   -- single-binder shadowing). This matches the @emitTail@ value-tail
   -- carve-out and prevents a cascade-free of the just-returned cell.
-  CDrop _ n body -> do
+  CDrop n body -> do
     (bodyInstrs, bodyResult) <- emitExpr ctx body
     let incInstr = case borrowedSource ctx body of
           Just m | m == n -> [ICall Nothing Void Nothing "@__inc_ref" [(Ptr, bodyResult)]]

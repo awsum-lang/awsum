@@ -438,7 +438,7 @@ simplifyExpr pt params valDefs vals = go Set.empty Map.empty
               Just fs -> Map.insert n fs conEnv
               Nothing -> conEnv
         finishLet valDefs n rhs' <$> go (sinkExtend [n] b sk) conEnv' b
-      CDrop k n b -> CDrop k n <$> go sk conEnv b
+      CDrop n b -> CDrop n <$> go sk conEnv b
       CReuse rm n t fs -> CReuse rm n t <$> traverse (go sk conEnv) fs
       CJoin j ps body inner -> CJoin j ps <$> go sk conEnv body <*> go sk conEnv inner
       CJump j args -> CJump j <$> traverse (go sk conEnv) args
@@ -502,16 +502,13 @@ collapseIdentical reuseable scrut = \case
   arms@((_, b0) : rest)
     | all ((== b0) . snd) rest,
       all (\(vs, _) -> not (any (`binderUsedIn` b0) vs)) arms,
-      -- The 'Awsum.Reuse' carve-out applies only when the scrutinee is
-      -- reuse-eligible (@reuseable@ — 'scrutReuseEligible' at the caller;
-      -- elsewhere there is no linear-scrutinee shape to starve) and only
-      -- to arms that bind fields: a binder-less arm's "arity" is zero,
-      -- which any nullary constructor anywhere in the body would match —
-      -- blocking exactly the boolean absorbing elements (@and x False@,
-      -- @or x True@, a 300-arm @-> True@ extractor) for a reuse win that
-      -- does not exist (the in-place rewrite of a zero-field cell saves
-      -- one tag store).
-      not reuseable || all (\(vs, _) -> null vs || not (reconstructsSameArity (length vs) b0)) arms ->
+      -- Keep the case when the scrutinee is reuse-eligible (@reuseable@ —
+      -- 'scrutReuseEligible' at the caller) and some arm is a 'reuseTargetArm':
+      -- its drop is a linear-scrutinee cell 'Awsum.Reuse' would rewrite in
+      -- place, which collapsing the dispatch would starve. Binder-less arms
+      -- are never targets, so the boolean absorbing elements (@and x False@,
+      -- @or x True@, a 300-arm @-> True@ extractor) still collapse.
+      not reuseable || not (any (\(vs, _) -> reuseTargetArm (length vs) b0) arms) ->
         Just
           $ if effectfulIn scrut
             then (\e -> CLet e scrut b0) <$> freshName "eff"
@@ -572,7 +569,7 @@ finishLet valDefs n rhs body =
       CVar v
         | not (Set.member v valDefs),
           v `Set.notMember` boundNamesIn body ->
-            renameVarFull n v body
+            renameVar n v body
       _ -> CLet n rhs body
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -819,7 +816,7 @@ foreignTransferIn = go Set.empty
       CCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CRowCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CLet _ rhs b -> go declared rhs || go declared b
-      CDrop _ _ b -> go declared b
+      CDrop _ b -> go declared b
       CReuse _ _ _ fs -> any (go declared) fs
       CVar _ -> False
       CProj _ _ -> False
@@ -849,7 +846,7 @@ jumpsOutwardIn = go Set.empty
       CCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CRowCase s alts -> go declared s || any (\(_, _, b) -> go declared b) alts
       CLet _ rhs b -> go declared rhs || go declared b
-      CDrop _ _ b -> go declared b
+      CDrop _ b -> go declared b
       CReuse _ _ _ fs -> any (go declared) fs
       CVar _ -> False
       CProj _ _ -> False
@@ -872,7 +869,7 @@ containsCase = go
       CLoop b -> go b
       CContinue xs -> any go xs
       CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> any go fs
       CJump _ args -> any go args
       CVar _ -> False
@@ -919,7 +916,7 @@ inlineCalls valDefs env = go
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> traverse go xs
       CLet x rhs b -> CLet x <$> go rhs <*> go b
-      CDrop k x b -> CDrop k x <$> go b
+      CDrop x b -> CDrop x <$> go b
       CReuse rm x t fs -> CReuse rm x t <$> traverse go fs
       CJoin j ps body inner -> CJoin j ps <$> go body <*> go inner
       CJump j args -> CJump j <$> traverse go args
@@ -955,8 +952,8 @@ inlineCallSite valDefs (InlineInfo ps body) args = do
       -- The parameter is a 'CProj' / 'CReuse' name somewhere: the binding
       -- must stay a /name/. A plain non-'CValDef' variable argument renames
       -- straight to it — unless it is spelled like another parameter, which
-      -- the rename pass below would then hit ('renameVarFull' has no scope
-      -- to tell them apart); anything else — including a 'CValDef'
+      -- the rename pass below would then hit ('Awsum.Core.renameVar' has no
+      -- scope to tell them apart); anything else — including a 'CValDef'
       -- reference, whose getter must not re-run per projection (the
       -- @borrowedSource@ boundary; the extra cells would leak) — binds to a
       -- fresh 'CLet' binder, so the getter runs once and the projections
@@ -991,7 +988,7 @@ inlineCallSite valDefs (InlineInfo ps body) args = do
       -- where the second argument mentions the caller's own 'a'). Renamed
       -- first, the body's parameter references are out of the way, and
       -- 'substVars' never re-walks what it injects.
-      bound = substVars substMap (foldl' (\e (p, t) -> renameVarFull p t e) body' renames)
+      bound = substVars substMap (foldl' (\e (p, t) -> renameVar p t e) body' renames)
   pure (foldr (uncurry CLet) bound lets)
   where
     duplicableArg = \case
@@ -1047,7 +1044,7 @@ freshenBinders = go Map.empty
         rhs' <- go env rhs
         (x', env') <- bind env x
         CLet x' rhs' <$> go env' b
-      CDrop k x b -> CDrop k (ref env x) <$> go env b
+      CDrop x b -> CDrop (ref env x) <$> go env b
       -- A join name is a binder too — an inlined body copied twice must not
       -- declare the same label twice. It freshens with its own minter (the
       -- value-name env carries the mapping; the namespaces cannot collide)
@@ -1063,34 +1060,6 @@ freshenBinders = go Map.empty
       e@(CString _) -> pure e
       e@(CIntLit _ _) -> pure e
       e@(CBuiltIn _) -> pure e
-
--- | Rename @old@ to @new@ in every reference position — 'CVar' and the name
---   positions of 'CProj' / 'CReuse'. Stops under a binder that re-introduces
---   @old@ (defensive; freshened bodies never re-bind a parameter).
-renameVarFull :: Name -> Name -> CExpr -> CExpr
-renameVarFull old new = go
-  where
-    rn v = if v == old then new else v
-    go = \case
-      CVar v -> CVar (rn v)
-      CProj v i -> CProj (rn v) i
-      CReuse rm v t fs -> CReuse rm (rn v) t (map go fs)
-      CCall f xs -> CCall (go f) (map go xs)
-      CCon t fs -> CCon t (map go fs)
-      CRow t v -> CRow t (go v)
-      CCase s alts -> CCase (go s) [(t, vs, if old `elem` vs then b else go b) | (t, vs, b) <- alts]
-      CRowCase s alts -> CRowCase (go s) [(t, v, if v == old then b else go b) | (t, v, b) <- alts]
-      CLoop b -> CLoop (go b)
-      CContinue xs -> CContinue (map go xs)
-      CLet x rhs b -> CLet x (go rhs) (if x == old then b else go b)
-      CDrop k x b -> CDrop k (rn x) (go b)
-      -- Join names live in their own namespace; only the parameters can
-      -- shadow a value name, and only inside the join body.
-      CJoin j ps body inner -> CJoin j ps (if old `elem` ps then body else go body) (go inner)
-      CJump j args -> CJump j (map go args)
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
 
 -- | Per top-level name: how many times it is called directly (callee
 --   position) and how many times it is referenced any other way ('CVar' in
@@ -1121,7 +1090,7 @@ programRefs (CoreProgram ds) = foldl' (Map.unionWith plus) Map.empty (map declRe
       CLoop b -> go b
       CContinue xs -> goMany xs
       CLet _ rhs b -> Map.unionWith plus (go rhs) (go b)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       -- A jump's target is a label, not a top-level reference.
       CJoin _ _ body inner -> Map.unionWith plus (go body) (go inner)
       CJump _ args -> goMany args
@@ -1131,51 +1100,17 @@ programRefs (CoreProgram ds) = foldl' (Map.unionWith plus) Map.empty (map declRe
 
 -- | Node count of an expression — the inliner's size measure.
 exprSize :: CExpr -> Int
-exprSize = go
-  where
-    go :: CExpr -> Int
-    go = \case
-      CCall f xs -> 1 + go f + sum (map go xs)
-      CCon _ fs -> 1 + sum (map go fs)
-      CRow _ v -> 1 + go v
-      CCase s alts -> 1 + go s + sum [go b | (_, _, b) <- alts]
-      CRowCase s alts -> 1 + go s + sum [go b | (_, _, b) <- alts]
-      CLoop b -> 1 + go b
-      CContinue xs -> 1 + sum (map go xs)
-      CLet _ rhs b -> 1 + go rhs + go b
-      CDrop _ _ b -> 1 + go b
-      CReuse _ _ _ fs -> 1 + sum (map go fs)
-      CJoin _ _ body inner -> 1 + go body + go inner
-      CJump _ args -> 1 + sum (map go args)
-      CVar _ -> 1
-      CProj _ _ -> 1
-      CString _ -> 1
-      CIntLit _ _ -> 1
-      CBuiltIn _ -> 1
+exprSize e = 1 + sum (map exprSize (children e))
 
 -- | Does the body contain the TCO loop forms? Their presence marks the
 --   declaration as (formerly) self-recursive — never inlined.
 hasLoopOrContinue :: CExpr -> Bool
-hasLoopOrContinue = go
+hasLoopOrContinue e = self || any hasLoopOrContinue (children e)
   where
-    go = \case
+    self = case e of
       CLoop _ -> True
       CContinue _ -> True
-      CCall f xs -> go f || any go xs
-      CCon _ fs -> any go fs
-      CRow _ v -> go v
-      CCase s alts -> go s || any (\(_, _, b) -> go b) alts
-      CRowCase s alts -> go s || any (\(_, _, b) -> go b) alts
-      CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
-      CReuse _ _ _ fs -> any go fs
-      CJoin _ _ body inner -> go body || go inner
-      CJump _ args -> any go args
-      CVar _ -> False
-      CProj _ _ -> False
-      CString _ -> False
-      CIntLit _ _ -> False
-      CBuiltIn _ -> False
+      _ -> False
 
 -- | Compile-time evaluation of the integer built-ins over literal operands
 --   (see the module header). The result is exactly the cell the runtime
@@ -1356,7 +1291,7 @@ rewriteIdentity p scrut = goR
           CRowCase s alts -> CRowCase (goR s) [(t, w, goR b) | (t, w, b) <- alts]
           CLoop b -> CLoop (goR b)
           CContinue xs -> CContinue (map goR xs)
-          CDrop k m b -> CDrop k m (goR b)
+          CDrop m b -> CDrop m (goR b)
           CReuse rm m t fs -> CReuse rm m t (map goR fs)
           CLet x rhs b -> CLet x (goR rhs) (goR b)
           CJoin j ps jb inner -> CJoin j ps (goR jb) (goR inner)
@@ -1393,19 +1328,31 @@ rewriteIdentity p scrut = goR
 --   arm body, none of its binders are inlined either — see 'scrutShadowedIn'.
 inlineArm :: Bool -> Name -> [(Name, Int)] -> CExpr -> CExpr
 inlineArm reuseable s binders body
-  | reuseable, reconstructsSameArity (length binders) body = body
+  | reuseable, reuseTargetArm (length binders) body = body
   | scrutShadowedIn s body = body
   | otherwise =
       let occ = occurrences body
           eligible = Map.fromList [(v, CProj s (k + 1)) | (v, k) <- binders, Map.lookup v occ == Just (1, False)]
        in if Map.null eligible then body else substVars eligible body
 
+-- | Is an arm with @arity@ field binders a 'Awsum.Reuse' target the same-arity
+--   carve-out must not disturb — a field-binding arm (@arity > 0@) whose body
+--   rebuilds a cell of that same arity? The single source of the carve-out's
+--   shape, shared by the single-use-binder inline ('inlineArm') and the
+--   identical-arms collapse ('collapseIdentical'): only a reuse-eligible
+--   scrutinee (the @reuseable@ caller flag) consults it, and only there is the
+--   extracted-binder reconstruction Reuse rewrites in place. Binder-less arms
+--   are never targets — their "arity" is zero, which any nullary constructor
+--   in the body would match, and there is no field cell to reuse.
+reuseTargetArm :: Int -> CExpr -> Bool
+reuseTargetArm arity body = arity > 0 && reconstructsSameArity arity body
+
 -- | Does the arm body build a 'CCon' of exactly @arity@ fields — a cell the
 --   same shape as the scrutinee, which 'Awsum.Reuse' could rewrite into an
---   in-place 'CReuse' on the scrutinee? Consulted only for reuse-eligible
---   scrutinees ('scrutReuseEligible'); within that scope it stays
---   conservative — any same-arity 'CCon' counts, whether or not Reuse will
---   actually fire.
+--   in-place 'CReuse' on the scrutinee? Consulted only through 'reuseTargetArm'
+--   (for reuse-eligible scrutinees, 'scrutReuseEligible'); within that scope it
+--   stays conservative — any same-arity 'CCon' counts, whether or not Reuse
+--   will actually fire.
 reconstructsSameArity :: Int -> CExpr -> Bool
 reconstructsSameArity arity = go
   where
@@ -1418,7 +1365,7 @@ reconstructsSameArity arity = go
       CLoop b -> go b
       CContinue xs -> any go xs
       CLet _ rhs b -> go rhs || go b
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> any go fs
       CJoin _ _ body inner -> go body || go inner
       CJump _ args -> any go args
@@ -1464,7 +1411,7 @@ boundNamesIn = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> foldMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> foldMap go fs
       -- The join parameters are value binders; the join name is a label in
       -- its own namespace and cannot capture a value name.
@@ -1507,7 +1454,7 @@ occurrences = go
       CLoop b -> go b
       CContinue xs -> goList xs
       CLet n rhs b -> merge (go rhs) (shadow [n] (go b))
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       -- The join name is a label, not a value occurrence; the parameters
       -- shadow inside the join body only.
       CJoin _ ps body inner -> merge (shadow ps (go body)) (go inner)
@@ -1545,7 +1492,7 @@ substVars = go
       CLoop b -> CLoop (go sub b)
       CContinue xs -> CContinue (map (go sub) xs)
       CLet n rhs b -> CLet n (go sub rhs) (go (Map.delete n sub) b)
-      CDrop k n b -> CDrop k n (go sub b)
+      CDrop n b -> CDrop n (go sub b)
       CReuse rm n t fs -> CReuse rm n t (map (go sub) fs)
       CJoin j ps body inner -> CJoin j ps (go (foldr Map.delete sub ps) body) (go sub inner)
       CJump j args -> CJump j (map (go sub) args)

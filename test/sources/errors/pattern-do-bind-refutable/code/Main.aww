@@ -1,10 +1,9 @@
 {- Refutable pattern on the LHS of a do-bind: `Just x <- e` where
    `e : Either err (Maybe a)`. The do-desugar produces a case
    whose Right arm uses only `Just x`, leaving `Right Nothing`
-   uncovered. The exhaustiveness recursion in `caseArmsNominal`
-   (added when destructuring let-bindings landed) walks into
-   nested patterns and reports the missing constructor — same
-   diagnostic the user would get from a hand-written `case ... of
+   uncovered. Matrix exhaustiveness walks into the nested pattern
+   and names the uncovered value `Right Nothing` — same diagnostic
+   the user would get from a hand-written `case ... of
    Right (Just x) -> …; Left _ -> …`.
 
    Fix: write the inner case explicitly with both `Just` and

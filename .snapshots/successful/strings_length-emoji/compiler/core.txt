@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -65,7 +65,7 @@ CoreProgram
                         [
                             ( 3
                             , [ "$do_e_3" ]
-                            , CDrop DropFreeUnchecked "$do_e_3"
+                            , CDrop "$do_e_3"
                                 ( CCon 3
                                     [ CVar "$do_e_3" ]
                                 )
@@ -73,7 +73,7 @@ CoreProgram
                         ,
                             ( 4
                             , [ "s0" ]
-                            , CDrop DropFreeUnchecked "s0"
+                            , CDrop "s0"
                                 ( CCase
                                     ( CCall
                                         ( CBuiltIn "concatString" )
@@ -86,7 +86,7 @@ CoreProgram
                                     [
                                         ( 3
                                         , [ "$do_e_2" ]
-                                        , CDrop DropFreeUnchecked "$do_e_2"
+                                        , CDrop "$do_e_2"
                                             ( CCon 3
                                                 [ CVar "$do_e_2" ]
                                             )
@@ -94,7 +94,7 @@ CoreProgram
                                     ,
                                         ( 4
                                         , [ "s1" ]
-                                        , CDrop DropFreeUnchecked "s1"
+                                        , CDrop "s1"
                                             ( CCase
                                                 ( CCall
                                                     ( CBuiltIn "concatString" )
@@ -105,7 +105,7 @@ CoreProgram
                                                 [
                                                     ( 3
                                                     , [ "$do_e_1" ]
-                                                    , CDrop DropFreeUnchecked "$do_e_1"
+                                                    , CDrop "$do_e_1"
                                                         ( CCon 3
                                                             [ CVar "$do_e_1" ]
                                                         )
@@ -113,7 +113,7 @@ CoreProgram
                                                 ,
                                                     ( 4
                                                     , [ "s2" ]
-                                                    , CDrop DropFreeUnchecked "s2"
+                                                    , CDrop "s2"
                                                         ( CCase
                                                             ( CCall
                                                                 ( CBuiltIn "concatString" )
@@ -126,7 +126,7 @@ CoreProgram
                                                             [
                                                                 ( 3
                                                                 , [ "$do_e_0" ]
-                                                                , CDrop DropFreeUnchecked "$do_e_0"
+                                                                , CDrop "$do_e_0"
                                                                     ( CCon 3
                                                                         [ CVar "$do_e_0" ]
                                                                     )
@@ -134,7 +134,7 @@ CoreProgram
                                                             ,
                                                                 ( 4
                                                                 , [ "s3" ]
-                                                                , CDrop DropFreeUnchecked "s3"
+                                                                , CDrop "s3"
                                                                     ( CCall
                                                                         ( CBuiltIn "concatString" )
                                                                         [ CVar "s3"
@@ -286,7 +286,7 @@ CoreProgram
                     ( CVar "$cps$$df$andThenIO$4" )
                     [ CLet "$inl3$x"
                         ( CVar "res" )
-                        ( CDrop DropFreeUnchecked "$inl3$x"
+                        ( CDrop "$inl3$x"
                             ( CCase
                                 ( CVar "$inl3$x" )
                                 [
@@ -344,9 +344,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 21
@@ -379,9 +379,9 @@ CoreProgram
                             [ "$pk_21"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_21"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_21"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_21"
                                         , CReuse ReuseUnique "$k" 7
@@ -431,9 +431,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 23
@@ -466,9 +466,9 @@ CoreProgram
                             [ "$pk_23"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_23"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_23"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_23"
                                         , CReuse ReuseUnique "$k" 7

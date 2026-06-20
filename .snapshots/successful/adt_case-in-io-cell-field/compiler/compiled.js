@@ -21,21 +21,21 @@
     }
   };
 
-  const main = (v__inl2_x =>
-    [
-      7,
-      (s => {
-        switch (s[0]) {
-          case 11: {
-            return "n";
-          }
-          case 12: {
-            return String(v__inl2_x[1]);
-          }
+  const v__inl2_x = [12, 1 | 0];
+  const main = [
+    7,
+    (s => {
+      switch (s[0]) {
+        case 11: {
+          return "n";
         }
-      })(v__inl2_x),
-      [5, [0]]
-    ])([12, 1 | 0]);
+        case 12: {
+          return String(v__inl2_x[1]);
+        }
+      }
+    })(v__inl2_x),
+    [5, [0]]
+  ];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

@@ -206,60 +206,60 @@
     }
   };
 
-  const v_runDemo = (v__inl5_depth =>
-    (() => {
-      let v__inl7_scrut;
-      $join6: {
-        const __s = v_buildLeft(v__inl5_depth, [24]);
-        switch (__s[0]) {
-          case 3: {
-            const v__inl1__do_e_3 = __s[1];
-            return [3, v__inl1__do_e_3];
-          }
-          case 4: {
-            const v__inl2_l = __s[1];
-            v__inl7_scrut = (s => {
-              switch (s[0]) {
-                case 3: {
-                  const v__inl3__do_e_2 = s[1];
-                  return [3, v__inl3__do_e_2];
-                }
-                case 4: {
-                  const v__inl4_r = s[1];
-                  return [4, [25, v__inl2_l, 0 | 0, v__inl4_r]];
-                }
-              }
-            })(v_buildRight(v__inl5_depth, [24]));
-            break $join6;
-          }
-        }
-      }
-      switch (v__inl7_scrut[0]) {
+  const v__inl5_depth = 5000000 | 0;
+  const v_runDemo = (() => {
+    let v__inl7_scrut;
+    $join6: {
+      const __s = v_buildLeft(v__inl5_depth, [24]);
+      switch (__s[0]) {
         case 3: {
-          return v__inl7_scrut;
+          const v__inl1__do_e_3 = __s[1];
+          return [3, v__inl1__do_e_3];
         }
         case 4: {
-          {
-            const __s = v_mirrorN(25 | 0, v__inl7_scrut[1]);
-            switch (__s[0]) {
+          const v__inl2_l = __s[1];
+          v__inl7_scrut = (s => {
+            switch (s[0]) {
               case 3: {
-                const v__do_e_0 = __s[1];
-                return [3, v__do_e_0];
+                const v__inl3__do_e_2 = s[1];
+                return [3, v__inl3__do_e_2];
               }
               case 4: {
-                const v_mirrored = __s[1];
-                return [
-                  4,
-                  v__scc_deepestLeftA_deepestLeftB_deepestLeftC(
-                    [26, 0 | 0, v_mirrored]
-                  )
-                ];
+                const v__inl4_r = s[1];
+                return [4, [25, v__inl2_l, 0 | 0, v__inl4_r]];
               }
+            }
+          })(v_buildRight(v__inl5_depth, [24]));
+          break $join6;
+        }
+      }
+    }
+    switch (v__inl7_scrut[0]) {
+      case 3: {
+        return v__inl7_scrut;
+      }
+      case 4: {
+        {
+          const __s = v_mirrorN(25 | 0, v__inl7_scrut[1]);
+          switch (__s[0]) {
+            case 3: {
+              const v__do_e_0 = __s[1];
+              return [3, v__do_e_0];
+            }
+            case 4: {
+              const v_mirrored = __s[1];
+              return [
+                4,
+                v__scc_deepestLeftA_deepestLeftB_deepestLeftC(
+                  [26, 0 | 0, v_mirrored]
+                )
+              ];
             }
           }
         }
       }
-    })())(5000000 | 0);
+    }
+  })();
 
   const main = (s => {
     switch (s[0]) {

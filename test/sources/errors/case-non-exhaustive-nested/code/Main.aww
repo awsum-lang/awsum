@@ -1,8 +1,8 @@
-{- Exhaustiveness must recurse into nested constructor patterns:
-   here the top-level `Right` / `Left` are both covered, but the
-   `Right`-arm's inner column has only `Just _` and so leaves
-   `Right Nothing` uncovered. Expected diagnostic is
-   `NonExhaustiveCase` on `Maybe`, naming `Nothing` as missing. -}
+{- Exhaustiveness recurses into nested constructor patterns: the
+   top-level `Right` / `Left` are both covered, but the `Right`-arm's
+   inner column has only `Just x`, so `Right Nothing` matches no arm.
+   The matrix check reports that uncovered combination as the
+   witness in the diagnostic. -}
 
 import IO.Stdout
 

@@ -143,7 +143,7 @@
   .method private hidebysig static object v_loop(object,object,object) cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
   IL_tco_loop:
     ldarg.0
     ldc.i4.0

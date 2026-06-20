@@ -80,31 +80,6 @@ transformDecl topLevel nextTag = \case
     | otherwise -> (nextTag, [CFunDef f params body])
   d@CValDef {} -> (nextTag, [d])
 
--- | Free variables of a Core expression. Arm pattern binders scope over
--- their body only and are subtracted.
-freeVars :: CExpr -> Set Name
-freeVars = \case
-  CVar n -> Set.singleton n
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
-  CCall c xs -> freeVars c <> foldMap freeVars xs
-  CCon _ fs -> foldMap freeVars fs
-  CCase s alts -> freeVars s <> foldMap armFv alts
-  CRow _ v -> freeVars v
-  CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
-  CLoop b -> freeVars b
-  CContinue xs -> foldMap freeVars xs
-  CDrop _ n b -> Set.delete n (freeVars b)
-  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
-  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
-  CProj n _ -> Set.singleton n
-  CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
-  CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
-  where
-    armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
-    rowArmFv (_, bound, body) = freeVars body `Set.difference` Set.singleton bound
-
 -- | One defunctionalized continuation.
 data KCon = KCon
   { kconTag :: !Int,
@@ -214,10 +189,9 @@ goTail env = go
             pure (t, vs, b')
           pure (CCase scrutVal alts')
       -- Tail row-case (structural sum): same shape as the nominal 'CCase'
-      -- above — scrutinee non-tail, each arm body in tail position. Without
-      -- this arm a tail-position row-case falls to the 'other' catch-all,
-      -- which wraps the whole case (self-call and all) in 'applyK' and leaves
-      -- a buried non-tail self-call un-CPS'd.
+      -- above — scrutinee non-tail, each arm body in tail position, so a buried
+      -- self-call in an arm is CPS'd instead of being wrapped whole in 'applyK'
+      -- with the self-call left un-CPS'd.
       CRowCase scrut alts ->
         goNonTail env scrut $ \scrutVal -> do
           alts' <- forM alts $ \(t, v, b) -> do
@@ -234,13 +208,26 @@ goTail env = go
           pure (applyK env (CCon tag fieldVals))
       -- Tail row injection: the injected value is the only sub-expression,
       -- like a one-field 'CCon' — evaluate it non-tail so a buried self-call
-      -- is CPS'd, then apply the continuation to the tagged value. Identical
-      -- to the 'other' catch-all when the value harbours no self-call.
+      -- is CPS'd, then apply the continuation to the tagged value.
       CRow tag v ->
         goNonTail env v $ \vVal ->
           pure (applyK env (CRow tag vVal))
-      -- Tail trivial: pass straight to apply.
-      other -> pure (applyK env other)
+      -- Tail trivial leaves: hand the value straight to the continuation.
+      e@(CVar _) -> pure (applyK env e)
+      e@(CString _) -> pure (applyK env e)
+      e@(CIntLit _ _) -> pure (applyK env e)
+      e@(CBuiltIn _) -> pure (applyK env e)
+      -- Impossible in Cps's input: every node below is minted by a later pass
+      -- (see 'goNonTail'). Enumerated so a catch-all can't silently wrap one in
+      -- 'applyK' and bury a self-call sitting in its tail sub-position.
+      CLoop _ -> error "Awsum.Cps: CLoop reached goTail — Cps must run before Tco"
+      CContinue _ -> error "Awsum.Cps: CContinue reached goTail — Cps must run before Tco"
+      CDrop {} -> error "Awsum.Cps: CDrop reached goTail — Cps must run before insertDrops"
+      CReuse {} -> error "Awsum.Cps: CReuse reached goTail — Cps must run before insertReuse"
+      CLet {} -> error "Awsum.Cps: CLet reached goTail — Cps must run before Simplify"
+      CProj {} -> error "Awsum.Cps: CProj reached goTail — Cps must run before Simplify"
+      CJoin {} -> error "Awsum.Cps: CJoin reached goTail — Cps must run before Simplify"
+      CJump {} -> error "Awsum.Cps: CJump reached goTail — Cps must run before Simplify"
 
 -- | Build @$apply$f $k e@.
 applyK :: CpsEnv -> CExpr -> CExpr
@@ -276,8 +263,6 @@ goNonTail env expr kont = case expr of
   CString _ -> kont expr
   CIntLit _ _ -> kont expr
   CBuiltIn _ -> kont expr
-  CProj _ _ -> kont expr -- trivial: a pure field read, no buried self-call
-  CLet {} -> error "Cps goNonTail: CLet is handled in core-simplifier step 2 (CPS over ANF)"
   -- Non-self call: evaluate args in non-tail, then synchronous call.
   CCall (CVar n) args
     | n == env.cpsSelfF ->
@@ -337,23 +322,26 @@ goNonTail env expr kont = case expr of
         b' <- goNonTail env b kont
         pure (t, v, b')
       pure (CRowCase scrutVal alts')
-  -- 'CLoop' / 'CContinue' are produced by 'Awsum.Tco' /after/ this
-  -- pass, so seeing them here would be a pipeline bug.
+  -- Every constructor below is minted by a /later/ pass, so reaching it in
+  -- Cps's input is a pipeline bug. Enumerated (no catch-all) so a future
+  -- 'CExpr' node surfaces as an incomplete-pattern failure, not a silent slip.
+  --
+  -- 'CLoop' / 'CContinue' are produced by 'Awsum.Tco' /after/ this pass.
   CLoop _ ->
     error "Awsum.Cps: CLoop reached goNonTail — Cps must run before Tco"
   CContinue _ ->
     error "Awsum.Cps: CContinue reached goNonTail — Cps must run before Tco"
-  -- 'CDrop' is produced by 'Awsum.Lifetime.insertDrops' /after/ Tco,
-  -- so seeing it here would also be a pipeline bug.
+  -- 'CDrop' is produced by 'Awsum.Lifetime.insertDrops' /after/ Tco.
   CDrop {} ->
     error "Awsum.Cps: CDrop reached goNonTail — Cps must run before insertDrops"
-  -- 'CReuse' is produced by 'Awsum.Reuse.insertReuse' /after/
-  -- insertDrops (which is after Tco, which is after Cps), so seeing
-  -- it here would also be a pipeline bug.
+  -- 'CReuse' is produced by 'Awsum.Reuse.insertReuse' /after/ insertDrops.
   CReuse {} ->
     error "Awsum.Cps: CReuse reached goNonTail — Cps must run before insertReuse"
-  -- 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' /after/ Tco, so
-  -- seeing them here would also be a pipeline bug.
+  -- 'CLet' / 'CProj' / 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' /after/ Tco.
+  CLet {} ->
+    error "Awsum.Cps: CLet reached goNonTail — Cps must run before Simplify"
+  CProj {} ->
+    error "Awsum.Cps: CProj reached goNonTail — Cps must run before Simplify"
   CJoin {} ->
     error "Awsum.Cps: CJoin reached goNonTail — Cps must run before Simplify"
   CJump {} ->
@@ -386,51 +374,11 @@ genApplyBody kTopTag kParam xParam kcons =
       let pkName :: Name
           pkName = "$pk_" <> show (kconTag kcon)
           binders = pkName : kconCaptured kcon
-          -- Two alpha-renames: 'kconReceivedVar' → $x (received value
-          -- lives in the apply's second parameter), and kParam ($k)
-          -- → pkName (parent continuation lives in the arm binder).
+          -- Two renames: 'kconReceivedVar' → $x (received value lives in
+          -- the apply's second parameter), and kParam ($k) → pkName (parent
+          -- continuation lives in the arm binder). 'Awsum.Core.renameVar'
+          -- is fresh-target, so folding the two doesn't capture.
           renamed =
-            alphaRename kParam pkName
-              $ alphaRename (kconReceivedVar kcon) xParam (kconApplyBody kcon)
+            renameVar kParam pkName
+              $ renameVar (kconReceivedVar kcon) xParam (kconApplyBody kcon)
        in (kconTag kcon, binders, renamed)
-
--- | Replace every free occurrence of @from@ in @e@ with @to@. Arm
--- binders shadow, so don't descend under one that reintroduces @from@.
-alphaRename :: Name -> Name -> CExpr -> CExpr
-alphaRename from to = go
-  where
-    go = \case
-      CVar n | n == from -> CVar to
-      e@(CVar _) -> e
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
-      CCall c xs -> CCall (go c) (map go xs)
-      CCon t fs -> CCon t (map go fs)
-      CCase s alts -> CCase (go s) (map goAlt alts)
-      CRow t v -> CRow t (go v)
-      CRowCase s alts -> CRowCase (go s) (map goRowAlt alts)
-      CLoop b -> CLoop (go b)
-      CContinue xs -> CContinue (map go xs)
-      CDrop k n b
-        | n == from -> CDrop k n b -- the drop kills 'from'; stop descending
-        | otherwise -> CDrop k n (go b)
-      CReuse rm n t fs
-        | n == from -> CReuse rm to t (map go fs)
-        | otherwise -> CReuse rm n t (map go fs)
-      CLet x rhs body
-        | x == from -> CLet x (go rhs) body -- x shadows 'from' in body
-        | otherwise -> CLet x (go rhs) (go body)
-      CProj n i
-        | n == from -> CProj to i
-        | otherwise -> CProj n i
-      CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
-      CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
-
-    goAlt (t, vs, b)
-      | from `elem` vs = (t, vs, b) -- shadowed; don't rename further in
-      | otherwise = (t, vs, go b)
-
-    goRowAlt (t, v, b)
-      | v == from = (t, v, b) -- shadowed
-      | otherwise = (t, v, go b)

@@ -108,8 +108,8 @@ data TParam = TParam SrcSpan Type' Name
   deriving stock (Show, Eq)
 
 -- | Typed pattern. Each binder carries its resolved type (consumed by
---   lowering for the binder's 'Awsum.Core.CDropKind'); 'TPAscribe'
---   carries the alternative type the row arm selects.
+--   lowering); 'TPAscribe' carries the alternative type the row arm
+--   selects.
 data TPattern
   = TPVar SrcSpan Type' Name
   | TPWild SrcSpan Type'

@@ -9,49 +9,47 @@
   const __concat = (a, b) =>
     a.length + b.length > 134217728 ? [3, [19]] : [4, a + b];
 
-  const v_wE2str = (v__inl77_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl77_x;
-        }
-        case 4: {
-          const v__inl74___input = [4, v__inl77_x[1]];
-          switch (v__inl74___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl74___input[1]]];
-            }
-            case 4: {
-              return v__inl74___input;
-            }
-          }
-        }
+  const v__inl69___input = [3, "kS"];
+  const v__inl77_x = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [1615808600, v__inl69___input[1]]];
       }
-    })(v__inl77_x))(
-    (v__inl69___input =>
-      (s => {
-        switch (s[0]) {
+      case 4: {
+        return v__inl69___input;
+      }
+    }
+  })(v__inl69___input);
+  const v_wE2str = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl77_x;
+      }
+      case 4: {
+        const v__inl74___input = [4, v__inl77_x[1]];
+        switch (v__inl74___input[0]) {
           case 3: {
-            return [3, [1615808600, v__inl69___input[1]]];
+            return [3, [2252990199, v__inl74___input[1]]];
           }
           case 4: {
-            return v__inl69___input;
+            return v__inl74___input;
           }
         }
-      })(v__inl69___input))([3, "kS"])
-  );
-
-  const v_twoE2 = (v__inl95___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, v__inl95___input[1]]];
-        }
-        case 4: {
-          return v__inl95___input;
-        }
       }
-    })(v__inl95___input))([3, [24]]);
+    }
+  })(v__inl77_x);
+
+  const v__inl95___input = [3, [24]];
+  const v_twoE2 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, v__inl95___input[1]]];
+      }
+      case 4: {
+        return v__inl95___input;
+      }
+    }
+  })(v__inl95___input);
 
   const v_tagged = (v_label, v_val) => {
     {
@@ -81,263 +79,257 @@
     }
   };
 
-  const v_strE2 = (v__inl137___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, v__inl137___input[1]]];
-        }
-        case 4: {
-          return v__inl137___input;
-        }
+  const v__inl137___input = [3, [24]];
+  const v_strE2 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, v__inl137___input[1]]];
       }
-    })(v__inl137___input))([3, [24]]);
+      case 4: {
+        return v__inl137___input;
+      }
+    }
+  })(v__inl137___input);
 
   const v_seedT = [4, 4 | 0];
 
-  const v_twoOk = (v__inl112_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [925038822, v__inl112_x[1]]];
-        }
-        case 4: {
-          const v__inl109___input = [4, v__inl112_x[1]];
-          switch (v__inl109___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl109___input[1]]];
-            }
-            case 4: {
-              return v__inl109___input;
-            }
-          }
-        }
+  const v__inl112_x = v_seedT;
+  const v_twoOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl112_x[1]]];
       }
-    })(v__inl112_x))(v_seedT);
-
-  const v_wE3 = (v__inl51_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl51_x;
-        }
-        case 4: {
-          const v__inl48___input = [3, [24]];
-          switch (v__inl48___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl48___input[1]]];
-            }
-            case 4: {
-              return v__inl48___input;
-            }
-          }
-        }
-      }
-    })(v__inl51_x))(
-    (v__inl45_x =>
-      (s => {
-        switch (s[0]) {
+      case 4: {
+        const v__inl109___input = [4, v__inl112_x[1]];
+        switch (v__inl109___input[0]) {
           case 3: {
-            return [3, [925038822, v__inl45_x[1]]];
+            return [3, [2252990199, v__inl109___input[1]]];
           }
           case 4: {
-            const v__inl42___input = [4, v__inl45_x[1]];
-            switch (v__inl42___input[0]) {
-              case 3: {
-                return [3, [1615808600, v__inl42___input[1]]];
-              }
-              case 4: {
-                return v__inl42___input;
-              }
-            }
-          }
-        }
-      })(v__inl45_x))(v_seedT)
-  );
-
-  const v_wOk = (v__inl89_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl89_x;
-        }
-        case 4: {
-          const v__inl86___input = [4, v__inl89_x[1]];
-          switch (v__inl86___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl86___input[1]]];
-            }
-            case 4: {
-              return v__inl86___input;
-            }
+            return v__inl109___input;
           }
         }
       }
-    })(v__inl89_x))(
-    (v__inl83_x =>
-      (s => {
-        switch (s[0]) {
+    }
+  })(v__inl112_x);
+
+  const v__inl45_x = v_seedT;
+  const v__inl51_x = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl45_x[1]]];
+      }
+      case 4: {
+        const v__inl42___input = [4, v__inl45_x[1]];
+        switch (v__inl42___input[0]) {
           case 3: {
-            return [3, [925038822, v__inl83_x[1]]];
+            return [3, [1615808600, v__inl42___input[1]]];
           }
           case 4: {
-            const v__inl80___input = [4, v__inl83_x[1]];
-            switch (v__inl80___input[0]) {
-              case 3: {
-                return [3, [1615808600, v__inl80___input[1]]];
-              }
-              case 4: {
-                return v__inl80___input;
-              }
-            }
+            return v__inl42___input;
           }
         }
-      })(v__inl83_x))(v_seedT)
-  );
+      }
+    }
+  })(v__inl45_x);
+  const v_wE3 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl51_x;
+      }
+      case 4: {
+        const v__inl48___input = [3, [24]];
+        switch (v__inl48___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl48___input[1]]];
+          }
+          case 4: {
+            return v__inl48___input;
+          }
+        }
+      }
+    }
+  })(v__inl51_x);
+
+  const v__inl83_x = v_seedT;
+  const v__inl89_x = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl83_x[1]]];
+      }
+      case 4: {
+        const v__inl80___input = [4, v__inl83_x[1]];
+        switch (v__inl80___input[0]) {
+          case 3: {
+            return [3, [1615808600, v__inl80___input[1]]];
+          }
+          case 4: {
+            return v__inl80___input;
+          }
+        }
+      }
+    }
+  })(v__inl83_x);
+  const v_wOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl89_x;
+      }
+      case 4: {
+        const v__inl86___input = [4, v__inl89_x[1]];
+        switch (v__inl86___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl86___input[1]]];
+          }
+          case 4: {
+            return v__inl86___input;
+          }
+        }
+      }
+    }
+  })(v__inl89_x);
 
   const v_seedSecond = [3, [27]];
 
-  const v_twoSecond = (v__inl118_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [925038822, v__inl118_x[1]]];
-        }
-        case 4: {
-          const v__inl115___input = [4, v__inl118_x[1]];
-          switch (v__inl115___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl115___input[1]]];
-            }
-            case 4: {
-              return v__inl115___input;
-            }
+  const v__inl118_x = v_seedSecond;
+  const v_twoSecond = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl118_x[1]]];
+      }
+      case 4: {
+        const v__inl115___input = [4, v__inl118_x[1]];
+        switch (v__inl115___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl115___input[1]]];
+          }
+          case 4: {
+            return v__inl115___input;
           }
         }
       }
-    })(v__inl118_x))(v_seedSecond);
+    }
+  })(v__inl118_x);
 
   const v_seedS = [4, 3 | 0];
 
-  const v_strIdem = (v__inl9_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl9_x;
-        }
-        case 4: {
-          return [3, "kS"];
-        }
+  const v__inl9_x = v_seedS;
+  const v_strIdem = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl9_x;
       }
-    })(v__inl9_x))(v_seedS);
+      case 4: {
+        return [3, "kS"];
+      }
+    }
+  })(v__inl9_x);
 
-  const v_strOk = (v__inl154_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [1615808600, v__inl154_x[1]]];
-        }
-        case 4: {
-          const v__inl151___input = [4, v__inl154_x[1]];
-          switch (v__inl151___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl151___input[1]]];
-            }
-            case 4: {
-              return v__inl151___input;
-            }
+  const v__inl154_x = v_seedS;
+  const v_strOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [1615808600, v__inl154_x[1]]];
+      }
+      case 4: {
+        const v__inl151___input = [4, v__inl154_x[1]];
+        switch (v__inl151___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl151___input[1]]];
+          }
+          case 4: {
+            return v__inl151___input;
           }
         }
       }
-    })(v__inl154_x))(v_seedS);
+    }
+  })(v__inl154_x);
 
   const v_seedNever = [4, 1 | 0];
 
   const v_seedLeftS = [3, "seedS"];
 
-  const v_strE1 = (v__inl148_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [1615808600, v__inl148_x[1]]];
-        }
-        case 4: {
-          const v__inl145___input = [4, v__inl148_x[1]];
-          switch (v__inl145___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl145___input[1]]];
-            }
-            case 4: {
-              return v__inl145___input;
-            }
+  const v__inl148_x = v_seedLeftS;
+  const v_strE1 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [1615808600, v__inl148_x[1]]];
+      }
+      case 4: {
+        const v__inl145___input = [4, v__inl148_x[1]];
+        switch (v__inl145___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl145___input[1]]];
+          }
+          case 4: {
+            return v__inl145___input;
           }
         }
       }
-    })(v__inl148_x))(v_seedLeftS);
+    }
+  })(v__inl148_x);
 
   const v_seedLeftA = [3, [24]];
 
   const v_seedFirst = [3, [26]];
 
-  const v_twoFirst = (v__inl106_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [925038822, v__inl106_x[1]]];
-        }
-        case 4: {
-          const v__inl103___input = [4, v__inl106_x[1]];
-          switch (v__inl103___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl103___input[1]]];
-            }
-            case 4: {
-              return v__inl103___input;
-            }
-          }
-        }
+  const v__inl106_x = v_seedFirst;
+  const v_twoFirst = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl106_x[1]]];
       }
-    })(v__inl106_x))(v_seedFirst);
-
-  const v_wE1 = (v__inl66_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl66_x;
-        }
-        case 4: {
-          const v__inl63___input = [4, v__inl66_x[1]];
-          switch (v__inl63___input[0]) {
-            case 3: {
-              return [3, [2252990199, v__inl63___input[1]]];
-            }
-            case 4: {
-              return v__inl63___input;
-            }
-          }
-        }
-      }
-    })(v__inl66_x))(
-    (v__inl60_x =>
-      (s => {
-        switch (s[0]) {
+      case 4: {
+        const v__inl103___input = [4, v__inl106_x[1]];
+        switch (v__inl103___input[0]) {
           case 3: {
-            return [3, [925038822, v__inl60_x[1]]];
+            return [3, [2252990199, v__inl103___input[1]]];
           }
           case 4: {
-            const v__inl57___input = [4, v__inl60_x[1]];
-            switch (v__inl57___input[0]) {
-              case 3: {
-                return [3, [1615808600, v__inl57___input[1]]];
-              }
-              case 4: {
-                return v__inl57___input;
-              }
-            }
+            return v__inl103___input;
           }
         }
-      })(v__inl60_x))(v_seedFirst)
-  );
+      }
+    }
+  })(v__inl106_x);
+
+  const v__inl60_x = v_seedFirst;
+  const v__inl66_x = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [925038822, v__inl60_x[1]]];
+      }
+      case 4: {
+        const v__inl57___input = [4, v__inl60_x[1]];
+        switch (v__inl57___input[0]) {
+          case 3: {
+            return [3, [1615808600, v__inl57___input[1]]];
+          }
+          case 4: {
+            return v__inl57___input;
+          }
+        }
+      }
+    }
+  })(v__inl60_x);
+  const v_wE1 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl66_x;
+      }
+      case 4: {
+        const v__inl63___input = [4, v__inl66_x[1]];
+        switch (v__inl63___input[0]) {
+          case 3: {
+            return [3, [2252990199, v__inl63___input[1]]];
+          }
+          case 4: {
+            return v__inl63___input;
+          }
+        }
+      }
+    }
+  })(v__inl66_x);
 
   const v_seedA = [4, 2 | 0];
 
@@ -356,128 +348,129 @@
     }
   };
 
-  const v_pureNever = (v__inl18_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl18_x;
-        }
-        case 4: {
-          return [4, v__inl18_x[1]];
-        }
+  const v__inl18_x = v_seedNever;
+  const v_pureNever = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl18_x;
       }
-    })(v__inl18_x))(v_seedNever);
+      case 4: {
+        return [4, v__inl18_x[1]];
+      }
+    }
+  })(v__inl18_x);
 
-  const v_nevRightOk = (v__inl15_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl15_x;
-        }
-        case 4: {
-          return [4, v__inl15_x[1]];
-        }
+  const v__inl15_x = v_seedA;
+  const v_nevRightOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl15_x;
       }
-    })(v__inl15_x))(v_seedA);
+      case 4: {
+        return [4, v__inl15_x[1]];
+      }
+    }
+  })(v__inl15_x);
 
-  const v_nevRightE1 = (v__inl12_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl12_x;
-        }
-        case 4: {
-          return [4, v__inl12_x[1]];
-        }
+  const v__inl12_x = v_seedLeftA;
+  const v_nevRightE1 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl12_x;
       }
-    })(v__inl12_x))(v_seedLeftA);
+      case 4: {
+        return [4, v__inl12_x[1]];
+      }
+    }
+  })(v__inl12_x);
 
-  const v_nevOk = (v__inl30_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl30_x;
-        }
-        case 4: {
-          return [4, v__inl30_x[1]];
-        }
+  const v__inl30_x = v_seedNever;
+  const v_nevOk = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl30_x;
       }
-    })(v__inl30_x))(v_seedNever);
+      case 4: {
+        return [4, v__inl30_x[1]];
+      }
+    }
+  })(v__inl30_x);
 
-  const v_nevFail = (v__inl27_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl27_x;
-        }
-        case 4: {
-          return [3, [24]];
-        }
+  const v__inl27_x = v_seedNever;
+  const v_nevFail = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl27_x;
       }
-    })(v__inl27_x))(v_seedNever);
+      case 4: {
+        return [3, [24]];
+      }
+    }
+  })(v__inl27_x);
 
-  const v_idemE2 = (v__inl24_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl24_x;
-        }
-        case 4: {
-          return [3, [24]];
-        }
+  const v__inl24_x = v_seedA;
+  const v_idemE2 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl24_x;
       }
-    })(v__inl24_x))(v_seedA);
+      case 4: {
+        return [3, [24]];
+      }
+    }
+  })(v__inl24_x);
 
-  const v_idemE1 = (v__inl21_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl21_x;
-        }
-        case 4: {
-          return [3, [24]];
-        }
+  const v__inl21_x = v_seedLeftA;
+  const v_idemE1 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl21_x;
       }
-    })(v__inl21_x))(v_seedLeftA);
+      case 4: {
+        return [3, [24]];
+      }
+    }
+  })(v__inl21_x);
 
-  const v_idem2Second = (v__inl6_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl6_x;
-        }
-        case 4: {
-          return [3, [27]];
-        }
+  const v__inl6_x = v_seedT;
+  const v_idem2Second = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl6_x;
       }
-    })(v__inl6_x))(v_seedT);
+      case 4: {
+        return [3, [27]];
+      }
+    }
+  })(v__inl6_x);
 
-  const v_idem2First = (v__inl3_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl3_x;
-        }
-        case 4: {
-          return [3, [27]];
-        }
+  const v__inl3_x = v_seedFirst;
+  const v_idem2First = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl3_x;
       }
-    })(v__inl3_x))(v_seedFirst);
+      case 4: {
+        return [3, [27]];
+      }
+    }
+  })(v__inl3_x);
 
-  const v_abE2 = (v__inl129___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2269767818, v__inl129___input[1]]];
-        }
-        case 4: {
-          return v__inl129___input;
-        }
+  const v__inl129___input = [3, [25]];
+  const v_abE2 = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2269767818, v__inl129___input[1]]];
       }
-    })(v__inl129___input))([3, [25]]);
+      case 4: {
+        return v__inl129___input;
+      }
+    }
+  })(v__inl129___input);
 
   const v_abE1 = [3, [2252990199, [24]]];
 
+  const v__inl157_e = v_nevOk;
   const v_render = (s => {
     switch (s[0]) {
       case 3: {
@@ -488,19 +481,19 @@
         const v_r01 = s[1];
         let v__inl297_scrut;
         $join296: {
+          const v__inl160_e = v_nevFail;
           const __s = v_tagged(
             "nevFail",
-            (v__inl160_e =>
-              (s => {
-                switch (s[0]) {
-                  case 3: {
-                    return "ErrA";
-                  }
-                  case 4: {
-                    return String(v__inl160_e[1]);
-                  }
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  return "ErrA";
                 }
-              })(v__inl160_e))(v_nevFail)
+                case 4: {
+                  return String(v__inl160_e[1]);
+                }
+              }
+            })(v__inl160_e)
           );
           switch (__s[0]) {
             case 3: {
@@ -521,19 +514,19 @@
           case 4: {
             let v__inl299_scrut;
             $join298: {
+              const v__inl165_e = v_nevRightOk;
               const __s = v_tagged(
                 "nevRightOk",
-                (v__inl165_e =>
-                  (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        return "ErrA";
-                      }
-                      case 4: {
-                        return String(v__inl165_e[1]);
-                      }
+                (s => {
+                  switch (s[0]) {
+                    case 3: {
+                      return "ErrA";
                     }
-                  })(v__inl165_e))(v_nevRightOk)
+                    case 4: {
+                      return String(v__inl165_e[1]);
+                    }
+                  }
+                })(v__inl165_e)
               );
               switch (__s[0]) {
                 case 3: {
@@ -557,19 +550,19 @@
               case 4: {
                 let v__inl301_scrut;
                 $join300: {
+                  const v__inl170_e = v_nevRightE1;
                   const __s = v_tagged(
                     "nevRightE1",
-                    (v__inl170_e =>
-                      (s => {
-                        switch (s[0]) {
-                          case 3: {
-                            return "ErrA";
-                          }
-                          case 4: {
-                            return String(v__inl170_e[1]);
-                          }
+                    (s => {
+                      switch (s[0]) {
+                        case 3: {
+                          return "ErrA";
                         }
-                      })(v__inl170_e))(v_nevRightE1)
+                        case 4: {
+                          return String(v__inl170_e[1]);
+                        }
+                      }
+                    })(v__inl170_e)
                   );
                   switch (__s[0]) {
                     case 3: {
@@ -593,10 +586,8 @@
                   case 4: {
                     let v__inl303_scrut;
                     $join302: {
-                      const __s = v_tagged(
-                        "pureNever",
-                        (v__inl173_e => String(v__inl173_e[1]))(v_pureNever)
-                      );
+                      const v__inl173_e = v_pureNever;
+                      const __s = v_tagged("pureNever", String(v__inl173_e[1]));
                       switch (__s[0]) {
                         case 3: {
                           const v__inl174__do_e_2 = __s[1];
@@ -619,27 +610,27 @@
                       case 4: {
                         let v__inl305_scrut;
                         $join304: {
+                          const v__inl180_e = v_strOk;
                           const __s = v_tagged(
                             "strOk",
-                            (v__inl180_e =>
-                              (s => {
-                                switch (s[0]) {
-                                  case 3: {
-                                    const v__inl176___pa0 = s[1];
-                                    switch (v__inl176___pa0[0]) {
-                                      case 1615808600: {
-                                        return v__inl176___pa0[1];
-                                      }
-                                      case 2252990199: {
-                                        return "ErrA";
-                                      }
+                            (s => {
+                              switch (s[0]) {
+                                case 3: {
+                                  const v__inl176___pa0 = s[1];
+                                  switch (v__inl176___pa0[0]) {
+                                    case 1615808600: {
+                                      return v__inl176___pa0[1];
+                                    }
+                                    case 2252990199: {
+                                      return "ErrA";
                                     }
                                   }
-                                  case 4: {
-                                    return String(v__inl180_e[1]);
-                                  }
                                 }
-                              })(v__inl180_e))(v_strOk)
+                                case 4: {
+                                  return String(v__inl180_e[1]);
+                                }
+                              }
+                            })(v__inl180_e)
                           );
                           switch (__s[0]) {
                             case 3: {
@@ -663,27 +654,27 @@
                           case 4: {
                             let v__inl307_scrut;
                             $join306: {
+                              const v__inl187_e = v_strE1;
                               const __s = v_tagged(
                                 "strE1",
-                                (v__inl187_e =>
-                                  (s => {
-                                    switch (s[0]) {
-                                      case 3: {
-                                        const v__inl183___pa0 = s[1];
-                                        switch (v__inl183___pa0[0]) {
-                                          case 1615808600: {
-                                            return v__inl183___pa0[1];
-                                          }
-                                          case 2252990199: {
-                                            return "ErrA";
-                                          }
+                                (s => {
+                                  switch (s[0]) {
+                                    case 3: {
+                                      const v__inl183___pa0 = s[1];
+                                      switch (v__inl183___pa0[0]) {
+                                        case 1615808600: {
+                                          return v__inl183___pa0[1];
+                                        }
+                                        case 2252990199: {
+                                          return "ErrA";
                                         }
                                       }
-                                      case 4: {
-                                        return String(v__inl187_e[1]);
-                                      }
                                     }
-                                  })(v__inl187_e))(v_strE1)
+                                    case 4: {
+                                      return String(v__inl187_e[1]);
+                                    }
+                                  }
+                                })(v__inl187_e)
                               );
                               switch (__s[0]) {
                                 case 3: {
@@ -707,27 +698,27 @@
                               case 4: {
                                 let v__inl309_scrut;
                                 $join308: {
+                                  const v__inl194_e = v_strE2;
                                   const __s = v_tagged(
                                     "strE2",
-                                    (v__inl194_e =>
-                                      (s => {
-                                        switch (s[0]) {
-                                          case 3: {
-                                            const v__inl190___pa0 = s[1];
-                                            switch (v__inl190___pa0[0]) {
-                                              case 1615808600: {
-                                                return v__inl190___pa0[1];
-                                              }
-                                              case 2252990199: {
-                                                return "ErrA";
-                                              }
+                                    (s => {
+                                      switch (s[0]) {
+                                        case 3: {
+                                          const v__inl190___pa0 = s[1];
+                                          switch (v__inl190___pa0[0]) {
+                                            case 1615808600: {
+                                              return v__inl190___pa0[1];
+                                            }
+                                            case 2252990199: {
+                                              return "ErrA";
                                             }
                                           }
-                                          case 4: {
-                                            return String(v__inl194_e[1]);
-                                          }
                                         }
-                                      })(v__inl194_e))(v_strE2)
+                                        case 4: {
+                                          return String(v__inl194_e[1]);
+                                        }
+                                      }
+                                    })(v__inl194_e)
                                   );
                                   switch (__s[0]) {
                                     case 3: {
@@ -751,19 +742,19 @@
                                   case 4: {
                                     let v__inl311_scrut;
                                     $join310: {
+                                      const v__inl199_e = v_strIdem;
                                       const __s = v_tagged(
                                         "strIdem",
-                                        (v__inl199_e =>
-                                          (s => {
-                                            switch (s[0]) {
-                                              case 3: {
-                                                return v__inl199_e[1];
-                                              }
-                                              case 4: {
-                                                return String(v__inl199_e[1]);
-                                              }
+                                        (s => {
+                                          switch (s[0]) {
+                                            case 3: {
+                                              return v__inl199_e[1];
                                             }
-                                          })(v__inl199_e))(v_strIdem)
+                                            case 4: {
+                                              return String(v__inl199_e[1]);
+                                            }
+                                          }
+                                        })(v__inl199_e)
                                       );
                                       switch (__s[0]) {
                                         case 3: {
@@ -787,31 +778,29 @@
                                       case 4: {
                                         let v__inl313_scrut;
                                         $join312: {
+                                          const v__inl206_e = v_abE1;
                                           const __s = v_tagged(
                                             "abE1",
-                                            (v__inl206_e =>
-                                              (s => {
-                                                switch (s[0]) {
-                                                  case 3: {
-                                                    {
-                                                      const __s = v__inl206_e[1];
-                                                      switch (__s[0]) {
-                                                        case 2252990199: {
-                                                          return "ErrA";
-                                                        }
-                                                        case 2269767818: {
-                                                          return "ErrB";
-                                                        }
+                                            (s => {
+                                              switch (s[0]) {
+                                                case 3: {
+                                                  {
+                                                    const __s = v__inl206_e[1];
+                                                    switch (__s[0]) {
+                                                      case 2252990199: {
+                                                        return "ErrA";
+                                                      }
+                                                      case 2269767818: {
+                                                        return "ErrB";
                                                       }
                                                     }
                                                   }
-                                                  case 4: {
-                                                    return String(
-                                                      v__inl206_e[1]
-                                                    );
-                                                  }
                                                 }
-                                              })(v__inl206_e))(v_abE1)
+                                                case 4: {
+                                                  return String(v__inl206_e[1]);
+                                                }
+                                              }
+                                            })(v__inl206_e)
                                           );
                                           switch (__s[0]) {
                                             case 3: {
@@ -835,31 +824,31 @@
                                           case 4: {
                                             let v__inl315_scrut;
                                             $join314: {
+                                              const v__inl213_e = v_abE2;
                                               const __s = v_tagged(
                                                 "abE2",
-                                                (v__inl213_e =>
-                                                  (s => {
-                                                    switch (s[0]) {
-                                                      case 3: {
-                                                        {
-                                                          const __s = v__inl213_e[1];
-                                                          switch (__s[0]) {
-                                                            case 2252990199: {
-                                                              return "ErrA";
-                                                            }
-                                                            case 2269767818: {
-                                                              return "ErrB";
-                                                            }
+                                                (s => {
+                                                  switch (s[0]) {
+                                                    case 3: {
+                                                      {
+                                                        const __s = v__inl213_e[1];
+                                                        switch (__s[0]) {
+                                                          case 2252990199: {
+                                                            return "ErrA";
+                                                          }
+                                                          case 2269767818: {
+                                                            return "ErrB";
                                                           }
                                                         }
                                                       }
-                                                      case 4: {
-                                                        return String(
-                                                          v__inl213_e[1]
-                                                        );
-                                                      }
                                                     }
-                                                  })(v__inl213_e))(v_abE2)
+                                                    case 4: {
+                                                      return String(
+                                                        v__inl213_e[1]
+                                                      );
+                                                    }
+                                                  }
+                                                })(v__inl213_e)
                                               );
                                               switch (__s[0]) {
                                                 case 3: {
@@ -883,41 +872,39 @@
                                               case 4: {
                                                 let v__inl317_scrut;
                                                 $join316: {
+                                                  const v__inl220_e = v_twoFirst;
                                                   const __s = v_tagged(
                                                     "twoFirst",
-                                                    (v__inl220_e =>
-                                                      (s => {
-                                                        switch (s[0]) {
-                                                          case 3: {
-                                                            const v__inl216___pa0 = s[1];
-                                                            switch (v__inl216___pa0[0]) {
-                                                              case 925038822: {
-                                                                {
-                                                                  const __s = v__inl216___pa0[1];
-                                                                  switch (__s[0]) {
-                                                                    case 26: {
-                                                                      return "First";
-                                                                    }
-                                                                    case 27: {
-                                                                      return "Second";
-                                                                    }
+                                                    (s => {
+                                                      switch (s[0]) {
+                                                        case 3: {
+                                                          const v__inl216___pa0 = s[1];
+                                                          switch (v__inl216___pa0[0]) {
+                                                            case 925038822: {
+                                                              {
+                                                                const __s = v__inl216___pa0[1];
+                                                                switch (__s[0]) {
+                                                                  case 26: {
+                                                                    return "First";
+                                                                  }
+                                                                  case 27: {
+                                                                    return "Second";
                                                                   }
                                                                 }
                                                               }
-                                                              case 2252990199: {
-                                                                return "ErrA";
-                                                              }
+                                                            }
+                                                            case 2252990199: {
+                                                              return "ErrA";
                                                             }
                                                           }
-                                                          case 4: {
-                                                            return String(
-                                                              v__inl220_e[1]
-                                                            );
-                                                          }
                                                         }
-                                                      })(v__inl220_e))(
-                                                      v_twoFirst
-                                                    )
+                                                        case 4: {
+                                                          return String(
+                                                            v__inl220_e[1]
+                                                          );
+                                                        }
+                                                      }
+                                                    })(v__inl220_e)
                                                   );
                                                   switch (__s[0]) {
                                                     case 3: {
@@ -944,41 +931,39 @@
                                                   case 4: {
                                                     let v__inl319_scrut;
                                                     $join318: {
+                                                      const v__inl227_e = v_twoSecond;
                                                       const __s = v_tagged(
                                                         "twoSecond",
-                                                        (v__inl227_e =>
-                                                          (s => {
-                                                            switch (s[0]) {
-                                                              case 3: {
-                                                                const v__inl223___pa0 = s[1];
-                                                                switch (v__inl223___pa0[0]) {
-                                                                  case 925038822: {
-                                                                    {
-                                                                      const __s = v__inl223___pa0[1];
-                                                                      switch (__s[0]) {
-                                                                        case 26: {
-                                                                          return "First";
-                                                                        }
-                                                                        case 27: {
-                                                                          return "Second";
-                                                                        }
+                                                        (s => {
+                                                          switch (s[0]) {
+                                                            case 3: {
+                                                              const v__inl223___pa0 = s[1];
+                                                              switch (v__inl223___pa0[0]) {
+                                                                case 925038822: {
+                                                                  {
+                                                                    const __s = v__inl223___pa0[1];
+                                                                    switch (__s[0]) {
+                                                                      case 26: {
+                                                                        return "First";
+                                                                      }
+                                                                      case 27: {
+                                                                        return "Second";
                                                                       }
                                                                     }
                                                                   }
-                                                                  case 2252990199: {
-                                                                    return "ErrA";
-                                                                  }
+                                                                }
+                                                                case 2252990199: {
+                                                                  return "ErrA";
                                                                 }
                                                               }
-                                                              case 4: {
-                                                                return String(
-                                                                  v__inl227_e[1]
-                                                                );
-                                                              }
                                                             }
-                                                          })(v__inl227_e))(
-                                                          v_twoSecond
-                                                        )
+                                                            case 4: {
+                                                              return String(
+                                                                v__inl227_e[1]
+                                                              );
+                                                            }
+                                                          }
+                                                        })(v__inl227_e)
                                                       );
                                                       switch (__s[0]) {
                                                         case 3: {
@@ -1005,41 +990,39 @@
                                                       case 4: {
                                                         let v__inl321_scrut;
                                                         $join320: {
+                                                          const v__inl234_e = v_twoE2;
                                                           const __s = v_tagged(
                                                             "twoE2",
-                                                            (v__inl234_e =>
-                                                              (s => {
-                                                                switch (s[0]) {
-                                                                  case 3: {
-                                                                    const v__inl230___pa0 = s[1];
-                                                                    switch (v__inl230___pa0[0]) {
-                                                                      case 925038822: {
-                                                                        {
-                                                                          const __s = v__inl230___pa0[1];
-                                                                          switch (__s[0]) {
-                                                                            case 26: {
-                                                                              return "First";
-                                                                            }
-                                                                            case 27: {
-                                                                              return "Second";
-                                                                            }
+                                                            (s => {
+                                                              switch (s[0]) {
+                                                                case 3: {
+                                                                  const v__inl230___pa0 = s[1];
+                                                                  switch (v__inl230___pa0[0]) {
+                                                                    case 925038822: {
+                                                                      {
+                                                                        const __s = v__inl230___pa0[1];
+                                                                        switch (__s[0]) {
+                                                                          case 26: {
+                                                                            return "First";
+                                                                          }
+                                                                          case 27: {
+                                                                            return "Second";
                                                                           }
                                                                         }
                                                                       }
-                                                                      case 2252990199: {
-                                                                        return "ErrA";
-                                                                      }
+                                                                    }
+                                                                    case 2252990199: {
+                                                                      return "ErrA";
                                                                     }
                                                                   }
-                                                                  case 4: {
-                                                                    return String(
-                                                                      v__inl234_e[1]
-                                                                    );
-                                                                  }
                                                                 }
-                                                              })(v__inl234_e))(
-                                                              v_twoE2
-                                                            )
+                                                                case 4: {
+                                                                  return String(
+                                                                    v__inl234_e[1]
+                                                                  );
+                                                                }
+                                                              }
+                                                            })(v__inl234_e)
                                                           );
                                                           switch (__s[0]) {
                                                             case 3: {
@@ -1066,41 +1049,39 @@
                                                           case 4: {
                                                             let v__inl323_scrut;
                                                             $join322: {
+                                                              const v__inl241_e = v_twoOk;
                                                               const __s = v_tagged(
                                                                 "twoOk",
-                                                                (v__inl241_e =>
-                                                                  (s => {
-                                                                    switch (s[0]) {
-                                                                      case 3: {
-                                                                        const v__inl237___pa0 = s[1];
-                                                                        switch (v__inl237___pa0[0]) {
-                                                                          case 925038822: {
-                                                                            {
-                                                                              const __s = v__inl237___pa0[1];
-                                                                              switch (__s[0]) {
-                                                                                case 26: {
-                                                                                  return "First";
-                                                                                }
-                                                                                case 27: {
-                                                                                  return "Second";
-                                                                                }
+                                                                (s => {
+                                                                  switch (s[0]) {
+                                                                    case 3: {
+                                                                      const v__inl237___pa0 = s[1];
+                                                                      switch (v__inl237___pa0[0]) {
+                                                                        case 925038822: {
+                                                                          {
+                                                                            const __s = v__inl237___pa0[1];
+                                                                            switch (__s[0]) {
+                                                                              case 26: {
+                                                                                return "First";
+                                                                              }
+                                                                              case 27: {
+                                                                                return "Second";
                                                                               }
                                                                             }
                                                                           }
-                                                                          case 2252990199: {
-                                                                            return "ErrA";
-                                                                          }
+                                                                        }
+                                                                        case 2252990199: {
+                                                                          return "ErrA";
                                                                         }
                                                                       }
-                                                                      case 4: {
-                                                                        return String(
-                                                                          v__inl241_e[1]
-                                                                        );
-                                                                      }
                                                                     }
-                                                                  })(
-                                                                    v__inl241_e
-                                                                  ))(v_twoOk)
+                                                                    case 4: {
+                                                                      return String(
+                                                                        v__inl241_e[1]
+                                                                      );
+                                                                    }
+                                                                  }
+                                                                })(v__inl241_e)
                                                               );
                                                               switch (__s[0]) {
                                                                 case 3: {
@@ -1127,24 +1108,22 @@
                                                               case 4: {
                                                                 let v__inl325_scrut;
                                                                 $join324: {
+                                                                  const v__inl246_e = v_idemE1;
                                                                   const __s = v_tagged(
                                                                     "idemE1",
-                                                                    (v__inl246_e =>
-                                                                      (s => {
-                                                                        switch (s[0]) {
-                                                                          case 3: {
-                                                                            return "ErrA";
-                                                                          }
-                                                                          case 4: {
-                                                                            return String(
-                                                                              v__inl246_e[1]
-                                                                            );
-                                                                          }
+                                                                    (s => {
+                                                                      switch (s[0]) {
+                                                                        case 3: {
+                                                                          return "ErrA";
                                                                         }
-                                                                      })(
-                                                                        v__inl246_e
-                                                                      ))(
-                                                                      v_idemE1
+                                                                        case 4: {
+                                                                          return String(
+                                                                            v__inl246_e[1]
+                                                                          );
+                                                                        }
+                                                                      }
+                                                                    })(
+                                                                      v__inl246_e
                                                                     )
                                                                   );
                                                                   switch (__s[0]) {
@@ -1172,24 +1151,22 @@
                                                                   case 4: {
                                                                     let v__inl327_scrut;
                                                                     $join326: {
+                                                                      const v__inl251_e = v_idemE2;
                                                                       const __s = v_tagged(
                                                                         "idemE2",
-                                                                        (v__inl251_e =>
-                                                                          (s => {
-                                                                            switch (s[0]) {
-                                                                              case 3: {
-                                                                                return "ErrA";
-                                                                              }
-                                                                              case 4: {
-                                                                                return String(
-                                                                                  v__inl251_e[1]
-                                                                                );
-                                                                              }
+                                                                        (s => {
+                                                                          switch (s[0]) {
+                                                                            case 3: {
+                                                                              return "ErrA";
                                                                             }
-                                                                          })(
-                                                                            v__inl251_e
-                                                                          ))(
-                                                                          v_idemE2
+                                                                            case 4: {
+                                                                              return String(
+                                                                                v__inl251_e[1]
+                                                                              );
+                                                                            }
+                                                                          }
+                                                                        })(
+                                                                          v__inl251_e
                                                                         )
                                                                       );
                                                                       switch (__s[0]) {
@@ -1217,34 +1194,32 @@
                                                                       case 4: {
                                                                         let v__inl329_scrut;
                                                                         $join328: {
+                                                                          const v__inl256_e = v_idem2First;
                                                                           const __s = v_tagged(
                                                                             "idem2First",
-                                                                            (v__inl256_e =>
-                                                                              (s => {
-                                                                                switch (s[0]) {
-                                                                                  case 3: {
-                                                                                    {
-                                                                                      const __s = v__inl256_e[1];
-                                                                                      switch (__s[0]) {
-                                                                                        case 26: {
-                                                                                          return "First";
-                                                                                        }
-                                                                                        case 27: {
-                                                                                          return "Second";
-                                                                                        }
+                                                                            (s => {
+                                                                              switch (s[0]) {
+                                                                                case 3: {
+                                                                                  {
+                                                                                    const __s = v__inl256_e[1];
+                                                                                    switch (__s[0]) {
+                                                                                      case 26: {
+                                                                                        return "First";
+                                                                                      }
+                                                                                      case 27: {
+                                                                                        return "Second";
                                                                                       }
                                                                                     }
                                                                                   }
-                                                                                  case 4: {
-                                                                                    return String(
-                                                                                      v__inl256_e[1]
-                                                                                    );
-                                                                                  }
                                                                                 }
-                                                                              })(
-                                                                                v__inl256_e
-                                                                              ))(
-                                                                              v_idem2First
+                                                                                case 4: {
+                                                                                  return String(
+                                                                                    v__inl256_e[1]
+                                                                                  );
+                                                                                }
+                                                                              }
+                                                                            })(
+                                                                              v__inl256_e
                                                                             )
                                                                           );
                                                                           switch (__s[0]) {
@@ -1272,34 +1247,32 @@
                                                                           case 4: {
                                                                             let v__inl331_scrut;
                                                                             $join330: {
+                                                                              const v__inl261_e = v_idem2Second;
                                                                               const __s = v_tagged(
                                                                                 "idem2Second",
-                                                                                (v__inl261_e =>
-                                                                                  (s => {
-                                                                                    switch (s[0]) {
-                                                                                      case 3: {
-                                                                                        {
-                                                                                          const __s = v__inl261_e[1];
-                                                                                          switch (__s[0]) {
-                                                                                            case 26: {
-                                                                                              return "First";
-                                                                                            }
-                                                                                            case 27: {
-                                                                                              return "Second";
-                                                                                            }
+                                                                                (s => {
+                                                                                  switch (s[0]) {
+                                                                                    case 3: {
+                                                                                      {
+                                                                                        const __s = v__inl261_e[1];
+                                                                                        switch (__s[0]) {
+                                                                                          case 26: {
+                                                                                            return "First";
+                                                                                          }
+                                                                                          case 27: {
+                                                                                            return "Second";
                                                                                           }
                                                                                         }
                                                                                       }
-                                                                                      case 4: {
-                                                                                        return String(
-                                                                                          v__inl261_e[1]
-                                                                                        );
-                                                                                      }
                                                                                     }
-                                                                                  })(
-                                                                                    v__inl261_e
-                                                                                  ))(
-                                                                                  v_idem2Second
+                                                                                    case 4: {
+                                                                                      return String(
+                                                                                        v__inl261_e[1]
+                                                                                      );
+                                                                                    }
+                                                                                  }
+                                                                                })(
+                                                                                  v__inl261_e
                                                                                 )
                                                                               );
                                                                               switch (__s[0]) {
@@ -1327,45 +1300,43 @@
                                                                               case 4: {
                                                                                 let v__inl333_scrut;
                                                                                 $join332: {
+                                                                                  const v__inl269_e = v_wE1;
                                                                                   const __s = v_tagged(
                                                                                     "wE1",
-                                                                                    (v__inl269_e =>
-                                                                                      (s => {
-                                                                                        switch (s[0]) {
-                                                                                          case 3: {
-                                                                                            const v__inl264___pa0 = s[1];
-                                                                                            switch (v__inl264___pa0[0]) {
-                                                                                              case 925038822: {
-                                                                                                {
-                                                                                                  const __s = v__inl264___pa0[1];
-                                                                                                  switch (__s[0]) {
-                                                                                                    case 26: {
-                                                                                                      return "First";
-                                                                                                    }
-                                                                                                    case 27: {
-                                                                                                      return "Second";
-                                                                                                    }
+                                                                                    (s => {
+                                                                                      switch (s[0]) {
+                                                                                        case 3: {
+                                                                                          const v__inl264___pa0 = s[1];
+                                                                                          switch (v__inl264___pa0[0]) {
+                                                                                            case 925038822: {
+                                                                                              {
+                                                                                                const __s = v__inl264___pa0[1];
+                                                                                                switch (__s[0]) {
+                                                                                                  case 26: {
+                                                                                                    return "First";
+                                                                                                  }
+                                                                                                  case 27: {
+                                                                                                    return "Second";
                                                                                                   }
                                                                                                 }
                                                                                               }
-                                                                                              case 1615808600: {
-                                                                                                return v__inl264___pa0[1];
-                                                                                              }
-                                                                                              case 2252990199: {
-                                                                                                return "ErrA";
-                                                                                              }
+                                                                                            }
+                                                                                            case 1615808600: {
+                                                                                              return v__inl264___pa0[1];
+                                                                                            }
+                                                                                            case 2252990199: {
+                                                                                              return "ErrA";
                                                                                             }
                                                                                           }
-                                                                                          case 4: {
-                                                                                            return String(
-                                                                                              v__inl269_e[1]
-                                                                                            );
-                                                                                          }
                                                                                         }
-                                                                                      })(
-                                                                                        v__inl269_e
-                                                                                      ))(
-                                                                                      v_wE1
+                                                                                        case 4: {
+                                                                                          return String(
+                                                                                            v__inl269_e[1]
+                                                                                          );
+                                                                                        }
+                                                                                      }
+                                                                                    })(
+                                                                                      v__inl269_e
                                                                                     )
                                                                                   );
                                                                                   switch (__s[0]) {
@@ -1393,45 +1364,43 @@
                                                                                   case 4: {
                                                                                     let v__inl335_scrut;
                                                                                     $join334: {
+                                                                                      const v__inl277_e = v_wE2str;
                                                                                       const __s = v_tagged(
                                                                                         "wE2str",
-                                                                                        (v__inl277_e =>
-                                                                                          (s => {
-                                                                                            switch (s[0]) {
-                                                                                              case 3: {
-                                                                                                const v__inl272___pa0 = s[1];
-                                                                                                switch (v__inl272___pa0[0]) {
-                                                                                                  case 925038822: {
-                                                                                                    {
-                                                                                                      const __s = v__inl272___pa0[1];
-                                                                                                      switch (__s[0]) {
-                                                                                                        case 26: {
-                                                                                                          return "First";
-                                                                                                        }
-                                                                                                        case 27: {
-                                                                                                          return "Second";
-                                                                                                        }
+                                                                                        (s => {
+                                                                                          switch (s[0]) {
+                                                                                            case 3: {
+                                                                                              const v__inl272___pa0 = s[1];
+                                                                                              switch (v__inl272___pa0[0]) {
+                                                                                                case 925038822: {
+                                                                                                  {
+                                                                                                    const __s = v__inl272___pa0[1];
+                                                                                                    switch (__s[0]) {
+                                                                                                      case 26: {
+                                                                                                        return "First";
+                                                                                                      }
+                                                                                                      case 27: {
+                                                                                                        return "Second";
                                                                                                       }
                                                                                                     }
                                                                                                   }
-                                                                                                  case 1615808600: {
-                                                                                                    return v__inl272___pa0[1];
-                                                                                                  }
-                                                                                                  case 2252990199: {
-                                                                                                    return "ErrA";
-                                                                                                  }
+                                                                                                }
+                                                                                                case 1615808600: {
+                                                                                                  return v__inl272___pa0[1];
+                                                                                                }
+                                                                                                case 2252990199: {
+                                                                                                  return "ErrA";
                                                                                                 }
                                                                                               }
-                                                                                              case 4: {
-                                                                                                return String(
-                                                                                                  v__inl277_e[1]
-                                                                                                );
-                                                                                              }
                                                                                             }
-                                                                                          })(
-                                                                                            v__inl277_e
-                                                                                          ))(
-                                                                                          v_wE2str
+                                                                                            case 4: {
+                                                                                              return String(
+                                                                                                v__inl277_e[1]
+                                                                                              );
+                                                                                            }
+                                                                                          }
+                                                                                        })(
+                                                                                          v__inl277_e
                                                                                         )
                                                                                       );
                                                                                       switch (__s[0]) {
@@ -1459,45 +1428,43 @@
                                                                                       case 4: {
                                                                                         let v__inl337_scrut;
                                                                                         $join336: {
+                                                                                          const v__inl285_e = v_wE3;
                                                                                           const __s = v_tagged(
                                                                                             "wE3",
-                                                                                            (v__inl285_e =>
-                                                                                              (s => {
-                                                                                                switch (s[0]) {
-                                                                                                  case 3: {
-                                                                                                    const v__inl280___pa0 = s[1];
-                                                                                                    switch (v__inl280___pa0[0]) {
-                                                                                                      case 925038822: {
-                                                                                                        {
-                                                                                                          const __s = v__inl280___pa0[1];
-                                                                                                          switch (__s[0]) {
-                                                                                                            case 26: {
-                                                                                                              return "First";
-                                                                                                            }
-                                                                                                            case 27: {
-                                                                                                              return "Second";
-                                                                                                            }
+                                                                                            (s => {
+                                                                                              switch (s[0]) {
+                                                                                                case 3: {
+                                                                                                  const v__inl280___pa0 = s[1];
+                                                                                                  switch (v__inl280___pa0[0]) {
+                                                                                                    case 925038822: {
+                                                                                                      {
+                                                                                                        const __s = v__inl280___pa0[1];
+                                                                                                        switch (__s[0]) {
+                                                                                                          case 26: {
+                                                                                                            return "First";
+                                                                                                          }
+                                                                                                          case 27: {
+                                                                                                            return "Second";
                                                                                                           }
                                                                                                         }
                                                                                                       }
-                                                                                                      case 1615808600: {
-                                                                                                        return v__inl280___pa0[1];
-                                                                                                      }
-                                                                                                      case 2252990199: {
-                                                                                                        return "ErrA";
-                                                                                                      }
+                                                                                                    }
+                                                                                                    case 1615808600: {
+                                                                                                      return v__inl280___pa0[1];
+                                                                                                    }
+                                                                                                    case 2252990199: {
+                                                                                                      return "ErrA";
                                                                                                     }
                                                                                                   }
-                                                                                                  case 4: {
-                                                                                                    return String(
-                                                                                                      v__inl285_e[1]
-                                                                                                    );
-                                                                                                  }
                                                                                                 }
-                                                                                              })(
-                                                                                                v__inl285_e
-                                                                                              ))(
-                                                                                              v_wE3
+                                                                                                case 4: {
+                                                                                                  return String(
+                                                                                                    v__inl285_e[1]
+                                                                                                  );
+                                                                                                }
+                                                                                              }
+                                                                                            })(
+                                                                                              v__inl285_e
                                                                                             )
                                                                                           );
                                                                                           switch (__s[0]) {
@@ -1524,45 +1491,43 @@
                                                                                           }
                                                                                           case 4: {
                                                                                             {
+                                                                                              const v__inl293_e = v_wOk;
                                                                                               const __s = v_tagged(
                                                                                                 "wOk",
-                                                                                                (v__inl293_e =>
-                                                                                                  (s => {
-                                                                                                    switch (s[0]) {
-                                                                                                      case 3: {
-                                                                                                        const v__inl288___pa0 = s[1];
-                                                                                                        switch (v__inl288___pa0[0]) {
-                                                                                                          case 925038822: {
-                                                                                                            {
-                                                                                                              const __s = v__inl288___pa0[1];
-                                                                                                              switch (__s[0]) {
-                                                                                                                case 26: {
-                                                                                                                  return "First";
-                                                                                                                }
-                                                                                                                case 27: {
-                                                                                                                  return "Second";
-                                                                                                                }
+                                                                                                (s => {
+                                                                                                  switch (s[0]) {
+                                                                                                    case 3: {
+                                                                                                      const v__inl288___pa0 = s[1];
+                                                                                                      switch (v__inl288___pa0[0]) {
+                                                                                                        case 925038822: {
+                                                                                                          {
+                                                                                                            const __s = v__inl288___pa0[1];
+                                                                                                            switch (__s[0]) {
+                                                                                                              case 26: {
+                                                                                                                return "First";
+                                                                                                              }
+                                                                                                              case 27: {
+                                                                                                                return "Second";
                                                                                                               }
                                                                                                             }
                                                                                                           }
-                                                                                                          case 1615808600: {
-                                                                                                            return v__inl288___pa0[1];
-                                                                                                          }
-                                                                                                          case 2252990199: {
-                                                                                                            return "ErrA";
-                                                                                                          }
+                                                                                                        }
+                                                                                                        case 1615808600: {
+                                                                                                          return v__inl288___pa0[1];
+                                                                                                        }
+                                                                                                        case 2252990199: {
+                                                                                                          return "ErrA";
                                                                                                         }
                                                                                                       }
-                                                                                                      case 4: {
-                                                                                                        return String(
-                                                                                                          v__inl293_e[1]
-                                                                                                        );
-                                                                                                      }
                                                                                                     }
-                                                                                                  })(
-                                                                                                    v__inl293_e
-                                                                                                  ))(
-                                                                                                  v_wOk
+                                                                                                    case 4: {
+                                                                                                      return String(
+                                                                                                        v__inl293_e[1]
+                                                                                                      );
+                                                                                                    }
+                                                                                                  }
+                                                                                                })(
+                                                                                                  v__inl293_e
                                                                                                 )
                                                                                               );
                                                                                               switch (__s[0]) {
@@ -1629,17 +1594,16 @@
   })(
     v_tagged(
       "nevOk",
-      (v__inl157_e =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return "ErrA";
-            }
-            case 4: {
-              return String(v__inl157_e[1]);
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return "ErrA";
           }
-        })(v__inl157_e))(v_nevOk)
+          case 4: {
+            return String(v__inl157_e[1]);
+          }
+        }
+      })(v__inl157_e)
     )
   );
 
@@ -1718,19 +1682,19 @@
     }
   };
 
+  const v__inl340_x = v_render;
   const main = v__cps__df_handleErrorIO_14(
     v__cps__df_andThenIO_18(
-      (v__inl340_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl340_x[1]];
-            }
-            case 4: {
-              return [5, v__inl340_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl340_x[1]];
           }
-        })(v__inl340_x))(v_render),
+          case 4: {
+            return [5, v__inl340_x[1]];
+          }
+        }
+      })(v__inl340_x),
       [30]
     ),
     [28]

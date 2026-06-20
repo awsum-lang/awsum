@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -63,8 +63,8 @@ CoreProgram
                             [ "$cl"
                             , "$arg0"
                             ]
-                        , CDrop DropFreeUnchecked "$cl"
-                            ( CDrop DropFreeUnchecked "$arg0"
+                        , CDrop "$cl"
+                            ( CDrop "$arg0"
                                 ( CCase
                                     ( CVar "$cl" )
                                     [
@@ -98,8 +98,8 @@ CoreProgram
                             [ "f"
                             , "x"
                             ]
-                        , CDrop DropFreeUnchecked "f"
-                            ( CDrop DropFreeUnchecked "x"
+                        , CDrop "f"
+                            ( CDrop "x"
                                 ( CContinue
                                     [ CReuse ReuseUnique "$args" 11
                                         [ CVar "f"

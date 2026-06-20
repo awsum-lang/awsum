@@ -1,0 +1,16 @@
+{- Injecting a bare constructor into a structural sum with an open tyvar
+   tail `(Maybe T | r)`. The tail is an extension slot, not a competing
+   alternative, so `Nothing` (whose type argument is unpinned) routes to
+   the unique concrete head-compatible label `Maybe T` without ambiguity.
+   Prints "mt". -}
+
+import IO.Stdout
+
+type T = A | B
+
+classify : (Maybe T | r) -> String
+classify x = case x of
+  (_m : Maybe T) -> "mt"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify Nothing)

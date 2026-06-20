@@ -169,6 +169,18 @@ data Agg = Agg
 aggOk :: Agg -> Bool
 aggOk agg = aggStatus agg == "ok"
 
+-- | The no-simplify differential leg runs strictly slower than the
+--   Simplify-on pipeline the measured budget is calibrated for (JS
+--   let-IIFE, JVM recheckcast), so it gets its own wider @gtimeout@ —
+--   this multiple of the measured @--timeout@. The differential is a
+--   hang-guard, not a measurement: a genuinely hung backend still
+--   terminates, but ordinary Off-leg slowdown no longer trips a budget
+--   sized for the On leg and gets misread as a behaviour divergence
+--   (@bench.txt@ recording an all-@ok@ measurement while the run exits
+--   non-zero).
+noSimplifyTimeoutMultiplier :: Int
+noSimplifyTimeoutMultiplier = 3
+
 -- | Run every backend @--runs@ times, aggregate per backend, and
 --   overwrite @.benchmarks/<TEST>/bench.txt@. No threshold on
 --   the numbers — the file is read through @git diff@ before/after a
@@ -204,17 +216,23 @@ runSnapshot opts = do
     -- pass must print the same stdout. One unmeasured run per backend
     -- against the same cross-backend anchor; nothing of it is recorded —
     -- bench.txt stays a SimplifyOn measurement, a deviation goes to
-    -- stderr and the exit code. Skipped when no anchor exists (every
-    -- measured run failed, so the rows above are already non-ok).
+    -- stderr and the exit code. The Off pipeline is strictly slower than
+    -- the measured On one, so this leg runs under its own wider budget
+    -- (noSimplifyTimeoutMultiplier times the measured --timeout):
+    -- otherwise a program near the measured boundary times out on the Off
+    -- leg only and reads as a divergence, intermittently under machine
+    -- load. Skipped when no anchor exists (every measured run failed, so
+    -- the rows above are already non-ok).
     offBad <- case anchor of
       Nothing -> pure []
       Just a -> do
-        putTextLn "  no-simplify differential (one unmeasured run per backend):"
+        let offTimeoutSecs = noSimplifyTimeoutMultiplier * opts.optTimeoutSecs
+        putTextLn $ "  no-simplify differential (one unmeasured run per backend, timeout " <> show offTimeoutSecs <> "s):"
         withSystemTempDirectory "awsum-bench-no-simplify" $ \offDir -> do
           (ptagsOff, coreOff) <- loadCore SimplifyOff opts.optTest
           artifactsOff <- buildAllArtifacts offDir ptagsOff coreOff
           fmap catMaybes $ forM allBackends $ \b -> do
-            r <- runOne opts.optTimeoutSecs offDir artifactsOff b
+            r <- runOne offTimeoutSecs offDir artifactsOff b
             let deviation = case rrExit r of
                   ExitSuccess -> if rrStdout r == a then Nothing else Just (b, "stdout mismatch")
                   ec -> Just (b, statusText ec)

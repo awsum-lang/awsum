@@ -1,0 +1,17 @@
+{- An uninhabited alternative imposes no coverage obligation: the row
+   `(Never2 | Int32)` has no `Never2` value, so matching only the `Int32`
+   alternative is exhaustive — the row mirrors how a nominal case skips an
+   uninhabited constructor. Prints "5". -}
+
+import IO.Stdout
+
+type Never2
+
+type Wrap = Wrap (Never2 | Int32)
+
+classify : Wrap -> String
+classify x = case x of
+  Wrap (n : Int32) -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Wrap (5 : Int32)))

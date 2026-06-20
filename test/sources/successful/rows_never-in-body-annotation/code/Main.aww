@@ -1,0 +1,12 @@
+{- A `let` binding annotated with `IO Never Unit` inside the function body.
+   `Never` written in an in-body annotation resolves to the same row-identity
+   type as `Never` in a signature, so the binding agrees with the enclosing
+   `main`. Prints `ok`. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main =
+  let action : IO Never Unit
+      action = IO.Stdout.print "ok"
+   in action

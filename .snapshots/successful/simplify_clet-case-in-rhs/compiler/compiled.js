@@ -50,33 +50,31 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl4_n = (s => {
+            switch (s[0]) {
+              case 1: {
+                return __lengthUtf8Bytes("abc");
+              }
+              case 2: {
+                return __lengthUtf8Bytes("zz");
+              }
+            }
+          })(__eqUInt32(__lengthUtf8Bytes("no"), 3 >>> 0));
           return v__apply__df_andThenIO_0(
             v__k,
             [
               7,
-              (v__inl4_n =>
-                (s => {
-                  switch (s[0]) {
-                    case 3: {
-                      return "OVERFLOW";
-                    }
-                    case 4: {
-                      const v__inl6_d = s[1];
-                      return String(v__inl6_d);
-                    }
+              (s => {
+                switch (s[0]) {
+                  case 3: {
+                    return "OVERFLOW";
                   }
-                })(__addUInt32(v__inl4_n, v__inl4_n)))(
-                (s => {
-                  switch (s[0]) {
-                    case 1: {
-                      return __lengthUtf8Bytes("abc");
-                    }
-                    case 2: {
-                      return __lengthUtf8Bytes("zz");
-                    }
+                  case 4: {
+                    const v__inl6_d = s[1];
+                    return String(v__inl6_d);
                   }
-                })(__eqUInt32(__lengthUtf8Bytes("no"), 3 >>> 0))
-              ),
+                }
+              })(__addUInt32(v__inl4_n, v__inl4_n)),
               [5, [0]]
             ]
           );
@@ -92,32 +90,30 @@
     }
   };
 
+  const v__inl9_n = (s => {
+    switch (s[0]) {
+      case 1: {
+        return __lengthUtf8Bytes("abc");
+      }
+      case 2: {
+        return __lengthUtf8Bytes("zz");
+      }
+    }
+  })(__eqUInt32(__lengthUtf8Bytes("one"), 3 >>> 0));
   const main = v__cps__df_andThenIO_0(
     [
       7,
-      (v__inl9_n =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return "OVERFLOW";
-            }
-            case 4: {
-              const v__inl8_d = s[1];
-              return String(v__inl8_d);
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return "OVERFLOW";
           }
-        })(__addUInt32(v__inl9_n, v__inl9_n)))(
-        (s => {
-          switch (s[0]) {
-            case 1: {
-              return __lengthUtf8Bytes("abc");
-            }
-            case 2: {
-              return __lengthUtf8Bytes("zz");
-            }
+          case 4: {
+            const v__inl8_d = s[1];
+            return String(v__inl8_d);
           }
-        })(__eqUInt32(__lengthUtf8Bytes("one"), 3 >>> 0))
-      ),
+        }
+      })(__addUInt32(v__inl9_n, v__inl9_n)),
       [5, [0]]
     ],
     [8]

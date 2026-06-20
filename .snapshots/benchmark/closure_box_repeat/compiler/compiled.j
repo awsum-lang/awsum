@@ -76,7 +76,7 @@ L_pred_ok:
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -105,8 +105,8 @@ L_eq_i32_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -248,8 +248,8 @@ L_tarm4:
 
 
 .method static v__apply_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco5:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -276,7 +276,7 @@ L_tarm6:
 
 
 .method static v_outerLoop(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
+  .limit stack 6
   .limit locals 10
 L_tco7:
   aload_1

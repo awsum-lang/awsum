@@ -66,14 +66,16 @@ cliModule ptags prog =
     SExpr (ECall (EArrow [] iifeBody) [])
   ]
   where
-    -- A blank line between each top-level statement (helper, declaration,
-    -- footer) for legibility.
+    -- A blank line between each top-level unit (helper, declaration, footer)
+    -- for legibility. A declaration is a group of statements — its hoisted
+    -- @const@s plus the binding — kept together, so the blanks land only
+    -- between units, never inside one.
     iifeBody =
-      intersperse
-        SBlank
-        ( header ptags (usedBuiltIns prog)
+      intercalate
+        [SBlank]
+        ( map (: []) (header ptags (usedBuiltIns prog))
             <> map declStmt (orderTopLevels prog)
-            <> cliFooter
+            <> map (: []) cliFooter
         )
 
 -- | Reorder top-level declarations so each name's @const@ binding is
@@ -488,12 +490,14 @@ cliFooter =
 -- | A top-level declaration becomes a @const@ binding: a 'CFunDef' is an arrow
 --   closure (its 'CLoop' body, the output of TCO, becomes a @while (true)@
 --   loop whose 'CContinue's rebind the parameters and @continue@); a 'CValDef'
---   is a plain value.
-declStmt :: CDecl -> JsStmt
+--   is a plain value. A 'CValDef' whose value hoists lets emits them as
+--   preceding @const@s — hence a list of statements, kept together (the
+--   caller blanks only between declarations, never inside one).
+declStmt :: CDecl -> [JsStmt]
 declStmt = \case
-  CFunDef nm args (CLoop body) -> SConst (mangle nm) (EArrow (map mangle args) [SWhileTrue (stmtBody Map.empty args body)])
-  CFunDef nm args body -> SConst (mangle nm) (EArrow (map mangle args) (stmtBody Map.empty args body))
-  CValDef nm rhs -> SConst (mangle nm) (exprE Map.empty rhs)
+  CFunDef nm args (CLoop body) -> [SConst (mangle nm) (EArrow (map mangle args) [SWhileTrue (stmtBody Map.empty args body)])]
+  CFunDef nm args body -> [SConst (mangle nm) (EArrow (map mangle args) (stmtBody Map.empty args body))]
+  CValDef nm rhs -> let (ss, e) = flatE Map.empty rhs in ss <> [SConst (mangle nm) e]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Statement-form bodies (tail position)
@@ -593,11 +597,14 @@ stmtBody apv0 params = go apv0 Map.empty []
         switchOn apv scrut (\scrutE -> map (stmtAlt apv (scrutName scrut) scrutE joins pending) alts)
       CRowCase scrut alts ->
         switchOn apv scrut (\scrutE -> map (stmtRowAlt apv scrutE joins pending) alts)
-      CDrop _ n body -> go apv joins (n : pending) body
+      CDrop n body -> go apv joins (n : pending) body
       -- A let in tail position binds a block-scoped @const@ and the body
       -- continues the statement spine (so arm-tail returns, continues and
-      -- pending drops all flow through unchanged).
-      CLet x rhs body -> SConst (mangle x) (exprE apv rhs) : go apv joins pending body
+      -- pending drops all flow through unchanged). The rhs flattens first, so
+      -- its own nested lets land as @const@s just above this one.
+      CLet x rhs body ->
+        let (ss, re) = flatE apv rhs
+         in ss <> (SConst (mangle x) re : go apv joins pending body)
       CJoin j ps body inner ->
         let target = JoinTarget {jtLabel = joinLabel j, jtParams = ps, jtPendingBase = length pending}
             slots = [SLet (mangle p) Nothing | p <- ps]
@@ -613,15 +620,17 @@ stmtBody apv0 params = go apv0 Map.empty []
                 (error "JS codegen: CJump to a join not registered by an enclosing CJoin (Core invariant: jumps appear only in the tail positions of their join's inner expression)")
                 j
                 joins
-            assigns = [SExpr (EAssign (EVar (mangle p)) (exprE apv a)) | (p, a) <- zip ps args]
+            (hoisted, argEs) = flatChildren apv args
+            assigns = [SExpr (EAssign (EVar (mangle p)) e) | (p, e) <- zip ps argEs]
             dead = filter (`elem` params) (take (length pending - base) pending)
             nulls = [SExpr (EAssign (EVar (mangle n)) ENull) | n <- dead]
-         in assigns <> nulls <> [SBreak label]
+         in hoisted <> assigns <> nulls <> [SBreak label]
       e ->
-        let paramPending = filter (`elem` params) pending
+        let (ss, ev) = flatE apv e
+            paramPending = filter (`elem` params) pending
          in if null paramPending
-              then [SReturn (exprE apv e)]
-              else [SBlock (SConst "__d" (exprE apv e) : [SExpr (EAssign (EVar (mangle n)) ENull) | n <- paramPending] <> [SReturn (EVar "__d")])]
+              then ss <> [SReturn ev]
+              else [SBlock (ss <> (SConst "__d" ev : [SExpr (EAssign (EVar (mangle n)) ENull) | n <- paramPending] <> [SReturn (EVar "__d")]))]
 
     -- Dispatch head of a statement-form case. The scrutinee must be
     -- evaluated exactly once, so in general it lands in a block-scoped
@@ -636,7 +645,9 @@ stmtBody apv0 params = go apv0 Map.empty []
 
     switchOn :: Map Name [Name] -> CExpr -> (JsExpr -> [(Integer, [JsStmt])]) -> [JsStmt]
     switchOn _ (CVar n) mkCases = let scrutE = EVar (mangle n) in [SSwitch (EIndex scrutE (ENum 0)) (mkCases scrutE)]
-    switchOn apv scrut mkCases = [SBlock (SConst "__s" (exprE apv scrut) : [SSwitch (EIndex (EVar "__s") (ENum 0)) (mkCases (EVar "__s"))])]
+    switchOn apv scrut mkCases =
+      let (ss, se) = flatE apv scrut
+       in [SBlock (ss <> (SConst "__s" se : [SSwitch (EIndex (EVar "__s") (ENum 0)) (mkCases (EVar "__s"))]))]
 
     stmtAlt :: Map Name [Name] -> Maybe Name -> JsExpr -> Map Name JoinTarget -> [Name] -> (Int, [Name], CExpr) -> (Integer, [JsStmt])
     stmtAlt apv mScrut scrutE joins pending (tag, vars, body) =
@@ -662,28 +673,64 @@ joinLabel = T.map (\c -> if Char.isAlphaNum c || c == '_' || c == '$' then c els
 -- Expression-form
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | Lower an expression for a position with no statement spine, forcing any
+--   hoistable let-bindings into a single zero-arg IIFE. Boundaries that /do/
+--   have a spine call 'flatE' and splice its statements, so this wrapper
+--   fires only where there is genuinely nowhere to put a statement: a 'CCon'
+--   field or 'CCall' argument blocked behind a non-movable sibling, a
+--   'CReuse' store operand, a 'CContinue' rebind argument. Even then it is one
+--   closure for the whole expression's lets, never one per let.
 exprE :: Map Name [Name] -> CExpr -> JsExpr
-exprE apv = \case
-  CString s -> EStr s
-  CVar n -> EVar (mangle n)
-  CIntLit n TInt32 -> i32 (ENum n)
-  CIntLit n TUInt8 -> u8 (ENum n)
-  CIntLit n TUInt32 -> u32 (ENum n)
+exprE apv e = case flatE apv e of
+  ([], je) -> je
+  (ss, je) -> ECall (EArrow [] (ss <> [SReturn je])) []
+
+-- | Lower an expression, hoisting the let-bindings reachable along strict,
+--   unconditional positions ('CCon' fields, 'CCall' callee\/arguments, 'CRow'
+--   payload, 'CCase'\/'CRowCase' scrutinees) into preceding @const@ statements
+--   returned alongside the residual expression. The statements run first;
+--   together they evaluate exactly what the expression denotes, but a hoisted
+--   @let@ becomes @const v = rhs;@ instead of the @((v) => …)(rhs)@ IIFE that
+--   allocates a closure on every evaluation.
+--
+--   A hoisted binding keeps the @let@'s own binder — globally unique by the
+--   inliner's mint and 'Awsum.UniquifyLocals' — so a bubbling region never
+--   needs (or invents) a fresh temp name.
+--
+--   Conditional and loop nodes stay opaque: a 'CCase'\/'CRowCase'\/'CJoin'
+--   renders with its own statement spine inside the dispatch arrow, and
+--   'flatE' bubbles only its scrutinee, never through its arms — those are
+--   conditional, so their bindings must stay inside them.
+flatE :: Map Name [Name] -> CExpr -> ([JsStmt], JsExpr)
+flatE apv = \case
+  CString s -> noStmt (EStr s)
+  CVar n -> noStmt (EVar (mangle n))
+  CIntLit n TInt32 -> noStmt (i32 (ENum n))
+  CIntLit n TUInt8 -> noStmt (u8 (ENum n))
+  CIntLit n TUInt32 -> noStmt (u32 (ENum n))
   CBuiltIn n -> error ("JS codegen: CBuiltIn '" <> n <> "' in term position (invariant: only in CCall callee)")
-  CCon tag fields -> EArray (ENum (toInteger tag) : map (exprE apv) fields)
-  CRow tag v -> EArray [ENum (toInteger tag), exprE apv v]
-  CDrop _ _ body -> exprE apv body
+  CCon tag fields ->
+    let (ss, es) = flatChildren apv fields
+     in (ss, EArray (ENum (toInteger tag) : es))
+  -- A single payload: its residual is last in evaluation order, so its
+  -- statements bubble with no sibling to reorder against.
+  CRow tag v ->
+    let (ss, e) = flatE apv v
+     in (ss, EArray [ENum (toInteger tag), e])
+  CDrop _ body -> flatE apv body
   -- A guarded reuse cannot mutate here: the cell may be shared (the caller
   -- can retain the structure) and there is no refcount header to check, so
-  -- it lowers as the allocation it replaced. Only a 'ReuseUnique' cell — an
-  -- Scc pack / Cps continuation, loop-private by construction — mutates.
-  CReuse ReuseGuarded _ tag fields -> exprE apv (CCon tag fields)
+  -- it lowers as the allocation it replaced — a 'CCon' for every purpose,
+  -- its fields hoisting like any other. Only a 'ReuseUnique' cell — an Scc
+  -- pack / Cps continuation, loop-private by construction — mutates.
+  CReuse ReuseGuarded _ tag fields -> flatE apv (CCon tag fields)
   CReuse ReuseUnique n tag fields ->
-    -- Stores in dependency order ('Awsum.Codegen.ReuseSchedule'): the
-    -- acyclic permutation part reads the old slots straight off the cell,
-    -- a cycle reads its one extracted binder, unrelated fields evaluate as
-    -- ever. The arm extraction above skips binders the schedule reads off
-    -- the cell ('reuseSlotElided'), which is what returns the inline look.
+    -- In-place stores in dependency order ('Awsum.Codegen.ReuseSchedule'):
+    -- the acyclic permutation part reads the old slots straight off the
+    -- cell, a cycle reads its one extracted binder, unrelated fields evaluate
+    -- as ever. The arm extraction skips binders the schedule reads off the
+    -- cell ('reuseSlotElided'), which is what returns the inline look. The
+    -- node mutates @n@, so it is order-sensitive — opaque to hoisting.
     let v = mangle n
         tagStore = EAssign (EIndex (EVar v) (ENum 0)) (ENum (toInteger tag))
         (stores, _breakers) = scheduleReuse (Map.findWithDefault [] n apv) fields
@@ -692,24 +739,34 @@ exprE apv = \case
           StoreFromSlot dst src -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (EIndex (EVar v) (ENum (toInteger src)))
           StoreFromBinder dst b -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (EVar (mangle b))
           StoreExtern dst -> EAssign (EIndex (EVar v) (ENum (toInteger dst))) (exprE apv (fieldAt dst))
-     in ESeq (tagStore : map storeE stores <> [EVar v])
-  CCase scrut alts -> exprCall (map (exprAlt (exprScrutName scrut)) alts) scrut
-  CRowCase scrut alts -> exprCall (map exprRowAlt alts) scrut
-  CCall f xs -> callExpr apv f xs
+     in noStmt (ESeq (tagStore : map storeE stores <> [EVar v]))
+  CCase scrut alts ->
+    let (ss, se) = flatE apv scrut
+     in (ss, caseDispatch se (map (exprAlt (exprScrutName scrut)) alts))
+  CRowCase scrut alts ->
+    let (ss, se) = flatE apv scrut
+     in (ss, caseDispatch se (map exprRowAlt alts))
+  CCall f xs -> flatCall apv f xs
   CLoop _ -> error "JS codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
   CContinue _ -> error "JS codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
-  -- A let in expression position is the beta-redex it desugars from:
-  -- @((x) => body)(rhs)@ — same shape as the expression-position case.
-  CLet x rhs body -> ECall (EArrow [mangle x] [SReturn (exprE apv body)]) [exprE apv rhs]
-  CProj n slot -> EIndex (EVar (mangle n)) (ENum (toInteger slot))
-  -- An expression-position join is self-contained (every jump inside
-  -- targets a join registered inside — a jump out of a value position is
-  -- ruled out in Core), so the statement-form lowering runs inside an
-  -- immediately-invoked arrow, the same shape as the expression-position
-  -- case: value tails @return@ past the join body, jumps @break@ to it.
-  e@CJoin {} -> ECall (EArrow [] (stmtBody apv [] e)) []
+  -- A let in expression position: hoist @rhs@ to a @const@ in the bubbled
+  -- spine, then continue with @body@ — no IIFE. @rhs@'s own sub-lets bubble
+  -- first (it is fully evaluated before @body@), so order is preserved.
+  CLet x rhs body ->
+    let (rs, re) = flatE apv rhs
+        (bs, be) = flatE apv body
+     in (rs <> (SConst (mangle x) re : bs), be)
+  CProj n slot -> noStmt (EIndex (EVar (mangle n)) (ENum (toInteger slot)))
+  -- An expression-position join is self-contained (every jump inside targets
+  -- a join registered inside — a jump out of a value position is ruled out in
+  -- Core), so the statement-form lowering runs inside an immediately-invoked
+  -- arrow: value tails @return@ past the join body, jumps @break@ to it.
+  e@CJoin {} -> noStmt (ECall (EArrow [] (stmtBody apv [] e)) [])
   CJump {} -> error "JS codegen: CJump outside the tail positions of its join's inner expression (Core invariant)"
   where
+    noStmt :: JsExpr -> ([JsStmt], JsExpr)
+    noStmt e = ([], e)
+
     -- An expression-position case dispatches through an immediately-invoked
     -- arrow whose @switch@ arms @return@ directly: @((s) => { switch (s[0]) {
     -- … } })(scrut)@. The arms are the arrow's tail, so their bodies run
@@ -721,9 +778,9 @@ exprE apv = \case
     -- recurses while parsing, and a 300-level dispatch chain at one more
     -- nesting step per level overflows its parser stack (@RangeError@
     -- before a single statement runs).
-    exprCall :: [(Integer, [JsStmt])] -> CExpr -> JsExpr
-    exprCall cases scrut =
-      ECall (EArrow ["s"] [SSwitch (EIndex (EVar "s") (ENum 0)) cases]) [exprE apv scrut]
+    caseDispatch :: JsExpr -> [(Integer, [JsStmt])] -> JsExpr
+    caseDispatch se cases =
+      ECall (EArrow ["s"] [SSwitch (EIndex (EVar "s") (ENum 0)) cases]) [se]
 
     exprScrutName :: CExpr -> Maybe Name
     exprScrutName = \case
@@ -742,42 +799,111 @@ exprE apv = \case
       let binds = [SConst (mangle var) (EIndex (EVar "s") (ENum 1)) | binderUsedIn var body]
        in (toInteger tag, binds <> stmtBody apv [] body)
 
--- | A 'CCall'. A 'CBuiltIn' callee dispatches to its runtime helper (or an
---   inlined form); any other callee is an ordinary application.
-callExpr :: Map Name [Name] -> CExpr -> [CExpr] -> JsExpr
-callExpr apv f xs = case f of
-  CBuiltIn "internalStdoutPrint" -> unary "__print"
-  CBuiltIn "internalGetArgs" -> nullaryCall "__getArgs"
-  CBuiltIn "internalStdinReadAllString" -> nullaryCall "__stdinReadAll"
-  CBuiltIn "internalStdinReadAllBytes" -> nullaryCall "__stdinReadAllBytes"
-  CBuiltIn name
-    | name `elem` ["showInt32", "showUInt8", "showUInt32"] -> case xs of
-        [x] -> ECall (EVar "String") [exprE apv x]
-        _ -> arityError name
-  CBuiltIn "byteToHexStringNoPrefix" -> case xs of
-    [x] -> ECall (EMember (ECall (EMember (exprE apv x) "toString") [ENum 16]) "padStart") [ENum 2, EStr "0"]
-    _ -> arityError "byteToHexStringNoPrefix"
-  CBuiltIn "predInt32" -> unary "__predInt32"
-  CBuiltIn "predUInt8" -> unary "__predUInt8"
-  CBuiltIn "predUInt32" -> unary "__predUInt32"
-  CBuiltIn "succInt32" -> unary "__succInt32"
-  CBuiltIn "succUInt8" -> unary "__succUInt8"
-  CBuiltIn "succUInt32" -> unary "__succUInt32"
-  CBuiltIn "negInt32" -> unary "__negInt32"
-  CBuiltIn name
-    | name `elem` ["eqInt32", "eqUInt8", "eqUInt32", "eqString"] -> binary (helperFor name)
-  CBuiltIn name
-    | name `elem` ["addInt32", "addUInt8", "addUInt32", "subInt32", "subUInt8", "subUInt32", "mulInt32", "mulUInt8", "mulUInt32"] -> binary (helperFor name)
-  CBuiltIn "concatString" -> binary "__concat"
-  CBuiltIn "splitOnFirst" -> binary "__splitOnFirst"
-  CBuiltIn name
-    | name `elem` ["parseInt32", "parseUInt8", "parseUInt32"] -> unary (helperFor name)
-  CBuiltIn name
-    | name `elem` ["lengthCodePoints", "lengthUtf16CodeUnits", "lengthUtf8Bytes"] -> unary (helperFor name)
-  CBuiltIn n -> error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
-  _ -> ECall (exprE apv f) (map (exprE apv) xs)
+-- | Lower the children of a strict, left-to-right node ('CCon' fields, a
+--   generic 'CCall' callee+arguments, builtin-call arguments), bubbling each
+--   child's let-bindings into the returned statement list — but only while
+--   every earlier sibling has a /movable/ residual ('movableE': a variable,
+--   literal, or pure operator tree over those, immune to reordering). Past the
+--   first non-movable sibling, later children keep their own IIFE ('exprE'),
+--   so a hoist never floats a computation across an observable evaluation.
+--   This is the conservative half of "hoist when it is free": no reordering
+--   of observable work, and no synthetic temp names.
+flatChildren :: Map Name [Name] -> [CExpr] -> ([JsStmt], [JsExpr])
+flatChildren apv = go True
   where
-    -- 'CBuiltIn' name → its '__'-prefixed runtime helper.
+    go _ [] = ([], [])
+    go True (c : cs) =
+      let (ss, e) = flatE apv c
+          (ss', es) = go (movableE e) cs
+       in (ss <> ss', e : es)
+    go False (c : cs) =
+      let (ss', es) = go False cs
+       in (ss', exprE apv c : es)
+
+-- | Is this residual safe to evaluate /after/ a later sibling's hoisted
+--   statements — does it neither read mutable cell contents, nor mutate, nor
+--   perform I/O? A variable read (the binding, not the cell behind it) and a
+--   literal qualify, as does any pure operator tree over such operands; a call,
+--   a field read ('EIndex'\/'EMember'), an in-place store ('EAssign'\/'ESeq'\/
+--   'EUpdate'), a closure, or an allocation with a non-movable element does
+--   not. Sufficient, not exact: when it holds, floating a later 'CLet' before
+--   this residual cannot change any observation.
+movableE :: JsExpr -> Bool
+movableE = \case
+  EVar _ -> True
+  ENum _ -> True
+  EHex _ -> True
+  EBigInt _ -> True
+  EStr _ -> True
+  ERegex _ -> True
+  EBool _ -> True
+  ENull -> True
+  EArray xs -> all movableE xs
+  EObject kvs -> all (movableE . snd) kvs
+  EBin _ a b -> movableE a && movableE b
+  EUnary _ a -> movableE a
+  ECond c t f -> movableE c && movableE t && movableE f
+  EMember _ _ -> False
+  EIndex _ _ -> False
+  ECall _ _ -> False
+  ENew _ _ -> False
+  EArrow _ _ -> False
+  EAssign _ _ -> False
+  EUpdate _ _ -> False
+  ESeq _ -> False
+
+-- | A 'CCall'. The callee and arguments are lowered through 'flatChildren'
+--   (so their let-bindings hoist along the movable-sibling gate), then a
+--   'CBuiltIn' callee dispatches to its runtime-helper shape ('buildBuiltin')
+--   over the lowered arguments; any other callee is an ordinary application.
+flatCall :: Map Name [Name] -> CExpr -> [CExpr] -> ([JsStmt], JsExpr)
+flatCall apv f xs = case f of
+  CBuiltIn name ->
+    let (ss, es) = flatChildren apv xs
+     in (ss, buildBuiltin name es)
+  _ ->
+    let (ss, es) = flatChildren apv (f : xs)
+     in case es of
+          (fe : argEs) -> (ss, ECall fe argEs)
+          [] -> error "JS codegen: flatCall produced no callee (impossible — f : xs is non-empty)"
+
+-- | The JS shape of a built-in call over its already-lowered argument
+--   expressions. A 'CBuiltIn' callee carries no hoistable lets itself, so this
+--   is a pure mapping name + args → expression; 'flatCall' owns the argument
+--   lowering.
+buildBuiltin :: Name -> [JsExpr] -> JsExpr
+buildBuiltin name es = case name of
+  "internalStdoutPrint" -> unary "__print"
+  "internalGetArgs" -> nullaryCall "__getArgs"
+  "internalStdinReadAllString" -> nullaryCall "__stdinReadAll"
+  "internalStdinReadAllBytes" -> nullaryCall "__stdinReadAllBytes"
+  _
+    | name `elem` ["showInt32", "showUInt8", "showUInt32"] -> case es of
+        [x] -> ECall (EVar "String") [x]
+        _ -> arityError name
+  "byteToHexStringNoPrefix" -> case es of
+    [x] -> ECall (EMember (ECall (EMember x "toString") [ENum 16]) "padStart") [ENum 2, EStr "0"]
+    _ -> arityError "byteToHexStringNoPrefix"
+  "predInt32" -> unary "__predInt32"
+  "predUInt8" -> unary "__predUInt8"
+  "predUInt32" -> unary "__predUInt32"
+  "succInt32" -> unary "__succInt32"
+  "succUInt8" -> unary "__succUInt8"
+  "succUInt32" -> unary "__succUInt32"
+  "negInt32" -> unary "__negInt32"
+  _
+    | name `elem` ["eqInt32", "eqUInt8", "eqUInt32", "eqString"] -> binary (helperFor name)
+  _
+    | name `elem` ["addInt32", "addUInt8", "addUInt32", "subInt32", "subUInt8", "subUInt32", "mulInt32", "mulUInt8", "mulUInt32"] -> binary (helperFor name)
+  "concatString" -> binary "__concat"
+  "splitOnFirst" -> binary "__splitOnFirst"
+  _
+    | name `elem` ["parseInt32", "parseUInt8", "parseUInt32"] -> unary (helperFor name)
+  _
+    | name `elem` ["lengthCodePoints", "lengthUtf16CodeUnits", "lengthUtf8Bytes"] -> unary (helperFor name)
+  _ -> error ("JS codegen: unknown builtin '" <> name <> "' reached CCall (typecheck should have rejected it)")
+  where
+    -- Built-in name → its '__'-prefixed runtime helper.
     helperFor :: Text -> Text
     helperFor n = "__" <> n
 
@@ -785,18 +911,18 @@ callExpr apv f xs = case f of
     arityError n = error ("BuiltIn." <> n <> ": arity mismatch")
 
     nullaryCall :: Text -> JsExpr
-    nullaryCall fn = case xs of
+    nullaryCall fn = case es of
       [] -> ECall (EVar fn) []
       _ -> error (fn <> ": arity mismatch")
 
     unary :: Text -> JsExpr
-    unary fn = case xs of
-      [x] -> ECall (EVar fn) [exprE apv x]
+    unary fn = case es of
+      [x] -> ECall (EVar fn) [x]
       _ -> error (fn <> ": arity mismatch")
 
     binary :: Text -> JsExpr
-    binary fn = case xs of
-      [a, b] -> ECall (EVar fn) [exprE apv a, exprE apv b]
+    binary fn = case es of
+      [a, b] -> ECall (EVar fn) [a, b]
       _ -> error (fn <> ": arity mismatch")
 
 -- | Name mangling: keep @main@ unchanged (needed by the runner); otherwise

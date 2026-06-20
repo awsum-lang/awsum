@@ -24,6 +24,7 @@
     }
   };
 
+  const v__inl1_r = [24, "1"];
   const v_res = (s => {
     switch (s[0]) {
       case 3: {
@@ -32,10 +33,11 @@
       }
       case 4: {
         const v_s0 = s[1];
-        return __concat(v_s0, (v__inl2_r => v__inl2_r[1])([25, "2"]));
+        const v__inl2_r = [25, "2"];
+        return __concat(v_s0, v__inl2_r[1]);
       }
     }
-  })(__concat((v__inl1_r => v__inl1_r[1])([24, "1"]), ","));
+  })(__concat(v__inl1_r[1], ","));
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -112,19 +114,19 @@
     }
   };
 
+  const v__inl5_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl5_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl5_x[1]];
-            }
-            case 4: {
-              return [5, v__inl5_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl5_x[1]];
           }
-        })(v__inl5_x))(v_res),
+          case 4: {
+            return [5, v__inl5_x[1]];
+          }
+        }
+      })(v__inl5_x),
       [28]
     ),
     [26]

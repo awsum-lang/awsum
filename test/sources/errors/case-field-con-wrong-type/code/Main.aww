@@ -1,0 +1,17 @@
+{- A nested arm names a constructor of another type: `Just`'s field is `T`,
+   matched by `True` (a `Bool` constructor). It is rejected at the offending
+   pattern (`'True' is not a constructor of T`) instead of surfacing as a
+   confusing missing-combination witness. Match a constructor of `T`. -}
+
+import IO.Stdout
+
+type T = A | B
+
+classify : Maybe T -> String
+classify x = case x of
+  Nothing -> "n"
+  Just True -> "t"
+  Just False -> "f"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify Nothing)

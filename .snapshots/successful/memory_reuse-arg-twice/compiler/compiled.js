@@ -74,61 +74,61 @@
     }
   };
 
-  const main = (v__inl37_xs =>
-    [
-      7,
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return "L";
-          }
-          case 4: {
-            const v__inl36_z = s[1];
-            return v__inl36_z;
-          }
+  const v__inl37_xs = v_mk(3 | 0, [24]);
+  const main = [
+    7,
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return "L";
         }
-      })(
-        __concat(
-          (s => {
-            switch (s[0]) {
-              case 24: {
-                return "E";
-              }
-              case 25: {
-                const v__inl28_r = s[2];
-                switch (v__inl28_r[0]) {
-                  case 24: {
-                    return "e";
-                  }
-                  case 25: {
-                    return v__inl28_r[1];
-                  }
+        case 4: {
+          const v__inl36_z = s[1];
+          return v__inl36_z;
+        }
+      }
+    })(
+      __concat(
+        (s => {
+          switch (s[0]) {
+            case 24: {
+              return "E";
+            }
+            case 25: {
+              const v__inl28_r = s[2];
+              switch (v__inl28_r[0]) {
+                case 24: {
+                  return "e";
+                }
+                case 25: {
+                  return v__inl28_r[1];
                 }
               }
             }
-          })(v_revInto2(v__inl37_xs, [24])),
-          (s => {
-            switch (s[0]) {
-              case 24: {
-                return "E";
-              }
-              case 25: {
-                const v__inl32_r = s[2];
-                switch (v__inl32_r[0]) {
-                  case 24: {
-                    return "e";
-                  }
-                  case 25: {
-                    return v__inl32_r[1];
-                  }
+          }
+        })(v_revInto2(v__inl37_xs, [24])),
+        (s => {
+          switch (s[0]) {
+            case 24: {
+              return "E";
+            }
+            case 25: {
+              const v__inl32_r = s[2];
+              switch (v__inl32_r[0]) {
+                case 24: {
+                  return "e";
+                }
+                case 25: {
+                  return v__inl32_r[1];
                 }
               }
             }
-          })(v__inl37_xs)
-        )
-      ),
-      [5, [0]]
-    ])(v_mk(3 | 0, [24]));
+          }
+        })(v__inl37_xs)
+      )
+    ),
+    [5, [0]]
+  ];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

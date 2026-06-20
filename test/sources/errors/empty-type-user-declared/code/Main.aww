@@ -1,0 +1,12 @@
+{- Declaring `empty type` in user code is rejected. `Never` (in the standard
+   library) is the language's single empty type, and every empty type is
+   interchangeable with it, so a user-declared one would only alias `Never`.
+   Use `Never` for the row identity, or a plain `type` for a distinct
+   uninhabited type. -}
+
+import IO.Stdout
+
+empty type Whatever
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

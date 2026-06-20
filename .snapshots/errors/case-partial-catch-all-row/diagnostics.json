@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":12,"startCol":8,"endLine":12,"endCol":9,"message":"Catch-all pattern not allowed here: another arm matches a specific alternative of Int32 | String, so this wildcard would swallow the remaining alternatives — and any added later. Match every alternative with '(x : T)', or ignore the whole field with a single '_' in every arm.","fixes":[]}]

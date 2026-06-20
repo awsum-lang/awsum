@@ -89,29 +89,29 @@
     }
   };
 
-  const v_res = (v__inl3_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return __concat("left: ", "UnderflowError");
-        }
-        case 4: {
-          return __concat(
-            "right: ",
-            (s => {
-              switch (s[0]) {
-                case 1: {
-                  return "True";
-                }
-                case 2: {
-                  return "False";
-                }
-              }
-            })(v__inl3_r[1])
-          );
-        }
+  const v__inl3_r = v__scc_evenInt_oddInt([20, 1000000 | 0]);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        return __concat("left: ", "UnderflowError");
       }
-    })(v__inl3_r))(v__scc_evenInt_oddInt([20, 1000000 | 0]));
+      case 4: {
+        return __concat(
+          "right: ",
+          (s => {
+            switch (s[0]) {
+              case 1: {
+                return "True";
+              }
+              case 2: {
+                return "False";
+              }
+            }
+          })(v__inl3_r[1])
+        );
+      }
+    }
+  })(v__inl3_r);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -188,19 +188,19 @@
     }
   };
 
+  const v__inl6_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl6_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl6_x[1]];
-            }
-            case 4: {
-              return [5, v__inl6_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl6_x[1]];
           }
-        })(v__inl6_x))(v_res),
+          case 4: {
+            return [5, v__inl6_x[1]];
+          }
+        }
+      })(v__inl6_x),
       [24]
     ),
     [22]

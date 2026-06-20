@@ -655,7 +655,7 @@
   .method private hidebysig static object v__apply_countRow(object,object) cil managed
   {
     .maxstack 6
-    .locals init (object[] V_0, object V_1, object V_2)
+    .locals init (object[] V_0, object V_1)
   IL_tco_loop:
     ldarg.0
     castclass object[]

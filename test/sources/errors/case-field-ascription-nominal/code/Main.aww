@@ -1,0 +1,15 @@
+{- An ascription pattern on a nominal constructor field: `Just`'s field is
+   the nominal `Bool`, matched by `(b : Bool)`. `(x : T)` discriminates a
+   structural sum, not a nominal type — the same judgment the top level
+   makes for a nominal scrutinee, now applied at field depth. Enumerate the
+   constructors (`Just True` / `Just False`) instead. -}
+
+import IO.Stdout
+
+classify : Maybe Bool -> String
+classify m = case m of
+  Just (b : Bool) -> showBool b
+  Nothing -> "none"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Just True))

@@ -1,27 +1,54 @@
-{- A tower of boolean operations above a runtime-dependent step: each level
-   feeds the next, and the compiler folds the four upper levels through the
-   shared dispatch into a single final case. Prints `F`. -}
+{- A three-`case` tower over a runtime value (first CLI argument, or `3` when
+   absent). The inner two `case`s fuse into a residual join point; the outer
+   consumer then folds into the join's value tails, leaving one `CJoin` whose
+   body is the consumer. Prints `x` for `7`, `y` for `1`, `z` otherwise. -}
 
 import IO.Stdout
+import IO.Args
 
-mix : Bool -> Bool
-mix b = case b of
-  True -> eqUInt32 (lengthUtf8Bytes "xyz") 3
-  False -> False
+type Col
+  = Red
+  | Green
+  | Blue
 
-seed : Bool
-seed = eqUInt32 (lengthUtf8Bytes (showInt32 42)) 2
+type Tag
+  = TX
+  | TY
+  | TZ
 
-result : String
-result =
-  let s0 = seed
-      s1 = and (mix s0) True
-      s2 = and s1 True
-      s3 = or s2 False
-      s4 = not s3
-   in case s4 of
-        True -> "T"
-        False -> "F"
+pick : Int32 -> Col
+pick n = case eqInt32 n 0 of
+  True -> Red
+  False -> case eqInt32 n 1 of
+    True -> Green
+    False -> Blue
+
+label : Int32 -> String
+label k = case (case (case eqInt32 k 7 of
+  True -> Red
+  False -> pick k
+) of
+  Red -> TX
+  Green -> TY
+  Blue -> TZ
+) of
+  TX -> "x"
+  TY -> "y"
+  TZ -> "z"
+
+run : List String -> IO Never Unit
+run args = case headList args of
+  Nothing -> IO.Stdout.print (label 3)
+  Just s -> case parseInt32 s of
+    Left _e -> IO.Stdout.print "PARSE"
+    Right n -> IO.Stdout.print (label n)
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STL"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UPS"
 
 main : IO Never Unit
-main = IO.Stdout.print result
+main = IO.Args.getArgs
+  |> andThenIO run
+  |> handleErrorIO onError

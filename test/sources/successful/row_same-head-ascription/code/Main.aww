@@ -1,0 +1,31 @@
+{- Injection into a structural sum whose two alternatives share a head
+   notation, `(Maybe T | Maybe U)`. A constructor that does not pin the
+   type argument (`Nothing`) is routed to the right alternative by an
+   ascription naming it; a payload that pins the argument (`Just C`)
+   needs no ascription. A unique head-compatible row `(Maybe T | Int32)`
+   accepts a bare `Nothing` without ambiguity. Prints "mt-mu-mu-mt". -}
+
+import IO.Stdout
+
+type T = A | B
+
+type U = C | D
+
+classify : (Maybe T | Maybe U) -> String
+classify x = case x of
+  (_m : Maybe T) -> "mt"
+  (_n : Maybe U) -> "mu"
+
+uniq : (Maybe T | Int32) -> String
+uniq x = case x of
+  (_m : Maybe T) -> "mt"
+  (_n : Int32) -> "int"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Nothing : Maybe T))
+  |> andThenIO (\_u1 -> IO.Stdout.print "-")
+  |> andThenIO (\_u2 -> IO.Stdout.print (classify (Nothing : Maybe U)))
+  |> andThenIO (\_u3 -> IO.Stdout.print "-")
+  |> andThenIO (\_u4 -> IO.Stdout.print (classify (Just C : Maybe U)))
+  |> andThenIO (\_u5 -> IO.Stdout.print "-")
+  |> andThenIO (\_u6 -> IO.Stdout.print (uniq Nothing))

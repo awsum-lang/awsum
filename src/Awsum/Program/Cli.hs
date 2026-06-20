@@ -10,6 +10,11 @@
 -- add a matching dispatch branch to every backend in
 -- @src/Awsum/Codegen/*@, and — where a runtime helper is needed —
 -- extend the @Set Name -> …@ gate in that backend's runtime emitter.
+-- The privileged @internal*@ primitive the effect lowers to (the one
+-- @runIO@ calls to actually perform it) is registered in 'Awsum.BuiltIn'
+-- and must be marked 'Effectful' there: that flag is the single source for
+-- 'Awsum.Core.effectfulIn', which is what stops 'Awsum.Simplify' from
+-- treating the runtime call as pure and deleting the effect.
 module Awsum.Program.Cli (cliPlatformTable) where
 
 import Awsum.Syntax (QName (..), Type' (..), noSpan)

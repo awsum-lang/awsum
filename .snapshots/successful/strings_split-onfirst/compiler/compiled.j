@@ -86,7 +86,7 @@ L_concat_too_long:
 .end method
 
 .method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 4
   aload_1
   checkcast java/lang/String
@@ -152,8 +152,8 @@ L_split_found:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1118,8 +1118,8 @@ L_join10:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   invokestatic AwsumMain/v_res()Ljava/lang/Object;
   astore_0
   aload_0
@@ -1192,7 +1192,7 @@ L_join52:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco54:
   aload_0
@@ -1349,7 +1349,7 @@ L_tarm58:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco59:
   aload_0

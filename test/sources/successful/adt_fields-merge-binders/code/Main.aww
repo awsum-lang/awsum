@@ -1,0 +1,31 @@
+{- Two arms that match the same field bind it to different names: `Wrap`'s
+   payload is `a` in the A-arm and `b` in the B-arm, each read in its own
+   body. With a row first field the same happens for `n`/`m`. Prints "79pq". -}
+
+import IO.Stdout
+
+type T = A | B
+
+type Wrap = Wrap Int32
+
+type W = W Wrap T
+
+type W2 = W2 (Int32 | String) T
+
+classify : W -> Int32
+classify w = case w of
+  W (Wrap a) A -> a
+  W (Wrap b) B -> b
+
+classifyRow : W2 -> String
+classifyRow w = case w of
+  W2 (n : Int32) A -> showInt32 n
+  W2 (m : Int32) B -> showInt32 m
+  W2 (s : String) A -> s
+  W2 (t : String) B -> t
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (classify (W (Wrap 7) B)))
+  |> andThenIO (\_u -> IO.Stdout.print (showInt32 (classify (W (Wrap 9) A))))
+  |> andThenIO (\_v -> IO.Stdout.print (classifyRow (W2 "p" A)))
+  |> andThenIO (\_w -> IO.Stdout.print (classifyRow (W2 "q" B)))

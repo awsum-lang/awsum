@@ -23,19 +23,19 @@
 
   const v_called = [3, [751576878, [26]]];
 
+  const v__inl3_r = v_called;
   const main = [
     7,
-    (v__inl3_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return "Z";
-          }
-          case 4: {
-            return String(v__inl3_r[1]);
-          }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          return "Z";
         }
-      })(v__inl3_r))(v_called),
+        case 4: {
+          return String(v__inl3_r[1]);
+        }
+      }
+    })(v__inl3_r),
     [5, [0]]
   ];
 

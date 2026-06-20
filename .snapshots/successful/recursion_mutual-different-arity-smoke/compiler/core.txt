@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -65,7 +65,7 @@ CoreProgram
                             ,
                                 ( 25
                                 , []
-                                , CDrop DropFreeUnchecked "$args"
+                                , CDrop "$args"
                                     ( CContinue
                                         [ CCon 27
                                             [ CCon 24 [] ]
@@ -77,7 +77,7 @@ CoreProgram
                     ,
                         ( 27
                         , [ "tok" ]
-                        , CDrop DropFreeUnchecked "tok"
+                        , CDrop "tok"
                             ( CCase
                                 ( CVar "tok" )
                                 [
@@ -88,7 +88,7 @@ CoreProgram
                                 ,
                                     ( 25
                                     , []
-                                    , CDrop DropFreeUnchecked "$args"
+                                    , CDrop "$args"
                                         ( CContinue
                                             [ CCon 26
                                                 [ CVar "tok"

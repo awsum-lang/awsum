@@ -119,19 +119,19 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
+          const v__inl5_x = v__cps_bytesToHexStringNoPrefix(v_io[1], [28]);
           return v__apply__df_andThenIO_9(
             v__k,
-            (v__inl5_x =>
-              (s => {
-                switch (s[0]) {
-                  case 3: {
-                    return [6, v__inl5_x[1]];
-                  }
-                  case 4: {
-                    return [5, v__inl5_x[1]];
-                  }
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  return [6, v__inl5_x[1]];
                 }
-              })(v__inl5_x))(v__cps_bytesToHexStringNoPrefix(v_io[1], [28]))
+                case 4: {
+                  return [5, v__inl5_x[1]];
+                }
+              }
+            })(v__inl5_x)
           );
         }
         case 6: {
@@ -281,11 +281,13 @@
           continue;
         }
         case 10: {
-          const __t0 = (v__inl9__arg0 =>
-            v__cps__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8(
+          const __t0 = (() => {
+            const v__inl9__arg0 = __stdinReadAllBytes();
+            return v__cps__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8(
               [24, v_io[1], v__inl9__arg0],
               [36]
-            ))(__stdinReadAllBytes());
+            );
+          })();
           v_io = __t0;
           continue;
         }

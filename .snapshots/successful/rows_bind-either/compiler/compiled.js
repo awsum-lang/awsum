@@ -24,36 +24,34 @@
     }
   };
 
-  const v_res = (v__inl11_r =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          {
-            const __s = v__inl11_r[1];
-            switch (__s[0]) {
-              case 2269767818: {
-                return [4, "ErrB"];
-              }
+  const v__inl4___input = [3, [25]];
+  const v__inl11_r = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2269767818, v__inl4___input[1]]];
+      }
+      case 4: {
+        return v__inl4___input;
+      }
+    }
+  })(v__inl4___input);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        {
+          const __s = v__inl11_r[1];
+          switch (__s[0]) {
+            case 2269767818: {
+              return [4, "ErrB"];
             }
           }
         }
-        case 4: {
-          return __concat("Ok ", String(v__inl11_r[1]));
-        }
       }
-    })(v__inl11_r))(
-    (v__inl4___input =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return [3, [2269767818, v__inl4___input[1]]];
-          }
-          case 4: {
-            return v__inl4___input;
-          }
-        }
-      })(v__inl4___input))([3, [25]])
-  );
+      case 4: {
+        return __concat("Ok ", String(v__inl11_r[1]));
+      }
+    }
+  })(v__inl11_r);
 
   const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     while (true) {
@@ -130,19 +128,19 @@
     }
   };
 
+  const v__inl14_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl14_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl14_x[1]];
-            }
-            case 4: {
-              return [5, v__inl14_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl14_x[1]];
           }
-        })(v__inl14_x))(v_res),
+          case 4: {
+            return [5, v__inl14_x[1]];
+          }
+        }
+      })(v__inl14_x),
       [28]
     ),
     [26]

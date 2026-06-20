@@ -128,26 +128,26 @@
     }
   };
 
-  const main = (v__inl27_s =>
-    v__cps__df_andThenIO_0(
-      [
-        7,
-        (v__inl23_t2 =>
-          (s => {
-            switch (s[0]) {
-              case 24: {
-                return "L";
-              }
-              case 25: {
-                return v__inl23_t2[2];
-              }
-            }
-          })(v__inl23_t2))(v_sumLeft(v__inl27_s, [24])),
-        [5, [0]]
-      ],
-      v__inl27_s,
-      [26]
-    ))(v_mk2(2 | 0, [24]));
+  const v__inl27_s = v_mk2(2 | 0, [24]);
+  const v__inl23_t2 = v_sumLeft(v__inl27_s, [24]);
+  const main = v__cps__df_andThenIO_0(
+    [
+      7,
+      (s => {
+        switch (s[0]) {
+          case 24: {
+            return "L";
+          }
+          case 25: {
+            return v__inl23_t2[2];
+          }
+        }
+      })(v__inl23_t2),
+      [5, [0]]
+    ],
+    v__inl27_s,
+    [26]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

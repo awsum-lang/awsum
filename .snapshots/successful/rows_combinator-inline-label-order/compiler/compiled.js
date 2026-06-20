@@ -23,31 +23,31 @@
 
   const v_ob = [3, [25]];
 
-  const v_cOrder = (v__inl3_x =>
+  const v__inl3_x = v_ob;
+  const v_cOrder = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [348914022, v__inl3_x[1]]];
+      }
+      case 4: {
+        return [4, v__inl3_x[1]];
+      }
+    }
+  })(v__inl3_x);
+
+  const v__inl6_r = v_cOrder;
+  const main = [
+    7,
     (s => {
       switch (s[0]) {
         case 3: {
-          return [3, [348914022, v__inl3_x[1]]];
+          return "B";
         }
         case 4: {
-          return [4, v__inl3_x[1]];
+          return String(v__inl6_r[1]);
         }
       }
-    })(v__inl3_x))(v_ob);
-
-  const main = [
-    7,
-    (v__inl6_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            return "B";
-          }
-          case 4: {
-            return String(v__inl6_r[1]);
-          }
-        }
-      })(v__inl6_r))(v_cOrder),
+    })(v__inl6_r),
     [5, [0]]
   ];
 

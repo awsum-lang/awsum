@@ -47,10 +47,8 @@
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df_andThenIO_0(
-            v__k,
-            [7, (v__inl2_x => v__inl2_x[1])(v_z), [5, [0]]]
-          );
+          const v__inl2_x = v_z;
+          return v__apply__df_andThenIO_0(v__k, [7, v__inl2_x[1], [5, [0]]]);
         }
         case 7: {
           const v_s = v_io[1];
@@ -63,10 +61,8 @@
     }
   };
 
-  const main = v__cps__df_andThenIO_0(
-    [7, (v__inl3_x => v__inl3_x[1])(v_w), [5, [0]]],
-    [8]
-  );
+  const v__inl3_x = v_w;
+  const main = v__cps__df_andThenIO_0([7, v__inl3_x[1], [5, [0]]], [8]);
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

@@ -134,7 +134,7 @@ L_pred_ok:
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -163,8 +163,8 @@ L_eq_i32_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -200,7 +200,7 @@ L_tarm1:
 
 
 .method static v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 7
 L_tco2:
   aload_0
@@ -293,8 +293,8 @@ L_tarm4:
 
 
 .method static v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 4
+  .limit stack 2
+  .limit locals 3
 L_tco5:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -321,7 +321,7 @@ L_tarm6:
 
 
 .method static v_res()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 3
   ldc 100000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
@@ -363,8 +363,8 @@ L_join7:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   invokestatic AwsumMain/v_res()Ljava/lang/Object;
   astore_0
   aload_0
@@ -437,7 +437,7 @@ L_join9:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco11:
   aload_0
@@ -594,7 +594,7 @@ L_tarm15:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco16:
   aload_0

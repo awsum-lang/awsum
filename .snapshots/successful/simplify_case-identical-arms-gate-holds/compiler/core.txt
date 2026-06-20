@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -64,14 +64,14 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "j" ]
-                                , CDrop DropFreeUnchecked "j"
+                                , CDrop "j"
                                     ( CCase
                                         ( CVar "m" )
                                         [
                                             ( 11
                                             , []
-                                            , CDrop DropFreeUnchecked "k"
-                                                ( CDrop DropFreeUnchecked "m"
+                                            , CDrop "k"
+                                                ( CDrop "m"
                                                     ( CContinue
                                                         [ CVar "j"
                                                         , CCon 12
@@ -83,7 +83,7 @@ CoreProgram
                                         ,
                                             ( 12
                                             , [ "_n" ]
-                                            , CDrop DropFreeUnchecked "k"
+                                            , CDrop "k"
                                                 ( CContinue
                                                     [ CVar "j"
                                                     , CReuse ReuseGuarded "m" 12
@@ -162,7 +162,7 @@ CoreProgram
                                 ]
                             ]
                         )
-                        ( CDrop DropFreeUnchecked "$inl6$m"
+                        ( CDrop "$inl6$m"
                             ( CCase
                                 ( CVar "$inl6$m" )
                                 [

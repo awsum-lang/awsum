@@ -46,7 +46,6 @@ import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
 import Awsum.Render (renderType)
-import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Symbols qualified as ASym
 import Awsum.Syntax qualified as ASyn
 import Awsum.TExpr
@@ -740,7 +739,7 @@ compileToTypedProgram :: Text -> Maybe TypedProgram
 compileToTypedProgram src =
   case parseProgramDiagnostic src of
     Left _ -> Nothing
-    Right userProg -> case restrictPreludeRefs userProg of
+    Right userProg -> case AD.userProgramRestrictionDiagnostics userProg of
       _ : _ -> Nothing
       [] ->
         -- Desugar before typechecking — mirrors 'elaborateLowerProgram'
@@ -766,8 +765,8 @@ compileToDiagnostics :: Text -> [AD.Diagnostic]
 compileToDiagnostics src =
   case parseProgramDiagnostic src of
     Left parseErrs -> map AD.parseErrorToDiagnostic parseErrs
-    Right userProg -> case restrictPreludeRefs userProg of
-      vs@(_ : _) -> map AD.preludeRefViolationToDiagnostic vs
+    Right userProg -> case AD.userProgramRestrictionDiagnostics userProg of
+      ds@(_ : _) -> ds
       [] ->
         case elaborateLowerProgram ProgramCli (withPrelude userProg) of
           Left typeErr -> [AD.typeErrorToDiagnostic typeErr]

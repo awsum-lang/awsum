@@ -18,7 +18,7 @@ module Awsum.Codegen.CLR.Assemble
   )
 where
 
-import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllBytesSpec, stdinReadAllSpec, strRef, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxLocalsOf, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllBytesSpec, stdinReadAllSpec, strRef, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
@@ -252,55 +252,6 @@ addLocalSigBytes blob = do
   let row = st.pSASn + 1
   put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
   pure (0x11000000 .|. row)
-
--- | Count the number of local variable slots needed for a CExpr.
--- A 'CCase' consumes @1@ slot for its array copy — unless the scrutinee is
--- dispatched in place ('scrutInPlaceLoad'), which consumes none — plus room
--- for its widest arm-binding set; nested cases inside an arm body need
--- binding slots after the outer bindings, so the demand is
--- additive: this level's @scrutSlots + maxBindings@ plus whatever the richest
--- nested case inside the arms asks for. Must mirror 'scrutDispatchI', which
--- picks the dispatch shape at emission time. A 'CCon' consumes @1@ slot
--- for its array tmp, additive with whatever its richest field needs —
--- nested 'CCon's stack tmp slots so a chain like @Right (Right ...)@
--- of depth N needs N tmp slots.
-exprLocalsNeeded :: Set Text -> Set Text -> CExpr -> Int
-exprLocalsNeeded valDefs funDefs = go
-  where
-    scrutSlots = \case
-      CVar n | not (Set.member n valDefs || Set.member n funDefs) -> 0
-      _ -> 1
-    go = \case
-      -- The scrutinee evaluates before the arr slot is taken, on the same
-      -- base — its demand overlaps the case's own rather than adding.
-      CCase scrut alts ->
-        let thisLevel = scrutSlots scrut + foldl' max 0 [length vs | (_, vs, _) <- alts]
-            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
-         in max (go scrut) (thisLevel + armMax)
-      CRowCase scrut alts ->
-        let thisLevel = scrutSlots scrut + 1 -- scrutinee slot (when copied) + 1 binding
-            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
-         in max (go scrut) (thisLevel + armMax)
-      CRow _ v -> 1 + go v
-      CCall f xs -> foldl' max 0 (go f : map go xs)
-      CCon _ fields -> 1 + foldl' max 0 (map go fields)
-      CLoop b -> go b
-      CContinue xs -> foldl' max 0 (map go xs)
-      CDrop _ _ b -> go b
-      -- Cell reuse: same locals budget as CCon.
-      CReuse _ _ _ fs -> 1 + foldl' max 0 (map go fs)
-      -- One slot for the binder, live across the body; the rhs evaluates
-      -- before the binder's store, so its scratch may overlap the slot.
-      CLet _ rhs b -> max (go rhs) (1 + go b)
-      -- One slot per join parameter, reserved at the node and live across both
-      -- sides (the inner expression's jumps write them, the body reads them) —
-      -- additive with either side's own demand, like a 'CLet' binder over its
-      -- body.
-      CJoin _ ps body inner -> length ps + max (go body) (go inner)
-      -- Jump arguments evaluate one at a time, each stored straight into its
-      -- parameter slot; the peak is the deepest single argument.
-      CJump _ args -> foldl' max 0 (map go args)
-      _ -> 0
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Coded index helpers
@@ -950,7 +901,7 @@ emitExprI ctx = \case
   -- only a loop-private 'ReuseUnique' pack/continuation mutates in place.
   CReuse ReuseGuarded _ tag fields -> emitCellI ctx tag fields
   CReuse ReuseUnique n tag fields -> emitReuseI ctx n tag fields
-  CDrop _ _ body -> emitExprI ctx body
+  CDrop _ body -> emitExprI ctx body
   CCall f xs -> emitCallI ctx f xs
   CCase scrut alts -> emitCaseI ctx scrut alts
   CRowCase scrut alts -> emitCaseI ctx scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
@@ -1086,8 +1037,9 @@ scrutInPlaceLoad ctx = \case
 -- tag on the stack), the per-read scrutinee-array load for arm bindings, and
 -- the first free slot for those bindings. An in-place scrutinee
 -- ('scrutInPlaceLoad') is re-loaded per read and consumes no scratch slot;
--- anything else evaluates once into @arrSlot@. Must mirror
--- 'exprLocalsNeeded', which charges the slot at layout time.
+-- anything else evaluates once into @arrSlot@. Whichever slots this takes are
+-- counted off the emitted stream by 'maxLocalsOf' — no separate sizing to keep
+-- in step.
 scrutDispatchI :: ECtx -> CExpr -> State Int ([CilInstr], [CilInstr], Int)
 scrutDispatchI ctx scrut = case scrutInPlaceLoad ctx scrut of
   Just load -> pure (load <> [LdcI4 0, LdelemRef, UnboxAny int32Ref], load, ctx.eNextScratch)
@@ -1179,7 +1131,7 @@ emitJoinI ctx j ps body inner = do
             ctx' = ctxJ {eLocals = Map.insert x slot ctxJ.eLocals, eNextScratch = slot + 1}
         bodyI <- goInner ctx' afterLbl b
         pure (rhsI <> [Stloc slot] <> bodyI)
-      CDrop _ _ b -> goInner ctxJ afterLbl b
+      CDrop _ b -> goInner ctxJ afterLbl b
       CCase scrut alts -> goInnerCase ctxJ afterLbl scrut alts
       CRowCase scrut alts ->
         goInnerCase ctxJ afterLbl scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
@@ -1230,7 +1182,7 @@ emitJoinI ctx j ps body inner = do
         pure (valI <> [Br (LabelId afterLbl)])
     peelDrops :: CExpr -> CExpr
     peelDrops = \case
-      CDrop _ _ b -> peelDrops b
+      CDrop _ b -> peelDrops b
       e -> e
 
 -- | Tail-position emitter for a 'CLoop' body. The loop head is @loopLbl@
@@ -1259,7 +1211,7 @@ emitTailI baseCtx params loopLbl = go baseCtx []
         pure (concat argCodes <> drainDrops ctx dropsNotRebound <> stargs <> [Br (LabelId loopLbl)])
       CCase scrut alts -> tailCase ctx pending scrut alts
       CRowCase scrut alts -> tailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      CDrop _ n body -> go ctx (n : pending) body
+      CDrop n body -> go ctx (n : pending) body
       CLet x rhs body -> do
         rhsI <- emitExprI ctx rhs
         let slot = ctx.eNextScratch
@@ -1332,34 +1284,40 @@ declCilMethod baseCtx = \case
   CFunDef nm args (CLoop body) ->
     let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..]), eLocals = Map.empty, eNextScratch = 0}
         loopLbl = "IL_tco_loop" :: Text
+        -- Loop head at the start; tail arms/values self-terminate, so no
+        -- trailing Ret.
+        instrs = Label (LabelId loopLbl) : evalState (emitTailI ctx args loopLbl body) 0
      in CilMethod
           { cmName = mangle nm,
             cmRet = SeObject,
             cmParams = replicate (length args) SeObject,
-            cmLocals = userLocals (exprLocalsNeeded baseCtx.eValDefs baseCtx.eFunDefs body),
-            -- Loop head at the start; tail arms/values self-terminate, so no
-            -- trailing Ret.
-            cmBody = Label (LabelId loopLbl) : evalState (emitTailI ctx args loopLbl body) 0
+            cmLocals = userLocals (maxLocalsOf instrs),
+            cmBody = instrs
           }
   CFunDef nm args body ->
     let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..]), eLocals = Map.empty, eNextScratch = 0}
+        instrs = evalState (emitExprI ctx body) 0 <> [Ret]
      in CilMethod
           { cmName = mangle nm,
             cmRet = SeObject,
             cmParams = replicate (length args) SeObject,
-            cmLocals = userLocals (exprLocalsNeeded baseCtx.eValDefs baseCtx.eFunDefs body),
-            cmBody = evalState (emitExprI ctx body) 0 <> [Ret]
+            cmLocals = userLocals (maxLocalsOf instrs),
+            cmBody = instrs
           }
   CValDef nm rhs ->
     let ctx = baseCtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0}
+        instrs = evalState (emitExprI ctx rhs) 0 <> [Ret]
      in CilMethod
           { cmName = mangle nm,
             cmRet = SeObject,
             cmParams = [],
-            cmLocals = userLocals (exprLocalsNeeded baseCtx.eValDefs baseCtx.eFunDefs rhs),
-            cmBody = evalState (emitExprI ctx rhs) 0 <> [Ret]
+            cmLocals = userLocals (maxLocalsOf instrs),
+            cmBody = instrs
           }
   where
+    -- @.locals@ count read back off the emitted stream ('maxLocalsOf'), so it
+    -- cannot disagree with the slots the emitter assigned. Slot 0 is the
+    -- @object[]@ scratch (cells / case scrutinee); the rest are @object@.
     userLocals n
       | n <= 0 = []
       | otherwise = SeSZArray SeObject : replicate (n - 1) SeObject

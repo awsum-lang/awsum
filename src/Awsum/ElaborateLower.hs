@@ -15,7 +15,7 @@
 --
 -- Invariants (assumed by codegen/tests):
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
---   • 'CBuiltIn' only appears in callee position of 'CCall'.
+--   • 'CBuiltIn' only appears as the callee of a /saturated/ 'CCall'.
 --   • Unsupported qualified names fail fast with a clear error.
 module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborateLowerProgramWith) where
 
@@ -39,7 +39,7 @@ import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), texprType, tparamType)
 import Awsum.Tco (tcoProgram)
-import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, markEmptyTypesInDecl, splitArrow, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, extractTyCon, markEmptyTypesInDecl, splitArrow, typecheckProgram)
 import Awsum.UniquifyLocals (uniquifyLocals)
 import Control.Monad (foldM)
 import Data.List (groupBy)
@@ -235,6 +235,18 @@ freshLetWildName = do
   put s {lsFresh = lsFresh s + 1}
   pure ("$let_w_" <> show (lsFresh s))
 
+-- | Mint a fresh binder name '$m$N' for reconciling the field binders of
+--   case arms being merged. When same-tag arms bind a field to different
+--   source names, the union keeps one canonical list — these globally
+--   unique names — and alpha-renames each arm's body onto it. A fresh
+--   target can neither chain (every name distinct) nor be captured (it
+--   appears in no other binder), so the rename is unconditionally safe.
+freshMergeName :: LowerM Name
+freshMergeName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$m$" <> show (lsFresh s))
+
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
 emitHelper d = modify (\s -> s {lsHelpers = d : lsHelpers s})
@@ -324,27 +336,54 @@ genConWrappers conInfo =
     let params = ["$x" <> show i | i <- [0 .. ciArity ci - 1]]
   ]
 
--- | Replace every bare 'CBuiltIn' in /value position/ with a reference to
---   a synthesised eta-wrapper, returning the rewritten expression plus the
---   set of built-in names that need wrappers generated.
+-- | Replace every 'CBuiltIn' that is not the callee of a /saturated/
+--   'CCall' with a reference to a synthesised eta-wrapper, returning the
+--   rewritten expression plus the set of built-in names that need wrappers
+--   generated. Two shapes trigger the rewrite:
+--
+--   * /Value position/ — a bare 'CBuiltIn' used as a value (constructor
+--     field, call argument, case scrutinee). When a user writes
+--     @bindIO io IO.Stdout.print@ or @apply showInt32 42@, the surrounding
+--     'EApp' doesn't wrap the built-in reference, so a bare 'CBuiltIn'
+--     would otherwise flow into a fn-typed slot — Defunctionalize/
+--     LowerClosures don't encode it as a closure, and the runtime
+--     '$applyN' dispatcher crashes on the non-'CCon' value.
+--
+--   * /Under-saturated callee/ — @CCall (CBuiltIn name) args@ with
+--     @length args < arity name@, i.e. a partial application such as
+--     @mulInt32 5@ (one of two arguments). A bare 'CBuiltIn' callee is
+--     legal only for an /exactly saturated/ call; codegen requires every
+--     built-in call to supply the full argument list. Routing the partial
+--     application through the wrapper turns it into
+--     @CCall (CVar ('$bi$' <> name)) args@ — a partial application of a
+--     top-level 'CFunDef', the shape 'Awsum.LowerClosures' / 'saturateProgram'
+--     already encode as a closure. (Over-application can't arise: no
+--     built-in returns a function.)
 --
 --   The pipeline invariant ('Awsum.LowerClosures' header) is that
---   'CBuiltIn' may only appear as the callee of a 'CCall'. When a user
---   writes @bindIO io IO.Stdout.print@ or @apply showInt32 42@, the
---   surrounding 'EApp' doesn't wrap the built-in reference (it's used as a
---   value), so a bare 'CBuiltIn' would otherwise flow into a fn-typed
---   slot — Defunctionalize/LowerClosures don't encode it as a closure,
---   and the runtime '$applyN' dispatcher crashes on the non-'CCon' value.
---   This walk rewrites every such occurrence to @CVar ('$bi$' <> name)@;
---   the generator 'genBuiltInEtaWrappers' then materialises the matching
+--   'CBuiltIn' may only appear as the callee of a /saturated/ 'CCall'. This
+--   walk rewrites every other occurrence to @CVar ('$bi$' <> name)@; the
+--   generator 'genBuiltInEtaWrappers' then materialises the matching
 --   'CFunDef' whose body is a saturated 'CCall (CBuiltIn name) [args]'.
-etaExpandBuiltInValues :: CExpr -> (CExpr, Set Name)
-etaExpandBuiltInValues = goValue
+--
+--   @arityOf@ maps each built-in name to its arrow arity (from
+--   'builtInTypeByName'); a name absent from the map keeps the bare callee
+--   (a registry bug surfaces at codegen exactly as before, not silently).
+etaExpandBuiltInValues :: Map Name Int -> CExpr -> (CExpr, Set Name)
+etaExpandBuiltInValues arityOf = goValue
   where
     -- /Value position/: a 'CBuiltIn' must be eta-wrapped.
     goValue :: CExpr -> (CExpr, Set Name)
     goValue = \case
       CBuiltIn n -> (CVar (builtInEtaWrapperName n), Set.singleton n)
+      -- Under-saturated built-in call: route through the wrapper so the
+      -- partial application becomes a partial application of a top-level
+      -- 'CFunDef'. A saturated call (or an unknown name) falls through to
+      -- the general 'CCall' case below, keeping the bare 'CBuiltIn' callee.
+      CCall (CBuiltIn name) args
+        | maybe False (length args <) (M.lookup name arityOf) ->
+            let (args', n2) = unzipFold (map goValue args)
+             in (CCall (CVar (builtInEtaWrapperName name)) args', Set.insert name n2)
       CCall callee args ->
         let (callee', n1) = goCallee callee
             (args', n2) = unzipFold (map goValue args)
@@ -369,9 +408,9 @@ etaExpandBuiltInValues = goValue
       CContinue args ->
         let (args', ns) = unzipFold (map goValue args)
          in (CContinue args', ns)
-      CDrop k n b ->
+      CDrop n b ->
         let (b', ns) = goValue b
-         in (CDrop k n b', ns)
+         in (CDrop n b', ns)
       CReuse rm n t fs ->
         let (fs', ns) = unzipFold (map goValue fs)
          in (CReuse rm n t fs', ns)
@@ -386,10 +425,11 @@ etaExpandBuiltInValues = goValue
       e@(CString _) -> (e, mempty)
       e@(CIntLit _ _) -> (e, mempty)
 
-    -- /Callee position/ of a 'CCall': bare 'CBuiltIn' is legal here, so
-    -- direct built-in calls 'CCall (CBuiltIn name) [args]' stay untouched.
-    -- Any other callee shape (e.g. a 'CCall' producing a function value)
-    -- is itself in value position and recurses through 'goValue'.
+    -- /Callee position/ of a 'CCall' that reached here: a bare 'CBuiltIn'
+    -- is a /saturated/ call (the under-saturated case is handled in
+    -- 'goValue' above), which is legal, so it stays untouched. Any other
+    -- callee shape (e.g. a 'CCall' producing a function value) is itself
+    -- in value position and recurses through 'goValue'.
     goCallee :: CExpr -> (CExpr, Set Name)
     goCallee = \case
       e@(CBuiltIn _) -> (e, mempty)
@@ -409,47 +449,54 @@ etaExpandBuiltInValues = goValue
     unzipFold xs = (map fst xs, foldMap snd xs)
 
 -- | Lift 'etaExpandBuiltInValues' over a single top-level declaration.
-etaExpandDeclBuiltInValues :: CDecl -> (CDecl, Set Name)
-etaExpandDeclBuiltInValues = \case
+etaExpandDeclBuiltInValues :: Map Name Int -> CDecl -> (CDecl, Set Name)
+etaExpandDeclBuiltInValues arityOf = \case
   CValDef n e ->
-    let (e', ns) = etaExpandBuiltInValues e
+    let (e', ns) = etaExpandBuiltInValues arityOf e
      in (CValDef n e', ns)
   CFunDef n ps body ->
-    let (body', ns) = etaExpandBuiltInValues body
+    let (body', ns) = etaExpandBuiltInValues arityOf body
      in (CFunDef n ps body', ns)
 
--- | Generate eta-wrapper 'CFunDef's for the listed built-in names.
---   Looks up each name's arity from 'Awsum.BuiltIn.builtIns' (unqualified
---   prelude built-ins) or 'Awsum.Program.platformTable' (qualified platform
---   effects keyed by their dotted form). Names that don't resolve (or
---   resolve to non-arrow types) are silently skipped — by construction the
---   walker only adds names that originated from 'CBuiltIn' positions, so
---   any missing entry is a registry bug, not a user error.
-genBuiltInEtaWrappers :: ProgramType -> Set Name -> [CDecl]
-genBuiltInEtaWrappers progType names =
-  let tymap = builtInTypeByName progType
-   in [ CFunDef wname params (CCall (CBuiltIn name) (map CVar params))
-      | name <- Set.toList names,
-        Just ty <- [M.lookup name tymap],
-        let arity = countArrows ty,
-        arity > 0,
-        let wname = builtInEtaWrapperName name,
-        let params = ["$x" <> show i | i <- [0 .. arity - 1]]
-      ]
+-- | Surface type of every built-in reachable in this program type, keyed
+--   by the name a 'CBuiltIn' node carries: unqualified for prelude
+--   built-ins ('Awsum.BuiltIn.builtIns'), dotted for the qualified platform
+--   effects ('Awsum.Program.platformTable').
+builtInTypeByName :: ProgramType -> Map Name Type'
+builtInTypeByName pt =
+  let preludeMap = builtIns
+      platformMap = M.mapKeys prettyQName (platformTable pt)
+   in M.union preludeMap platformMap
   where
-    builtInTypeByName :: ProgramType -> Map Name Type'
-    builtInTypeByName pt =
-      let preludeMap = builtIns
-          platformMap = M.mapKeys prettyQName (platformTable pt)
-       in M.union preludeMap platformMap
-
     prettyQName :: QName -> Name
     prettyQName (QName mods n) = T.intercalate "." (mods <> [n])
 
+-- | Arrow arity of every built-in reachable in this program type. Both
+--   the eta-expansion walk (to spot under-saturated calls) and
+--   'genBuiltInEtaWrappers' (to size the wrapper's parameter list) consult
+--   this one source of truth.
+builtInArities :: ProgramType -> Map Name Int
+builtInArities = M.map countArrows . builtInTypeByName
+  where
     countArrows :: Type' -> Int
     countArrows = \case
       TyArrow _ _ rest -> 1 + countArrows rest
       _ -> 0
+
+-- | Generate eta-wrapper 'CFunDef's for the listed built-in names, using
+--   the precomputed 'builtInArities' map. Names that don't resolve (or
+--   resolve to non-arrow types, arity 0) are silently skipped — by
+--   construction the walker only adds names that originated from 'CBuiltIn'
+--   positions, so any missing entry is a registry bug, not a user error.
+genBuiltInEtaWrappers :: Map Name Int -> Set Name -> [CDecl]
+genBuiltInEtaWrappers arityOf names =
+  [ CFunDef wname params (CCall (CBuiltIn name) (map CVar params))
+  | name <- Set.toList names,
+    Just arity <- [M.lookup name arityOf],
+    arity > 0,
+    let wname = builtInEtaWrapperName name,
+    let params = ["$x" <> show i | i <- [0 .. arity - 1]]
+  ]
 
 -- | Run a 'LowerM' computation, returning its result and the
 --   accumulated lifted helpers (in source order — they're appended
@@ -544,17 +591,20 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
       declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo, ioStdinReadAllStringContDecl conInfo, ioStdinReadAllBytesContDecl conInfo]
-      -- Eta-expand every bare 'CBuiltIn' that appears in value position
-      -- (constructor field, call argument, case scrutinee, etc.) into a
-      -- reference to a synthesised wrapper. Restores the pipeline invariant
-      -- that 'CBuiltIn' only appears as a 'CCall' callee. Runs before
+      -- Eta-expand every 'CBuiltIn' that is not the callee of a saturated
+      -- 'CCall' — a bare value reference (constructor field, call argument,
+      -- case scrutinee, …) or an under-saturated callee (a partial
+      -- application like @mulInt32 5@) — into a reference to a synthesised
+      -- wrapper. Restores the pipeline invariant that 'CBuiltIn' only
+      -- appears as the callee of a saturated 'CCall'. Runs before
       -- 'lowerIOPlatformBuiltinsDecl' so the wrapper bodies — themselves
       -- saturated 'CCall (CBuiltIn name) [args]' — get rewritten in the
       -- same pass when 'name' is a platform built-in like @IO.Stdout.print@.
+      arityOf = builtInArities progType
       (declsAfterEta, etaNeeded) =
-        let pairs = map etaExpandDeclBuiltInValues declsBeforeBI
+        let pairs = map (etaExpandDeclBuiltInValues arityOf) declsBeforeBI
          in (map fst pairs, foldMap snd pairs)
-      builtInWrappers = genBuiltInEtaWrappers progType etaNeeded
+      builtInWrappers = genBuiltInEtaWrappers arityOf etaNeeded
       allDeclsRaw = declsAfterEta <> builtInWrappers
       allDecls = map (lowerIOPlatformBuiltinsDecl conInfo) allDeclsRaw
   --    Then tree-shake: drop Core declarations unreachable from 'main'.
@@ -669,7 +719,7 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
   --    freely rewrite bodies and would otherwise have to preserve
   --    drops through every transformation.
   -- 13) Cell reuse: rewrites the canonical
-  --    'CCase (CVar n) [..., (t, vs, CDrop _ n inner), ...]' +
+  --    'CCase (CVar n) [..., (t, vs, CDrop n inner), ...]' +
   --    matching-arity 'CCon' inside 'inner' into 'CReuse'. Runs
   --    after 'insertDrops' so it can rely on the drop placement as
   --    a proxy for linear-use of the scrutinee.
@@ -875,7 +925,7 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
           [(t, v, rewriteExpr e) | (t, v, e) <- alts]
       CLoop body -> CLoop (rewriteExpr body)
       CContinue args -> CContinue (map rewriteExpr args)
-      CDrop k n body -> CDrop k n (rewriteExpr body)
+      CDrop n body -> CDrop n (rewriteExpr body)
       CReuse rm n t fs -> CReuse rm n t (map rewriteExpr fs)
       CLet x rhs body -> CLet x (rewriteExpr rhs) (rewriteExpr body)
       CJoin {} -> error "ElaborateLower: CJoin is minted by Awsum.Simplify, which runs later"
@@ -1057,7 +1107,7 @@ guardedTags cs rs = go
       CCall f xs -> go f <> foldMap go xs
       CLoop b -> go b
       CContinue xs -> foldMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CLet _ rhs body -> go rhs <> go body
       CJoin _ _ body inner -> go body <> go inner
       CJump _ args -> foldMap go args
@@ -1097,7 +1147,7 @@ pruneDeadArms conTags rowTags = go
       CRow t v -> CRow t (go v)
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
-      CDrop k n b -> CDrop k n (go b)
+      CDrop n b -> CDrop n (go b)
       CReuse rm n t fs -> CReuse rm n t (map go fs)
       CLet x rhs body -> CLet x (go rhs) (go body)
       CJoin j ps body inner -> CJoin j ps (go body) (go inner)
@@ -1193,7 +1243,7 @@ saturateExpr am locals = go
       -- Same story: 'CDrop' is produced by 'Awsum.Lifetime.insertDrops'
       -- after Tco, so saturate never sees it. Transparent passthrough
       -- keeps the pattern match exhaustive.
-      CDrop k n b -> CDrop k n <$> go b
+      CDrop n b -> CDrop n <$> go b
       -- 'CReuse' is also produced after Tco; passthrough.
       CReuse rm n t fs -> CReuse rm n t <$> traverse go fs
       CLet x rhs body -> CLet x <$> go rhs <*> go body
@@ -1235,32 +1285,6 @@ saturateExpr am locals = go
               papDecl = CFunDef papName etas papBody
           put (papDecl : extras)
           pure (CVar papName)
-
-freeVars :: CExpr -> Set Name
-freeVars = \case
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CVar n -> one n
-  CBuiltIn _ -> mempty
-  CCon _ fs -> foldMap freeVars fs
-  CCase s alts ->
-    freeVars s
-      <> foldMap (\(_, vs, b) -> freeVars b `Set.difference` fromList vs) alts
-  CRow _ v -> freeVars v
-  CRowCase s alts ->
-    freeVars s
-      <> foldMap (\(_, v, b) -> freeVars b `Set.difference` Set.singleton v) alts
-  CCall f xs -> freeVars f <> foldMap freeVars xs
-  CLoop b -> freeVars b
-  CContinue xs -> foldMap freeVars xs
-  CDrop _ n b -> Set.delete n (freeVars b)
-  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
-  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
-  CProj n _ -> one n
-  -- The join name is a label, not a reference; the parameters scope over
-  -- the body only.
-  CJoin _ ps body inner -> (freeVars body `Set.difference` Set.fromList ps) <> freeVars inner
-  CJump _ args -> foldMap freeVars args
 
 -- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
 extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv
@@ -1318,13 +1342,20 @@ peelTLams :: TExpr -> ([TParam], TExpr)
 peelTLams (TLam _ _ ps b) = let (ps', b') = peelTLams b in (ps <> ps', b')
 peelTLams e = ([], e)
 
--- | Lower a typed top-level definition. Bare-built-in aliases
---   (@showInt32 = BuiltIn.showInt32@) are dropped — references resolve
---   to the built-in directly through 'lowerVar'. A zero-parameter def
---   whose body has an arrow type is the alias form (@foo = otherFn@) and
---   is eta-expanded; otherwise it is a constant.
+-- | Lower a typed top-level definition. A same-name built-in alias
+--   (@showInt32 = BuiltIn.showInt32@, as the prelude forwards every
+--   built-in) is dropped: 'lowerVar' resolves a reference to @showInt32@
+--   straight to @CBuiltIn "showInt32"@ by name, so the decl carries no
+--   information. That name-resolution is the load-bearing condition —
+--   for a /renaming/ alias (@f = BuiltIn.showInt32@, @f \/= showInt32@)
+--   dropping the decl would leave every @f@ reference resolving to a
+--   dangling @CVar "f"@. So only the same-name form is dropped; the
+--   renaming form falls through to the alias-eta path below and lowers
+--   exactly like the hand-written @f x = BuiltIn.showInt32 x@. A
+--   zero-parameter def whose body has an arrow type is the alias form
+--   (@foo = otherFn@) and is eta-expanded; otherwise it is a constant.
 lowerTDecl :: LowerEnv -> TDecl -> LowerM (Maybe CDecl)
-lowerTDecl _ (TValDef _ (TBuiltIn {})) = pure Nothing
+lowerTDecl _ (TValDef n (TBuiltIn _ _ bn)) | n == bn = pure Nothing
 lowerTDecl env (TValDef n body)
   -- @f = \\a b -> e@ — move the lambda parameters onto the LHS (the
   -- typed equivalent of the old surface eta-contraction), so the body
@@ -1399,7 +1430,7 @@ lowerTExpr env locals = \case
   TCase _ _ scrut alts -> do
     scrut' <- lowerTExpr env locals scrut
     alts' <- traverse (lowerTAltM env locals) alts
-    merged <- liftEither (mergeAlts alts')
+    merged <- mergeAlts alts'
     pure (CCase scrut' merged)
   TRowCase _ _ scrut alts -> do
     scrut' <- lowerTExpr env locals scrut
@@ -1553,7 +1584,7 @@ buildRowAltsT env locals alts = do
         [(tag, _, AscribeShape var body)] -> pure (tag, var, body)
         ((tag, _, ConShape {}) : _) -> do
           let conAlts = [(t, vs, b) | (_, _, ConShape t vs b) <- g]
-          merged <- liftEither (mergeAlts conAlts)
+          merged <- mergeAlts conAlts
           let var = "__rw" :: Name
           pure (tag, var, CCase (CVar var) merged)
         ((_, _, AscribeShape _ _) : _ : _) ->
@@ -1695,8 +1726,8 @@ synthCoerce conInfo src tgt@(TyOr {}) =
               )
           )
 synthCoerce conInfo src tgt
-  | Just headName <- tyConHead src,
-    Just headName' <- tyConHead tgt,
+  | Just headName <- extractTyCon src,
+    Just headName' <- extractTyCon tgt,
     headName == headName' =
       synthNominalHeadCoerce conInfo headName src tgt
 -- Function-typed coercion: pointwise rebuild via a top-level helper
@@ -1835,8 +1866,8 @@ coercionIsIdentity conInfo = go Set.empty
       | TyArrow _ sA sB <- src,
         TyArrow _ tA tB <- tgt =
           go seen tA sA && go seen sB tB
-      | Just h1 <- tyConHead src,
-        Just h2 <- tyConHead tgt,
+      | Just h1 <- extractTyCon src,
+        Just h2 <- extractTyCon tgt,
         h1 == h2 =
           let key = (canonicalLabel src, canonicalLabel tgt)
            in Set.member key seen
@@ -1905,59 +1936,113 @@ data RowArmShape
   = AscribeShape Name CExpr
   | ConShape Int [Name] CExpr
 
--- | Extract the head 'TyCon' name from a type, peeling 'TyApp' chains.
---   Returns 'Nothing' for 'TyVar', 'TyArrow', 'TyOr'.
-tyConHead :: Type' -> Maybe Name
-tyConHead (TyCon _ n) = Just n
-tyConHead (TyApp _ f _) = tyConHead f
-tyConHead _ = Nothing
-
--- | Merge case alternatives that have the same outer tag.
---   When multiple alts match the same constructor with nested patterns,
---   merge their inner case expressions into a single nested case.
---   Example: @Ok (Ok x) -> ...@ and @Ok (Err x) -> ...@ both have tag 0 for Ok,
---   so we merge them into a single alt with a nested case on the inner Result.
-mergeAlts :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
-mergeAlts alts =
-  let grouped = groupBy (\(t1, _, _) (t2, _, _) -> t1 == t2) (sortOn (\(t, _, _) -> t) alts)
-   in traverse mergeGroup grouped >>= Right . concat
+-- | Merge case alternatives that share an outer tag. Arms that match the
+--   same constructor but differ only in deeper fields are unioned into one
+--   arm whose body dispatches on those fields — e.g. @Ok (Ok x) -> …@ and
+--   @Ok (Err x) -> …@ (both tag @Ok@) fold into one @Ok@ arm with a nested
+--   case on the inner @Result@. Two obligations beyond plain concatenation:
+--
+--     * /Row fields/ merge recursively ('mergeRowAlts'), exactly like
+--       nominal fields ('mergeAlts'). A row field followed by a further
+--       discriminating field produces two arms with the same row tag; left
+--       merely concatenated, the second tag duplicates the first and its
+--       dispatch is lost.
+--     * /Binders/ are reconciled ('reconcileVars' / 'reconcileVar'). The
+--       union keeps one binder list; an arm whose binders differ is
+--       alpha-renamed onto a fresh canonical list first, so no body
+--       references a binder the merge dropped.
+--
+--   A residual shape conflict (one arm dispatches on a field, a sibling
+--   binds it whole) is the forbidden partial-catch-all, which
+--   'Awsum.Typing.rejectPartialCatchAll' rejects before lowering — so the
+--   'TELowering' branches in 'mergeBodies' are defensive and unreachable
+--   on well-typed input.
+mergeAlts :: [(Int, [Name], CExpr)] -> LowerM [(Int, [Name], CExpr)]
+mergeAlts alts = concat <$> traverse mergeGroup (groupByTag alts)
   where
-    mergeGroup :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
-    mergeGroup [] = Right []
-    mergeGroup [alt] = Right [alt]
-    mergeGroup ((tag, vars, body) : rest) = do
-      -- Check if all alts in this group have the same structure
-      -- (same number of vars, all bodies are CCase or CRowCase on
-      -- the first var). The 'CRowCase' branch covers row-case arms
-      -- whose outer constructor is the same and whose ascription-
-      -- driven inner 'CRowCase' wrappers (introduced by
-      -- 'lowerRowConInnerPats') need to be unioned into a single
-      -- multi-arm 'CRowCase'.
-      case (body, map (\(_, vs, b) -> (vs, b)) rest) of
-        (CCase (CVar scrutVar) innerAlts, otherBodies) -> do
-          allInnerAlts <- foldM collectInnerAlts innerAlts otherBodies
-          mergedInnerAlts <- mergeAlts allInnerAlts
-          Right [(tag, vars, CCase (CVar scrutVar) mergedInnerAlts)]
-        (CRowCase (CVar scrutVar) innerAlts, otherBodies) -> do
-          allInnerAlts <- foldM collectInnerRowAlts innerAlts otherBodies
-          Right [(tag, vars, CRowCase (CVar scrutVar) allInnerAlts)]
-        _ ->
-          Left (TELowering $ "conflicting pattern shapes for constructor tag " <> show tag)
+    mergeGroup :: [(Int, [Name], CExpr)] -> LowerM [(Int, [Name], CExpr)]
+    mergeGroup [] = pure []
+    mergeGroup [alt] = pure [alt]
+    mergeGroup grp@((tag, _, _) : _) = do
+      (vars, bodies) <- reconcileVars [(vs, b) | (_, vs, b) <- grp]
+      merged <- mergeBodies bodies
+      pure [(tag, vars, merged)]
 
-    collectInnerAlts :: [(Int, [Name], CExpr)] -> ([Name], CExpr) -> Either TypeError [(Int, [Name], CExpr)]
-    collectInnerAlts acc (_vars, CCase (CVar _scrutVar) innerAlts) =
-      Right (acc <> innerAlts)
-    collectInnerAlts _ _ =
-      Left (TELowering "conflicting pattern shapes in merge")
+-- | Group case-alt triples by their (orderable) tag, sorting first so
+--   'groupBy' collects all same-tag arms into one group. One copy shared by
+--   'mergeAlts' and 'mergeRowAlts' so the sort key and the group predicate
+--   can never drift apart (a mismatch would split same-tag arms and skip
+--   the merge they require).
+groupByTag :: (Ord t) => [(t, a, b)] -> [[(t, a, b)]]
+groupByTag = groupBy (\(t1, _, _) (t2, _, _) -> t1 == t2) . sortOn (\(t, _, _) -> t)
 
-    collectInnerRowAlts ::
-      [(Word32, Name, CExpr)] ->
-      ([Name], CExpr) ->
-      Either TypeError [(Word32, Name, CExpr)]
-    collectInnerRowAlts acc (_vars, CRowCase (CVar _scrutVar) innerAlts) =
-      Right (acc <> innerAlts)
-    collectInnerRowAlts _ _ =
-      Left (TELowering "conflicting row-case shapes in merge")
+-- | The structural-sum analogue of 'mergeAlts': merge row-case arms that
+--   share a row tag, unioning their inner dispatchers. A group of size one
+--   (a row label matched once) is left untouched.
+mergeRowAlts :: [(Word32, Name, CExpr)] -> LowerM [(Word32, Name, CExpr)]
+mergeRowAlts alts = concat <$> traverse mergeRowGroup (groupByTag alts)
+  where
+    mergeRowGroup :: [(Word32, Name, CExpr)] -> LowerM [(Word32, Name, CExpr)]
+    mergeRowGroup [] = pure []
+    mergeRowGroup [alt] = pure [alt]
+    mergeRowGroup grp@((tag, _, _) : _) = do
+      (var, bodies) <- reconcileVar [(v, b) | (_, v, b) <- grp]
+      merged <- mergeBodies bodies
+      pure [(tag, var, merged)]
+
+-- | Union the inner dispatchers of same-tag arms. Every body in a
+--   multi-arm group is the same shape — a 'CCase' / 'CRowCase' on the same
+--   field binder — because the arms matched the same constructor and
+--   differ only deeper; the field binders are positional and so identical
+--   across the arms ('reconcileVars' has already made the top-level ones
+--   coincide). A mismatched shape is the forbidden partial-catch-all
+--   rejected upstream (see 'mergeAlts').
+mergeBodies :: [CExpr] -> LowerM CExpr
+mergeBodies [] = liftEither $ Left (TELowering "mergeBodies: empty group (unreachable)")
+mergeBodies [body] = pure body
+mergeBodies (body0 : rest) = case body0 of
+  CCase (CVar scrutVar) innerAlts -> do
+    allInnerAlts <- foldM collectCase innerAlts rest
+    CCase (CVar scrutVar) <$> mergeAlts allInnerAlts
+  CRowCase (CVar scrutVar) innerAlts -> do
+    allInnerAlts <- foldM collectRow innerAlts rest
+    CRowCase (CVar scrutVar) <$> mergeRowAlts allInnerAlts
+  _ -> liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+  where
+    collectCase acc (CCase (CVar _) innerAlts) = pure (acc <> innerAlts)
+    collectCase _ _ = liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+    collectRow acc (CRowCase (CVar _) innerAlts) = pure (acc <> innerAlts)
+    collectRow _ _ = liftEither $ Left (TELowering "conflicting row-case shapes in merge")
+
+-- | Reconcile the field-binder lists of arms being merged. When every arm
+--   already uses the same binders (the common case — deterministic
+--   @__pN@ field names, or the same source name) keep them, so Core stays
+--   readable. Otherwise mint a fresh canonical list and alpha-rename each
+--   arm's body onto it; fresh targets ('freshMergeName') are globally
+--   unique, so the rename neither chains nor captures.
+reconcileVars :: [([Name], CExpr)] -> LowerM ([Name], [CExpr])
+reconcileVars [] = pure ([], [])
+reconcileVars arms@((vars0, _) : _)
+  | all ((== vars0) . fst) arms = pure (vars0, map snd arms)
+  | otherwise = do
+      fresh <- traverse (const freshMergeName) vars0
+      pure (fresh, [renameBinders (zip vs fresh) body | (vs, body) <- arms])
+
+-- | Single-binder ('CRowCase' arm) counterpart of 'reconcileVars'.
+reconcileVar :: [(Name, CExpr)] -> LowerM (Name, [CExpr])
+reconcileVar [] = pure ("__rw", [])
+reconcileVar arms@((var0, _) : _)
+  | all ((== var0) . fst) arms = pure (var0, map snd arms)
+  | otherwise = do
+      fresh <- freshMergeName
+      pure (fresh, [renameVar v fresh body | (v, body) <- arms])
+
+-- | Apply a positional binder renaming to a body. The targets are fresh
+--   (so distinct from every source name and from each other), which is why
+--   folding single-variable 'Awsum.Core.renameVar's is equivalent to a
+--   simultaneous substitution here — no rename can feed another.
+renameBinders :: [(Name, Name)] -> CExpr -> CExpr
+renameBinders pairs body = foldl' (\acc (from, to) -> renameVar from to acc) body pairs
 
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body with the right Core dispatchers:
@@ -1996,13 +2081,38 @@ desugarPatsM conInfo prefix idx ((p, mFieldTy) : ps) body = do
       let fresh = prefix <> "w" <> show idx
        in pure (fresh : restVars, restBody)
     PCon _ innerCon innerPats -> do
-      let fresh = prefix <> "p" <> show idx
-          innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
-          innerPrefix = fresh <> "_"
-          innerFieldTys = innerFieldTypes conInfo innerCon mFieldTy (length innerPats)
-      (innerVars, innerBody) <-
-        desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
-      pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
+      let innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
+      case rowLabelForCon conInfo innerCon mFieldTy of
+        -- Row-typed field whose value is tagged by the label `innerCon`
+        -- belongs to: dispatch on the row tag first — binding the
+        -- unwrapped value — then on the constructor, mirroring the
+        -- row-case path's `ConShape`. A bare `CCase` on the constructor
+        -- tag would read the row tag instead and never match. The outer
+        -- binder uses the shared `__pa<idx>` name (as `PAscribe` does), so
+        -- a sibling ascription arm or another label-descent on the same
+        -- field merges into one `CRowCase` rather than bailing with
+        -- "conflicting pattern shapes in merge".
+        Just label -> do
+          let rowVar = prefix <> "pa" <> show idx
+              rowInner = rowVar <> "c"
+              innerPrefix = rowInner <> "_"
+              innerFieldTys = innerFieldTypes conInfo innerCon (Just label) (length innerPats)
+          labelTag <- recordRowTag label
+          (innerVars, innerBody) <-
+            desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
+          pure
+            ( rowVar : restVars,
+              CRowCase
+                (CVar rowVar)
+                [(labelTag, rowInner, CCase (CVar rowInner) [(innerTag, innerVars, innerBody)])]
+            )
+        Nothing -> do
+          let fresh = prefix <> "p" <> show idx
+              innerPrefix = fresh <> "_"
+              innerFieldTys = innerFieldTypes conInfo innerCon mFieldTy (length innerPats)
+          (innerVars, innerBody) <-
+            desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
+          pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
     PAscribe _ inner ascrTy -> do
       let topVar = prefix <> "pa" <> show idx
       tag <- recordRowTag ascrTy
@@ -2023,6 +2133,19 @@ ascribeInner conInfo prefix idx other body = do
   case vars of
     [v] -> pure (v, wrappedBody)
     _ -> liftEither $ Left (TELowering "ascribeInner: nested pattern produced unexpected binders")
+
+-- | When a 'PCon' field pattern's field type is a structural sum and the
+--   constructor belongs to one of its labels (a nominal type appearing as
+--   an alternative), return that label. The pattern then /descends/ into
+--   the label — the field's value is row-tagged, so the match dispatches
+--   on the row tag first and on the constructor second. 'Nothing' for a
+--   nominal field, where the constructor matches the value directly.
+rowLabelForCon :: ConInfoEnv -> Name -> Maybe Type' -> Maybe Type'
+rowLabelForCon conInfo innerCon (Just fieldTy)
+  | TyOr {} <- fieldTy,
+    Just ci <- M.lookup innerCon conInfo =
+      find (\l -> extractTyCon l == Just (ciTypeName ci)) (flattenRow fieldTy)
+rowLabelForCon _ _ _ = Nothing
 
 -- | Substituted field types of an inner constructor application,
 --   given the outer field's known type. Falls back to 'Nothing's when

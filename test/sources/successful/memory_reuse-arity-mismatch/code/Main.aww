@@ -1,0 +1,38 @@
+{- Rebuilds a smaller cell (2-field Pair) from a bigger linear scrutinee
+   (3-field Triple), dropping the third field. Reuse must not fire across the
+   arity mismatch: rewriting the Triple cell in place into a Pair would strand
+   the dropped field's slot (a leak invisible to stdout). The Triple comes from
+   a non-inlinable recursive call so the unpack survives to codegen instead of
+   folding at compile time. Prints the two kept fields as "a,b". -}
+
+import IO.Stdout
+
+type Triple = MkTriple Int32 Int32 Int32
+
+type Pair = MkPair Int32 Int32
+
+mkBig : Int32 -> Triple
+mkBig n = case eqInt32 n 0 of
+  True -> MkTriple 7 8 9
+  False -> case predInt32 n of
+    Left _u -> MkTriple 7 8 9
+    Right m -> mkBig m
+
+shrink : Triple -> Pair
+shrink t = case t of
+  MkTriple a b _c -> MkPair a b
+
+render : Pair -> Either StringTooLong String
+render p = case p of
+  MkPair a b -> do
+    s1 <- showInt32 a ++ ","
+    s1 ++ showInt32 b
+
+main : IO Never Unit
+main = eitherToIO (render (shrink (mkBig 3)))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : StringTooLong -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"

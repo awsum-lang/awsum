@@ -1,0 +1,16 @@
+{- A constructor pattern on a genuinely-polymorphic field: `Box`'s field is
+   the type parameter `a`, an abstract type with no constructors to match.
+   Matching `Just _y` there is rejected (`Case on non-sum type`) — matching
+   a constructor against a rigid field would otherwise reach lowering and
+   read a non-existent slot. Bind the field with a name instead. -}
+
+import IO.Stdout
+
+type Box a = Box a
+
+describe : Box a -> String
+describe x = case x of
+  Box (Just _y) -> "j"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (Box True))

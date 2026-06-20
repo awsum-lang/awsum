@@ -21,7 +21,8 @@
     }
   };
 
-  const v_res = (v__inl1_c => v__inl1_c[1])([24, [1]]);
+  const v__inl1_c = [24, [1]];
+  const v_res = v__inl1_c[1];
 
   const main = [
     7,

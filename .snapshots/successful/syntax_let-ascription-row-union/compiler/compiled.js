@@ -108,23 +108,23 @@
     }
   };
 
-  const main = (v__inl7_res =>
-    v__cps__df_handleErrorIO_0(
-      v__cps__df__rowmono_0_andThenIO_4(
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl7_res[1]];
-            }
-            case 4: {
-              return [5, v__inl7_res[1]];
-            }
+  const v__inl7_res = [4, 2 | 0];
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df__rowmono_0_andThenIO_4(
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl7_res[1]];
           }
-        })(v__inl7_res),
-        [28]
-      ),
-      [26]
-    ))([4, 2 | 0]);
+          case 4: {
+            return [5, v__inl7_res[1]];
+          }
+        }
+      })(v__inl7_res),
+      [28]
+    ),
+    [26]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

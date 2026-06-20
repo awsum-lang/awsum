@@ -86,8 +86,8 @@ L_concat_too_long:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 6
+  .limit stack 5
+  .limit locals 4
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -157,7 +157,7 @@ L_tarm2:
 
 
 .method static v__cps_bytesToHexStringNoPrefix(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 5
 L_tco3:
   aload_0
@@ -226,7 +226,7 @@ L_tarm4:
 
 
 .method static v__apply_bytesToHexStringNoPrefix(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 3
   .limit locals 9
 L_tco5:
   aload_0
@@ -287,7 +287,7 @@ L_join7:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 7
   .limit locals 0
   iconst_2
   anewarray java/lang/Object
@@ -335,7 +335,7 @@ L_join7:
 
 
 .method static v__cps__df_handleErrorIO_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco9:
   aload_0
@@ -529,7 +529,7 @@ L_tarm14:
 
 
 .method static v__cps__df_andThenIO_5(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco15:
   aload_0
@@ -726,8 +726,8 @@ L_tarm20:
 
 
 .method static v__cps__df_andThenIO_9(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
-  .limit locals 11
+  .limit stack 8
+  .limit locals 10
 L_tco21:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -947,8 +947,8 @@ L_tarm28:
 
 
 .method static v__cps__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 7
+  .limit stack 5
+  .limit locals 6
 L_tco29:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1182,8 +1182,8 @@ L_tarm32:
 
 
 .method static v__apply__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 4
+  .limit stack 6
+  .limit locals 3
 L_tco36:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1257,7 +1257,7 @@ L_tarm39:
 .end method
 
 .method static __stdinReadAllBytes()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 3
   new java/io/ByteArrayOutputStream
   dup

@@ -1,0 +1,21 @@
+{- A constructor's row field is matched by descending into one label's
+   constructors (`Inner`'s `IY` / `IN`) and ascribing another (`Int32`),
+   mixed in one case. Each arm dispatches on the field's row tag first,
+   then — for the descended label — on the constructor. Prints "yn5". -}
+
+import IO.Stdout
+
+type Inner = IY | IN
+
+type Wrap = Wrap (Inner | Int32)
+
+classify : Wrap -> String
+classify x = case x of
+  Wrap IY -> "y"
+  Wrap IN -> "n"
+  Wrap (i : Int32) -> showInt32 i
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Wrap IY))
+  |> andThenIO (\_a -> IO.Stdout.print (classify (Wrap IN)))
+  |> andThenIO (\_b -> IO.Stdout.print (classify (Wrap (5 : Int32))))

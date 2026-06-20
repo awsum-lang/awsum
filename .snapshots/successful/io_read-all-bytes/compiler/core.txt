@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl8$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl8$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -31,13 +31,13 @@ CoreProgram
                     ,
                         ( 10
                         , [ "cont" ]
-                        , CDrop DropFreeUnchecked "io"
+                        , CDrop "io"
                             ( CContinue
                                 [ CLet "$inl9$$arg0"
                                     ( CCall
                                         ( CBuiltIn "internalStdinReadAllBytes" ) []
                                     )
-                                    ( CDrop DropFreeUnchecked "$inl9$$arg0"
+                                    ( CDrop "$inl9$$arg0"
                                         ( CCall
                                             ( CVar "$cps$$scc$$apply1_$df$$lam$11$4_$df$$lam$2$12_$df$$lam$2$8" )
                                             [ CCon 24
@@ -77,9 +77,9 @@ CoreProgram
                             [ "b"
                             , "rest"
                             ]
-                        , CDrop DropFreeUnchecked "b"
-                            ( CDrop DropFreeUnchecked "rest"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "b"
+                            ( CDrop "rest"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "rest"
                                         , CReuse ReuseGuarded "bytes" 29
@@ -112,8 +112,8 @@ CoreProgram
                             [ "$pk_29"
                             , "b"
                             ]
-                        , CDrop DropFreeUnchecked "$k"
-                            ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$k"
+                            ( CDrop "$x"
                                 ( CContinue
                                     [ CProj "$k" 1
                                     , CCase
@@ -193,9 +193,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 31
@@ -210,7 +210,7 @@ CoreProgram
                     ,
                         ( 10
                         , [ "cont" ]
-                        , CDrop DropFreeUnchecked "cont"
+                        , CDrop "cont"
                             ( CCall
                                 ( CVar "$apply$$df$handleErrorIO$1" )
                                 [ CVar "$k"
@@ -242,9 +242,9 @@ CoreProgram
                             [ "$pk_31"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_31"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_31"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_31"
                                         , CReuse ReuseUnique "$k" 7
@@ -294,9 +294,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 33
@@ -311,7 +311,7 @@ CoreProgram
                     ,
                         ( 10
                         , [ "cont" ]
-                        , CDrop DropFreeUnchecked "cont"
+                        , CDrop "cont"
                             ( CCall
                                 ( CVar "$apply$$df$andThenIO$5" )
                                 [ CVar "$k"
@@ -343,9 +343,9 @@ CoreProgram
                             [ "$pk_33"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_33"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_33"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_33"
                                         , CReuse ReuseUnique "$k" 7
@@ -380,7 +380,7 @@ CoreProgram
                                     , CCon 28 []
                                     ]
                                 )
-                                ( CDrop DropFreeUnchecked "$inl5$x"
+                                ( CDrop "$inl5$x"
                                     ( CCase
                                         ( CVar "$inl5$x" )
                                         [
@@ -415,9 +415,9 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CDrop DropFreeUnchecked "s"
-                            ( CDrop DropFreeUnchecked "next"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CVar "next"
                                         , CReuse ReuseGuarded "io" 35
@@ -432,7 +432,7 @@ CoreProgram
                     ,
                         ( 10
                         , [ "cont" ]
-                        , CDrop DropFreeUnchecked "cont"
+                        , CDrop "cont"
                             ( CCall
                                 ( CVar "$apply$$df$andThenIO$9" )
                                 [ CVar "$k"
@@ -464,9 +464,9 @@ CoreProgram
                             [ "$pk_35"
                             , "s"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_35"
-                            ( CDrop DropFreeUnchecked "s"
-                                ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$pk_35"
+                            ( CDrop "s"
+                                ( CDrop "$x"
                                     ( CContinue
                                         [ CVar "$pk_35"
                                         , CReuse ReuseUnique "$k" 7
@@ -494,14 +494,14 @@ CoreProgram
                             [ "$cl"
                             , "$arg0"
                             ]
-                        , CDrop DropFreeUnchecked "$cl"
-                            ( CDrop DropFreeUnchecked "$arg0"
+                        , CDrop "$cl"
+                            ( CDrop "$arg0"
                                 ( CCase
                                     ( CVar "$cl" )
                                     [
                                         ( 20
                                         , [ "$cap20_0" ]
-                                        , CDrop DropFreeUnchecked "$k"
+                                        , CDrop "$k"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 25
                                                     [ CProj "$cl" 1
@@ -514,7 +514,7 @@ CoreProgram
                                     ,
                                         ( 21
                                         , [ "$cap21_0" ]
-                                        , CDrop DropFreeUnchecked "$k"
+                                        , CDrop "$k"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 26
                                                     [ CProj "$cl" 1
@@ -527,7 +527,7 @@ CoreProgram
                                     ,
                                         ( 22
                                         , [ "$cap22_0" ]
-                                        , CDrop DropFreeUnchecked "$k"
+                                        , CDrop "$k"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 27
                                                     [ CProj "$cl" 1
@@ -557,9 +557,9 @@ CoreProgram
                             [ "cont"
                             , "bytes"
                             ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "cont"
+                            ( CDrop "bytes"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CReuse ReuseUnique "$args" 24
                                             [ CVar "cont"
@@ -578,9 +578,9 @@ CoreProgram
                             [ "cont"
                             , "bytes"
                             ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "cont"
+                            ( CDrop "bytes"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CReuse ReuseUnique "$args" 24
                                             [ CVar "cont"
@@ -599,9 +599,9 @@ CoreProgram
                             [ "cont"
                             , "bytes"
                             ]
-                        , CDrop DropFreeUnchecked "cont"
-                            ( CDrop DropFreeUnchecked "bytes"
-                                ( CDrop DropFreeUnchecked "$k"
+                        , CDrop "cont"
+                            ( CDrop "bytes"
+                                ( CDrop "$k"
                                     ( CContinue
                                         [ CReuse ReuseUnique "$args" 24
                                             [ CVar "cont"
@@ -632,8 +632,8 @@ CoreProgram
                     ,
                         ( 37
                         , [ "$pk_37" ]
-                        , CDrop DropFreeUnchecked "$k"
-                            ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$k"
+                            ( CDrop "$x"
                                 ( CContinue
                                     [ CProj "$k" 1
                                     , CCall
@@ -648,8 +648,8 @@ CoreProgram
                     ,
                         ( 38
                         , [ "$pk_38" ]
-                        , CDrop DropFreeUnchecked "$k"
-                            ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$k"
+                            ( CDrop "$x"
                                 ( CContinue
                                     [ CProj "$k" 1
                                     , CCall
@@ -664,8 +664,8 @@ CoreProgram
                     ,
                         ( 39
                         , [ "$pk_39" ]
-                        , CDrop DropFreeUnchecked "$k"
-                            ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$k"
+                            ( CDrop "$x"
                                 ( CContinue
                                     [ CProj "$k" 1
                                     , CCall

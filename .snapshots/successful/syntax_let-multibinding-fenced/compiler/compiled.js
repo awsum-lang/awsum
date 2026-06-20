@@ -99,23 +99,23 @@
     }
   };
 
-  const main = (v__inl9_both =>
-    v__cps__df_handleErrorIO_0(
-      v__cps__df_andThenIO_4(
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl9_both[1]];
-            }
-            case 4: {
-              return [5, v__inl9_both[1]];
-            }
+  const v__inl9_both = __concat("hi ", "bob");
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df_andThenIO_4(
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl9_both[1]];
           }
-        })(v__inl9_both),
-        [22]
-      ),
-      [20]
-    ))(__concat("hi ", "bob"));
+          case 4: {
+            return [5, v__inl9_both[1]];
+          }
+        }
+      })(v__inl9_both),
+      [22]
+    ),
+    [20]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

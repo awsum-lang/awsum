@@ -192,7 +192,7 @@ collectResidualArities arities = foldMap declArities
       CRowCase s alts -> exprArities s <> foldMap (\(_, _, b) -> exprArities b) alts
       CLoop b -> exprArities b
       CContinue xs -> foldMap exprArities xs
-      CDrop _ _ b -> exprArities b
+      CDrop _ b -> exprArities b
       CReuse _ _ _ fs -> foldMap exprArities fs
       CLet _ rhs body -> exprArities rhs <> exprArities body
       CJoin {} -> error "LowerClosures: CJoin is minted by Awsum.Simplify, which runs later"
@@ -228,7 +228,7 @@ exprShapes arities = goValue
       CRowCase s alts -> goValue s <> foldMap (\(_, _, b) -> goValue b) alts
       CLoop b -> goValue b
       CContinue xs -> foldMap goValue xs
-      CDrop _ _ b -> goValue b
+      CDrop _ b -> goValue b
       CReuse _ _ _ fs -> foldMap goValue fs
       CLet _ rhs body -> goValue rhs <> goValue body
       CJoin {} -> error "LowerClosures: CJoin is minted by Awsum.Simplify, which runs later"
@@ -287,7 +287,7 @@ rewriteExpr arities shapeTag = goValue
       CRowCase s alts -> CRowCase (goValue s) (map (\(t, v, b) -> (t, v, goValue b)) alts)
       CLoop b -> CLoop (goValue b)
       CContinue xs -> CContinue (map goValue xs)
-      CDrop k n b -> CDrop k n (goValue b)
+      CDrop n b -> CDrop n (goValue b)
       CReuse rm n tag fs -> CReuse rm n tag (map goValue fs)
       CLet x rhs body -> CLet x (goValue rhs) (goValue body)
       CJoin {} -> error "LowerClosures: CJoin is minted by Awsum.Simplify, which runs later"

@@ -2,10 +2,10 @@ benchmark: tree_sum_repeat
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 1.35 (1.29–1.63)            3.0 (3.0–3.1)
-JVM      ok                 0.25 (0.24–0.27)      504.2 (504.1–504.4)
-CLR      ok                 0.61 (0.60–0.61)      206.7 (206.7–206.8)
-WASM     ok                 0.88 (0.88–0.88)         14.5 (14.4–14.5)
-JS       ok                 0.27 (0.27–0.28)      115.8 (115.8–116.1)
+LLVM     ok                 1.31 (1.27–1.63)            3.0 (2.9–3.0)
+JVM      ok                 0.24 (0.24–0.25)      504.2 (504.1–504.3)
+CLR      ok                 0.61 (0.60–0.62)      206.3 (206.2–206.4)
+WASM     ok                 0.87 (0.86–0.87)         14.4 (14.4–14.5)
+JS       ok                 0.27 (0.27–0.27)      115.9 (115.7–116.0)
 
 stdout: 10000

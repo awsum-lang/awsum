@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -67,7 +67,7 @@ CoreProgram
                             [
                                 ( 3
                                 , [ "e" ]
-                                , CDrop DropFreeUnchecked "e"
+                                , CDrop "e"
                                     ( CCall
                                         ( CVar "$apply$countWithBox" )
                                         [ CVar "$k"
@@ -79,10 +79,10 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CDrop DropFreeUnchecked "m"
-                                    ( CDrop DropFreeUnchecked "b"
-                                        ( CDrop DropFreeUnchecked "n"
-                                            ( CDrop DropFreeUnchecked "$k"
+                                , CDrop "m"
+                                    ( CDrop "b"
+                                        ( CDrop "n"
+                                            ( CDrop "$k"
                                                 ( CContinue
                                                     [ CVar "b"
                                                     , CVar "m"
@@ -119,8 +119,8 @@ CoreProgram
                             [ "$pk_27"
                             , "b"
                             ]
-                        , CDrop DropFreeUnchecked "$k"
-                            ( CDrop DropFreeUnchecked "$x"
+                        , CDrop "$k"
+                            ( CDrop "$x"
                                 ( CContinue
                                     [ CProj "$k" 1
                                     , CVar "$x"
@@ -160,7 +160,7 @@ CoreProgram
                             [
                                 ( 3
                                 , [ "e" ]
-                                , CDrop DropFreeUnchecked "e"
+                                , CDrop "e"
                                     ( CCon 3
                                         [ CVar "e" ]
                                     )
@@ -168,7 +168,7 @@ CoreProgram
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CDrop DropFreeUnchecked "m"
+                                , CDrop "m"
                                     ( CCase
                                         ( CCall
                                             ( CVar "$cps$countWithBox" )
@@ -180,7 +180,7 @@ CoreProgram
                                         [
                                             ( 3
                                             , [ "e" ]
-                                            , CDrop DropFreeUnchecked "e"
+                                            , CDrop "e"
                                                 ( CCon 3
                                                     [ CVar "e" ]
                                                 )
@@ -188,8 +188,8 @@ CoreProgram
                                         ,
                                             ( 4
                                             , [ "_v" ]
-                                            , CDrop DropFreeUnchecked "b"
-                                                ( CDrop DropFreeUnchecked "k"
+                                            , CDrop "b"
+                                                ( CDrop "k"
                                                     ( CContinue
                                                         [ CVar "b"
                                                         , CVar "m"

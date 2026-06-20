@@ -106,7 +106,7 @@ goExpr topNames = go
       CRowCase s alts -> CRowCase <$> go env s <*> traverse (goRowAlt env) alts
       CLoop b -> CLoop <$> go env b
       CContinue xs -> CContinue <$> traverse (go env) xs
-      CDrop k x b -> CDrop k (ref env x) <$> go env b
+      CDrop x b -> CDrop (ref env x) <$> go env b
       CReuse rm x t fs -> CReuse rm (ref env x) t <$> traverse (go env) fs
       CLet x rhs body -> do
         rhs' <- go env rhs
@@ -142,7 +142,7 @@ allNames = \case
       CRowCase s alts -> exprNames s <> foldMap (\(_, v, b) -> Set.insert v (exprNames b)) alts
       CLoop b -> exprNames b
       CContinue xs -> foldMap exprNames xs
-      CDrop _ x b -> Set.insert x (exprNames b)
+      CDrop x b -> Set.insert x (exprNames b)
       CReuse _ x _ fs -> Set.insert x (foldMap exprNames fs)
       CLet x rhs body -> Set.insert x (exprNames rhs <> exprNames body)
       CProj x _ -> Set.singleton x

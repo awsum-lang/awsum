@@ -41,6 +41,7 @@ module Awsum.Typing
     warningMessage,
     isBareBuiltIn,
     splitArrow,
+    extractTyCon,
     intTypeRange,
     maxStringLitUtf16CodeUnits,
     emptyTypeNamesInProgram,
@@ -63,6 +64,7 @@ import Data.Set qualified as S
 import Data.Text qualified as T
 import Numeric (showHex)
 import Relude
+import Relude.Extra.Bifunctor (firstF)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- 'Check' monad
@@ -118,12 +120,36 @@ data TypeError
     TypeMismatch Type' Type' Expr
   | -- | (function name, expected #args, actual #args)
     ArityMismatch SrcSpan Name Int Int
+  | -- | A constructor pattern binds a different number of sub-patterns
+    --   than the constructor has fields — @Single a b c@ where @Single@
+    --   has one field, or @Tuple3 a@ where it has three. The field count
+    --   is fixed by the constructor declaration and independent of how the
+    --   type is instantiated, so a mismatch is ill-formed at every pattern
+    --   position (case arm, nested field, @let@ / parameter
+    --   destructuring). Without this check the @zip@-based field walks
+    --   silently truncate: extra sub-patterns vanish unbound, and too-few
+    --   surfaces as a confusing non-exhaustiveness witness. Carries the
+    --   pattern's span, the constructor name, its declared field count, and
+    --   the count written. Distinct from the function-application
+    --   'ArityMismatch' — that is about arguments to a call, this about
+    --   fields of a match.
+    PatternArityMismatch SrcSpan Name Int Int
   | -- | Top-level definition without a signature.
     MissingSignature SrcSpan Name
   | DuplicateSignature SrcSpan Name
   | DuplicateDefinition SrcSpan Name
   | -- | A 'TyCon' the checker does not recognize.
     UnknownTypeCon SrcSpan Name
+  | -- | A type constructor applied to the wrong number of arguments —
+    --   @Maybe Int32 Int32@ (one too many), @Either Int32@ (one too few),
+    --   a bare @Maybe@ (unsaturated). The arity is fixed by the type's
+    --   declaration, so the mismatch is ill-formed wherever the type is
+    --   written (signature, constructor field). Carries the span of the
+    --   constructor head, its name, its declared arity, and the number of
+    --   arguments written. Distinct from the value-application
+    --   'ArityMismatch' and the pattern-field 'PatternArityMismatch':
+    --   this is about arguments to a /type/ constructor.
+    TypeConArityMismatch SrcSpan Name Int Int
   | MainMissing
   | -- | 'main' present but with a different type.
     MainWrongType Type'
@@ -139,6 +165,32 @@ data TypeError
     UnknownConstructor SrcSpan Name
   | -- | Case expression does not cover all constructors.
     NonExhaustiveCase SrcSpan Name [Name]
+  | -- | A @case@ leaves a combination of constructor fields unmatched —
+    --   the failure independent-per-column coverage cannot see. Every
+    --   top-level constructor is present, but some cartesian product of
+    --   their field patterns escapes every arm (e.g. @Tuple2 A A |
+    --   Tuple2 B B@ leaves @Tuple2 A B@ unmatched). Carries the
+    --   scrutinee type and a witness pattern — one concrete uncovered
+    --   value with @_@ for don't-care positions — produced by the
+    --   matrix-exhaustiveness check ('matrixWitness'). The simple
+    --   "a whole top-level constructor / row label is missing" case
+    --   stays with 'NonExhaustiveCase' / 'NonExhaustiveRow'; this one
+    --   fires only for the deeper combinatorial holes.
+    NonExhaustiveMatch SrcSpan Type' Pattern
+  | -- | A wildcard / binder catches the remainder of a position where a
+    --   sibling arm names a specific constructor or row alternative — the
+    --   partial catch-all forbidden by the language (see
+    --   @docs/principles.md@). The wildcard would silently absorb a
+    --   constructor added to the type later, the very routing the
+    --   no-catch-all rule exists to prevent. Allowed instead: enumerate
+    --   every constructor / label, or ignore the whole position with one
+    --   wildcard in every arm (e.g. @Just _@, @Tuple2 A _ | Tuple2 B _@).
+    --   The top-level form of this is already rejected as
+    --   "requires constructor patterns" / "wildcard at the top of a row
+    --   arm"; this one fires for the nested field positions, found by
+    --   'rejectPartialCatchAll'. Carries the offending wildcard's span and
+    --   the type at that position.
+    PartialCatchAll SrcSpan Type'
   | -- | A case arm that can never be reached (duplicate constructor).
     UnreachableCase SrcSpan Name
   | -- | A case arm on a constructor whose field type is uninhabited.
@@ -152,6 +204,18 @@ data TypeError
     IntLiteralOutOfRange SrcSpan Integer Name
   | -- | Integer literal used in a context that does not determine its type.
     AmbiguousIntLiteral SrcSpan
+  | -- | A value is injected into a structural sum, but the value's own
+    --   type leaves a variable free that more than one alternative of
+    --   the row would accept — so the target alternative is not
+    --   determined. The canonical trigger is a payload-less or
+    --   partially-applied constructor flowing into a row with two labels
+    --   of the same head notation: @Nothing@ into @(Maybe T | Maybe U)@,
+    --   @Left e@ into @(Either A x | Either B x)@. Picking the first
+    --   matching label (what the greedy lowering coercion would do) is a
+    --   silent miscompile; no-defaulting requires an annotation that
+    --   pins the value's type. Fields: span, the value's (free-variable)
+    --   type, the target row.
+    AmbiguousRowInjection SrcSpan Type' Type'
   | -- | String literal exceeds the language-fixed maximum length
     --   ('maxStringLengthUtf16CodeUnits' = 2^27 UTF-16 code units).
     --   Fields: span, literal length in UTF-16 code units.
@@ -219,6 +283,15 @@ data TypeError
     UnnamedTypeParameter SrcSpan
   | -- | Two type parameters of the same type declaration share a name.
     DuplicateTypeParameter SrcSpan Name
+  | -- | A type parameter's name is @_@ followed by an uppercase letter
+    --   (e.g. @_T@). Such a name lexes as a type /constructor/ in any
+    --   use position, so the parameter could never be referenced as a
+    --   type variable in a constructor field — it is unusable by
+    --   construction. (A bare uppercase name like @T@ is already rejected
+    --   by the parser, which only accepts a lowercase- or @_@-initial
+    --   binder; @_@-then-uppercase is the one shape that slips through.)
+    --   Span covers just the parameter identifier.
+    UppercaseTypeParameter SrcSpan Name
   | -- | A constructor field references a type variable that is not in
     --   the type declaration's parameter list. Without this check the
     --   typechecker would silently treat the free variable as a fresh
@@ -298,6 +371,16 @@ data TypeError
     --   the table. Distinct from 'RowLabelNotInScrut' (the PAscribe
     --   analogue).
     RowLabelNotForConstructor SrcSpan Name Type'
+  | -- | A constructor pattern in a nominal @case@ (or a nested nominal
+    --   field) names a constructor whose owning type is not the type being
+    --   matched — e.g. @Just@ (a 'Maybe' constructor) on a scrutinee or
+    --   field of type @T@. Carries the constructor's span, the constructor
+    --   name, and the matched type. The nominal analogue of
+    --   'RowLabelNotForConstructor'; replaces the silent acceptance (a
+    --   wrong extra arm on an already-exhaustive nominal scrutinee was
+    --   accepted, against no-defaulting) and the confusing
+    --   missing-constructor witness a nested wrong constructor produced.
+    ConstructorNotInType SrcSpan Name Type'
   | -- | A 'do' block was used in a synthesis position. A 'do' block has
     --   no synthesis form — it desugars through 'bindEither' against the
     --   surrounding expected type.
@@ -373,10 +456,12 @@ typeErrorSpan = \case
   NotAFunction e _ -> Just (exprSpan e)
   TypeMismatch _ _ e -> Just (exprSpan e)
   ArityMismatch sp _ _ _ -> Just sp
+  PatternArityMismatch sp _ _ _ -> Just sp
   MissingSignature sp _ -> Just sp
   DuplicateSignature sp _ -> Just sp
   DuplicateDefinition sp _ -> Just sp
   UnknownTypeCon sp _ -> Just sp
+  TypeConArityMismatch sp _ _ _ -> Just sp
   MainMissing -> Nothing
   MainWrongType _ -> Nothing
   NotImported sp _ -> Just sp
@@ -385,12 +470,15 @@ typeErrorSpan = \case
   DuplicateConstructor sp _ -> Just sp
   UnknownConstructor sp _ -> Just sp
   NonExhaustiveCase sp _ _ -> Just sp
+  NonExhaustiveMatch sp _ _ -> Just sp
+  PartialCatchAll sp _ -> Just sp
   UnreachableCase sp _ -> Just sp
   UnreachableCaseUninhabited sp _ _ -> Just sp
   CaseBranchTypeMismatch _ _ e -> Just (exprSpan e)
   CaseOnNonSumType sp _ -> Just sp
   IntLiteralOutOfRange sp _ _ -> Just sp
   AmbiguousIntLiteral sp -> Just sp
+  AmbiguousRowInjection sp _ _ -> Just sp
   StringLiteralTooLong sp _ -> Just sp
   MissingLetAnnotation sp _ _ -> Just sp
   PolymorphicRowLet sp _ -> Just sp
@@ -400,6 +488,7 @@ typeErrorSpan = \case
   ReferencingIgnoredTypeVar sp _ -> Just sp
   UnnamedTypeParameter sp -> Just sp
   DuplicateTypeParameter sp _ -> Just sp
+  UppercaseTypeParameter sp _ -> Just sp
   UnknownTypeVariable sp _ -> Just sp
   UnnamedType sp -> Just sp
   UnnamedConstructor sp -> Just sp
@@ -413,6 +502,7 @@ typeErrorSpan = \case
   RowCatchAllPattern sp -> Just sp
   DuplicateRowArm sp _ -> Just sp
   RowLabelNotForConstructor sp _ _ -> Just sp
+  ConstructorNotInType sp _ _ -> Just sp
   DoInSynthesisPosition sp -> Just sp
   DoBindNonEither sp _ -> Just sp
   DoBlockMissingResult sp -> Just sp
@@ -457,10 +547,24 @@ prettyPrintTypeError = \case
   NotAFunction _ ty -> "Not a function; has type " <> showType ty
   TypeMismatch expected actual _ -> "Type mismatch: expected " <> showType expected <> ", got " <> showType actual
   ArityMismatch _ name expected actual -> "Arity mismatch for " <> name <> ": expected " <> show expected <> " arguments, got " <> show actual
+  PatternArityMismatch _ cName expected actual ->
+    "Pattern arity mismatch for '"
+      <> cName
+      <> "': expected "
+      <> show expected
+      <> (if expected == 1 then " field, got " else " fields, got ")
+      <> show actual
   MissingSignature _ name -> "Missing type signature for: " <> name
   DuplicateSignature _ name -> "Duplicate type signature for: " <> name
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
+  TypeConArityMismatch _ name expected actual ->
+    "Type constructor '"
+      <> name
+      <> "' expects "
+      <> show expected
+      <> (if expected == 1 then " argument, got " else " arguments, got ")
+      <> show actual
   MainMissing -> "Missing 'main' function"
   MainWrongType ty -> "Wrong type for 'main': expected IO Never Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
@@ -469,6 +573,16 @@ prettyPrintTypeError = \case
   DuplicateConstructor _ name -> "Duplicate constructor: " <> name
   UnknownConstructor _ name -> "Unknown constructor: " <> name
   NonExhaustiveCase _ tyName missing -> "Non-exhaustive case on " <> tyName <> ": missing " <> show missing
+  NonExhaustiveMatch _ scrut wit -> "Non-exhaustive case on " <> showType scrut <> ": no arm matches " <> showWitness wit
+  PartialCatchAll _ ty -> case ty of
+    TyOr {} ->
+      "Catch-all pattern not allowed here: another arm matches a specific alternative of "
+        <> showType ty
+        <> ", so this wildcard would swallow the remaining alternatives — and any added later. Match every alternative with '(x : T)', or ignore the whole field with a single '_' in every arm."
+    _ ->
+      "Catch-all pattern not allowed here: another arm matches a specific constructor of "
+        <> showType ty
+        <> ", so this wildcard would swallow the remaining constructors — and any added later. Match every constructor, or ignore the whole field with a single '_' in every arm."
   UnreachableCase _ name -> "Unreachable case: " <> name <> " is already covered"
   UnreachableCaseUninhabited _ conName ty -> "Unreachable case: " <> conName <> " can never match because " <> showType ty <> " has no constructors"
   CaseBranchTypeMismatch expected actual _ -> "Case branch type mismatch: expected " <> showType expected <> ", got " <> showType actual
@@ -476,6 +590,12 @@ prettyPrintTypeError = \case
   IntLiteralOutOfRange _ n tyName ->
     "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
   AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
+  AmbiguousRowInjection _ src tgt ->
+    "Ambiguous injection of "
+      <> showType src
+      <> " into "
+      <> showType tgt
+      <> ": more than one alternative could accept it, and the value's type is not pinned. Add an explicit type annotation that names the intended alternative."
   StringLiteralTooLong _ n ->
     "String literal exceeds maximum length: "
       <> show n
@@ -509,6 +629,8 @@ prettyPrintTypeError = \case
     "Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused"
   DuplicateTypeParameter _ n ->
     "Duplicate type parameter: '" <> n <> "' is already declared in this type"
+  UppercaseTypeParameter _ n ->
+    "Type parameter '" <> n <> "' starts with '_' and an uppercase letter, so it reads as a type constructor and can never be used as a type variable. Use a lowercase name like '_t' (intentionally unused) or 't'."
   UnknownTypeVariable _ n ->
     "Unknown type variable: '" <> n <> "' is not declared as a type parameter"
   UnnamedType _ ->
@@ -563,6 +685,14 @@ prettyPrintTypeError = \case
       <> cName
       <> "' is not in any alternative of the structural sum "
       <> showType scrut
+      <> "."
+  ConstructorNotInType _ cName matched ->
+    "Constructor '"
+      <> cName
+      <> "' is not a constructor of "
+      <> showType matched
+      <> ". Match a constructor of "
+      <> showType matched
       <> "."
   DoInSynthesisPosition _ ->
     "A 'do' block needs an expected type from the surrounding context. "
@@ -626,6 +756,27 @@ prettyPrintTypeError = \case
     showTypeAtom t@TyArrow {} = "(" <> showType t <> ")"
     showTypeAtom t@TyOr {} = "(" <> showType t <> ")"
     showTypeAtom t = showType t
+
+    -- Render a witness pattern (a concrete uncovered value) for
+    -- 'NonExhaustiveMatch'. Deliberately separate from
+    -- 'Awsum.Render.renderPattern' rather than a duplicate to delete: it
+    -- renders ascribed types through the local 'showType', which strips
+    -- synthetic tyvar suffixes (@a$scrut@ → @a@) — the same renderer used
+    -- for the scrutinee type in this message, so the two stay consistent.
+    -- 'Render.typeDoc' does not strip, and 'Typing' deliberately does not
+    -- depend on 'Render'. The 'Pattern' \\case is exhaustive (no wildcard),
+    -- so a new 'Pattern' constructor breaks the build here rather than
+    -- drifting silently.
+    showWitness :: Pattern -> Text
+    showWitness = \case
+      PWild _ -> "_"
+      PVar _ n -> n
+      PCon _ c [] -> c
+      PCon _ c ps -> c <> " " <> unwords (map showWitnessAtom ps)
+      PAscribe _ p ty -> "(" <> showWitness p <> " : " <> showType ty <> ")"
+    showWitnessAtom :: Pattern -> Text
+    showWitnessAtom p@(PCon _ _ (_ : _)) = "(" <> showWitness p <> ")"
+    showWitnessAtom p = showWitness p
 
     rangeText :: Name -> Text
     rangeText n = case intTypeRange n of
@@ -715,28 +866,63 @@ splitArrow = go []
     go acc (TyArrow _ a b) = go (acc <> [a]) b
     go acc t = (acc, t)
 
--- | Validate that a written type only mentions known constructors.
---   The 'Type'' value carries per-node spans, so errors point at the
---   offending identifier (e.g. @_A@) rather than the whole signature.
-wellFormedTypeWith :: S.Set Name -> Type' -> Either TypeError ()
-wellFormedTypeWith userTypes = \case
-  TyVar _ _ -> Right ()
-  TyCon sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnored sp n)
-  TyCon _ "String" -> Right ()
-  TyCon _ "IO" -> Right ()
-  TyCon _ "Int32" -> Right ()
-  TyCon _ "UInt8" -> Right ()
-  TyCon _ "UInt32" -> Right ()
-  TyCon sp n
-    | S.member n userTypes -> Right ()
-    | otherwise -> Left (UnknownTypeCon sp n)
-  -- 'TyEmpty' is produced by the empty-type rewrite from a TyCon
-  -- whose name matched an 'empty type X' declaration; the user-types
-  -- check has already accepted that name as known.
-  TyEmpty _ _ -> Right ()
-  TyApp _ f x -> wellFormedTypeWith userTypes f >> wellFormedTypeWith userTypes x
-  TyArrow _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
-  TyOr _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
+-- | Peel a type-application spine into its head and argument list, left
+--   to right: @TyApp (TyApp f a) b@ ⇒ @(f, [a, b])@.
+splitTyApp :: Type' -> (Type', [Type'])
+splitTyApp = go []
+  where
+    go acc (TyApp _ f x) = go (x : acc) f
+    go acc t = (t, acc)
+
+-- | Arity (declared type-parameter count) of every compiler built-in type
+--   constructor — the primitives that have no @type@ declaration in the
+--   prelude. All four take no parameters. 'IO' is /not/ here: it is a
+--   prelude @type IO e a@, so it reaches the arity map with arity 2 from
+--   the declarations like any user type — a single source of truth for
+--   its arity rather than a literal duplicated here.
+builtinTypeArities :: M.Map Name Int
+builtinTypeArities =
+  M.fromList [("String", 0), ("Int32", 0), ("UInt8", 0), ("UInt32", 0)]
+
+-- | Validate a written type: every type constructor it mentions must be
+--   known and applied to exactly its declared number of arguments. The
+--   'Type'' value carries per-node spans, so errors point at the
+--   offending identifier (an unknown @_A@, or the head of an ill-arity
+--   application) rather than the whole signature. Run on both signatures
+--   and constructor field types, so the two are held to one standard.
+wellFormedTypeWith :: M.Map Name Int -> Type' -> Either TypeError ()
+wellFormedTypeWith arities = go
+  where
+    go = \case
+      TyVar _ _ -> Right ()
+      TyCon sp n -> checkHead sp n 0
+      -- 'TyEmpty' is produced by the empty-type rewrite from a TyCon whose
+      -- name matched an 'empty type X' declaration — always arity 0, always
+      -- known, so a bare reference is well-formed; an /applied/ one is
+      -- caught in the 'TyApp' spine below.
+      TyEmpty _ _ -> Right ()
+      app@TyApp {} ->
+        let (headTy, args) = splitTyApp app
+         in checkAppHead headTy (length args) >> mapM_ go args
+      TyArrow _ a b -> go a >> go b
+      TyOr _ a b -> go a >> go b
+
+    -- The head of an application spine. A constructor head ('TyCon' /
+    -- 'TyEmpty') carries an arity to check against; a type-variable head
+    -- (@a Int32@, higher-kinded use) is left for unification to reject, as
+    -- before — kind-checking type variables is a separate concern.
+    checkAppHead headTy nArgs = case headTy of
+      TyCon sp n -> checkHead sp n nArgs
+      TyEmpty sp n -> checkHead sp n nArgs
+      _ -> go headTy
+
+    checkHead sp n nArgs
+      | "_" `T.isPrefixOf` n = Left (ReferencingIgnored sp n)
+      | otherwise = case M.lookup n arities of
+          Nothing -> Left (UnknownTypeCon sp n)
+          Just arity
+            | nArgs == arity -> Right ()
+            | otherwise -> Left (TypeConArityMismatch sp n arity nArgs)
 
 -- | Collect every name declared with the @empty type@ keyword from a
 --   program's top-level declarations. Used by callers (the
@@ -777,7 +963,47 @@ markEmptyTypesInDecl emptyNames = \case
     where
       markCon (ConDef cSp cName flds) =
         ConDef cSp cName (map (markEmptyType emptyNames) flds)
-  d@FunDef {} -> d
+  -- A function body carries type annotations the user wrote inline —
+  -- ascriptions @(e : T)@, @let n : T = …@, lambda-parameter annotations
+  -- @\\(x : T) -> …@, ascribed patterns @(p : T)@. An empty type ('Never')
+  -- named in one of those must be rewritten to 'TyEmpty' just like in a
+  -- signature; otherwise it stays a 'TyCon' that no longer matches the
+  -- same name a signature carries as 'TyEmpty', so a row position fails to
+  -- unify against itself (rendering identically — @Never | A@ vs
+  -- @Never | A@ — while one is 'TyEmpty' and the other 'TyCon').
+  FunDef sp n ps body tc doc ->
+    FunDef sp n (map markParam ps) (markExpr body) tc doc
+    where
+      markT = markEmptyType emptyNames
+      markExpr = \case
+        EVar sp' q -> EVar sp' q
+        EApp sp' f x -> EApp sp' (markExpr f) (markExpr x)
+        EInfix sp' op l r -> EInfix sp' op (markExpr l) (markExpr r)
+        EParens sp' e -> EParens sp' (markExpr e)
+        ELit sp' l -> ELit sp' l
+        ECon sp' c -> ECon sp' c
+        ECase sp' scrut alts cs -> ECase sp' (markExpr scrut) (fmap markAlt alts) cs
+        EBuiltIn sp' bn -> EBuiltIn sp' bn
+        ELam sp' params bdy -> ELam sp' (map markParam params) (markExpr bdy)
+        EDo sp' stmts -> EDo sp' (map markStmt stmts)
+        ELet sp' pat mAnnot rhs bdy ->
+          ELet sp' (markPat pat) (firstF markT mAnnot) (markExpr rhs) (markExpr bdy)
+        EAscribe sp' e t -> EAscribe sp' (markExpr e) (markT t)
+      markParam = \case
+        Param sp' nm -> Param sp' nm
+        ParamPat sp' pat -> ParamPat sp' (markPat pat)
+      markPat = \case
+        PCon sp' nm flds -> PCon sp' nm (map markPat flds)
+        PVar sp' nm -> PVar sp' nm
+        PWild sp' -> PWild sp'
+        PAscribe sp' inner t -> PAscribe sp' (markPat inner) (markT t)
+      markAlt = \case
+        CaseAltLeaf cs pat e mt -> CaseAltLeaf cs (markPat pat) (markExpr e) mt
+        CaseAltBlock cs pat e -> CaseAltBlock cs (markPat pat) (markExpr e)
+      markStmt = \case
+        DoBind sp' pat e -> DoBind sp' (markPat pat) (markExpr e)
+        DoLet sp' pat mAnnot e -> DoLet sp' (markPat pat) (firstF markT mAnnot) (markExpr e)
+        DoExpr sp' e -> DoExpr sp' (markExpr e)
   d@CommentDecl {} -> d
 
 -- | Build the return type of a constructor given the type name and type parameters.
@@ -796,14 +1022,24 @@ conType tName tvs = foldr (TyArrow noSpan) (conReturnType tName tvs)
 type TypeConsMap = M.Map Name [Name]
 
 -- | Build a constructor environment from @type@ declarations.
---   Returns (set of type names, constructor env, constructor value env, type-constructor map).
-buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
+--   Returns (type-constructor arity map, constructor env, constructor
+--   value env, type-constructor map).
+buildConEnv :: [Decl] -> Either TypeError (M.Map Name Int, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
   let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ _ _ <- decls]
+      -- Arity of every type constructor in scope: the built-in primitives
+      -- plus one entry per declared type (user + prelude), keyed by name
+      -- with its declared parameter count. Built up front so a field or
+      -- signature referencing a type declared later still resolves
+      -- (forward reference), and so the same map validates both positions.
+      typeArities =
+        builtinTypeArities
+          <> M.fromList [(n, length tvs) | (_sp, n, tvs, _cs) <- typeDecls]
   -- Validate each declaration before building anything else:
   --   • bare '_' as type or constructor name — rejected;
-  --   • bare '_' or duplicate type-parameter names — rejected;
-  --   • '_foo' type-variable references inside constructor fields — rejected.
+  --   • bare '_', '_'-uppercase, or duplicate type-parameter names — rejected;
+  --   • '_foo' type-variable references inside constructor fields — rejected;
+  --   • unknown / '_'-prefixed type constructors in fields — rejected.
   forM_ typeDecls $ \(sp, n, tvs, cs) -> do
     -- The TypeDecl span starts at the @type@ keyword; the name sits
     -- @length "type "@ chars later (formatter guarantees this shape).
@@ -812,7 +1048,7 @@ buildConEnv decls = do
     when (n == "_") $ Left (UnnamedType nameSp)
     forM_ cs $ \(ConDef cSp cName _) ->
       when (cName == "_") $ Left (UnnamedConstructor cSp)
-    validateTypeParams sp tvs cs
+    validateTypeParams typeArities sp tvs cs
   -- 'tvs' here is already reduced to bare names — the per-parameter spans
   -- only matter for the unused-type-parameter warning (emitted separately).
   let typeDefs = [(sp, n, map paramName tvs, cs) | (sp, n, tvs, cs) <- typeDecls]
@@ -827,13 +1063,12 @@ buildConEnv decls = do
           | (_sp, tName, tvs, cs) <- typeDefs,
             ConDef _ cName flds <- cs
           ]
-      typeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDefs]
       typeConsMap =
         M.fromList
           [ (tName, [cName | ConDef _ cName _ <- cs])
           | (_sp, tName, _tvs, cs) <- typeDefs
           ]
-  pure (typeNames, conEnv, conValEnv, typeConsMap)
+  pure (typeArities, conEnv, conValEnv, typeConsMap)
   where
     checkDupType seen (sp, n, _tvs, _) =
       if S.member n seen
@@ -859,38 +1094,73 @@ buildConEnv decls = do
            in Right (M.insert cName (ConInfo tName tvs (concat flds) siblings cSp) m)
 
 -- | Validate a single type declaration's parameter list and constructor
---   field types. Enforces four invariants:
+--   field types. @typeArities@ maps every type constructor in scope
+--   (built-in primitives + declared types) to its arity — the same map
+--   the signature path validates against. Enforces six invariants:
 --
 --     1. Every parameter has a name; bare @_@ is rejected ('UnnamedTypeParameter').
---     2. No two parameters share a name ('DuplicateTypeParameter').
---     3. No constructor field mentions an ignored type variable (a
+--     2. No parameter name is @_@ followed by an uppercase letter
+--        ('UppercaseTypeParameter') — such a name lexes as a type
+--        constructor in any use position, so the parameter could never
+--        be referenced as a type variable in a field.
+--     3. No two parameters share a name ('DuplicateTypeParameter').
+--     4. No constructor field mentions an ignored type variable (a
 --        'TyVar' whose name starts with @_@) — if the user marks a type
 --        parameter as intentionally unused, they must not then turn
 --        around and use it ('ReferencingIgnoredTypeVar').
---     4. Every type variable in a constructor field must appear in the
+--     5. Every type variable in a constructor field must appear in the
 --        declaration's parameter list ('UnknownTypeVariable'). Without
 --        this, @type X = X a@ would silently treat @a@ as a fresh
 --        per-constructor tyvar disconnected from the type's parameters.
-validateTypeParams :: SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
-validateTypeParams _declSp params cons = do
-  -- 1) Reject bare '_' as a type parameter name. Type parameters are
-  --    always 'Param' (the parser uses 'paramBinderNoLine' which only
-  --    accepts a simple name), so 'paramName' / 'paramSpan' return
-  --    the user-written values directly here.
-  forM_ params $ \p ->
-    when (paramName p == "_") $ Left (UnnamedTypeParameter (paramSpan p))
-  -- 2) Reject duplicate parameter names.
+--     6. Every type /constructor/ head in a constructor field resolves
+--        against @typeArities@ (built-in primitive or declared type),
+--        else 'UnknownTypeCon'; an @_@-prefixed one is rejected as
+--        'ReferencingIgnored'; and it is applied to exactly its declared
+--        arity, else 'TypeConArityMismatch'. This is the very check the
+--        signature path runs ('wellFormedTypeWith'), so a field type and
+--        a signature type are held to the same standard — @type Phantom =
+--        Phantom Nonexistent@ (unknown) and @type T = T (Maybe Int32
+--        Int32)@ (ill-arity) are both rejected at the declaration, not
+--        silently accepted until a confusing use-site mismatch (or never,
+--        when the constructor goes unused).
+--
+--   Invariants 4–5 (type variables) and 6 (type constructors) are
+--   disjoint by node, so neither masks the other; the variable checks
+--   run first, keeping their more specific diagnostics when a field
+--   carries both kinds of error.
+validateTypeParams :: M.Map Name Int -> SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
+validateTypeParams typeArities _declSp params cons = do
+  -- 1+2) Reject an unusable type-parameter name: bare '_', or '_' then an
+  --      uppercase letter (which would lex as a 'TyCon' in use position,
+  --      so the parameter could never be referenced). Type parameters are
+  --      always 'Param' (the parser uses 'paramBinderNoLine' which only
+  --      accepts a simple name), so 'paramName' / 'paramSpan' return the
+  --      user-written values directly here.
+  forM_ params $ \p -> do
+    let n = paramName p
+    when (n == "_") $ Left (UnnamedTypeParameter (paramSpan p))
+    when (uppercaseAfterUnderscore n) $ Left (UppercaseTypeParameter (paramSpan p) n)
+  -- 3) Reject duplicate parameter names.
   foldM_ checkDup S.empty params
-  -- 3) Reject references to ignored type variables inside constructor fields.
+  -- 4) Reject references to ignored type variables inside constructor fields.
   --    The 'TyVar' carries its own source span, so the error points at
   --    the exact identifier rather than the whole type declaration.
   forM_ cons $ \(ConDef _ _ flds) ->
     forM_ flds checkNoIgnoredTyVar
-  -- 4) Reject type variables that aren't in the parameter list.
+  -- 5) Reject type variables that aren't in the parameter list.
   let declared = S.fromList (map paramName params)
   forM_ cons $ \(ConDef _ _ flds) ->
     forM_ flds (checkDeclaredTyVar declared)
+  -- 6) Reject unknown / ignored type constructors in constructor fields,
+  --    mirroring the signature-resolution path exactly.
+  forM_ cons $ \(ConDef _ _ flds) ->
+    forM_ flds (wellFormedTypeWith typeArities)
   where
+    -- A '_'-prefixed name whose first real character is uppercase.
+    uppercaseAfterUnderscore n = case T.uncons (T.drop 1 n) of
+      Just (c, _) -> Char.isUpper c
+      Nothing -> False
+
     checkDup seen p =
       let n = paramName p
        in if S.member n seen
@@ -985,7 +1255,7 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
       declsResolved = fmap (markEmptyTypesInDecl emptyTypeNames) decls
 
   -- 1) Build constructor environment from type declarations.
-  (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList declsResolved)
+  (typeArities, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList declsResolved)
 
   -- 2) Partition top-level decls into signatures and definitions.
   let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList declsResolved))
@@ -998,8 +1268,8 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- Build the signature environment; reject duplicates early.
   sigEnv <- foldM insertSig M.empty sigsList
 
-  -- Validate every written type (no unknown TyCons, no ignored refs).
-  mapM_ (\(_sp, _, t) -> wellFormedTypeWith userTypeNames t) sigsList
+  -- Validate every written type (known TyCons, correct arity, no ignored refs).
+  mapM_ (\(_sp, _, t) -> wellFormedTypeWith typeArities t) sigsList
 
   -- Ensure unique definition names (shadowing is not allowed at top level).
   foldM_ insertDefName S.empty defsList
@@ -1850,12 +2120,17 @@ solveRowVars pinAllFree rigid tailVars = go
 -- | Accept a synthesised value of type @actual@ into a position
 --   requiring @expected@, recording an explicit 'TCoerce' iff the
 --   acceptance is a genuine row widening — i.e. the two do /not/ unify
---   but @actual@ subsumes into @expected@. When they unify (including
---   when @expected@ still carries tyvars the surrounding call will
---   instantiate) no coercion is emitted, so a value flowing into an
---   as-yet-abstract row position is left untouched rather than wrapped
---   in a coercion to an abstract target. This is the single rule for
+--   but @actual@ subsumes into @expected@. This is the single rule for
 --   where row injection nodes appear.
+--
+--   When the two /do/ unify (including when @expected@ carries tyvars the
+--   surrounding call will instantiate) no coercion is emitted, but the
+--   solving substitution is pushed into the elaborated value. That pin
+--   matters when @actual@ left a variable free that @expected@ fixes — a
+--   payload-less @Nothing@ checked against @Maybe U@ synthesises
+--   @Maybe a$N@, and without propagating @a$N := U@ a later injection
+--   would record a 'TCoerce' whose @src@ still carries the free variable,
+--   which the greedy lowering coercion then resolves to the wrong label.
 acceptInto :: Type' -> TExpr -> Expr -> Check TExpr
 acceptInto expected eE srcExpr =
   let actual = texprType eE
@@ -1863,8 +2138,79 @@ acceptInto expected eE srcExpr =
         then throwTE (TypeMismatch expected actual srcExpr)
         else
           if needsRowCoerce expected actual
-            then pure (TCoerce (exprSpan srcExpr) actual expected eE)
-            else pure eE
+            then mkRowInject (exprSpan srcExpr) actual expected eE
+            -- Pin the value to the checked type, so a constructor that
+            -- left a nominal type parameter free (@Nothing : Maybe a@
+            -- against @Maybe U@) carries the concrete type into a later
+            -- injection rather than reaching it with a free variable the
+            -- greedy lowering coercion mis-resolves. Restricted to
+            -- row-free types: where a structural sum is involved,
+            -- unification assigns row variables greedily and
+            -- order-dependently, and forcing that choice into the tree
+            -- would mis-specialise 'MonomorphizeRows'. Such positions are
+            -- left to it (and to 'mkRowInject' at the injection point).
+            else
+              if containsRow actual || containsRow expected
+                then pure eE
+                else case unify actual expected of
+                  Right s -> pure (substTExpr s eE)
+                  Left _ -> pure eE
+
+-- | Build a single-label row injection of @src@ into the row @tgt@,
+--   resolving the genuinely-ambiguous case honestly rather than leaving
+--   the greedy lowering coercion to pick a label. A payload-less or
+--   partially-applied constructor can reach an injection with its type
+--   parameter still free (@Nothing : Maybe a@):
+--
+--     * exactly one alternative of @tgt@ accepts @src@ — pin @src@ to it
+--       ('unify' then 'substTExpr') so the recorded 'TCoerce' source is
+--       concrete before lowering;
+--     * more than one accepts it — the target is undetermined; picking
+--       the first (what greedy lowering does) is a silent miscompile, so
+--       reject as 'AmbiguousRowInjection' (no-defaulting).
+--
+--   A row-typed @src@ is a row→row retag handled per-label downstream,
+--   and a ground @src@ is already unambiguous; both pass through
+--   unchanged, so existing programs see no new coercion shape.
+mkRowInject :: SrcSpan -> Type' -> Type' -> TExpr -> Check TExpr
+mkRowInject sp src tgt inner
+  -- Row source: a row→row retag handled per-label downstream.
+  | TyOr {} <- src = pure plain
+  -- Bare row variable: an abstract-row injection inside a row-polymorphic
+  -- combinator (@bindEither@'s @e1@ into @(e1 | e2)@). Resolution is
+  -- deferred to 'Awsum.MonomorphizeRows', which substitutes the concrete
+  -- label per call-site before lowering — not ambiguous here, and the two
+  -- variable labels would otherwise both "accept" the source.
+  | TyVar {} <- src = pure plain
+  -- Ground source: its matching alternative is unique by construction.
+  | S.null (collectTypeVars src) = pure plain
+  -- A nominal-headed source with a free parameter (@Nothing : Maybe a@) —
+  -- the bug domain. If more than one /concrete/ alternative would accept
+  -- it, the target is undetermined; picking the first (what the greedy
+  -- lowering coercion does) is a silent miscompile, so reject. With one
+  -- (or zero, unreachable after the caller's 'rowSubsume' guard) the
+  -- unique label is resolved correctly downstream, so emit the coercion
+  -- unchanged. An open tyvar tail (@(Maybe T | r)@) is /not/ a competing
+  -- alternative — it is an extension slot resolved per-call-site by
+  -- 'Awsum.MonomorphizeRows', mirroring the @TyVar src@ case above; it
+  -- would otherwise "accept" every source and make every injection into
+  -- an open row spuriously ambiguous.
+  | otherwise = case filter (\l -> not (isTyVarTy l) && rowSubsume l src) (flattenRow tgt) of
+      (_ : _ : _) -> throwTE (AmbiguousRowInjection sp src tgt)
+      _ -> pure plain
+  where
+    plain = TCoerce sp src tgt inner
+
+-- | True when a type mentions a structural sum ('TyOr') anywhere. Gates
+--   the type-pinning in 'acceptInto': unification over rows assigns row
+--   variables greedily, so its substitution must not be pushed into the
+--   elaborated tree where 'MonomorphizeRows' reads call-head types.
+containsRow :: Type' -> Bool
+containsRow = \case
+  TyOr {} -> True
+  TyApp _ a b -> containsRow a || containsRow b
+  TyArrow _ a b -> containsRow a || containsRow b
+  _ -> False
 
 -- | Does accepting a value of type @actual@ into a position requiring
 --   @expected@ need a row injection? Yes exactly when, at some
@@ -1944,6 +2290,7 @@ elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
       when (unmonomorphizableRowLet te)
         $ throwTE (PolymorphicRowLet lsp (patternBinderName pat))
       pure (eE, te)
+  liftEither (checkPatternArity conEnv pat)
   liftEither (checkNoShadow env exempt (collectPatternVars [pat]))
   let bindings = patternBindings conEnv [pat] [te]
       envNext = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
@@ -2048,9 +2395,9 @@ typeOfExpr conEnv tcm env = \case
                 pure (TApp sp (applySubst s b) (substTExpr s tfE) [substTExpr s xE])
               Left _ ->
                 if rowSubsume a tx
-                  then
-                    let xE' = if needsRowCoerce a tx then TCoerce (exprSpan x) tx a xE else xE
-                     in pure (TApp sp b tfE [xE'])
+                  then do
+                    xE' <- if needsRowCoerce a tx then mkRowInject (exprSpan x) tx a xE else pure xE
+                    pure (TApp sp b tfE [xE'])
                   else throwTE (TypeMismatch a tx x)
       _ -> throwTE (NotAFunction f (texprType tfE))
   -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' clause
@@ -2214,6 +2561,10 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
     _ -> caseArmsNominal scrutTy
   pure (scrutE, elab)
   where
+    -- Computed once per @case@ and threaded into every inhabitedness query
+    -- below (see 'isConInhabited'): the matrix/catch-all walks call these
+    -- per-constructor, so a per-call rebuild was quadratic.
+    recSet = recursiveTypeNames conEnv
     caseArmsNominal scrutTy = do
       -- Scrutinee must be a user-defined sum type.
       tyName <- case extractTyCon scrutTy of
@@ -2229,44 +2580,90 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
                   freshGenericRetTy = freshenType "$scrut" genericRetTy
                in fromRight mempty (unify freshGenericRetTy scrutTy)
             Nothing -> mempty
+      -- Is the scrutinee type corroborated by at least one arm whose
+      -- constructor actually belongs to it? If so, a non-belonging arm is a
+      -- genuine wrong-constructor mistake (rejected by 'handleArm' below). If
+      -- not — every arm names a foreign constructor, as in a `do`-block
+      -- desugared over a non-'Either' scrutinee — the scrutinee type itself
+      -- is in doubt, so we leave the clearer type-mismatch / non-exhaustive
+      -- diagnostic to fire instead of blaming an individual constructor.
+      let anyArmBelongs =
+            any
+              ( \alt -> case caseAltPattern alt of
+                  PCon _ c _ -> maybe False ((== tyName) . ciTypeName) (M.lookup c conEnv)
+                  _ -> False
+              )
+              (toList alts)
       -- Type-check each arm; collect arm results and covered patterns.
       -- We track full patterns (not just constructor names) to handle nested patterns correctly.
-      (talts, coveredPatterns) <- foldM (handleArm sp scrutTy env scrutSubst) ([], []) (toList alts)
+      (talts, coveredPatterns) <- foldM (handleArm sp scrutTy anyArmBelongs env scrutSubst) ([], []) (toList alts)
       -- Exhaustiveness: every inhabited constructor must appear at least once.
       -- For simple patterns (no nesting), each constructor should appear exactly once.
       let topLevelCons = [cName | (cName, _) <- coveredPatterns]
           missing = filter (`notElem` topLevelCons) allCons
-          inhabitedMissing = filter (isConInhabited conEnv tcm S.empty scrutSubst) missing
+          inhabitedMissing = filter (isConInhabited recSet conEnv tcm scrutSubst) missing
       unless (null inhabitedMissing) $ throwTE (NonExhaustiveCase sp tyName inhabitedMissing)
-      -- Recursive exhaustiveness: for each top-level constructor that
-      -- appears, check that the column of inner-pattern fields exhausts
-      -- the constructor's field types. Without this, @case x of Right
-      -- (Just _) -> …; Left _ -> …@ would be silently accepted at type
-      -- 'Either e (Maybe a)' and crash at runtime on @Right Nothing@ —
-      -- because the top-level @Right@/@Left@ are both covered but the
-      -- nested @Maybe@ has only @Just@.
+      -- Field-combination exhaustiveness: every top-level constructor is
+      -- present, but a cartesian combination of their fields can still
+      -- escape every arm. For each present constructor, run matrix
+      -- exhaustiveness over its field columns (the field-pattern rows of
+      -- its arms). This catches both @case x of Right (Just _) -> …; Left
+      -- _ -> …@ leaving @Right Nothing@ uncovered, and @Tuple2 A A |
+      -- Tuple2 B B@ leaving @Tuple2 A B@ uncovered — the latter is exactly
+      -- what per-column coverage missed.
       let perCon = M.fromListWith (<>) [(c, [fields]) | (c, fields) <- coveredPatterns]
       forM_ (M.toList perCon) $ \(cName, armsFields) ->
         case M.lookup cName conEnv of
           Just ci | not (null (ciFieldTypes ci)) -> do
-            -- The freshening suffix must match the one used when
-            -- 'scrutSubst' was built ('"$scrut"'), or the
-            -- substitution's keys won't line up with these field
-            -- types and the apply silently no-ops.
-            let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
-                fieldTys = map (applySubst scrutSubst) freshFieldTys
-                columns = transpose armsFields
-            liftEither $ zipWithM_ (checkPatternColumnCovers sp conEnv tcm) fieldTys columns
+            -- Field types at this scrutinee's instantiation. The
+            -- freshening suffix must match the one used when 'scrutSubst'
+            -- was built ('"$scrut"'), or the substitution's keys won't
+            -- line up and the apply silently no-ops.
+            let fieldTys = map (applySubst scrutSubst . freshenType "$scrut") (ciFieldTypes ci)
+            -- Reject a catch-all/specific mix within a field column,
+            -- before the exhaustiveness check so it reads as the targeted
+            -- 'PartialCatchAll' rather than a non-exhaustiveness witness.
+            -- This is the gate lowering's pattern-merge relies on: a column
+            -- mixing a wildcard arm with a constructor arm under the same
+            -- outer tag is the one shape 'mergeAlts' cannot represent (see
+            -- 'Awsum.ElaborateLower.mergeAlts'). A wildcard that only
+            -- conflicts with a specific sibling across *different* outer
+            -- constructors never reaches the merge — distinct tags don't
+            -- fuse — and, if it leaves a hole, surfaces as a
+            -- 'NonExhaustiveMatch' witness instead.
+            liftEither (rejectPartialCatchAll recSet conEnv tcm fieldTys armsFields)
+            whenJust (matrixWitness recSet conEnv tcm fieldTys armsFields) $ \w ->
+              throwTE (NonExhaustiveMatch sp scrutTy (PCon noSpan cName w))
           _ -> pass
       pure (NominalArms talts)
 
-    handleArm caseSp scrutTy envLocal scrutSubst (talts, patterns) alt = case caseAltPattern alt of
+    handleArm caseSp scrutTy anyArmBelongs envLocal scrutSubst (talts, patterns) alt = case caseAltPattern alt of
       PCon patSp cName pats -> do
         let body = caseAltBody alt
         -- Reject @_X@ constructor references at any depth in the pattern.
         liftEither (mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats))
-        -- Verify the constructor belongs to the scrutinee type.
+        -- The constructor must exist…
         ci <- liftEither (maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv))
+        -- …and belong to the scrutinee type. A known constructor of another
+        -- type (a wrong or typo'd extra arm) was silently accepted on an
+        -- already-exhaustive nominal scrutinee — against no-defaulting — and
+        -- then carried the wrong field types into binding. Only checked when
+        -- the scrutinee type is corroborated by some belonging arm
+        -- ('anyArmBelongs'); otherwise the scrutinee type is itself suspect
+        -- and the type-mismatch / non-exhaustive diagnostic reads better.
+        case extractTyCon scrutTy of
+          Just scrutName
+            | anyArmBelongs && ciTypeName ci /= scrutName ->
+                throwTE (ConstructorNotInType patSp cName scrutTy)
+          _ -> pass
+        -- The pattern must bind exactly as many sub-patterns as the
+        -- constructor has fields, at every depth. The 'zip'-based walks
+        -- below (shape validation, binding, elaboration) truncate a
+        -- mismatch silently; checked here, before per-binder analysis, so
+        -- the arity error precedes any shadow / shape complaint about the
+        -- surplus binders, and (running per-arm) precedes the matrix
+        -- non-exhaustiveness check that a too-few pattern would otherwise hit.
+        liftEither (checkPatternArity conEnv (PCon patSp cName pats))
         -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
         let currentPattern = (cName, pats)
         when (patternMatches conEnv currentPattern patterns) $ throwTE (UnreachableCase caseSp cName)
@@ -2281,9 +2678,16 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
         let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
             fieldTys = map (applySubst scrutSubst) freshFieldTys
         -- Reject patterns on uninhabited constructors (unreachable).
-        case find (not . isTypeInhabited conEnv tcm) fieldTys of
+        case find (not . isTypeInhabited recSet conEnv tcm) fieldTys of
           Just emptyTy -> throwTE (UnreachableCaseUninhabited caseSp cName emptyTy)
           Nothing -> pass
+        -- Validate each field pattern's shape against its field type. The
+        -- matrix-exhaustiveness check below assumes a constructor pattern
+        -- on a sum and an ascription pattern on a row; without this gate a
+        -- malformed nested pattern (a '(x : T)' on a nominal/primitive
+        -- field, a constructor on a primitive field) passes typechecking
+        -- and then crashes or miscompiles in lowering.
+        liftEither (zipWithM_ (validatePatternShape conEnv tcm) fieldTys pats)
         -- Bind pattern variables from constructor fields.
         let bindings = patternBindings conEnv pats fieldTys
             envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
@@ -2328,12 +2732,20 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
   pure (RowArms tralts)
   where
     labels = flattenRow scrutTy
+    -- Computed once per @case@ and threaded into every inhabitedness query
+    -- (see 'isConInhabited' / 'caseArms').
+    recSet = recursiveTypeNames conEnv
 
     notExhaust label (ascribedSet, perLabelConArms) = case label of
       TyVar _ _ -> False -- open row tail, no obligation
-      _ ->
-        notElem label ascribedSet
-          && not (label `M.member` perLabelConArms)
+      -- An uninhabited alternative carries no runtime value, so it imposes
+      -- no coverage obligation — mirrors the 'isConInhabited' filter on
+      -- nominal constructors.
+      _
+        | not (isTypeInhabited recSet conEnv tcm label) -> False
+        | otherwise ->
+            notElem label ascribedSet
+              && not (label `M.member` perLabelConArms)
 
     -- Locate the row label whose head 'TyCon' matches @tyName@.
     findLabel tyName =
@@ -2349,7 +2761,11 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         when (ascrTy `M.member` perCon)
           $ throwTE (DuplicateRowArm patSp ascrTy)
         liftEither (rejectIgnoredConstructor conEnv inner)
+        liftEither (checkPatternArity conEnv inner)
         liftEither (checkNoShadow env crossExempt (collectPatternVars [inner]))
+        -- The inner pattern matches at the ascribed alternative; validate
+        -- its shape against that type before binding.
+        liftEither (validatePatternShape conEnv tcm ascrTy inner)
         -- Bind the inner pattern with the ascribed type — that is the
         -- key semantic difference from a nominal arm: 'n' in
         -- @case x of (n : Int32) -> …@ is bound at type 'Int32', not
@@ -2371,6 +2787,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         when (label `elem` ascribed)
           $ throwTE (DuplicateRowArm patSp label)
         liftEither (rejectIgnoredConstructor conEnv (PCon patSp cName innerPats))
+        liftEither (checkPatternArity conEnv (PCon patSp cName innerPats))
         liftEither (checkNoShadow env crossExempt (collectPatternVars innerPats))
         -- Substitute the constructor's generic field types using the
         -- row label as the concrete return type — this gives the same
@@ -2383,6 +2800,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
             fieldTys = map (applySubst scrutSubst) freshFieldTys
             bindings = patternBindings conEnv innerPats fieldTys
             envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+        liftEither (zipWithM_ (validatePatternShape conEnv tcm) fieldTys innerPats)
         bodyE <- runBody envWithBindings body
         let tralt = TRowAlt label (elabPattern conEnv (PCon patSp cName innerPats) label) bodyE
             perCon' =
@@ -2406,110 +2824,323 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
           $ find (\c -> ciTypeName c == tyName) (M.elems conEnv)
       let allCons = ciSiblings ci
           present = M.keys byCon
-          missingCons = filter (`notElem` present) allCons
+          -- An uninhabited constructor of the label (its field is itself
+          -- uninhabited, e.g. @Just (Box Never)@) carries no runtime value,
+          -- so it imposes no coverage obligation — mirrors the
+          -- 'inhabitedMissing' filter on a nominal scrutinee and the
+          -- uninhabited-label skip in 'notExhaust' above.
+          labelSubst = scrutInstantiation tyName ci label
+          missingCons =
+            filter (\c -> c `notElem` present && isConInhabited recSet conEnv tcm labelSubst c) allCons
       unless (null missingCons)
         $ throwTE (NonExhaustiveCase sp tyName missingCons)
-      -- For each present constructor, verify the inner patterns column-
-      -- wise cover the substituted field types.
-      forM_ (M.toList byCon) $ \(_cName, armsForCon) -> case armsForCon of
+      -- For each present constructor, run matrix exhaustiveness over its
+      -- field columns. Per-column coverage would accept uncovered field
+      -- combinations — e.g. a @Tuple2 T T@ label matched only by @Tuple2
+      -- A A | Tuple2 B B@, leaving @Tuple2 A B@ unmatched.
+      forM_ (M.toList byCon) $ \(cName, armsForCon) -> case armsForCon of
         [] -> pass
-        ((_, fieldTys0, _) : _) ->
-          let columns = transpose [pats | (pats, _, _) <- armsForCon]
-           in liftEither $ zipWithM_ (checkPatternColumnCovers sp conEnv tcm) fieldTys0 columns
+        ((_, fieldTys0, _) : _) -> do
+          let armsFields = [pats | (pats, _, _) <- armsForCon]
+          liftEither (rejectPartialCatchAll recSet conEnv tcm fieldTys0 armsFields)
+          whenJust (matrixWitness recSet conEnv tcm fieldTys0 armsFields) $ \w ->
+            throwTE (NonExhaustiveMatch sp scrutTy (PCon noSpan cName w))
 
--- | Verify that a column of patterns (one per arm, all at the same
---   position) exhausts @ty@. Used both by 'caseArmsRow' to validate
---   that, e.g., @Just (b : Bool)@ / @Just (u : Unit)@ together cover
---   the @(Bool | Unit)@ field of @Just@, and by 'caseArmsNominal'
---   to recurse into nested constructor patterns inside each
---   top-level arm.
---
---   Three cases on @ty@:
---
---     * @TyVar@ — open tail; no exhaustiveness check possible.
---     * @TyOr@ — row-shaped; per-label coverage with no catch-all
---       (PAscribe arms cover their ascribed label, PCon arms cover
---       the row label whose head matches the constructor's owning
---       type).
---     * Nominal sum — every inhabitant constructor must appear,
---       and for each present constructor we recurse into its
---       field columns at the substituted field types. Missing
---       inhabited constructors raise 'NonExhaustiveCase';
---       uninhabited ones (e.g. @Just Never@) are silently skipped
---       because they can't appear at runtime.
-checkPatternColumnCovers ::
-  SrcSpan -> ConEnv -> TypeConsMap -> Type' -> [Pattern] -> Either TypeError ()
-checkPatternColumnCovers sp conEnv tcm ty pats
-  | any isWildcardPat pats = Right () -- a single 'PVar'/'PWild' covers everything
-  | otherwise = case ty of
-      TyVar _ _ -> Right () -- open tail
-      TyOr {} -> do
-        let labels = flattenRow ty
-            ascribed = [ascr | PAscribe _ _ ascr <- pats]
-            perCon =
-              M.fromListWith
-                (<>)
-                [ (cName, [(innerPats, ())])
-                | PCon _ cName innerPats <- pats
-                ]
-            covered l =
-              l
-                `elem` ascribed
-                || maybe False (`M.member` perCon) (extractTyCon l)
-            missing = filter (\l -> not (isOpenLabel l) && not (covered l)) labels
-        unless (null missing) $ Left (NonExhaustiveRow sp missing ty)
-      _ -> case extractTyCon ty of
-        Just tyName -> do
-          let perCon =
-                M.fromListWith
-                  (<>)
-                  [ (cName, [innerPats])
-                  | PCon _ cName innerPats <- pats
-                  ]
-          ci <-
-            maybeToRight (CaseOnNonSumType sp ty)
-              $ find (\c -> ciTypeName c == tyName) (M.elems conEnv)
-          let allCons = ciSiblings ci
-              missingCons = filter (`notElem` M.keys perCon) allCons
-              -- The substitution that maps @tyName@'s type-params to
-              -- @ty@'s concrete arguments — needed both for the
-              -- 'isConInhabited' filter on missing constructors and
-              -- for substituting the present constructor's field
-              -- types when we recurse.
-              -- Freshening suffix must be '"$scrut"' so the keys line
-              -- up with the '"$scrut"'-freshened field types inside
-              -- 'isConInhabited' (and the recursive
-              -- 'checkPatternColumnCovers' below). With a different
-              -- suffix the substitution silently no-ops and uninhabited
-              -- siblings get reported as missing.
-              tySubst =
-                let genericRetTy = conReturnType tyName (ciTypeParams ci)
-                    freshGenericRetTy = freshenType "$scrut" genericRetTy
-                 in fromRight mempty (unify freshGenericRetTy ty)
-              inhabitedMissing =
-                filter (isConInhabited conEnv tcm S.empty tySubst) missingCons
-          unless (null inhabitedMissing)
-            $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
-          -- Recurse into each present constructor's field columns.
-          -- This is what catches @Right (Just _)@ / @Left _@ leaving
-          -- @Right Nothing@ uncovered: top-level @Right@/@Left@ are
-          -- both present, but the @Right@-arm's field column on
-          -- @Maybe a@ contains only @Just _@.
-          forM_ (M.toList perCon) $ \(cName, armsFields) ->
-            case M.lookup cName conEnv of
-              Just ci' | not (null (ciFieldTypes ci')) -> do
-                let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci')
-                    fieldTys = map (applySubst tySubst) freshFieldTys
-                    columns = transpose armsFields
-                zipWithM_ (checkPatternColumnCovers sp conEnv tcm) fieldTys columns
-              _ -> Right ()
-        Nothing -> Right ()
+-- Shared Maranget-specialization primitives used by both 'matrixWitness'
+-- (exhaustiveness) and 'rejectPartialCatchAll' (catch-all legality). The
+-- two passes have different drivers and verdicts, but they must agree on
+-- how a column is instantiated and specialized — a divergence would let one
+-- accept a column shape the other rejects. These are exactly the pieces
+-- where that agreement is load-bearing, so they live here as one copy.
+
+-- | Drop a redundant ascription wrapper to its inner pattern. On a nominal
+--   / opaque column @(p : T)@ is annotation-only, so it matches as @p@; on
+--   a row column ascriptions name the label and are kept (not stripped).
+patStripAscribe :: Pattern -> Pattern
+patStripAscribe (PAscribe _ inner _) = patStripAscribe inner
+patStripAscribe p = p
+
+-- | Substitution from a constructor's type params to a concrete column
+--   type. The freshening suffix must be '"$scrut"': it is shared with the
+--   field-type freshening in 'conFieldTypesAtScrut' and with the '"$scrut"'
+--   that 'isConInhabited' hardcodes — any other suffix and the unify
+--   silently no-ops, mis-reporting uninhabited siblings (e.g. @Err (Box
+--   Never)@) as missing.
+scrutInstantiation :: Name -> ConInfo -> Type' -> Subst
+scrutInstantiation n ci ty =
+  fromRight mempty (unify (freshenType "$scrut" (conReturnType n (ciTypeParams ci))) ty)
+
+-- | A constructor's arity (field count); 0 if unknown.
+conArity :: ConEnv -> Name -> Int
+conArity conEnv c = maybe 0 (length . ciFieldTypes) (M.lookup c conEnv)
+
+-- | A constructor's field types at the given instantiation (see
+--   'scrutInstantiation' for the suffix invariant).
+conFieldTypesAtScrut :: ConEnv -> Subst -> Name -> [Type']
+conFieldTypesAtScrut conEnv subst c = case M.lookup c conEnv of
+  Just ci -> map (applySubst subst . freshenType "$scrut") (ciFieldTypes ci)
+  Nothing -> []
+
+-- | The row label a constructor selects: the alternative whose head names
+--   the constructor's owning type. 'Nothing' if no alternative matches.
+rowLabelForConstructor :: ConEnv -> [Type'] -> Name -> Maybe Type'
+rowLabelForConstructor conEnv labels c = do
+  ci <- M.lookup c conEnv
+  find (\l -> extractTyCon l == Just (ciTypeName ci)) labels
+
+-- | The row label a pattern's head selects: a @(p : l)@ ascription names @l@
+--   directly; a constructor selects its owning type's label; a wildcard / binder
+--   selects none (it falls to the default matrix). Shared by 'matrixWitness'
+--   and 'rejectPartialCatchAll' so both agree on which label a head matches.
+rowHeadLabel :: ConEnv -> [Type'] -> Pattern -> Maybe Type'
+rowHeadLabel conEnv labels = \case
+  PAscribe _ _ l -> Just l
+  PCon _ c _ -> rowLabelForConstructor conEnv labels c
+  _ -> Nothing
+
+-- | The concrete, /inhabited/ labels of a row — the ones a @case@ must cover.
+--   An open tyvar tail imposes no obligation, and (mirroring 'nominalColumn')
+--   neither does an uninhabited alternative, since no value of it can occur.
+--   Shared by 'matrixWitness' and 'rejectPartialCatchAll'.
+concreteRowLabels :: S.Set Name -> ConEnv -> TypeConsMap -> [Type'] -> [Type']
+concreteRowLabels recSet conEnv tcm =
+  filter (\l -> not (isTyVarTy l) && isTypeInhabited recSet conEnv tcm l)
+
+-- | Maranget specialization of a NOMINAL column on constructor @c@: keep a
+--   matching @PCon c@ arm with its sub-patterns spliced in, drop a
+--   different constructor, and expand a wildcard to @c@'s arity. Ascription
+--   is annotation-only on a nominal column, so it is stripped first.
+specializeNominalColumn :: ConEnv -> Name -> [[Pattern]] -> [[Pattern]]
+specializeNominalColumn conEnv c = concatMap step
   where
-    isWildcardPat (PVar _ _) = True
-    isWildcardPat (PWild _) = True
-    isWildcardPat _ = False
-    isOpenLabel (TyVar _ _) = True
-    isOpenLabel _ = False
+    step (p : ps) = case patStripAscribe p of
+      PCon _ c' sub
+        | c' == c -> [sub <> ps]
+        | otherwise -> []
+      _ -> [replicate (conArity conEnv c) (PWild noSpan) <> ps]
+    step [] = []
+
+-- | Maranget specialization of a ROW column on label @l@: an ascription of
+--   @l@ exposes its inner pattern; a constructor of @l@'s type stays as the
+--   leading pattern (the recursion then handles @l@'s nominal structure); a
+--   wildcard matches @l@ as a wildcard; anything selecting a different
+--   label is dropped.
+specializeRowColumn :: ConEnv -> [Type'] -> Type' -> [[Pattern]] -> [[Pattern]]
+specializeRowColumn conEnv labels l = concatMap step
+  where
+    step (p : ps) = case p of
+      PAscribe _ inner l'
+        | l' == l -> [inner : ps]
+        | otherwise -> []
+      PCon _ c sub
+        | rowLabelForConstructor conEnv labels c == Just l -> [PCon noSpan c sub : ps]
+        | otherwise -> []
+      _ -> [PWild noSpan : ps]
+    step [] = []
+
+-- | Matrix exhaustiveness (Maranget, "usefulness"/specialization).
+--   Given the column types and a pattern matrix — one row per arm, each
+--   row holding one pattern per column — return 'Nothing' if the matrix
+--   matches every value vector, or @Just witness@ (a counterexample: one
+--   pattern per column, with @_@ at don't-care positions) otherwise.
+--
+--   Replaces an earlier per-column check that validated each field
+--   position independently. Independent columns accept uncovered
+--   cartesian combinations: @Tuple2 A A | Tuple2 B B@ has each column
+--   covering @{A, B}@, yet @Tuple2 A B@ matches no arm. Specialization
+--   threads the correlation between columns — after fixing field 1 = A
+--   the residual matrix keeps only arms consistent on field 1, so the
+--   uncovered tail of a combination is never lost.
+--
+--   Columns come in three shapes:
+--
+--     * nominal sum — signature is the inhabited constructors;
+--       uninhabited ones can't occur at runtime, so they impose no
+--       obligation (mirrors the old 'inhabitedMissing' filter);
+--     * structural sum ('TyOr') — signature is the concrete labels; an
+--       open tyvar tail imposes no obligation, preserving the existing
+--       partial open-row behaviour;
+--     * opaque — primitives, type variables, anything with no matchable
+--       constructors: only wildcards can appear, so the column passes
+--       through @default@ with a @_@ witness head.
+--
+--   The witness is a surface 'Pattern' so 'NonExhaustiveMatch' renders
+--   it as source the user could have written.
+matrixWitness ::
+  S.Set Name -> ConEnv -> TypeConsMap -> [Type'] -> [[Pattern]] -> Maybe [Pattern]
+matrixWitness recSet conEnv tcm = go
+  where
+    go :: [Type'] -> [[Pattern]] -> Maybe [Pattern]
+    go [] rows
+      | null rows = Just [] -- nothing left matches: non-exhaustive
+      | otherwise = Nothing -- some arm covers the remaining space
+    go (ty : tys) rows
+      -- An uninhabited column has no values, so no vector can miss here.
+      | not (isTypeInhabited recSet conEnv tcm ty) = Nothing
+      | TyOr {} <- ty = rowColumn (flattenRow ty) tys rows
+      | Just n <- extractTyCon ty,
+        Just ci <- anyConInfo n conEnv =
+          nominalColumn (ciSiblings ci) (scrutInstantiation n ci ty) tys rows
+      | otherwise = opaqueColumn tys rows
+
+    -- --- nominal column --------------------------------------------------
+
+    nominalColumn :: [Name] -> Subst -> [Type'] -> [[Pattern]] -> Maybe [Pattern]
+    nominalColumn allCons subst tys rows =
+      let inhabited = filter (isConInhabited recSet conEnv tcm subst) allCons
+          usedCons = [c | (p : _) <- rows, PCon _ c _ <- [patStripAscribe p]]
+          missing = filter (`notElem` usedCons) inhabited
+       in case missing of
+            [] ->
+              -- complete signature: non-exhaustive iff some constructor's
+              -- specialized residual is.
+              asum
+                [ rebuildCon c
+                    <$> go (conFieldTypesAtScrut conEnv subst c <> tys) (specializeNominalColumn conEnv c rows)
+                | c <- inhabited
+                ]
+            (cMiss : _) ->
+              -- incomplete: a missing constructor heads the witness; its
+              -- fields are don't-cares, the tail comes from the wildcard
+              -- (default) arms.
+              (\w -> PCon noSpan cMiss (replicate (conArity conEnv cMiss) (PWild noSpan)) : w)
+                <$> go tys (defaultRows rows)
+      where
+        rebuildCon c w = PCon noSpan c (take (conArity conEnv c) w) : drop (conArity conEnv c) w
+        defaultRows :: [[Pattern]] -> [[Pattern]]
+        defaultRows = concatMap step
+          where
+            step (p : ps) = case patStripAscribe p of
+              PCon {} -> []
+              _ -> [ps] -- wildcard head
+            step [] = []
+
+    -- --- structural-sum (row) column -------------------------------------
+
+    rowColumn :: [Type'] -> [Type'] -> [[Pattern]] -> Maybe [Pattern]
+    rowColumn labels tys rows =
+      let concrete = concreteRowLabels recSet conEnv tcm labels
+          usedLabels = [l | (p : _) <- rows, Just l <- [rowHeadLabel conEnv labels p]]
+          missing = filter (`notElem` usedLabels) concrete
+       in case missing of
+            [] ->
+              asum
+                [ rebuildLabel l <$> go (l : tys) (specializeRowColumn conEnv labels l rows)
+                | l <- concrete
+                ]
+            (lMiss : _) ->
+              (\w -> PAscribe noSpan (PWild noSpan) lMiss : w)
+                <$> go tys (defaultRows rows)
+      where
+        -- Specializing a row column on label @l@ introduces one new
+        -- leading column of type @l@; the recursion then handles @l@'s
+        -- own (nominal or opaque) structure.
+        rebuildLabel l w = case w of
+          (wL@PCon {} : rest) -> wL : rest
+          (wL : rest) -> PAscribe noSpan wL l : rest
+          [] -> []
+        defaultRows :: [[Pattern]] -> [[Pattern]]
+        defaultRows = concatMap step
+          where
+            step (PAscribe {} : _) = []
+            step (PCon {} : _) = []
+            step (_ : ps) = [ps]
+            step [] = []
+
+    -- --- opaque column (primitive / type variable) -----------------------
+
+    -- No matchable constructors, so every pattern here is a wildcard;
+    -- the column passes straight through with a @_@ witness head.
+    opaqueColumn :: [Type'] -> [[Pattern]] -> Maybe [Pattern]
+    opaqueColumn tys rows =
+      (PWild noSpan :) <$> go tys [ps | (_ : ps) <- rows]
+
+-- | Extend the no-catch-all rule (@docs/principles.md@) to nested field
+--   positions. A wildcard / binder is a catch-all; it is forbidden at a
+--   position where a sibling arm names a specific constructor (nominal) or
+--   alternative (row), because it would silently absorb a constructor
+--   added to the type later. Allowed at each position: enumerate every
+--   constructor / label, or ignore the whole position with one wildcard in
+--   every arm (e.g. @Just _@, @Tuple2 A _ | Tuple2 B _@). The top-level
+--   form is already rejected upstream ("requires constructor patterns" /
+--   "wildcard at the top of a row arm"); this walks the deeper positions.
+--
+--   Mirrors the Maranget specialization of 'matrixWitness' (which checks
+--   exhaustiveness, an orthogonal property): an all-catch-all column drops
+--   through, an all-specific column recurses into each present
+--   constructor's fields, and a mixed column raises 'PartialCatchAll' at
+--   the first catch-all arm. With the mix ruled out, every column reaching
+--   the recursion is cleanly partitioned, so no default matrix is tracked.
+rejectPartialCatchAll ::
+  S.Set Name -> ConEnv -> TypeConsMap -> [Type'] -> [[Pattern]] -> Either TypeError ()
+rejectPartialCatchAll recSet conEnv tcm = go
+  where
+    go :: [Type'] -> [[Pattern]] -> Either TypeError ()
+    go [] _ = Right ()
+    go (ty : tys) rows
+      -- An uninhabited column carries no runtime value to dispatch on, so
+      -- no catch-all question arises (mirrors 'matrixWitness').
+      | not (isTypeInhabited recSet conEnv tcm ty) = Right ()
+      | TyOr {} <- ty = rowCol ty tys rows
+      | Just n <- extractTyCon ty,
+        Just ci <- anyConInfo n conEnv =
+          nomCol ty (scrutInstantiation n ci ty) tys rows
+      -- Opaque column (primitive / type variable): no matchable
+      -- constructors, every head is a wildcard, never a mix — drop it.
+      | otherwise = go tys [ps | (_ : ps) <- rows]
+
+    -- --- nominal column --------------------------------------------------
+
+    nomCol :: Type' -> Subst -> [Type'] -> [[Pattern]] -> Either TypeError ()
+    nomCol ty subst tys rows =
+      -- 'patStripAscribe' folds a redundant @(p : T)@ around a nominal
+      -- field into @p@, so the head is a plain 'PCon' (specific) or a
+      -- binder / wildcard (catch-all). The span blamed is the original
+      -- pattern's.
+      let heads = [(p, patStripAscribe p) | (p : _) <- rows]
+          hasSpecific = any (isCon . snd) heads
+          catchAllSpans = [patternSpan orig | (orig, s) <- heads, isCatchAll s]
+       in case catchAllSpans of
+            (sp : _) | hasSpecific -> Left (PartialCatchAll sp ty)
+            _ ->
+              let usedCons = ordNub [c | (_, PCon _ c _) <- heads]
+               in if null usedCons
+                    then go tys [ps | (_ : ps) <- rows] -- all catch-all: drop column
+                    else forM_ usedCons $ \c ->
+                      go (conFieldTypesAtScrut conEnv subst c <> tys) (specializeNominalColumn conEnv c rows)
+
+    -- --- structural-sum (row) column -------------------------------------
+
+    rowCol :: Type' -> [Type'] -> [[Pattern]] -> Either TypeError ()
+    rowCol ty tys rows =
+      -- On a row column 'PAscribe' names a label (specific) and 'PCon'
+      -- names a label's constructor (specific) — do /not/ strip them; a
+      -- binder / wildcard is the catch-all.
+      let labels = flattenRow ty
+          heads = [p | (p : _) <- rows]
+          hasSpecific = any isSpecificRow heads
+          catchAllSpans = [patternSpan p | p <- heads, not (isSpecificRow p)]
+       in case catchAllSpans of
+            (sp : _) | hasSpecific -> Left (PartialCatchAll sp ty)
+            _ ->
+              let present =
+                    filter (\l -> any ((== Just l) . rowHeadLabel conEnv labels) heads) (concreteRowLabels recSet conEnv tcm labels)
+               in if null present
+                    then go tys [ps | (_ : ps) <- rows]
+                    else forM_ present $ \l -> go (l : tys) (specializeRowColumn conEnv labels l rows)
+
+    -- --- helpers ---------------------------------------------------------
+
+    isCon (PCon {}) = True
+    isCon _ = False
+    isCatchAll p = case p of
+      PVar _ _ -> True
+      PWild _ -> True
+      _ -> False
+    isSpecificRow p = case p of
+      PAscribe {} -> True
+      PCon {} -> True
+      _ -> False
 
 -- | Reject any @_X@-named constructor anywhere in a pattern. The error
 --   carries both the pattern's own span and the span of the constructor
@@ -2574,8 +3205,8 @@ patternSpan = \case
 --   field's type is derived by unifying the constructor's freshened
 --   return type with the matched type and substituting into its field
 --   types; a 'PAscribe' overrides the matched type with the ascribed
---   alternative. Each binder ('TPVar') carries its resolved type so
---   lowering can pick its 'Awsum.Core.CDropKind'.
+--   alternative. Each binder ('TPVar') carries its resolved type,
+--   consumed by lowering.
 elabPattern :: ConEnv -> Pattern -> Type' -> TPattern
 elabPattern conEnv = go
   where
@@ -2625,6 +3256,113 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
     -- scrutinee's row) lives in the caseArms helper.
     go (PAscribe _ inner ty, _) = patternBindings conEnv [inner] [ty]
 
+-- | Check that every constructor pattern binds exactly as many
+--   sub-patterns as its constructor has fields. Arity is fixed by the
+--   constructor declaration and independent of the type instantiation, so
+--   this is a purely structural walk — no types, no substitution — and
+--   recursing means one call on a whole arm / @let@ pattern covers every
+--   depth. An unknown constructor is left to the unknown-constructor
+--   check; a 'PAscribe' delegates to its inner pattern. The mismatch is
+--   reported before descending, so a wrong-arity outer pattern wins over
+--   any error inside its (already mis-shaped) sub-patterns.
+checkPatternArity :: ConEnv -> Pattern -> Either TypeError ()
+checkPatternArity conEnv = go
+  where
+    go :: Pattern -> Either TypeError ()
+    go (PVar _ _) = Right ()
+    go (PWild _) = Right ()
+    go (PAscribe _ inner _) = go inner
+    go (PCon sp cName subs) = case M.lookup cName conEnv of
+      Nothing -> Right () -- deferred to 'UnknownConstructor'
+      Just ci -> do
+        let expected = length (ciFieldTypes ci)
+        when (length subs /= expected)
+          $ Left (PatternArityMismatch sp cName expected (length subs))
+        traverse_ go subs
+
+-- | Validate that a nested field pattern's /shape/ fits its field type,
+--   extending the top-level case rules to every nested position. The old
+--   per-column exhaustiveness check did this implicitly; the matrix check
+--   ('matrixWitness') assumes a constructor pattern sits on a sum and an
+--   ascription pattern on a row, so without this gate a malformed nested
+--   pattern passes typechecking and then crashes or miscompiles in
+--   lowering (a @(x : T)@ on a nominal/primitive field is lowered as a row
+--   dispatch; a constructor on a primitive field reads the wrong tag).
+--   Three rules, mirroring 'caseArmsNominal' / 'caseArmsRow':
+--
+--     * @(x : T)@ discriminates a structural sum — legal only on a 'TyOr'
+--       field whose alternatives include @T@; on a nominal / primitive
+--       field it is the forbidden non-constructor arm
+--       ('NonConstructorNominalArm'), the same judgment the top level makes.
+--     * a constructor pattern needs a sum — on a 'TyOr' field it must name
+--       one alternative's constructor ('RowLabelNotForConstructor'); on a
+--       primitive / opaque field there is nothing to match
+--       ('CaseOnNonSumType', what the removed per-column check emitted).
+--     * a bare binder / wildcard ignores the field — always legal.
+--
+--   A genuinely-polymorphic field (a 'TyVar' no substitution pinned) is
+--   abstract: there is no sum to match, so a constructor or ascription on
+--   it is rejected ('CaseOnNonSumType') — only a binder / wildcard is legal
+--   there. (Lowering a constructor match against a rigid field reads a
+--   non-existent slot — a runtime miscompile — so the gate must reject
+--   rather than pass.) A constructor naming a different type than the
+--   field's is rejected at the pattern ('ConstructorNotInType'), the
+--   nominal analogue of the row 'RowLabelNotForConstructor' rule above; an
+--   unknown constructor is deferred to the unknown-constructor check.
+validatePatternShape :: ConEnv -> TypeConsMap -> Type' -> Pattern -> Either TypeError ()
+validatePatternShape conEnv tcm = go
+  where
+    go :: Type' -> Pattern -> Either TypeError ()
+    go _ (PVar _ _) = Right ()
+    go _ (PWild _) = Right ()
+    go ty (PAscribe sp inner ascrTy)
+      -- An ascription discriminates a structural sum; a bare type variable
+      -- is abstract, not a sum, so it is rejected like a primitive.
+      | TyVar _ _ <- ty = Left (CaseOnNonSumType sp ty)
+      | TyOr {} <- ty =
+          if ascrTy `elem` flattenRow ty
+            then go ascrTy inner
+            else Left (RowLabelNotInScrut sp ascrTy ty)
+      | otherwise = Left (NonConstructorNominalArm sp ty)
+    go ty (PCon sp cName subs)
+      -- A constructor needs a sum to match; a bare type variable has none,
+      -- so reject it (matching a constructor against a rigid field would
+      -- otherwise reach lowering and read a non-existent slot).
+      | TyVar _ _ <- ty = Left (CaseOnNonSumType sp ty)
+      | TyOr {} <- ty =
+          case rowLabelForConstructor conEnv (flattenRow ty) cName of
+            Just lbl -> goFields lbl cName subs
+            Nothing -> Left (RowLabelNotForConstructor sp cName ty)
+      | Just n <- extractTyCon ty,
+        isSumTy n =
+          case M.lookup cName conEnv of
+            -- A known constructor of a different type than the field's is
+            -- rejected precisely here, rather than slipping through to a
+            -- confusing missing-constructor witness in the matrix check.
+            Just ci | ciTypeName ci /= n -> Left (ConstructorNotInType sp cName ty)
+            _ -> goFields ty cName subs
+      | otherwise = Left (CaseOnNonSumType sp ty)
+
+    -- Recurse into a constructor's fields at the matched (row-label or
+    -- nominal) type, computing each field type exactly as 'patternBindings'
+    -- does. An unknown constructor, or one whose owning type does not unify
+    -- with the field, leaves an empty substitution and tyvar field types —
+    -- the recursion then only admits binders there, deferring the real
+    -- error to the exhaustiveness / unknown-constructor checks.
+    goFields :: Type' -> Name -> [Pattern] -> Either TypeError ()
+    goFields matchedTy cName subs = case M.lookup cName conEnv of
+      Nothing -> Right ()
+      Just ci ->
+        let freshRet = freshenType "$inner" (conReturnType (ciTypeName ci) (ciTypeParams ci))
+            innerSubst = fromRight mempty (unify freshRet matchedTy)
+            fieldTys = map (applySubst innerSubst . freshenType "$inner") (ciFieldTypes ci)
+         in zipWithM_ go fieldTys subs
+
+    isSumTy :: Name -> Bool
+    isSumTy n = case M.lookup n tcm of
+      Just (_ : _) -> True
+      _ -> False
+
 -- | Extract the type constructor name from a type (peeling off TyApp).
 extractTyCon :: Type' -> Maybe Name
 extractTyCon (TyCon _ n) = Just n
@@ -2637,54 +3375,114 @@ extractTyCon (TyEmpty _ n) = Just n
 extractTyCon (TyApp _ f _) = extractTyCon f
 extractTyCon _ = Nothing
 
+-- | A bare type variable — an open row tail, or a genuinely-polymorphic
+--   field. Such a position imposes no row/exhaustiveness obligation and is
+--   never a concrete injection alternative; shared by 'mkRowInject',
+--   'matrixWitness', and 'rejectPartialCatchAll'.
+isTyVarTy :: Type' -> Bool
+isTyVarTy (TyVar _ _) = True
+isTyVarTy _ = False
+
 -- | Get 'ConInfo' for any constructor of the given type.
 anyConInfo :: Name -> ConEnv -> Maybe ConInfo
 anyConInfo tyName conEnv =
   find (\ci -> ciTypeName ci == tyName) (M.elems conEnv)
 
+-- | Type constructors that can reach themselves through their constructors'
+--   field types — self-recursive (@List@, @Nest@, @IO@) or mutually recursive.
+--   Inhabitedness short-circuits coinductively only on these (see
+--   'isTypeInhabited'). A non-recursive constructor such as @Box@ in
+--   @Box (Box (Box Never))@ is absent here, so the walk descends it fully and
+--   still reaches the uninhabited @Never@ at the leaf.
+recursiveTypeNames :: ConEnv -> S.Set Name
+recursiveTypeNames conEnv =
+  S.fromList [n | G.CyclicSCC ns <- G.stronglyConnComp graph, n <- ns]
+  where
+    -- One vertex per type that has constructors; an edge to every type
+    -- constructor mentioned (head or argument) in any of its field types.
+    fieldTysByType = M.fromListWith (<>) [(ciTypeName ci, ciFieldTypes ci) | ci <- M.elems conEnv]
+    graph =
+      [ (tyName, tyName, S.toList (foldMap typeConsMentioned ftys))
+      | (tyName, ftys) <- M.toList fieldTysByType
+      ]
+
+-- | Every type-constructor name mentioned anywhere in a type (head and
+--   argument positions, through arrows and rows); type variables contribute
+--   nothing. Drives the recursive-type graph in 'recursiveTypeNames'.
+typeConsMentioned :: Type' -> S.Set Name
+typeConsMentioned = \case
+  TyVar _ _ -> S.empty
+  TyCon _ n -> S.singleton n
+  TyEmpty _ n -> S.singleton n
+  TyApp _ f x -> typeConsMentioned f <> typeConsMentioned x
+  TyArrow _ a b -> typeConsMentioned a <> typeConsMentioned b
+  TyOr _ a b -> typeConsMentioned a <> typeConsMentioned b
+
 -- | A constructor is inhabited if all its field types (after substitution) are inhabited.
 --   A type is uninhabited if it has no constructors (e.g. @type Never@),
 --   or all its constructors require an uninhabited field (e.g. @Box Never@).
-isConInhabited :: ConEnv -> TypeConsMap -> S.Set Type' -> Subst -> Name -> Bool
-isConInhabited conEnv tcm visited subst cName =
+-- The recursive-type set ('recursiveTypeNames') is computed once per @case@
+-- by the caller and threaded in, rather than rebuilt on every call: these
+-- run per-constructor inside the matrix-exhaustiveness recursion, so a
+-- per-call rebuild was an O(arms × constructors × depth) Tarjan SCC over the
+-- whole 'ConEnv' for a single @case@.
+isConInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> Subst -> Name -> Bool
+isConInhabited recSet conEnv tcm = conInhabited recSet conEnv tcm S.empty
+
+-- | A type is inhabited unless it resolves to a user-defined type whose
+--   constructors all require an uninhabited field (recursively).
+--   @type Never@ → uninhabited (0 constructors).
+--   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
+--   Recursive types (@List a = Cons a (List a) | Nil@) are assumed inhabited
+--   via coinductive interpretation: re-entering a recursive type constructor
+--   (one in 'recursiveTypeNames') at /any/ instantiation returns True. The
+--   guard keys on the head /name/, not the full 'Type'', because non-regular
+--   (nested) recursion grows the type argument each level
+--   (@Rec a = MkRec (Rec (Maybe a))@) so a structural key never repeats and
+--   the walk would not terminate. Restricting the cut to genuinely recursive
+--   names keeps finite uninhabitedness intact: @Box@ is not recursive, so
+--   @Box (Box (Box Never))@ is walked to its @Never@ leaf rather than cut at
+--   the second @Box@.
+isTypeInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> Type' -> Bool
+isTypeInhabited recSet conEnv tcm = typeInhabited recSet conEnv tcm S.empty
+
+-- | Worker for 'isConInhabited'; the recursive-type set and the visited set
+--   (recursive type names already entered on this path) are threaded down.
+conInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> S.Set Name -> Subst -> Name -> Bool
+conInhabited recSet conEnv tcm visited subst cName =
   case M.lookup cName conEnv of
     Nothing -> True
     Just ci ->
       -- Freshen field types with the same suffix used in scrutSubst, then apply substitution.
       let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
           fieldTys = map (applySubst subst) freshFieldTys
-       in all (isTypeInhabited' conEnv tcm visited) fieldTys
+       in all (typeInhabited recSet conEnv tcm visited) fieldTys
 
--- | A type is inhabited unless it resolves to a user-defined type whose
---   constructors all require an uninhabited field (recursively).
---   @type Never@ → uninhabited (0 constructors).
---   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
---   Recursive types (e.g. @List a = Cons a (List a) | Nil@) are assumed inhabited
---   via coinductive interpretation: if we encounter the exact same concrete type
---   already being checked, we return True and let base-case constructors confirm it.
-isTypeInhabited :: ConEnv -> TypeConsMap -> Type' -> Bool
-isTypeInhabited conEnv tcm = isTypeInhabited' conEnv tcm S.empty
-
-isTypeInhabited' :: ConEnv -> TypeConsMap -> S.Set Type' -> Type' -> Bool
-isTypeInhabited' conEnv tcm visited ty
-  | ty `S.member` visited = True -- recursive type, assume inhabited
-  | otherwise =
-      case extractTyCon ty of
-        Just n -> case M.lookup n tcm of
+-- | Worker for 'isTypeInhabited'. Only recursive type names are inserted into
+--   @visited@, so re-encountering a name there is always a genuine recursive
+--   cycle; non-recursive names are never inserted and so always descend.
+typeInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> S.Set Name -> Type' -> Bool
+typeInhabited recSet conEnv tcm visited ty =
+  case extractTyCon ty of
+    Just n
+      | n `S.member` visited -> True -- recursive type re-entered (any instantiation)
+      | otherwise -> case M.lookup n tcm of
           Nothing -> True -- built-in, inhabited
           Just [] -> False -- 0 constructors
           Just cons ->
             -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
             -- Freshen generic type variables to avoid collisions with concrete type variables.
-            let visited' = S.insert ty visited
+            let visited'
+                  | n `S.member` recSet = S.insert n visited
+                  | otherwise = visited
                 subst = case anyConInfo n conEnv of
                   Just ci ->
                     let genericRetTy = conReturnType n (ciTypeParams ci)
                         freshGenericRetTy = freshenType "$scrut" genericRetTy
                      in fromRight mempty (unify freshGenericRetTy ty)
                   Nothing -> mempty
-             in any (isConInhabited conEnv tcm visited' subst) cons
-        Nothing -> True
+             in any (conInhabited recSet conEnv tcm visited' subst) cons
+    Nothing -> True
 
 -- | Check if a pattern is already covered by any pattern in the list.
 --   Compares full pattern structure (constructor name + nested patterns).
@@ -2704,6 +3502,13 @@ patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName
     patternEqual (PVar _ _) (PWild _) = True -- variable matches wildcard
     patternEqual (PCon _ c1 ps1) (PCon _ c2 ps2) =
       c1 == c2 && patternsEqual ps1 ps2
+    -- Two ascriptions cover the same values when they name the same row
+    -- label and their inner patterns coincide — so a duplicate
+    -- @(a : Int32)@ / @(b : Int32)@ arm is caught as 'UnreachableCase'
+    -- here, rather than slipping past to lowering's arm-merge (which has
+    -- no representation for it and would bail with an internal error).
+    patternEqual (PAscribe _ p1 t1) (PAscribe _ p2 t2) =
+      t1 == t2 && patternEqual p1 p2
     patternEqual _ _ = False
 
 -- | Collect every unqualified variable name referenced in an expression.

@@ -1,33 +1,63 @@
-{- A boolean step the compiler declines to fold through: the consumer above it
-   carries a case in every arm, so folding would duplicate a case-carrying arm
-   on each path. The consumer stays a live case dispatching at runtime. Prints
-   `TT`. -}
+{- The same three-`case` tower over a runtime value (first CLI argument, or `3`
+   when absent), but one middle branch is a recursive call rather than a literal.
+   The inner two `case`s still fuse into a residual join point, yet the outer
+   consumer cannot statically resolve that branch's value tail, so the
+   all-or-nothing case-of-join declines and a live `case` over the join node
+   remains. Prints `x` for `7`, `y` for `1`, `z` otherwise. -}
 
 import IO.Stdout
+import IO.Args
 
-mix : Bool -> Bool
-mix b = case b of
-  True -> eqUInt32 (lengthUtf8Bytes "xyz") 3
-  False -> False
+type Col
+  = Red
+  | Green
+  | Blue
 
-seed : Bool
-seed = eqUInt32 (lengthUtf8Bytes (showInt32 42)) 2
+type Tag
+  = TX
+  | TY
+  | TZ
 
-other : Bool
-other = eqUInt32 (lengthUtf8Bytes (showInt32 7)) 1
+pick : Int32 -> Col
+pick n = case eqInt32 n 0 of
+  True -> Red
+  False -> case eqInt32 n 1 of
+    True -> Green
+    False -> Blue
 
-result : String
-result =
-  let s1 = and (mix seed) True
-   in case s1 of
-        True -> (case other of
-          True -> "TT"
-          False -> "TF"
-        )
-        False -> (case other of
-          True -> "FT"
-          False -> "FF"
-        )
+spin : Int32 -> Tag
+spin n = case eqInt32 n 0 of
+  True -> TY
+  False -> case predInt32 n of
+    Left _e -> TY
+    Right m -> spin m
+
+label : Int32 -> String
+label k = case (case (case eqInt32 k 7 of
+  True -> Red
+  False -> pick k
+) of
+  Red -> TX
+  Green -> spin k
+  Blue -> TZ
+) of
+  TX -> "x"
+  TY -> "y"
+  TZ -> "z"
+
+run : List String -> IO Never Unit
+run args = case headList args of
+  Nothing -> IO.Stdout.print (label 3)
+  Just s -> case parseInt32 s of
+    Left _e2 -> IO.Stdout.print "PARSE"
+    Right n -> IO.Stdout.print (label n)
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STL"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UPS"
 
 main : IO Never Unit
-main = IO.Stdout.print result
+main = IO.Args.getArgs
+  |> andThenIO run
+  |> handleErrorIO onError

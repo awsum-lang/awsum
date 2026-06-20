@@ -124,7 +124,7 @@ L_succ_ok:
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -153,7 +153,7 @@ L_eq_i32_ne:
 .end method
 
 .method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 6
   aload_0
   checkcast java/lang/Integer
@@ -259,8 +259,8 @@ L_addi32_under:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -424,7 +424,7 @@ L_tarm7:
 
 
 .method static v_runN(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 6
   .limit locals 11
 L_tco8:
   aload_0

@@ -32,17 +32,18 @@
     }
   };
 
-  const v_res = (v__inl4_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return v__inl4_x;
-        }
-        case 4: {
-          return [4, String(v__inl4_x[1])];
-        }
+  const v__inl1_x = 5 | 0;
+  const v__inl4_x = __addInt32(v__inl1_x, v__inl1_x);
+  const v_res = (s => {
+    switch (s[0]) {
+      case 3: {
+        return v__inl4_x;
       }
-    })(v__inl4_x))((v__inl1_x => __addInt32(v__inl1_x, v__inl1_x))(5 | 0));
+      case 4: {
+        return [4, String(v__inl4_x[1])];
+      }
+    }
+  })(v__inl4_x);
 
   const v__apply__df_handleErrorIO_2 = (v__k, v__x) => {
     while (true) {
@@ -131,19 +132,19 @@
     }
   };
 
+  const v__inl9_x = v_res;
   const main = v__cps__df_handleErrorIO_2(
     v__cps__df__rowmono_0_andThenIO_6(
-      (v__inl9_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl9_x[1]];
-            }
-            case 4: {
-              return [5, v__inl9_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl9_x[1]];
           }
-        })(v__inl9_x))(v_res),
+          case 4: {
+            return [5, v__inl9_x[1]];
+          }
+        }
+      })(v__inl9_x),
       [21]
     ),
     [19]

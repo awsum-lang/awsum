@@ -21,6 +21,7 @@ module Awsum.Codegen.WASM.Instr
     WasmFunc (..),
     renderValType,
     renderWat,
+    maxLocalsOf,
     boxI32Spec,
     byteToHexSpec,
     incRefSpec,
@@ -207,6 +208,23 @@ data WasmFunc = WasmFunc
     wfBody :: [WasmInstr]
   }
   deriving stock (Eq, Show)
+
+-- | One past the highest local index a body reads, sets, or tees — i.e. the
+--   total number of locals (params + declared) the function uses. Read off the
+--   emitted stream, so it tracks the slots the emitter actually assigned rather
+--   than a second prediction over the source IR; the caller subtracts the
+--   parameter count to size the @.locals@ vector. WASM does not declare a max
+--   operand-stack depth (the validator derives it), so locals is the only sizing
+--   a function header carries.
+maxLocalsOf :: [WasmInstr] -> Int
+maxLocalsOf = foldl' (\acc i -> max acc (slotEnd i)) 0
+  where
+    slotEnd :: WasmInstr -> Int
+    slotEnd = \case
+      LocalGet n -> n + 1
+      LocalSet n -> n + 1
+      LocalTee n -> n + 1
+      _ -> 0
 
 renderValType :: ValType -> Text
 renderValType I32 = "i32"

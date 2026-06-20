@@ -76,7 +76,7 @@ L_pred_ok:
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -105,7 +105,7 @@ L_eq_i32_ne:
 .end method
 
 .method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 6
   aload_0
   checkcast java/lang/Integer
@@ -211,8 +211,8 @@ L_addi32_under:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -337,7 +337,7 @@ L_tarm4:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 14
+  .limit stack 11
   .limit locals 0
   iconst_3
   anewarray java/lang/Object
@@ -407,7 +407,7 @@ L_tarm4:
 
 
 .method static v__scc__apply_sumTree__cps_sumTree(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 8
+  .limit stack 7
   .limit locals 14
 L_tco5:
   aload_0

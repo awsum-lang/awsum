@@ -184,14 +184,16 @@ unify t1 t2 = case (t1, t2) of
   (TyCon _ c1, TyCon _ c2)
     | c1 == c2 -> Right mempty
     | otherwise -> Left (CannotUnify t1 t2)
-  -- Two 'TyEmpty' references unify regardless of declared name. Every
-  -- @empty type@ declaration introduces the same row-identity type up
-  -- to renaming, so the user-side names ('Never', 'Whatever', ...) are
-  -- diagnostic only — the typechecker treats them as a single
-  -- canonical type. 'canonicalLabel' folds them to "_empty" for the
-  -- same reason. Pairing 'TyEmpty' with anything non-'TyEmpty' (other
-  -- than a free 'TyVar', already handled above) is a real mismatch:
-  -- a populated 'TyCon' or row carries values; an empty type has none.
+  -- Two 'TyEmpty' references unify regardless of declared name. An
+  -- @empty type@ is the row identity; the standard library declares the
+  -- one such type, @Never@ (user code may not declare its own — see
+  -- 'Awsum.RestrictEmptyTypeDecls'). The rule still folds any two
+  -- 'TyEmpty's to a single canonical type, so the name is diagnostic
+  -- only and the identity stays robust; 'canonicalLabel' folds them to
+  -- "_empty" for the same reason. Pairing 'TyEmpty' with anything
+  -- non-'TyEmpty' (other than a free 'TyVar', already handled above) is
+  -- a real mismatch: a populated 'TyCon' or row carries values; an
+  -- empty type has none.
   (TyEmpty _ _, TyEmpty _ _) -> Right mempty
   (TyApp _ f1 x1, TyApp _ f2 x2) -> do
     s1 <- unify f1 f2
@@ -253,16 +255,16 @@ rowRetagNeeded src tgt =
 --   nominal heads.
 rowSubsume :: Type' -> Type' -> Bool
 rowSubsume expected actual = case (expected, actual) of
-  -- A 'TyEmpty' (any @empty type X@ declaration — 'Never' in the
-  -- prelude, user-defined ones too) is the row identity: it has no
-  -- inhabitants, so a value typed at it fits any expected position
-  -- vacuously. This is what lets @IO Never X <: IO r X@ for any row
-  -- @r@, so 'IO.Stdout.print' (currently @IO Never Unit@) flows into
-  -- a position expecting an IO with errors without a user-written
-  -- wrapper. Plain @type X@ with zero constructors is uninhabited but
-  -- a 'TyCon', not a 'TyEmpty', and remains a distinct row label —
-  -- the @empty@ keyword on the declaration is what opts the type into
-  -- this rule.
+  -- A 'TyEmpty' (the prelude's @empty type Never@ — the one empty type;
+  -- user code may not declare its own, see 'Awsum.RestrictEmptyTypeDecls')
+  -- is the row identity: it has no inhabitants, so a value typed at it
+  -- fits any expected position vacuously. This is what lets
+  -- @IO Never X <: IO r X@ for any row @r@, so 'IO.Stdout.print'
+  -- (currently @IO Never Unit@) flows into a position expecting an IO
+  -- with errors without a user-written wrapper. Plain @type X@ with zero
+  -- constructors is uninhabited but a 'TyCon', not a 'TyEmpty', and
+  -- remains a distinct row label — the @empty@ keyword on the
+  -- declaration is what opts the type into this rule.
   (_, TyEmpty _ _) -> True
   -- A free tyvar on either side accepts anything: the checker will
   -- have already pinned constraints in the synthesis path; here we
@@ -276,9 +278,20 @@ rowSubsume expected actual = case (expected, actual) of
   -- by an expected row containing @Maybe (Bool | Unit)@: outer
   -- @Maybe ~ Maybe@ matches as TyApp, inner @Bool ⊆ (Bool | Unit)@
   -- via the recursive call into 'rowSubsume'.
-  (TyOr {}, _) -> all (\al -> any (`rowSubsume` al) exLabels) (flattenRow actual)
-    where
-      exLabels = flattenRow expected
+  (TyOr {}, _) ->
+    -- An exact canonical-label hit — the common case, since widening,
+    -- narrowing and reordering all leave a label's canonical form intact
+    -- — is resolved by one 'Set' lookup before the structural scan: a
+    -- canonical-equal expected label subsumes @al@ by reflexivity, so the
+    -- lookup only ever skips the scan, never changes the verdict. The
+    -- O(N) scan still runs for genuinely-subsumed-but-not-equal labels
+    -- (an inner row that grew — @Maybe Bool@ fitting an expected
+    -- @Maybe (Bool | Unit)@), keeping those cases exact.
+    let exLabels = flattenRow expected
+        exSet = S.fromList (map canonicalLabel exLabels)
+     in all
+          (\al -> S.member (canonicalLabel al) exSet || any (`rowSubsume` al) exLabels)
+          (flattenRow actual)
   -- Row on actual but not expected: a multi-label value cannot flow
   -- into a single-label position.
   (_, TyOr {}) -> False
@@ -309,7 +322,24 @@ unifyRows lhs rhs =
       rs = flattenRow rhs
       mismatch = Left (CannotUnify lhs rhs)
    in if length ls == length rs
-        then goMatch mismatch ls rs mempty
+        then
+          -- Ground fast path. When neither flattened side carries a free
+          -- tyvar, every successful 'unify' yields the identity
+          -- substitution, so the equal-cardinality match collapses to
+          -- multiset equality of canonical labels: a perfect matching
+          -- exists iff the two label multisets agree. 'goMatch' would
+          -- rediscover that matching by an O(N²) greedy scan — worst case
+          -- when the rows list the same labels in opposite order. Sorting
+          -- canonical labels decides it in O(N log N) with the identical
+          -- verdict. 'canonicalLabel' folds empty-type names and sorts
+          -- nested 'TyOr's exactly as 'unify' treats them as
+          -- interchangeable, so set-equal ground rows agree here too.
+          if all isGround ls && all isGround rs
+            then
+              if sort (map canonicalLabel ls) == sort (map canonicalLabel rs)
+                then Right mempty
+                else mismatch
+            else goMatch mismatch ls rs mempty
         else absorbAndMatch lhs rhs ls rs mismatch
 
 -- | Length-mismatch path of 'unifyRows'. The two flattened, deduped
@@ -341,7 +371,17 @@ absorbAndMatch lhs rhs ls rs mismatch =
       extraL = filter (`S.notMember` rConcSet) lConc
       extraR = filter (`S.notMember` lConcSet) rConc
       sharedConc = filter (`S.member` rConcSet) lConc
-   in if length extraL > length rTv || length extraR > length lTv
+   in -- An unmatched empty type ('Never') is the row identity. It stays in
+      -- 'extraL' / 'extraR' so an opposite tyvar can absorb it
+      -- ('Never ~ (e1 | e2)' binds both to 'Never'); but when no tyvar is
+      -- there to take it, it drops rather than forcing a mismatch
+      -- ('(Never | A) ~ A' succeeds). So the cardinality guard counts only
+      -- the /non-empty/ extras — the labels that genuinely need a tyvar —
+      -- and 'lsDone' / 'rsDone' below drop empties before the length check.
+      if length (filter (not . isEmptyLabel) extraL)
+        > length rTv
+        || length (filter (not . isEmptyLabel) extraR)
+        > length lTv
         then mismatch
         else do
           let absorbingInL = take (length extraR) lTv
@@ -372,8 +412,13 @@ absorbAndMatch lhs rhs ls rs mismatch =
                           <> mconcat (map (`bindRowVar` anchor) (drop pairLen remTvR))
                    in Right (paired <> extras)
           let combined = subst1 <> subst2
-              lsDone = ordNub (map (applySubst combined) ls)
-              rsDone = ordNub (map (applySubst combined) rs)
+              -- Drop empties before the final cardinality check + match:
+              -- they are the row identity, and a tyvar bound to 'Never'
+              -- above (the '(Never | e2) ~ Never' ⇒ e2 ↦ Never case) has
+              -- now become one, so it must not count against length
+              -- equality. '(Never | A)' and 'A' both reduce to '[A]'.
+              lsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) ls))
+              rsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) rs))
           if length lsDone /= length rsDone
             then Left (CannotUnify lhs rhs)
             else goMatch (Left (CannotUnify lhs rhs)) lsDone rsDone combined
@@ -381,6 +426,21 @@ absorbAndMatch lhs rhs ls rs mismatch =
 isRowTyVar :: Type' -> Bool
 isRowTyVar (TyVar _ _) = True
 isRowTyVar _ = False
+
+-- | True when a type carries no free type variables — every label is a
+--   fully-determined ground type. The ground fast path in 'unifyRows'
+--   uses it: with no tyvar to bind, a successful 'unify' between two
+--   labels yields the identity substitution, so equal-cardinality row
+--   unification reduces to multiset equality of canonical labels.
+isGround :: Type' -> Bool
+isGround = S.null . collectTypeVars
+
+-- | Is this row label an empty type ('Never')? Empty types are the row
+--   identity, so 'unifyRows' drops them before matching — '(Never | A)'
+--   means the same row as 'A'.
+isEmptyLabel :: Type' -> Bool
+isEmptyLabel (TyEmpty _ _) = True
+isEmptyLabel _ = False
 
 -- | Bind a 'TyVar'-shaped row element to a target type. No-op when the
 --   element isn't actually a tyvar — defensive against caller mistakes.

@@ -1,0 +1,384 @@
+Program
+    { moduleComment = Just " A `case` over a non-regular (nested) recursive type: the tail of `Nest a`
+         is `Nest (Tuple2 a a)`, so the type argument grows each level. Built from
+         the base constructor `NestNil`; prints `nil`. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 7
+            , spanStartCol = 1
+            , spanEndLine = 7
+            , spanEndCol = 55
+            }
+        ) "Nest"
+        [ Param
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 11
+                , spanEndLine = 7
+                , spanEndCol = 12
+                }
+            ) "a"
+        ]
+        [ ConDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 15
+                , spanEndLine = 7
+                , spanEndCol = 23
+                }
+            ) "NestCons"
+            [ TyVar
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 24
+                    , spanEndLine = 7
+                    , spanEndCol = 25
+                    }
+                ) "a"
+            , TyApp
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 26
+                    , spanEndLine = 7
+                    , spanEndCol = 46
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 27
+                        , spanEndLine = 7
+                        , spanEndCol = 31
+                        }
+                    ) "Nest"
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 32
+                        , spanEndLine = 7
+                        , spanEndCol = 44
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 33
+                            , spanEndLine = 7
+                            , spanEndCol = 41
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 33
+                                , spanEndLine = 7
+                                , spanEndCol = 39
+                                }
+                            ) "Tuple2"
+                        )
+                        ( TyVar
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 40
+                                , spanEndLine = 7
+                                , spanEndCol = 41
+                                }
+                            ) "a"
+                        )
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 42
+                            , spanEndLine = 7
+                            , spanEndCol = 43
+                            }
+                        ) "a"
+                    )
+                )
+            ]
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 48
+                , spanEndLine = 7
+                , spanEndCol = 55
+                }
+            ) "NestNil" []
+        ] Nothing NotEmpty Nothing :|
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 36
+                }
+            ) "describeNest"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 16
+                    , spanEndLine = 9
+                    , spanEndCol = 36
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 16
+                        , spanEndLine = 9
+                        , spanEndCol = 26
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 16
+                            , spanEndLine = 9
+                            , spanEndCol = 20
+                            }
+                        ) "Nest"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 21
+                            , spanEndLine = 9
+                            , spanEndCol = 26
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 30
+                        , spanEndLine = 9
+                        , spanEndCol = 36
+                        }
+                    ) "String"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 19
+                }
+            ) "describeNest"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 14
+                    , spanEndLine = 10
+                    , spanEndCol = 15
+                    }
+                ) "n"
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 18
+                    , spanEndLine = 12
+                    , spanEndCol = 19
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 23
+                        , spanEndLine = 10
+                        , spanEndCol = 25
+                        }
+                    )
+                    ( QName [] "n" )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 3
+                            , spanEndLine = 11
+                            , spanEndCol = 11
+                            }
+                        ) "NestCons"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 12
+                                , spanEndLine = 11
+                                , spanEndCol = 17
+                                }
+                            ) "_head"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 18
+                                , spanEndLine = 11
+                                , spanEndCol = 23
+                                }
+                            ) "_rest"
+                        ]
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 27
+                            , spanEndLine = 11
+                            , spanEndCol = 33
+                            }
+                        )
+                        ( LString "cons" )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 3
+                                , spanEndLine = 12
+                                , spanEndCol = 10
+                                }
+                            ) "NestNil" []
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 14
+                                , spanEndLine = 12
+                                , spanEndCol = 19
+                                }
+                            )
+                            ( LString "nil" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 14
+                , spanStartCol = 1
+                , spanEndLine = 14
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 8
+                    , spanEndLine = 14
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 8
+                        , spanEndLine = 14
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 8
+                            , spanEndLine = 14
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 11
+                            , spanEndLine = 14
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 17
+                        , spanEndLine = 14
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 15
+                , spanStartCol = 1
+                , spanEndLine = 15
+                , spanEndCol = 46
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 8
+                    , spanEndLine = 15
+                    , spanEndCol = 46
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 8
+                        , spanEndLine = 15
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 24
+                        , spanEndLine = 15
+                        , spanEndCol = 46
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 25
+                            , spanEndLine = 15
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 25
+                                , spanEndLine = 15
+                                , spanEndCol = 38
+                                }
+                            )
+                            ( QName [] "describeNest" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 38
+                                , spanEndLine = 15
+                                , spanEndCol = 45
+                                }
+                            ) "NestNil"
+                        )
+                    )
+                )
+            ) Nothing Nothing
+        ]
+    }

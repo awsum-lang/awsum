@@ -1,0 +1,18 @@
+{- Two arms ascribe the same field to the same row alternative: `Wrap (a :
+   Int32)` and `Wrap (b : Int32)` cover the same values, so the second arm
+   is unreachable. It is reported as such (`Unreachable case`) rather than
+   slipping past to lowering's arm-merge, which has no representation for it.
+   Drop the duplicate arm. -}
+
+import IO.Stdout
+
+type Wrap = Wrap (Int32 | String)
+
+describe : Wrap -> String
+describe w = case w of
+  Wrap (a : Int32) -> showInt32 a
+  Wrap (b : Int32) -> showInt32 b
+  Wrap (s : String) -> s
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (Wrap (5 : Int32)))

@@ -2,10 +2,10 @@ benchmark: mutual_three_way_repeat
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 9.12 (8.73–9.65)            1.6 (1.6–1.6)
-JVM      ok                 0.54 (0.52–0.55)      503.8 (503.8–504.0)
-CLR      ok                 2.31 (2.31–2.32)      197.9 (197.8–198.0)
-WASM     ok                 3.68 (3.63–3.71)         13.5 (13.5–13.6)
-JS       ok                 0.60 (0.59–0.60)         51.5 (51.3–51.7)
+LLVM     ok                 8.25 (6.65–8.64)            1.6 (1.6–1.6)
+JVM      ok                 0.54 (0.53–0.56)      503.8 (503.8–503.9)
+CLR      ok                 2.26 (2.25–2.28)      197.5 (197.4–197.7)
+WASM     ok                 3.63 (3.58–3.65)         13.5 (13.4–21.4)
+JS       ok                 0.60 (0.59–0.61)         51.5 (51.3–51.6)
 
 stdout: ok

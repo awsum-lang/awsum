@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":7,"startCol":5,"endLine":7,"endCol":11,"message":"Type constructor 'Either' expects 2 arguments, got 1","fixes":[]}]

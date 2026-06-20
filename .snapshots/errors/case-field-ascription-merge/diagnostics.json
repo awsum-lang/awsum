@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":13,"startCol":5,"endLine":13,"endCol":17,"message":"Case on a nominal type requires constructor patterns. A '(x : T)' ascription pattern discriminates a structural-sum scrutinee, not a nominal type like Int32; binding the whole value (a catch-all) is not allowed. Match each constructor.","fixes":[]}]

@@ -9,7 +9,7 @@
 --   nodes that pair with the codegen's inc-on-store discipline to give
 --   every heap cell a balanced inc/dec history.
 --
---     @CDrop k n body@   means   "evaluate @body@; after @body@'s
+--     @CDrop n body@   means   "evaluate @body@; after @body@'s
 --                                 value is produced, dec @n@'s
 --                                 refcount (cascading-free on 0)".
 --
@@ -37,7 +37,7 @@
 --   The third source of decs — value-tail decs for every parameter
 --   that survives to a non-@CContinue@ terminal — is /not/ emitted
 --   as 'CDrop' here. Outer-wrapping the whole body in
---   @CDrop k p body@ for each param would pollute 'outerDropped'
+--   @CDrop p body@ for each param would pollute 'outerDropped'
 --   and silently suppress the inner @CContinue@ param drops.
 --   Codegen handles value-tail param decs directly, with an
 --   explicit move-semantics carve-out for the case where the
@@ -45,10 +45,9 @@
 --   the function transfers ownership to the caller instead of
 --   freeing its own return value).
 --
---   The 'CDropKind' attached to every emitted 'CDrop' is set
---   conservatively to 'DropFreeUnchecked' at this layer; backends
---   read the cell's runtime header at dec time to short-circuit
---   on literals (flag==0) and to drive cascading via @shape@.
+--   Every emitted 'CDrop' is reclaimed the same way: backends read
+--   the cell's runtime header at dec time to short-circuit on
+--   literals (flag==0) and to drive cascading via @shape@.
 module Awsum.Lifetime
   ( BindingUsage (..),
     BindingKind (..),
@@ -57,7 +56,6 @@ module Awsum.Lifetime
     analyzeProgram,
     renderLifetime,
     insertDrops,
-    freeVars,
     elidableArmBinders,
     scrutReuseEligible,
     soleScrutineeUse,
@@ -137,7 +135,7 @@ collectInnerBinders = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> concatMap go xs
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ _ _ fs -> concatMap go fs
       CLet x rhs body ->
         go rhs <> (LifetimeEntry x LetBinder (BindingUsage (countUses x body)) : go body)
@@ -186,7 +184,7 @@ countUses target = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> sum (fmap go xs)
-      CDrop _ n b
+      CDrop n b
         | n == target -> 0
         | otherwise -> go b
       CReuse _ n _ fs ->
@@ -232,39 +230,6 @@ padRight n t = t <> T.replicate (max 0 (n - T.length t)) " "
 -- ════════════════════════════════════════════════════════════════════════════
 -- Drop insertion ("drop after body" semantics + ownership-aware LCA placement)
 -- ════════════════════════════════════════════════════════════════════════════
-
--- | Free variables of a Core expression. 'CCase' / 'CRowCase' arm
---   binders subtract from the body's free vars; 'CDrop' subtracts
---   the dropped binder (after the drop, downstream code does not
---   refer to it).
-freeVars :: CExpr -> Set Name
-freeVars = \case
-  CVar n -> Set.singleton n
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
-  CCall f xs -> freeVars f <> foldMap freeVars xs
-  CCon _ fs -> foldMap freeVars fs
-  CCase s alts ->
-    freeVars s
-      <> foldMap (\(_, ns, b) -> freeVars b `Set.difference` Set.fromList ns) alts
-  CRow _ v -> freeVars v
-  CRowCase s alts ->
-    freeVars s
-      <> foldMap (\(_, n, b) -> Set.delete n (freeVars b)) alts
-  CLoop b -> freeVars b
-  CContinue xs -> foldMap freeVars xs
-  CDrop _ n b -> Set.delete n (freeVars b)
-  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
-  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
-  CProj n _ -> Set.singleton n
-  -- The join name is a label, not a reference; the parameters scope over
-  -- the body only.
-  CJoin _ ps body inner -> (freeVars body `Set.difference` Set.fromList ps) <> freeVars inner
-  CJump _ args -> foldMap freeVars args
-
-defaultKind :: CDropKind
-defaultKind = DropFreeUnchecked
 
 -- | Pure-RC drop placement.
 --
@@ -339,7 +304,7 @@ joinBodyDrops = go
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
       CLet x rhs b -> CLet x (go rhs) (wrapLetBinderDrop x (go b))
-      CDrop k x b -> CDrop k x (go b)
+      CDrop x b -> CDrop x (go b)
       CReuse rm x t fs -> CReuse rm x t (map go fs)
       e@(CVar _) -> e
       e@(CProj _ _) -> e
@@ -361,7 +326,7 @@ joinBodyDrops = go
 wrapLetBinderDrop :: Name -> CExpr -> CExpr
 wrapLetBinderDrop x body
   | soleScrutineeUse x body, Just sunk <- sinkScrutDrop x body = sunk
-  | otherwise = CDrop defaultKind x body
+  | otherwise = CDrop x body
 
 addContinueDrops :: [Name] -> CExpr -> CExpr
 addContinueDrops params = goExpr Set.empty
@@ -373,7 +338,7 @@ addContinueDrops params = goExpr Set.empty
             droppedParams =
               filter (`Set.notMember` outerDropped) params
          in foldr
-              (CDrop defaultKind)
+              CDrop
               (CContinue argsRecursed)
               droppedParams
       CCase scrut alts ->
@@ -392,7 +357,7 @@ addContinueDrops params = goExpr Set.empty
       CCon t fs -> CCon t (map (goExpr outerDropped) fs)
       CRow t v -> CRow t (goExpr outerDropped v)
       CLoop b -> CLoop (goExpr outerDropped b)
-      CDrop k n b -> CDrop k n (goExpr (Set.insert n outerDropped) b)
+      CDrop n b -> CDrop n (goExpr (Set.insert n outerDropped) b)
       CReuse rm n tag fs -> CReuse rm n tag (map (goExpr outerDropped) fs)
       -- A let binder is dropped like a case-arm binder — 'CDrop' around
       -- the body it scopes over (or sunk into its sole consuming
@@ -435,7 +400,7 @@ addContinueDrops params = goExpr Set.empty
         -- keeps the scope wrap.
         wrapOne v acc
           | soleScrutineeUse v acc, Just sunk <- sinkScrutDrop v acc = sunk
-          | otherwise = CDrop defaultKind v acc
+          | otherwise = CDrop v acc
 
 -- | Can 'Awsum.Reuse' ever rewrite a reconstruction inside an arm of a case
 --   on this scrutinee into an in-place 'CReuse'? Reuse matches a
@@ -493,7 +458,7 @@ soleScrutineeUse v e0 = not (reboundIn e0) && counts True e0 == (1, 0, 1)
       CRow _ x -> reboundIn x
       CLoop b -> reboundIn b
       CContinue xs -> any reboundIn xs
-      CDrop _ _ b -> reboundIn b
+      CDrop _ b -> reboundIn b
       CReuse _ _ _ fs -> any reboundIn fs
       CJump _ args -> any reboundIn args
       CVar _ -> False
@@ -511,6 +476,11 @@ soleScrutineeUse v e0 = not (reboundIn e0) && counts True e0 == (1, 0, 1)
       CCase (CVar s) alts
         | s == v -> foldl' addC (1, 0 :: Int, if spine then 1 else 0) [counts False b | (_, _, b) <- alts]
       CCase s alts -> foldl' addC (counts spine s) [counts False b | (_, _, b) <- alts]
+      -- No symmetric @CRowCase (CVar v)@ branch on purpose: the spine flag
+      -- (third component) exists only to mark a sink-then-reuse target, and
+      -- 'Awsum.Reuse' never reuses a row scrutinee cell ('reuseArm' fires under
+      -- 'CCase' only — see 'scrutReuseEligible'). A row scrutinee stays
+      -- scope-wrapped, which is all its drop needs.
       CRowCase s alts -> foldl' addC (counts spine s) [counts False b | (_, _, b) <- alts]
       CLet _ rhs b -> addC (counts spine rhs) (counts spine b)
       CJoin _ _ body inner -> addC (counts False body) (counts spine inner)
@@ -519,7 +489,7 @@ soleScrutineeUse v e0 = not (reboundIn e0) && counts True e0 == (1, 0, 1)
       CRow _ x -> counts spine x
       CLoop b -> counts False b
       CContinue xs -> foldl' addC zeroC (map (counts spine) xs)
-      CDrop _ _ b -> counts spine b
+      CDrop _ b -> counts spine b
       CReuse _ n _ fs -> foldl' addC (0, if n == v then 1 else 0, 0) (map (counts spine) fs)
       CJump _ args -> foldl' addC zeroC (map (counts spine) args)
       CVar n -> (if n == v then 1 else 0, 0, 0)
@@ -542,7 +512,7 @@ sinkScrutDrop v = go
     go = \case
       CCase (CVar s) alts
         | s == v ->
-            Just (CCase (CVar s) [(t, vs, CDrop defaultKind v b) | (t, vs, b) <- alts])
+            Just (CCase (CVar s) [(t, vs, CDrop v b) | (t, vs, b) <- alts])
       CCase s alts ->
         (CCase <$> go s <*> pure alts)
           <|> (CCase s <$> goAlts alts)
@@ -562,7 +532,7 @@ sinkScrutDrop v = go
       CRow t x -> CRow t <$> go x
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> goFirst xs
-      CDrop k n b -> CDrop k n <$> go b
+      CDrop n b -> CDrop n <$> go b
       CReuse rm n t fs -> CReuse rm n t <$> goFirst fs
       CJump j args -> CJump j <$> goFirst args
       CVar _ -> Nothing
@@ -606,11 +576,11 @@ sinkScrutDrop v = go
 -- escape to another consumer that would need the inc.
 --
 -- Note on @CDrop@: this analysis runs on post-'insertDrops' IR
--- where every arm-binder is wrapped in a @CDrop k v armBody@. The
+-- where every arm-binder is wrapped in a @CDrop v armBody@. The
 -- walk descends through @CDrop@ unconditionally — the binder is
 -- still in scope inside @body@ (the CDrop fires after @body@'s
 -- value is produced). This differs from 'countUses' which
--- short-circuits on @CDrop _ n b | n == target -> 0@ for the
+-- short-circuits on @CDrop n b | n == target -> 0@ for the
 -- stat-linearity report's own scoping convention.
 elidableArmBinders :: Name -> [Name] -> CExpr -> Set Name
 elidableArmBinders scrut vs body =
@@ -623,7 +593,7 @@ elidableArmBinders scrut vs body =
         == 1
 
 -- | Count every @CVar target@ occurrence inside @e@. Unlike
--- 'countUses', this does not short-circuit at @CDrop _ target _@ —
+-- 'countUses', this does not short-circuit at @CDrop target _@ —
 -- the binder is still in scope inside the @CDrop@'s body.
 countAllUses :: Name -> CExpr -> Int
 countAllUses target = go
@@ -652,7 +622,7 @@ countAllUses target = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> sum (fmap go xs)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ n _ fs ->
         (if n == target then 1 else 0) + sum (fmap go fs)
       CLet x rhs body -> go rhs + (if x == target then 0 else go body)
@@ -689,7 +659,7 @@ countReuseFieldUses scrut target = go
       CRow _ v -> go v
       CLoop b -> go b
       CContinue xs -> sum (fmap go xs)
-      CDrop _ _ b -> go b
+      CDrop _ b -> go b
       CReuse _ n _ fs
         | n == scrut ->
             sum [1 | CVar w <- fs, w == target] + sum (fmap go fs)

@@ -99,29 +99,29 @@
     [12]
   );
 
+  const v__inl7_r = v_result;
   const main = [
     7,
-    (v__inl7_r =>
-      (s => {
-        switch (s[0]) {
-          case 3: {
-            {
-              const __s = v__inl7_r[1];
-              switch (__s[0]) {
-                case 2252990199: {
-                  return "ERR_A";
-                }
-                case 2269767818: {
-                  return "ERR_B";
-                }
+    (s => {
+      switch (s[0]) {
+        case 3: {
+          {
+            const __s = v__inl7_r[1];
+            switch (__s[0]) {
+              case 2252990199: {
+                return "ERR_A";
+              }
+              case 2269767818: {
+                return "ERR_B";
               }
             }
           }
-          case 4: {
-            return String(v__inl7_r[1]);
-          }
         }
-      })(v__inl7_r))(v_result),
+        case 4: {
+          return String(v__inl7_r[1]);
+        }
+      }
+    })(v__inl7_r),
     [5, [0]]
   ];
 

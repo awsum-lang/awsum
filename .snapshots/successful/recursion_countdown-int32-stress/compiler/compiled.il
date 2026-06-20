@@ -291,7 +291,6 @@
   .method private hidebysig static object v__apply_countDown(object,object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0)
   IL_tco_loop:
     ldarg.0
     castclass object[]
@@ -320,7 +319,7 @@
   .method private hidebysig static object v_res() cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1)
+    .locals init (object[] V_0)
     ldc.i4 100000
     box [System.Runtime]System.Int32
     ldc.i4.1

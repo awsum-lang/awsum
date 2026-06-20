@@ -99,71 +99,69 @@
     }
   };
 
-  const main = (v__inl9_res =>
-    v__cps__df_handleErrorIO_0(
-      v__cps__df_andThenIO_4(
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl9_res[1]];
-            }
-            case 4: {
-              return [5, v__inl9_res[1]];
-            }
-          }
-        })(v__inl9_res),
-        [22]
-      ),
-      [20]
-    ))(
-    (() => {
-      let v__inl11_scrut;
-      $join10: {
-        const __s = __concat("[", "hi");
-        switch (__s[0]) {
-          case 3: {
-            const v__inl3__do_e_1 = __s[1];
-            return [3, v__inl3__do_e_1];
-          }
-          case 4: {
-            const v__inl4_p = __s[1];
-            v__inl11_scrut = (s => {
-              switch (s[0]) {
-                case 3: {
-                  const v__inl5__do_e_0 = s[1];
-                  return [3, v__inl5__do_e_0];
-                }
-                case 4: {
-                  const v__inl6_q = s[1];
-                  return __concat(v__inl6_q, v__inl6_q);
-                }
-              }
-            })(__concat(v__inl4_p, "]"));
-            break $join10;
-          }
-        }
-      }
-      switch (v__inl11_scrut[0]) {
+  const v__inl9_res = (() => {
+    let v__inl11_scrut;
+    $join10: {
+      const __s = __concat("[", "hi");
+      switch (__s[0]) {
         case 3: {
-          return v__inl11_scrut;
+          const v__inl3__do_e_1 = __s[1];
+          return [3, v__inl3__do_e_1];
         }
         case 4: {
-          {
-            const __s = __concat("<", v__inl11_scrut[1]);
-            switch (__s[0]) {
+          const v__inl4_p = __s[1];
+          v__inl11_scrut = (s => {
+            switch (s[0]) {
               case 3: {
-                const v__do_e_2 = __s[1];
-                return [3, v__do_e_2];
+                const v__inl5__do_e_0 = s[1];
+                return [3, v__inl5__do_e_0];
               }
               case 4: {
-                const v_s0 = __s[1];
-                return __concat(v_s0, ">");
+                const v__inl6_q = s[1];
+                return __concat(v__inl6_q, v__inl6_q);
               }
+            }
+          })(__concat(v__inl4_p, "]"));
+          break $join10;
+        }
+      }
+    }
+    switch (v__inl11_scrut[0]) {
+      case 3: {
+        return v__inl11_scrut;
+      }
+      case 4: {
+        {
+          const __s = __concat("<", v__inl11_scrut[1]);
+          switch (__s[0]) {
+            case 3: {
+              const v__do_e_2 = __s[1];
+              return [3, v__do_e_2];
+            }
+            case 4: {
+              const v_s0 = __s[1];
+              return __concat(v_s0, ">");
             }
           }
         }
       }
-    })()
+    }
+  })();
+  const main = v__cps__df_handleErrorIO_0(
+    v__cps__df_andThenIO_4(
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl9_res[1]];
+          }
+          case 4: {
+            return [5, v__inl9_res[1]];
+          }
+        }
+      })(v__inl9_res),
+      [22]
+    ),
+    [20]
   );
 
   if (typeof require !== "undefined" && require.main === module) {

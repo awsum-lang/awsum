@@ -128,33 +128,33 @@
     }
   };
 
-  const main = (v__inl17_xs =>
-    v__cps__df_andThenIO_0(
-      [
-        7,
-        (s => {
-          switch (s[0]) {
-            case 24: {
-              return "E";
-            }
-            case 25: {
-              const v__inl14_r = s[2];
-              switch (v__inl14_r[0]) {
-                case 24: {
-                  return "e";
-                }
-                case 25: {
-                  return v__inl14_r[1];
-                }
+  const v__inl17_xs = v_mk(3 | 0, [24]);
+  const main = v__cps__df_andThenIO_0(
+    [
+      7,
+      (s => {
+        switch (s[0]) {
+          case 24: {
+            return "E";
+          }
+          case 25: {
+            const v__inl14_r = s[2];
+            switch (v__inl14_r[0]) {
+              case 24: {
+                return "e";
+              }
+              case 25: {
+                return v__inl14_r[1];
               }
             }
           }
-        })(v_revInto2(v__inl17_xs, [24])),
-        [5, [0]]
-      ],
-      v__inl17_xs,
-      [26]
-    ))(v_mk(3 | 0, [24]));
+        }
+      })(v_revInto2(v__inl17_xs, [24])),
+      [5, [0]]
+    ],
+    v__inl17_xs,
+    [26]
+  );
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

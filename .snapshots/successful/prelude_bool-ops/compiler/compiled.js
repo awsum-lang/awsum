@@ -33,31 +33,31 @@
       case 4: {
         const v_s0 = s[1];
         {
+          const v__inl1_a = [1];
           const __s = __concat(
             v_s0,
-            (v__inl1_a =>
-              (() => {
-                let v__inl6_scrut;
-                $join5: {
-                  switch (v__inl1_a[0]) {
-                    case 1: {
-                      return "False";
-                    }
-                    case 2: {
-                      v__inl6_scrut = v__inl1_a;
-                      break $join5;
-                    }
-                  }
-                }
-                switch (v__inl6_scrut[0]) {
+            (() => {
+              let v__inl6_scrut;
+              $join5: {
+                switch (v__inl1_a[0]) {
                   case 1: {
-                    return "True";
-                  }
-                  case 2: {
                     return "False";
                   }
+                  case 2: {
+                    v__inl6_scrut = v__inl1_a;
+                    break $join5;
+                  }
                 }
-              })())([1])
+              }
+              switch (v__inl6_scrut[0]) {
+                case 1: {
+                  return "True";
+                }
+                case 2: {
+                  return "False";
+                }
+              }
+            })()
           );
           switch (__s[0]) {
             case 3: {
@@ -173,19 +173,19 @@
     }
   };
 
+  const v__inl9_x = v_res;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl9_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl9_x[1]];
-            }
-            case 4: {
-              return [5, v__inl9_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl9_x[1]];
           }
-        })(v__inl9_x))(v_res),
+          case 4: {
+            return [5, v__inl9_x[1]];
+          }
+        }
+      })(v__inl9_x),
       [22]
     ),
     [20]

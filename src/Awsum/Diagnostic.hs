@@ -17,11 +17,14 @@ module Awsum.Diagnostic
     typeErrorToDiagnostic,
     warningToDiagnostic,
     preludeRefViolationToDiagnostic,
+    emptyTypeDeclViolationToDiagnostic,
+    userProgramRestrictionDiagnostics,
   )
 where
 
-import Awsum.RestrictPreludeRefs (PreludeRefViolation (..))
-import Awsum.Syntax (SrcSpan (..))
+import Awsum.RestrictEmptyTypeDecls (EmptyTypeDeclViolation (..), restrictUserEmptyTypeDecls)
+import Awsum.RestrictPreludeRefs (PreludeRefViolation (..), restrictPreludeRefs)
+import Awsum.Syntax (Program, SrcSpan (..))
 import Awsum.Typing (TypeError (..), Warning (..), prettyPrintTypeError, typeErrorSpan)
 import Data.Text qualified as T
 import Relude
@@ -173,6 +176,34 @@ preludeRefViolationToDiagnostic (PreludeRefViolation sp n) =
           <> "' is reserved by the standard library and cannot be referenced from user code",
       diagFixes = []
     }
+
+-- | Render a user-declared @empty type@ as an error. The standard library
+--   owns the one empty type the language has — @Never@, the row identity —
+--   and every empty type is interchangeable with it, so a user-declared one
+--   is a hidden alias rather than a new type. The message points the user at
+--   the two real options: @Never@ for the row identity, or a plain @type@
+--   for a distinct uninhabited type.
+emptyTypeDeclViolationToDiagnostic :: EmptyTypeDeclViolation -> Diagnostic
+emptyTypeDeclViolationToDiagnostic (EmptyTypeDeclViolation sp n) =
+  Diagnostic
+    { diagSeverity = SevError,
+      diagSpan = sp,
+      diagMessage =
+        "'empty type' may not be declared in user code: 'Never' is the standard library's single empty type (the row identity). Use 'Never' where you need it, or a plain 'type "
+          <> n
+          <> "' for a distinct uninhabited type",
+      diagFixes = []
+    }
+
+-- | Every restriction the compiler enforces on a raw user 'Program' before
+--   'Awsum.Prelude.withPrelude' merges the prelude in, already rendered as
+--   diagnostics: references to prelude-private names and user-declared
+--   @empty type@s. One entry point so every consumer (CLI check / build /
+--   run, LSP) applies the same set in the same place.
+userProgramRestrictionDiagnostics :: Program -> [Diagnostic]
+userProgramRestrictionDiagnostics userProg =
+  map preludeRefViolationToDiagnostic (restrictPreludeRefs userProg)
+    <> map emptyTypeDeclViolationToDiagnostic (restrictUserEmptyTypeDecls userProg)
 
 -- | Lift a warning into a 'Diagnostic' with severity @warning@ and a
 --   gentle rename quick-fix.

@@ -28,8 +28,8 @@
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 6
+  .limit stack 5
+  .limit locals 4
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -99,7 +99,7 @@ L_tarm2:
 
 
 .method static v_combined()Ljava/lang/Object;
-  .limit stack 8
+  .limit stack 7
   .limit locals 0
   iconst_2
   anewarray java/lang/Object
@@ -131,7 +131,7 @@ L_tarm2:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 5
   .limit locals 0
   invokestatic AwsumMain/v_combined()Ljava/lang/Object;
   iconst_1
@@ -147,7 +147,7 @@ L_tarm2:
 
 
 .method static v__cps__lift_13(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 8
   .limit locals 5
 L_tco3:
   aload_0
@@ -336,7 +336,7 @@ L_tarm8:
 
 
 .method static v__cps__df__rowmono_0_bindIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 8
   .limit locals 5
 L_tco9:
   aload_0
@@ -524,8 +524,8 @@ L_tarm14:
 
 
 .method static v__cps__df_handleErrorIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 10
+  .limit locals 10
 L_tco15:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -807,8 +807,8 @@ L_tarm23:
 
 
 .method static v__cps__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__lift_14(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 12
+  .limit stack 5
+  .limit locals 11
 L_tco24:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1076,8 +1076,8 @@ L_tarm27:
 
 
 .method static v__apply__scc__apply1__df__lam_9_5__df__rowmono_1_bindIOAfterArgs_1__lift_14(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 4
+  .limit stack 6
+  .limit locals 3
 L_tco33:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1151,7 +1151,7 @@ L_tarm36:
 .end method
 
 .method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 8
   aload_0
   checkcast java/lang/String

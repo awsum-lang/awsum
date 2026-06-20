@@ -49,17 +49,17 @@
     }
   };
 
-  const v_strWiden = (v__inl3___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [1615808600, v__inl3___input[1]]];
-        }
-        case 4: {
-          return v__inl3___input;
-        }
+  const v__inl3___input = v_vStr;
+  const v_strWiden = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [1615808600, v__inl3___input[1]]];
       }
-    })(v__inl3___input))(v_vStr);
+      case 4: {
+        return v__inl3___input;
+      }
+    }
+  })(v__inl3___input);
 
   const v_runIO = v_io => {
     while (true) {
@@ -121,41 +121,41 @@
     }
   };
 
-  const v_letBody = (v__inl29_x =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2269767818, v__inl29_x[1]]];
-        }
-        case 4: {
-          return v__inl29_x;
-        }
+  const v__inl29_x = v_vErrB;
+  const v_letBody = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2269767818, v__inl29_x[1]]];
       }
-    })(v__inl29_x))(v_vErrB);
+      case 4: {
+        return v__inl29_x;
+      }
+    }
+  })(v__inl29_x);
 
-  const v_defBodyRight = (v__inl24___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, v__inl24___input[1]]];
-        }
-        case 4: {
-          return v__inl24___input;
-        }
+  const v__inl24___input = v_vOkA;
+  const v_defBodyRight = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, v__inl24___input[1]]];
       }
-    })(v__inl24___input))(v_vOkA);
+      case 4: {
+        return v__inl24___input;
+      }
+    }
+  })(v__inl24___input);
 
-  const v_defBodyLeft = (v__inl21___input =>
-    (s => {
-      switch (s[0]) {
-        case 3: {
-          return [3, [2252990199, v__inl21___input[1]]];
-        }
-        case 4: {
-          return v__inl21___input;
-        }
+  const v__inl21___input = v_vErrA;
+  const v_defBodyLeft = (s => {
+    switch (s[0]) {
+      case 3: {
+        return [3, [2252990199, v__inl21___input[1]]];
       }
-    })(v__inl21___input))(v_vErrA);
+      case 4: {
+        return v__inl21___input;
+      }
+    }
+  })(v__inl21___input);
 
   const v_caseUnion = v_flag => {
     switch (v_flag[0]) {
@@ -184,6 +184,7 @@
     }
   };
 
+  const v__inl34_e = v_defBodyLeft;
   const v_render = (s => {
     switch (s[0]) {
       case 3: {
@@ -194,29 +195,29 @@
         const v_r01 = s[1];
         let v__inl92_scrut;
         $join91: {
+          const v__inl39_e = v_defBodyRight;
           const __s = v_tagged(
             "defBodyRight",
-            (v__inl39_e =>
-              (s => {
-                switch (s[0]) {
-                  case 3: {
-                    {
-                      const __s = v__inl39_e[1];
-                      switch (__s[0]) {
-                        case 2252990199: {
-                          return "ErrA";
-                        }
-                        case 2269767818: {
-                          return "ErrB";
-                        }
+            (s => {
+              switch (s[0]) {
+                case 3: {
+                  {
+                    const __s = v__inl39_e[1];
+                    switch (__s[0]) {
+                      case 2252990199: {
+                        return "ErrA";
+                      }
+                      case 2269767818: {
+                        return "ErrB";
                       }
                     }
                   }
-                  case 4: {
-                    return String(v__inl39_e[1]);
-                  }
                 }
-              })(v__inl39_e))(v_defBodyRight)
+                case 4: {
+                  return String(v__inl39_e[1]);
+                }
+              }
+            })(v__inl39_e)
           );
           switch (__s[0]) {
             case 3: {
@@ -237,29 +238,29 @@
           case 4: {
             let v__inl94_scrut;
             $join93: {
+              const v__inl46_e = v_letBody;
               const __s = v_tagged(
                 "letBody",
-                (v__inl46_e =>
-                  (s => {
-                    switch (s[0]) {
-                      case 3: {
-                        {
-                          const __s = v__inl46_e[1];
-                          switch (__s[0]) {
-                            case 2252990199: {
-                              return "ErrA";
-                            }
-                            case 2269767818: {
-                              return "ErrB";
-                            }
+                (s => {
+                  switch (s[0]) {
+                    case 3: {
+                      {
+                        const __s = v__inl46_e[1];
+                        switch (__s[0]) {
+                          case 2252990199: {
+                            return "ErrA";
+                          }
+                          case 2269767818: {
+                            return "ErrB";
                           }
                         }
                       }
-                      case 4: {
-                        return String(v__inl46_e[1]);
-                      }
                     }
-                  })(v__inl46_e))(v_letBody)
+                    case 4: {
+                      return String(v__inl46_e[1]);
+                    }
+                  }
+                })(v__inl46_e)
               );
               switch (__s[0]) {
                 case 3: {
@@ -280,29 +281,29 @@
               case 4: {
                 let v__inl96_scrut;
                 $join95: {
+                  const v__inl53_e = v_caseUnion([1]);
                   const __s = v_tagged(
                     "caseTrue",
-                    (v__inl53_e =>
-                      (s => {
-                        switch (s[0]) {
-                          case 3: {
-                            {
-                              const __s = v__inl53_e[1];
-                              switch (__s[0]) {
-                                case 2252990199: {
-                                  return "ErrA";
-                                }
-                                case 2269767818: {
-                                  return "ErrB";
-                                }
+                    (s => {
+                      switch (s[0]) {
+                        case 3: {
+                          {
+                            const __s = v__inl53_e[1];
+                            switch (__s[0]) {
+                              case 2252990199: {
+                                return "ErrA";
+                              }
+                              case 2269767818: {
+                                return "ErrB";
                               }
                             }
                           }
-                          case 4: {
-                            return String(v__inl53_e[1]);
-                          }
                         }
-                      })(v__inl53_e))(v_caseUnion([1]))
+                        case 4: {
+                          return String(v__inl53_e[1]);
+                        }
+                      }
+                    })(v__inl53_e)
                   );
                   switch (__s[0]) {
                     case 3: {
@@ -326,29 +327,29 @@
                   case 4: {
                     let v__inl98_scrut;
                     $join97: {
+                      const v__inl60_e = v_caseUnion([2]);
                       const __s = v_tagged(
                         "caseFalse",
-                        (v__inl60_e =>
-                          (s => {
-                            switch (s[0]) {
-                              case 3: {
-                                {
-                                  const __s = v__inl60_e[1];
-                                  switch (__s[0]) {
-                                    case 2252990199: {
-                                      return "ErrA";
-                                    }
-                                    case 2269767818: {
-                                      return "ErrB";
-                                    }
+                        (s => {
+                          switch (s[0]) {
+                            case 3: {
+                              {
+                                const __s = v__inl60_e[1];
+                                switch (__s[0]) {
+                                  case 2252990199: {
+                                    return "ErrA";
+                                  }
+                                  case 2269767818: {
+                                    return "ErrB";
                                   }
                                 }
                               }
-                              case 4: {
-                                return String(v__inl60_e[1]);
-                              }
                             }
-                          })(v__inl60_e))(v_caseUnion([2]))
+                            case 4: {
+                              return String(v__inl60_e[1]);
+                            }
+                          }
+                        })(v__inl60_e)
                       );
                       switch (__s[0]) {
                         case 3: {
@@ -372,37 +373,37 @@
                       case 4: {
                         let v__inl100_scrut;
                         $join99: {
+                          const v__inl67_e = v_nestedUnion([11]);
                           const __s = v_tagged(
                             "nestedNothing",
-                            (v__inl67_e =>
-                              (s => {
-                                switch (s[0]) {
-                                  case 3: {
-                                    const v__inl63___pa0 = s[1];
-                                    switch (v__inl63___pa0[0]) {
-                                      case 925038822: {
-                                        {
-                                          const __s = v__inl63___pa0[1];
-                                          switch (__s[0]) {
-                                            case 26: {
-                                              return "First";
-                                            }
-                                            case 27: {
-                                              return "Second";
-                                            }
+                            (s => {
+                              switch (s[0]) {
+                                case 3: {
+                                  const v__inl63___pa0 = s[1];
+                                  switch (v__inl63___pa0[0]) {
+                                    case 925038822: {
+                                      {
+                                        const __s = v__inl63___pa0[1];
+                                        switch (__s[0]) {
+                                          case 26: {
+                                            return "First";
+                                          }
+                                          case 27: {
+                                            return "Second";
                                           }
                                         }
                                       }
-                                      case 2252990199: {
-                                        return "ErrA";
-                                      }
+                                    }
+                                    case 2252990199: {
+                                      return "ErrA";
                                     }
                                   }
-                                  case 4: {
-                                    return String(v__inl67_e[1]);
-                                  }
                                 }
-                              })(v__inl67_e))(v_nestedUnion([11]))
+                                case 4: {
+                                  return String(v__inl67_e[1]);
+                                }
+                              }
+                            })(v__inl67_e)
                           );
                           switch (__s[0]) {
                             case 3: {
@@ -426,37 +427,37 @@
                           case 4: {
                             let v__inl102_scrut;
                             $join101: {
+                              const v__inl74_e = v_nestedUnion([12, [1]]);
                               const __s = v_tagged(
                                 "nestedJustTrue",
-                                (v__inl74_e =>
-                                  (s => {
-                                    switch (s[0]) {
-                                      case 3: {
-                                        const v__inl70___pa0 = s[1];
-                                        switch (v__inl70___pa0[0]) {
-                                          case 925038822: {
-                                            {
-                                              const __s = v__inl70___pa0[1];
-                                              switch (__s[0]) {
-                                                case 26: {
-                                                  return "First";
-                                                }
-                                                case 27: {
-                                                  return "Second";
-                                                }
+                                (s => {
+                                  switch (s[0]) {
+                                    case 3: {
+                                      const v__inl70___pa0 = s[1];
+                                      switch (v__inl70___pa0[0]) {
+                                        case 925038822: {
+                                          {
+                                            const __s = v__inl70___pa0[1];
+                                            switch (__s[0]) {
+                                              case 26: {
+                                                return "First";
+                                              }
+                                              case 27: {
+                                                return "Second";
                                               }
                                             }
                                           }
-                                          case 2252990199: {
-                                            return "ErrA";
-                                          }
+                                        }
+                                        case 2252990199: {
+                                          return "ErrA";
                                         }
                                       }
-                                      case 4: {
-                                        return String(v__inl74_e[1]);
-                                      }
                                     }
-                                  })(v__inl74_e))(v_nestedUnion([12, [1]]))
+                                    case 4: {
+                                      return String(v__inl74_e[1]);
+                                    }
+                                  }
+                                })(v__inl74_e)
                               );
                               switch (__s[0]) {
                                 case 3: {
@@ -480,37 +481,37 @@
                               case 4: {
                                 let v__inl104_scrut;
                                 $join103: {
+                                  const v__inl81_e = v_nestedUnion([12, [2]]);
                                   const __s = v_tagged(
                                     "nestedJustFalse",
-                                    (v__inl81_e =>
-                                      (s => {
-                                        switch (s[0]) {
-                                          case 3: {
-                                            const v__inl77___pa0 = s[1];
-                                            switch (v__inl77___pa0[0]) {
-                                              case 925038822: {
-                                                {
-                                                  const __s = v__inl77___pa0[1];
-                                                  switch (__s[0]) {
-                                                    case 26: {
-                                                      return "First";
-                                                    }
-                                                    case 27: {
-                                                      return "Second";
-                                                    }
+                                    (s => {
+                                      switch (s[0]) {
+                                        case 3: {
+                                          const v__inl77___pa0 = s[1];
+                                          switch (v__inl77___pa0[0]) {
+                                            case 925038822: {
+                                              {
+                                                const __s = v__inl77___pa0[1];
+                                                switch (__s[0]) {
+                                                  case 26: {
+                                                    return "First";
+                                                  }
+                                                  case 27: {
+                                                    return "Second";
                                                   }
                                                 }
                                               }
-                                              case 2252990199: {
-                                                return "ErrA";
-                                              }
+                                            }
+                                            case 2252990199: {
+                                              return "ErrA";
                                             }
                                           }
-                                          case 4: {
-                                            return String(v__inl81_e[1]);
-                                          }
                                         }
-                                      })(v__inl81_e))(v_nestedUnion([12, [2]]))
+                                        case 4: {
+                                          return String(v__inl81_e[1]);
+                                        }
+                                      }
+                                    })(v__inl81_e)
                                   );
                                   switch (__s[0]) {
                                     case 3: {
@@ -533,27 +534,27 @@
                                   }
                                   case 4: {
                                     {
+                                      const v__inl88_e = v_strWiden;
                                       const __s = v_tagged(
                                         "strWiden",
-                                        (v__inl88_e =>
-                                          (s => {
-                                            switch (s[0]) {
-                                              case 3: {
-                                                const v__inl84___pa0 = s[1];
-                                                switch (v__inl84___pa0[0]) {
-                                                  case 1615808600: {
-                                                    return v__inl84___pa0[1];
-                                                  }
-                                                  case 2252990199: {
-                                                    return "ErrA";
-                                                  }
+                                        (s => {
+                                          switch (s[0]) {
+                                            case 3: {
+                                              const v__inl84___pa0 = s[1];
+                                              switch (v__inl84___pa0[0]) {
+                                                case 1615808600: {
+                                                  return v__inl84___pa0[1];
+                                                }
+                                                case 2252990199: {
+                                                  return "ErrA";
                                                 }
                                               }
-                                              case 4: {
-                                                return String(v__inl88_e[1]);
-                                              }
                                             }
-                                          })(v__inl88_e))(v_strWiden)
+                                            case 4: {
+                                              return String(v__inl88_e[1]);
+                                            }
+                                          }
+                                        })(v__inl88_e)
                                       );
                                       switch (__s[0]) {
                                         case 3: {
@@ -588,27 +589,26 @@
   })(
     v_tagged(
       "defBodyLeft",
-      (v__inl34_e =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              {
-                const __s = v__inl34_e[1];
-                switch (__s[0]) {
-                  case 2252990199: {
-                    return "ErrA";
-                  }
-                  case 2269767818: {
-                    return "ErrB";
-                  }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            {
+              const __s = v__inl34_e[1];
+              switch (__s[0]) {
+                case 2252990199: {
+                  return "ErrA";
+                }
+                case 2269767818: {
+                  return "ErrB";
                 }
               }
             }
-            case 4: {
-              return String(v__inl34_e[1]);
-            }
           }
-        })(v__inl34_e))(v_defBodyLeft)
+          case 4: {
+            return String(v__inl34_e[1]);
+          }
+        }
+      })(v__inl34_e)
     )
   );
 
@@ -687,19 +687,19 @@
     }
   };
 
+  const v__inl107_x = v_render;
   const main = v__cps__df_handleErrorIO_0(
     v__cps__df_andThenIO_4(
-      (v__inl107_x =>
-        (s => {
-          switch (s[0]) {
-            case 3: {
-              return [6, v__inl107_x[1]];
-            }
-            case 4: {
-              return [5, v__inl107_x[1]];
-            }
+      (s => {
+        switch (s[0]) {
+          case 3: {
+            return [6, v__inl107_x[1]];
           }
-        })(v__inl107_x))(v_render),
+          case 4: {
+            return [5, v__inl107_x[1]];
+          }
+        }
+      })(v__inl107_x),
       [30]
     ),
     [28]

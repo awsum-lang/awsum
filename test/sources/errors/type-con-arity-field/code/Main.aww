@@ -1,0 +1,11 @@
+{- Error: a constructor field applies a type constructor to the wrong
+   number of arguments. `Maybe` takes one parameter; this field gives it
+   two. Field types are arity-checked exactly like signatures, so the typo
+   surfaces at the declaration rather than at a confusing use site. -}
+
+import IO.Stdout
+
+type T = T (Maybe Int32 Int32)
+
+main : IO Never Unit
+main = IO.Stdout.print "x"

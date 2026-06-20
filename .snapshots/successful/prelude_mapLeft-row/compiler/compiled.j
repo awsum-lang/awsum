@@ -86,8 +86,8 @@ L_concat_too_long:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -384,7 +384,7 @@ L_join6:
 
 
 .method static v_remappedX()Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 7
   .limit locals 7
   invokestatic AwsumMain/v_leftX()Ljava/lang/Object;
   astore_0
@@ -471,7 +471,7 @@ L_join8:
 
 
 .method static v_remappedY()Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 7
   .limit locals 7
   invokestatic AwsumMain/v_leftY()Ljava/lang/Object;
   astore_0
@@ -641,8 +641,8 @@ L_join16:
 
 
 .method static v_render()Ljava/lang/Object;
-  .limit stack 5
-  .limit locals 25
+  .limit stack 4
+  .limit locals 24
   ldc "mappedA"
   astore 8
   invokestatic AwsumMain/v_mappedA()Ljava/lang/Object;
@@ -1120,8 +1120,8 @@ L_join24:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   invokestatic AwsumMain/v_render()Ljava/lang/Object;
   astore_0
   aload_0
@@ -1194,7 +1194,7 @@ L_join59:
 
 
 .method static v__cps__df_handleErrorIO_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco61:
   aload_0
@@ -1351,7 +1351,7 @@ L_tarm65:
 
 
 .method static v__cps__df_andThenIO_7(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco66:
   aload_0

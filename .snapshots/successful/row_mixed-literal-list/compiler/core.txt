@@ -20,8 +20,8 @@ CoreProgram
                                 ( CBuiltIn "internalStdoutPrint" )
                                 [ CProj "io" 1 ]
                             )
-                            ( CDrop DropFreeUnchecked "$inl0$eff"
-                                ( CDrop DropFreeUnchecked "io"
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
                                     ( CContinue
                                         [ CProj "io" 2 ]
                                     )
@@ -53,15 +53,15 @@ CoreProgram
                             [ "h"
                             , "t"
                             ]
-                        , CDrop DropFreeUnchecked "h"
-                            ( CDrop DropFreeUnchecked "t"
+                        , CDrop "h"
+                            ( CDrop "t"
                                 ( CRowCase
                                     ( CVar "h" )
                                     [
                                         ( 1615808600
                                         , "_s"
-                                        , CDrop DropFreeUnchecked "xs"
-                                            ( CDrop DropFreeUnchecked "$k"
+                                        , CDrop "xs"
+                                            ( CDrop "$k"
                                                 ( CContinue
                                                     [ CVar "t"
                                                     , CVar "$k"
@@ -72,7 +72,7 @@ CoreProgram
                                     ,
                                         ( 2711245919
                                         , "n"
-                                        , CDrop DropFreeUnchecked "$k"
+                                        , CDrop "$k"
                                             ( CContinue
                                                 [ CVar "t"
                                                 , CReuse ReuseGuarded "xs" 16
@@ -107,7 +107,7 @@ CoreProgram
                             [ "$pk_16"
                             , "n"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_16"
+                        , CDrop "$pk_16"
                             ( CCase
                                 ( CCall
                                     ( CBuiltIn "addInt32" )
@@ -118,8 +118,8 @@ CoreProgram
                                 [
                                     ( 3
                                     , [ "_e" ]
-                                    , CDrop DropFreeUnchecked "$k"
-                                        ( CDrop DropFreeUnchecked "$x"
+                                    , CDrop "$k"
+                                        ( CDrop "$x"
                                             ( CContinue
                                                 [ CVar "$pk_16"
                                                 , CIntLit 0 TInt32
@@ -130,9 +130,9 @@ CoreProgram
                                 ,
                                     ( 4
                                     , [ "r" ]
-                                    , CDrop DropFreeUnchecked "r"
-                                        ( CDrop DropFreeUnchecked "$k"
-                                            ( CDrop DropFreeUnchecked "$x"
+                                    , CDrop "r"
+                                        ( CDrop "$k"
+                                            ( CDrop "$x"
                                                 ( CContinue
                                                     [ CVar "$pk_16"
                                                     , CVar "r"
