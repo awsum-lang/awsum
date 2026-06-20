@@ -371,7 +371,17 @@ absorbAndMatch lhs rhs ls rs mismatch =
       extraL = filter (`S.notMember` rConcSet) lConc
       extraR = filter (`S.notMember` lConcSet) rConc
       sharedConc = filter (`S.member` rConcSet) lConc
-   in if length extraL > length rTv || length extraR > length lTv
+   in -- An unmatched empty type ('Never') is the row identity. It stays in
+      -- 'extraL' / 'extraR' so an opposite tyvar can absorb it
+      -- ('Never ~ (e1 | e2)' binds both to 'Never'); but when no tyvar is
+      -- there to take it, it drops rather than forcing a mismatch
+      -- ('(Never | A) ~ A' succeeds). So the cardinality guard counts only
+      -- the /non-empty/ extras — the labels that genuinely need a tyvar —
+      -- and 'lsDone' / 'rsDone' below drop empties before the length check.
+      if length (filter (not . isEmptyLabel) extraL)
+        > length rTv
+        || length (filter (not . isEmptyLabel) extraR)
+        > length lTv
         then mismatch
         else do
           let absorbingInL = take (length extraR) lTv
@@ -402,8 +412,13 @@ absorbAndMatch lhs rhs ls rs mismatch =
                           <> mconcat (map (`bindRowVar` anchor) (drop pairLen remTvR))
                    in Right (paired <> extras)
           let combined = subst1 <> subst2
-              lsDone = ordNub (map (applySubst combined) ls)
-              rsDone = ordNub (map (applySubst combined) rs)
+              -- Drop empties before the final cardinality check + match:
+              -- they are the row identity, and a tyvar bound to 'Never'
+              -- above (the '(Never | e2) ~ Never' ⇒ e2 ↦ Never case) has
+              -- now become one, so it must not count against length
+              -- equality. '(Never | A)' and 'A' both reduce to '[A]'.
+              lsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) ls))
+              rsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) rs))
           if length lsDone /= length rsDone
             then Left (CannotUnify lhs rhs)
             else goMatch (Left (CannotUnify lhs rhs)) lsDone rsDone combined
@@ -419,6 +434,13 @@ isRowTyVar _ = False
 --   unification reduces to multiset equality of canonical labels.
 isGround :: Type' -> Bool
 isGround = S.null . collectTypeVars
+
+-- | Is this row label an empty type ('Never')? Empty types are the row
+--   identity, so 'unifyRows' drops them before matching — '(Never | A)'
+--   means the same row as 'A'.
+isEmptyLabel :: Type' -> Bool
+isEmptyLabel (TyEmpty _ _) = True
+isEmptyLabel _ = False
 
 -- | Bind a 'TyVar'-shaped row element to a target type. No-op when the
 --   element isn't actually a tyvar — defensive against caller mistakes.
