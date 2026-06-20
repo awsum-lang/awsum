@@ -502,16 +502,13 @@ collapseIdentical reuseable scrut = \case
   arms@((_, b0) : rest)
     | all ((== b0) . snd) rest,
       all (\(vs, _) -> not (any (`binderUsedIn` b0) vs)) arms,
-      -- The 'Awsum.Reuse' carve-out applies only when the scrutinee is
-      -- reuse-eligible (@reuseable@ — 'scrutReuseEligible' at the caller;
-      -- elsewhere there is no linear-scrutinee shape to starve) and only
-      -- to arms that bind fields: a binder-less arm's "arity" is zero,
-      -- which any nullary constructor anywhere in the body would match —
-      -- blocking exactly the boolean absorbing elements (@and x False@,
-      -- @or x True@, a 300-arm @-> True@ extractor) for a reuse win that
-      -- does not exist (the in-place rewrite of a zero-field cell saves
-      -- one tag store).
-      not reuseable || all (\(vs, _) -> null vs || not (reconstructsSameArity (length vs) b0)) arms ->
+      -- Keep the case when the scrutinee is reuse-eligible (@reuseable@ —
+      -- 'scrutReuseEligible' at the caller) and some arm is a 'reuseTargetArm':
+      -- its drop is a linear-scrutinee cell 'Awsum.Reuse' would rewrite in
+      -- place, which collapsing the dispatch would starve. Binder-less arms
+      -- are never targets, so the boolean absorbing elements (@and x False@,
+      -- @or x True@, a 300-arm @-> True@ extractor) still collapse.
+      not reuseable || not (any (\(vs, _) -> reuseTargetArm (length vs) b0) arms) ->
         Just
           $ if effectfulIn scrut
             then (\e -> CLet e scrut b0) <$> freshName "eff"
@@ -1393,19 +1390,31 @@ rewriteIdentity p scrut = goR
 --   arm body, none of its binders are inlined either — see 'scrutShadowedIn'.
 inlineArm :: Bool -> Name -> [(Name, Int)] -> CExpr -> CExpr
 inlineArm reuseable s binders body
-  | reuseable, reconstructsSameArity (length binders) body = body
+  | reuseable, reuseTargetArm (length binders) body = body
   | scrutShadowedIn s body = body
   | otherwise =
       let occ = occurrences body
           eligible = Map.fromList [(v, CProj s (k + 1)) | (v, k) <- binders, Map.lookup v occ == Just (1, False)]
        in if Map.null eligible then body else substVars eligible body
 
+-- | Is an arm with @arity@ field binders a 'Awsum.Reuse' target the same-arity
+--   carve-out must not disturb — a field-binding arm (@arity > 0@) whose body
+--   rebuilds a cell of that same arity? The single source of the carve-out's
+--   shape, shared by the single-use-binder inline ('inlineArm') and the
+--   identical-arms collapse ('collapseIdentical'): only a reuse-eligible
+--   scrutinee (the @reuseable@ caller flag) consults it, and only there is the
+--   extracted-binder reconstruction Reuse rewrites in place. Binder-less arms
+--   are never targets — their "arity" is zero, which any nullary constructor
+--   in the body would match, and there is no field cell to reuse.
+reuseTargetArm :: Int -> CExpr -> Bool
+reuseTargetArm arity body = arity > 0 && reconstructsSameArity arity body
+
 -- | Does the arm body build a 'CCon' of exactly @arity@ fields — a cell the
 --   same shape as the scrutinee, which 'Awsum.Reuse' could rewrite into an
---   in-place 'CReuse' on the scrutinee? Consulted only for reuse-eligible
---   scrutinees ('scrutReuseEligible'); within that scope it stays
---   conservative — any same-arity 'CCon' counts, whether or not Reuse will
---   actually fire.
+--   in-place 'CReuse' on the scrutinee? Consulted only through 'reuseTargetArm'
+--   (for reuse-eligible scrutinees, 'scrutReuseEligible'); within that scope it
+--   stays conservative — any same-arity 'CCon' counts, whether or not Reuse
+--   will actually fire.
 reconstructsSameArity :: Int -> CExpr -> Bool
 reconstructsSameArity arity = go
   where

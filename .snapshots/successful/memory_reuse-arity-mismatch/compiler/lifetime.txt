@@ -1,0 +1,49 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+mkBig:
+  param           n                               count=2
+  case-pattern    _u                              count=0
+  case-pattern    m                               count=0
+
+main:
+  let             $inl1$t                         count=0
+  let             $inl4$p                         count=0
+  case-pattern    $inl2$$do_e_0                   count=1
+  case-pattern    $inl3$s1                        count=1
+  let             $inl7$x                         count=0
+  case-pattern    $inl5$e                         count=0
+  case-pattern    $inl6$a                         count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=3
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_29                          count=0
+  case-pattern    s                               count=0
+
