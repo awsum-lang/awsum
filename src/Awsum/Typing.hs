@@ -140,6 +140,16 @@ data TypeError
   | DuplicateDefinition SrcSpan Name
   | -- | A 'TyCon' the checker does not recognize.
     UnknownTypeCon SrcSpan Name
+  | -- | A type constructor applied to the wrong number of arguments —
+    --   @Maybe Int32 Int32@ (one too many), @Either Int32@ (one too few),
+    --   a bare @Maybe@ (unsaturated). The arity is fixed by the type's
+    --   declaration, so the mismatch is ill-formed wherever the type is
+    --   written (signature, constructor field). Carries the span of the
+    --   constructor head, its name, its declared arity, and the number of
+    --   arguments written. Distinct from the value-application
+    --   'ArityMismatch' and the pattern-field 'PatternArityMismatch':
+    --   this is about arguments to a /type/ constructor.
+    TypeConArityMismatch SrcSpan Name Int Int
   | MainMissing
   | -- | 'main' present but with a different type.
     MainWrongType Type'
@@ -451,6 +461,7 @@ typeErrorSpan = \case
   DuplicateSignature sp _ -> Just sp
   DuplicateDefinition sp _ -> Just sp
   UnknownTypeCon sp _ -> Just sp
+  TypeConArityMismatch sp _ _ _ -> Just sp
   MainMissing -> Nothing
   MainWrongType _ -> Nothing
   NotImported sp _ -> Just sp
@@ -547,6 +558,13 @@ prettyPrintTypeError = \case
   DuplicateSignature _ name -> "Duplicate type signature for: " <> name
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
+  TypeConArityMismatch _ name expected actual ->
+    "Type constructor '"
+      <> name
+      <> "' expects "
+      <> show expected
+      <> (if expected == 1 then " argument, got " else " arguments, got ")
+      <> show actual
   MainMissing -> "Missing 'main' function"
   MainWrongType ty -> "Wrong type for 'main': expected IO Never Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
@@ -848,28 +866,63 @@ splitArrow = go []
     go acc (TyArrow _ a b) = go (acc <> [a]) b
     go acc t = (acc, t)
 
--- | Validate that a written type only mentions known constructors.
---   The 'Type'' value carries per-node spans, so errors point at the
---   offending identifier (e.g. @_A@) rather than the whole signature.
-wellFormedTypeWith :: S.Set Name -> Type' -> Either TypeError ()
-wellFormedTypeWith userTypes = \case
-  TyVar _ _ -> Right ()
-  TyCon sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnored sp n)
-  TyCon _ "String" -> Right ()
-  TyCon _ "IO" -> Right ()
-  TyCon _ "Int32" -> Right ()
-  TyCon _ "UInt8" -> Right ()
-  TyCon _ "UInt32" -> Right ()
-  TyCon sp n
-    | S.member n userTypes -> Right ()
-    | otherwise -> Left (UnknownTypeCon sp n)
-  -- 'TyEmpty' is produced by the empty-type rewrite from a TyCon
-  -- whose name matched an 'empty type X' declaration; the user-types
-  -- check has already accepted that name as known.
-  TyEmpty _ _ -> Right ()
-  TyApp _ f x -> wellFormedTypeWith userTypes f >> wellFormedTypeWith userTypes x
-  TyArrow _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
-  TyOr _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
+-- | Peel a type-application spine into its head and argument list, left
+--   to right: @TyApp (TyApp f a) b@ ⇒ @(f, [a, b])@.
+splitTyApp :: Type' -> (Type', [Type'])
+splitTyApp = go []
+  where
+    go acc (TyApp _ f x) = go (x : acc) f
+    go acc t = (t, acc)
+
+-- | Arity (declared type-parameter count) of every compiler built-in type
+--   constructor — the primitives that have no @type@ declaration in the
+--   prelude. All four take no parameters. 'IO' is /not/ here: it is a
+--   prelude @type IO e a@, so it reaches the arity map with arity 2 from
+--   the declarations like any user type — a single source of truth for
+--   its arity rather than a literal duplicated here.
+builtinTypeArities :: M.Map Name Int
+builtinTypeArities =
+  M.fromList [("String", 0), ("Int32", 0), ("UInt8", 0), ("UInt32", 0)]
+
+-- | Validate a written type: every type constructor it mentions must be
+--   known and applied to exactly its declared number of arguments. The
+--   'Type'' value carries per-node spans, so errors point at the
+--   offending identifier (an unknown @_A@, or the head of an ill-arity
+--   application) rather than the whole signature. Run on both signatures
+--   and constructor field types, so the two are held to one standard.
+wellFormedTypeWith :: M.Map Name Int -> Type' -> Either TypeError ()
+wellFormedTypeWith arities = go
+  where
+    go = \case
+      TyVar _ _ -> Right ()
+      TyCon sp n -> checkHead sp n 0
+      -- 'TyEmpty' is produced by the empty-type rewrite from a TyCon whose
+      -- name matched an 'empty type X' declaration — always arity 0, always
+      -- known, so a bare reference is well-formed; an /applied/ one is
+      -- caught in the 'TyApp' spine below.
+      TyEmpty _ _ -> Right ()
+      app@TyApp {} ->
+        let (headTy, args) = splitTyApp app
+         in checkAppHead headTy (length args) >> mapM_ go args
+      TyArrow _ a b -> go a >> go b
+      TyOr _ a b -> go a >> go b
+
+    -- The head of an application spine. A constructor head ('TyCon' /
+    -- 'TyEmpty') carries an arity to check against; a type-variable head
+    -- (@a Int32@, higher-kinded use) is left for unification to reject, as
+    -- before — kind-checking type variables is a separate concern.
+    checkAppHead headTy nArgs = case headTy of
+      TyCon sp n -> checkHead sp n nArgs
+      TyEmpty sp n -> checkHead sp n nArgs
+      _ -> go headTy
+
+    checkHead sp n nArgs
+      | "_" `T.isPrefixOf` n = Left (ReferencingIgnored sp n)
+      | otherwise = case M.lookup n arities of
+          Nothing -> Left (UnknownTypeCon sp n)
+          Just arity
+            | nArgs == arity -> Right ()
+            | otherwise -> Left (TypeConArityMismatch sp n arity nArgs)
 
 -- | Collect every name declared with the @empty type@ keyword from a
 --   program's top-level declarations. Used by callers (the
@@ -969,15 +1022,19 @@ conType tName tvs = foldr (TyArrow noSpan) (conReturnType tName tvs)
 type TypeConsMap = M.Map Name [Name]
 
 -- | Build a constructor environment from @type@ declarations.
---   Returns (set of type names, constructor env, constructor value env, type-constructor map).
-buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
+--   Returns (type-constructor arity map, constructor env, constructor
+--   value env, type-constructor map).
+buildConEnv :: [Decl] -> Either TypeError (M.Map Name Int, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
   let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ _ _ <- decls]
-      -- Every declared type name, needed up front so a field referencing
-      -- a type declared later in the program still resolves (forward
-      -- reference). This is the same set the signature path validates
-      -- against — it is recomputed as 'typeNames' below for the return.
-      allTypeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDecls]
+      -- Arity of every type constructor in scope: the built-in primitives
+      -- plus one entry per declared type (user + prelude), keyed by name
+      -- with its declared parameter count. Built up front so a field or
+      -- signature referencing a type declared later still resolves
+      -- (forward reference), and so the same map validates both positions.
+      typeArities =
+        builtinTypeArities
+          <> M.fromList [(n, length tvs) | (_sp, n, tvs, _cs) <- typeDecls]
   -- Validate each declaration before building anything else:
   --   • bare '_' as type or constructor name — rejected;
   --   • bare '_', '_'-uppercase, or duplicate type-parameter names — rejected;
@@ -991,7 +1048,7 @@ buildConEnv decls = do
     when (n == "_") $ Left (UnnamedType nameSp)
     forM_ cs $ \(ConDef cSp cName _) ->
       when (cName == "_") $ Left (UnnamedConstructor cSp)
-    validateTypeParams allTypeNames sp tvs cs
+    validateTypeParams typeArities sp tvs cs
   -- 'tvs' here is already reduced to bare names — the per-parameter spans
   -- only matter for the unused-type-parameter warning (emitted separately).
   let typeDefs = [(sp, n, map paramName tvs, cs) | (sp, n, tvs, cs) <- typeDecls]
@@ -1006,13 +1063,12 @@ buildConEnv decls = do
           | (_sp, tName, tvs, cs) <- typeDefs,
             ConDef _ cName flds <- cs
           ]
-      typeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDefs]
       typeConsMap =
         M.fromList
           [ (tName, [cName | ConDef _ cName _ <- cs])
           | (_sp, tName, _tvs, cs) <- typeDefs
           ]
-  pure (typeNames, conEnv, conValEnv, typeConsMap)
+  pure (typeArities, conEnv, conValEnv, typeConsMap)
   where
     checkDupType seen (sp, n, _tvs, _) =
       if S.member n seen
@@ -1038,9 +1094,9 @@ buildConEnv decls = do
            in Right (M.insert cName (ConInfo tName tvs (concat flds) siblings cSp) m)
 
 -- | Validate a single type declaration's parameter list and constructor
---   field types. @allTypeNames@ is the set of every type name declared
---   in the program (the same set the signature path resolves against).
---   Enforces six invariants:
+--   field types. @typeArities@ maps every type constructor in scope
+--   (built-in primitives + declared types) to its arity — the same map
+--   the signature path validates against. Enforces six invariants:
 --
 --     1. Every parameter has a name; bare @_@ is rejected ('UnnamedTypeParameter').
 --     2. No parameter name is @_@ followed by an uppercase letter
@@ -1057,21 +1113,23 @@ buildConEnv decls = do
 --        this, @type X = X a@ would silently treat @a@ as a fresh
 --        per-constructor tyvar disconnected from the type's parameters.
 --     6. Every type /constructor/ head in a constructor field resolves
---        against @allTypeNames@ (or a built-in primitive), else
---        'UnknownTypeCon'; an @_@-prefixed one is rejected as
---        'ReferencingIgnored'. This is the very check the signature path
---        runs ('wellFormedTypeWith'), so a field type and a signature
---        type are held to the same standard — @type Phantom = Phantom
---        Nonexistent@ is rejected at the declaration, not silently
---        accepted until a confusing use-site mismatch (or never, when
---        the constructor goes unused).
+--        against @typeArities@ (built-in primitive or declared type),
+--        else 'UnknownTypeCon'; an @_@-prefixed one is rejected as
+--        'ReferencingIgnored'; and it is applied to exactly its declared
+--        arity, else 'TypeConArityMismatch'. This is the very check the
+--        signature path runs ('wellFormedTypeWith'), so a field type and
+--        a signature type are held to the same standard — @type Phantom =
+--        Phantom Nonexistent@ (unknown) and @type T = T (Maybe Int32
+--        Int32)@ (ill-arity) are both rejected at the declaration, not
+--        silently accepted until a confusing use-site mismatch (or never,
+--        when the constructor goes unused).
 --
 --   Invariants 4–5 (type variables) and 6 (type constructors) are
 --   disjoint by node, so neither masks the other; the variable checks
 --   run first, keeping their more specific diagnostics when a field
 --   carries both kinds of error.
-validateTypeParams :: S.Set Name -> SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
-validateTypeParams allTypeNames _declSp params cons = do
+validateTypeParams :: M.Map Name Int -> SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
+validateTypeParams typeArities _declSp params cons = do
   -- 1+2) Reject an unusable type-parameter name: bare '_', or '_' then an
   --      uppercase letter (which would lex as a 'TyCon' in use position,
   --      so the parameter could never be referenced). Type parameters are
@@ -1096,7 +1154,7 @@ validateTypeParams allTypeNames _declSp params cons = do
   -- 6) Reject unknown / ignored type constructors in constructor fields,
   --    mirroring the signature-resolution path exactly.
   forM_ cons $ \(ConDef _ _ flds) ->
-    forM_ flds (wellFormedTypeWith allTypeNames)
+    forM_ flds (wellFormedTypeWith typeArities)
   where
     -- A '_'-prefixed name whose first real character is uppercase.
     uppercaseAfterUnderscore n = case T.uncons (T.drop 1 n) of
@@ -1197,7 +1255,7 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
       declsResolved = fmap (markEmptyTypesInDecl emptyTypeNames) decls
 
   -- 1) Build constructor environment from type declarations.
-  (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList declsResolved)
+  (typeArities, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList declsResolved)
 
   -- 2) Partition top-level decls into signatures and definitions.
   let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList declsResolved))
@@ -1210,8 +1268,8 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- Build the signature environment; reject duplicates early.
   sigEnv <- foldM insertSig M.empty sigsList
 
-  -- Validate every written type (no unknown TyCons, no ignored refs).
-  mapM_ (\(_sp, _, t) -> wellFormedTypeWith userTypeNames t) sigsList
+  -- Validate every written type (known TyCons, correct arity, no ignored refs).
+  mapM_ (\(_sp, _, t) -> wellFormedTypeWith typeArities t) sigsList
 
   -- Ensure unique definition names (shadowing is not allowed at top level).
   foldM_ insertDefName S.empty defsList

@@ -1,0 +1,14 @@
+{- Error: a type constructor applied to too many arguments. `Maybe` takes
+   one type parameter; `Maybe Int32 Int32` gives it two. The arity is fixed
+   by the type's declaration, so the mismatch is reported here at the
+   signature — even inside a row alternative that no value ever inhabits. -}
+
+import IO.Stdout
+
+f : (Maybe Int32 Int32 | String) -> String
+f x = case x of
+  (s : String) -> s
+  (_m : Maybe Int32 Int32) -> "maybe"
+
+main : IO Never Unit
+main = IO.Stdout.print (f "hi")

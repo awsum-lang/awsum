@@ -1,0 +1,11 @@
+{- Error: a type constructor applied to too few arguments. `Either` takes
+   two type parameters; `Either Int32` gives it one. An under-applied type
+   constructor is ill-kinded, rejected at the signature. -}
+
+import IO.Stdout
+
+f : Either Int32 -> String
+f _x = "x"
+
+main : IO Never Unit
+main = IO.Stdout.print "x"
