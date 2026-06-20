@@ -788,7 +788,7 @@
   .method private hidebysig static object v__apply__scc_handleA_handleB(object,object) cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1)
+    .locals init (object[] V_0)
   IL_tco_loop:
     ldarg.0
     castclass object[]

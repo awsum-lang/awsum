@@ -197,7 +197,7 @@
   .method private hidebysig static object v_res() cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1)
+    .locals init (object[] V_0)
     ldc.i4.2
     newarr [System.Runtime]System.Object
     stloc.0

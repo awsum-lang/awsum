@@ -227,7 +227,6 @@
   .method private hidebysig static object v__apply_bytesToHexStringNoPrefix(object,object) cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
     castclass object[]

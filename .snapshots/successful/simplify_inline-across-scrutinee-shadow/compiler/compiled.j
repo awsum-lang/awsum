@@ -28,7 +28,7 @@
 .end method
 
 .method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 4
   aload_1
   checkcast java/lang/String
@@ -94,8 +94,8 @@ L_split_found:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -131,7 +131,7 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 10
+  .limit stack 7
   .limit locals 8
   ldc ":"
   ldc "X:Y:Z"

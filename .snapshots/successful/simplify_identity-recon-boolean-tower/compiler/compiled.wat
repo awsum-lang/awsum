@@ -595,7 +595,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
       i32.load
@@ -605,27 +604,27 @@
         block (result i32)
           local.get 0
           i32.load offset=4
-          local.tee 6
+          local.tee 2
           call 13
-          local.get 6
-          local.set 5
+          local.get 2
+          local.set 2
           local.get 0
           call 14
-          local.get 5
+          local.get 2
         end
       else
         local.get 0
         i32.load offset=4
-        local.tee 6
+        local.tee 3
         call 13
-        local.get 6
+        local.get 3
         call 7
         local.set 3
         local.get 0
         i32.load offset=8
-        local.tee 6
+        local.tee 5
         call 13
-        local.get 6
+        local.get 5
         local.set 4
         local.get 0
         call 14
@@ -638,8 +637,6 @@
     end)
 
   (func $v_seed (result i32)
-    (local i32)
-    (local i32)
     i32.const 42
     call 8
     call 9
@@ -651,13 +648,10 @@
   (func $v_result (result i32)
     (local i32)
     (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
     call 17
-    local.set 1
+    local.set 0
     block (result i32)
-      local.get 1
+      local.get 0
       i32.load
       i32.const 1
       i32.eq
@@ -668,34 +662,32 @@
         call 8
         call 10
       else
-        local.get 1
-        local.tee 3
+        local.get 0
+        local.tee 1
         call 13
-        local.get 3
+        local.get 1
       end
-      local.set 0
-      local.get 0
+      local.set 1
+      local.get 1
       i32.load
       i32.const 1
       i32.eq
       if (result i32)
-        local.get 0
+        local.get 1
         call 14
         i32.const 119
       else
-        local.get 0
+        local.get 1
         call 14
         i32.const 140
       end
-      local.set 2
-      local.get 1
+      local.set 1
+      local.get 0
       call 14
-      local.get 2
+      local.get 1
     end)
 
   (func $v_main (result i32)
-    (local i32)
-    (local i32)
     (local i32)
     (local i32)
     (local i32)

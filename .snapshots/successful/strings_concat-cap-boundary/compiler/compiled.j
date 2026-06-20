@@ -133,7 +133,7 @@ L_predu32_ok:
 .end method
 
 .method static __eqUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -162,7 +162,7 @@ L_eq_u32_ne:
 .end method
 
 .method static __lengthUtf16CodeUnits(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 2
+  .limit stack 1
   .limit locals 1
   aload_0
   checkcast java/lang/String
@@ -181,8 +181,8 @@ L_eq_u32_ne:
 
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -226,7 +226,7 @@ L_tarm1:
 
 
 .method static v_runTest()Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 8
   iconst_3
   anewarray java/lang/Object
@@ -347,7 +347,7 @@ L_join2:
 
 
 .method static v__scc__df_andThenEither_0__lam_13_build(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 7
 L_tco8:
   aload_0

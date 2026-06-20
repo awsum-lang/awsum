@@ -746,7 +746,7 @@
   .method private hidebysig static object v__apply__scc_show_showCons(object,object) cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2)
+    .locals init (object[] V_0)
   IL_tco_loop:
     ldarg.0
     castclass object[]

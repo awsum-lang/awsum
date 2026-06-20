@@ -28,8 +28,8 @@
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -65,7 +65,7 @@ L_tarm1:
 
 
 .method static v_addOk()Ljava/lang/Object;
-  .limit stack 2
+  .limit stack 1
   .limit locals 0
   bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
@@ -100,7 +100,7 @@ L_tarm1:
 
 
 .method static v_succOk()Ljava/lang/Object;
-  .limit stack 2
+  .limit stack 1
   .limit locals 0
   bipush 42
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
@@ -111,7 +111,7 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 18
+  .limit stack 10
   .limit locals 0
   iconst_3
   anewarray java/lang/Object
@@ -213,7 +213,7 @@ L_tarm1:
 
 
 .method static v__cps__df_andThenIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco2:
   aload_0
@@ -358,7 +358,7 @@ L_tarm5:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco6:
   aload_0
@@ -503,7 +503,7 @@ L_tarm9:
 
 
 .method static v__cps__df_andThenIO_8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco10:
   aload_0
@@ -648,7 +648,7 @@ L_tarm13:
 
 
 .method static v__cps__df_andThenIO_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco14:
   aload_0
@@ -793,7 +793,7 @@ L_tarm17:
 
 
 .method static v__cps__df_andThenIO_16(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco18:
   aload_0
@@ -938,7 +938,7 @@ L_tarm21:
 
 
 .method static v__cps__df_andThenIO_20(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco22:
   aload_0
@@ -1083,7 +1083,7 @@ L_tarm25:
 
 
 .method static v__cps__df_andThenIO_24(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco26:
   aload_0
@@ -1228,7 +1228,7 @@ L_tarm29:
 
 
 .method static v__cps__df_andThenIO_28(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco30:
   aload_0

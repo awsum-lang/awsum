@@ -28,7 +28,7 @@
 .end method
 
 .method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -171,8 +171,8 @@ L_parseInt32_fail:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 6
+  .limit stack 5
+  .limit locals 4
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -349,7 +349,7 @@ L_jafter4:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 9
+  .limit stack 7
   .limit locals 0
   iconst_2
   anewarray java/lang/Object
@@ -389,8 +389,8 @@ L_jafter4:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 10
+  .limit locals 10
 L_tco13:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -636,8 +636,8 @@ L_tarm20:
 
 
 .method static v__cps__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 15
+  .limit stack 10
+  .limit locals 14
 L_tco21:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -942,8 +942,8 @@ L_tarm30:
 
 
 .method static v__cps__scc__apply1__df__lam_13_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 12
+  .limit stack 5
+  .limit locals 11
 L_tco31:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1149,8 +1149,8 @@ L_tarm33:
 
 
 .method static v__apply__scc__apply1__df__lam_13_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 4
+  .limit stack 6
+  .limit locals 3
 L_tco38:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -1204,7 +1204,7 @@ L_tarm40:
 .end method
 
 .method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 8
   aload_0
   checkcast java/lang/String

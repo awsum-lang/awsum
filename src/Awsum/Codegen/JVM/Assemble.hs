@@ -8,7 +8,7 @@
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
 module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
-import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, methodMaxLocals, methodMaxStack, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -490,8 +490,8 @@ assembleMethod m = do
         mCode = code,
         mCodeAttrCount = attrCount,
         mCodeAttrs = attrs,
-        mMaxStack = fromIntegral (jmMaxStack m),
-        mMaxLocals = fromIntegral (jmMaxLocals m)
+        mMaxStack = fromIntegral (methodMaxStack m),
+        mMaxLocals = fromIntegral (methodMaxLocals m)
       }
 
 -- | The verifier locals at method entry, derived from the descriptor — the
@@ -928,86 +928,6 @@ data ECtx = ECtx
     cJoinTargets :: Map Text (LabelId, [Text], Int)
   }
 
--- | Structural slots a case head consumes: the @arrSlot@ copy — unless the
--- scrutinee is dispatched in place (a 'CVar' naming a local or parameter,
--- not a global) — plus the @tagSlot@ — unless the case is single-arm, where
--- no compare reads a tag and none is extracted. Must mirror 'caseHeadI',
--- which emits these slots.
-caseHeadSlots :: Set Text -> Set Text -> CExpr -> Int -> Int
-caseHeadSlots valDefs funDefs scrut nAlts =
-  let inPlace = case scrut of
-        CVar n -> not (Set.member n valDefs || Set.member n funDefs)
-        _ -> False
-   in (if inPlace then 0 else 1) + (if nAlts == 1 then 0 else 1)
-
--- | Number of *additional* local slots a body needs beyond its
--- parameters — sums the additive nesting of 'CCase' ('caseHeadSlots' +
--- max-binding count per level) and propagates through subexpressions.
--- Mirrors the slot allocation in 'emitExprI' / 'emitTailBinI'. Used to
--- fill the @max_locals@ field of the Code attribute (JVM Spec §4.7.3);
--- hardcoding 256 there caused @ClassFormatError: bad type array size@
--- on programs whose StackMapTable referenced a slot index ≥ 256.
-exprMaxLocals :: Set Text -> Set Text -> CExpr -> Int
-exprMaxLocals valDefs funDefs = go
-  where
-    go = \case
-      -- 'CCase' burns 'caseHeadSlots' slots per level (the @Object[]@ copy
-      -- when the scrutinee isn't in place, the unboxed @int@ tag when arms
-      -- compare) plus @maxBindings@ binding
-      -- slots reserved across every arm — see 'emitExprI' / 'emitTailCase'
-      -- comments for why bindings are sized to the widest arm. The
-      -- scrutinee evaluates /before/ the arrSlot is taken, on the same
-      -- base — its (dead-afterwards) demand overlaps rather than adds,
-      -- so the level takes the max of the two.
-      CCase scrut alts ->
-        let thisLevel = caseHeadSlots valDefs funDefs scrut (length alts) + foldl' max 0 [length vs | (_, vs, _) <- alts]
-            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
-         in max (go scrut) (thisLevel + armMax)
-      CRowCase scrut alts ->
-        -- Same shape as a 'CCase' with one binder per arm (the row's
-        -- value): the head slots plus the binding.
-        let thisLevel = caseHeadSlots valDefs funDefs scrut (length alts) + 1
-            armMax = foldl' max 0 [go b | (_, _, b) <- alts]
-         in max (go scrut) (thisLevel + armMax)
-      CRow _ v -> (if noMultiArmCase v then 0 else 1) + go v
-      CCall f xs ->
-        -- A 'CCase' nested in an argument position would push StackMapTable
-        -- frames whose declared (empty) stack disagrees with the verifier-
-        -- derived stack (which still holds prior args). 'emitExprI' / 'CCall'
-        -- routes each argument through a fresh local when this happens —
-        -- 'length xs' slots — plus one more for the function value on the
-        -- indirect-call path. Conservative: charge @length xs + 1@ whenever
-        -- either side has a case, since 'exprMaxLocals' has no context to
-        -- distinguish the direct and indirect paths.
-        let save =
-              if exprContainsCase f || any exprContainsCase xs
-                then length xs + 1
-                else 0
-         in save + foldl' max 0 (go f : map go xs)
-      -- A multi-arm-case field routes the whole cell through save locals
-      -- ('emitCellI') — charge one per field, like the 'CCall' arm above.
-      CCon _ fields ->
-        let save = if all noMultiArmCase fields then 0 else length fields
-         in save + foldl' max 0 (map go fields)
-      CLoop b -> go b
-      CContinue xs ->
-        let save = if all noMultiArmCase xs then 0 else length xs
-         in save + foldl' max 0 (map go xs)
-      CDrop _ b -> go b
-      CReuse _ _ _ fs ->
-        let save = if all noMultiArmCase fs then 0 else length fs
-         in save + foldl' max 0 (map go fs)
-      -- The binder lives in the dedicated named region, charged per method as
-      -- @nNamed@ in 'declJvmMethod' — only the structural demand counts here.
-      CLet _ rhs b -> max (go rhs) (go b)
-      -- A join's parameters live in the named region too; the node itself takes
-      -- no structural slot — inner and body each run on the node's base.
-      CJoin _ _ body inner -> max (go body) (go inner)
-      -- Jump arguments evaluate one at a time, each stored straight into its
-      -- parameter slot — no save region.
-      CJump _ args -> foldl' max 0 (map go args)
-      _ -> 0
-
 -- | Does the expression contain a 'CCase' (or 'CRowCase') anywhere?
 -- 'CCall' (and any other multi-sub-expr emitter that leaves prior
 -- values on the operand stack) needs to know this so it can route
@@ -1111,93 +1031,6 @@ emitTailIOk = \case
   CJump _ args -> all emitIOk args
   other -> emitIOk other
 
--- | Maximum operand-stack depth a body ever reaches. Mirrors the
--- emission shape: 'CCon' uses a dup/stelem chain so each nesting
--- level pins one extra slot on the stack across the next field's
--- evaluation; 'CCase' clears the stack at @astore@ and only peaks
--- transiently while extracting the tag; 'CCall' stacks args
--- left-to-right. Used to fill the @max_stack@ field of the Code
--- attribute (JVM Spec §4.7.3).
-exprMaxStack :: CExpr -> Int
-exprMaxStack = \case
-  CString _ -> 1
-  CIntLit _ _ -> 1
-  CBuiltIn _ -> 1
-  CVar _ -> 1
-  -- rhs evaluates on the current base and is popped by the @astore@; the
-  -- body then evaluates on the same base.
-  CLet _ rhs b -> max (exprMaxStack rhs) (exprMaxStack b)
-  CProj _ _ -> 2 -- aload base; pushint slot; checkcast; aaload — peak 2
-  CCon _ fields ->
-    -- Per-field emission shape is @dup; iconst i; <field>; aastore@,
-    -- so the array + index already pin two slots on the stack across
-    -- the field's evaluation, and a third slot is pushed by the dup
-    -- itself before the index — peak per level is 3 + max field depth.
-    -- The tag store @dup; iconst 0; iconst tag; invokestatic
-    -- Integer.valueOf; aastore@ peaks at 4 independently. The
-    -- save-locals path ('emitCellI' on a multi-arm-case field) peaks
-    -- lower — each field on an empty stack, then aload chains of 4 —
-    -- so this bound covers both shapes.
-    let maxFld = foldl' max 0 (map exprMaxStack fields)
-     in max 4 (3 + maxFld)
-  CCase scrut alts ->
-    -- Scrutinee leaves +1, then dup+iconst+aaload+ checkcast +invokevirtual peaks at ~3,
-    -- arms emit independently after astore drops to 0.
-    foldl' max 3 (exprMaxStack scrut : [exprMaxStack b | (_, _, b) <- alts])
-  CRowCase scrut alts ->
-    -- Same emission shape as 'CCase' (delegated to it in 'emitExprI');
-    -- mirror the bound here.
-    foldl' max 3 (exprMaxStack scrut : [exprMaxStack b | (_, _, b) <- alts])
-  CRow _ v ->
-    -- Same shape as a one-field 'CCon': dup + tag store peaks at 4 and
-    -- one field push.
-    max 4 (3 + exprMaxStack v)
-  CCall f xs ->
-    -- Conservative bound: assume the first-class shape, where the
-    -- callee occupies one stack slot across the evaluation of every
-    -- arg (CBuiltIn / direct-CFunDef calls do not, but overestimating
-    -- by one slot is harmless and keeps this helper context-free —
-    -- 'exprMaxStack' has no view of @cFunDefs@). A CVar callee that
-    -- happens to be a *parameter* (and so is *not* in @cFunDefs@) is
-    -- a first-class call and absolutely needs the +1; treating every
-    -- @CCall@ uniformly avoids the silent under-count that crashed
-    -- @v_compose@ / @v_apply@ / @v__apply_map@ with @VerifyError:
-    -- Operand stack overflow@.
-    let argDepths = map exprMaxStack xs
-        fD = exprMaxStack f
-        nXs = length xs
-        seqArgs base = foldl' max base [base + i + d | (i, d) <- zip [0 :: Int ..] argDepths]
-     in max fD (max (seqArgs 1) (nXs + 1))
-  -- A value tail under a 'CDrop' drains the pending drops /after/ the
-  -- value is on the stack — each drain pushes an @aconst_null@ on top of
-  -- it ('emitTailBinI'), so the loop's floor is 2 even when the body's own
-  -- peak is 1.
-  CLoop b -> max 2 (exprMaxStack b)
-  -- Args stack left-to-right; the save-locals path ('emitContinue' on a
-  -- multi-arm-case arg) peaks lower — each arg on an empty stack, then n
-  -- aloads — and n ≤ (n-1) + depth of the last arg, so this bound covers
-  -- both shapes. The pending-drop drain at the terminator pushes one
-  -- @aconst_null@ on top of the n parked args — the @n + 1@ floor; without
-  -- it a continue whose own peak is exactly n under-declares and the
-  -- verifier rejects the method (@Operand stack overflow@ — a three-arg
-  -- swap loop whose dropped case binder drains over the parked args).
-  CContinue xs ->
-    let argDepths = map exprMaxStack xs
-     in foldl' max (length xs + 1) [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
-  -- Liveness annotation; codegen-transparent (no extra stack slots).
-  -- Stack budget == wrapped body's.
-  CDrop _ b -> exprMaxStack b
-  -- Cell reuse. On the JVM it falls through to 'CCon' (fresh
-  -- alloc), so stack budget matches an equivalent 'CCon tag fs'.
-  CReuse _ _ tag fs -> exprMaxStack (CCon tag fs)
-  -- Inner and body both start on an empty stack (the node is gated to
-  -- stack-empty positions like a multi-arm case); the after-label merge
-  -- holds the one result value.
-  CJoin _ _ body inner -> max 1 (max (exprMaxStack body) (exprMaxStack inner))
-  -- Each jump argument evaluates on an empty stack and is stored before the
-  -- next starts; the peak is the deepest single argument.
-  CJump _ args -> foldl' max 1 (map exprMaxStack args)
-
 -- | Build the 'JvmMethod' for one user declaration — the single source
 --   consumed by both 'mkDecl' (→ classfile bytes via 'assembleMethod') and
 --   the text renderer (→ Jasmin via 'renderMethod'). Every form routes
@@ -1221,19 +1054,19 @@ declJvmMethod valDefs funDefs arities = \case
         ctx = mkCtx (Map.fromList (zip args [0 ..])) next0 namedSlots
         loopFrame = Frame (replicate (length args) (VObject objectClassRef)) []
     bodyI <- emitTailBinI ctx args loopLbl body
-    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (Map.size namedSlots) (Label loopLbl (Just loopFrame) : bodyI))
+    pure (userMethod (mangle nm) (objMethodDesc (length args)) (Label loopLbl (Just loopFrame) : bodyI))
   CFunDef nm args body | emitIOk body -> do
     let namedSlots = namedSlotAssignments (length args) body
         next0 = length args + Map.size namedSlots
         ctx = mkCtx (Map.fromList (zip args [0 ..])) next0 namedSlots
     instrs <- emitExprI ctx body
-    pure (userMethod (mangle nm) (objMethodDesc (length args)) body (length args) (Map.size namedSlots) (instrs <> [AReturn]))
+    pure (userMethod (mangle nm) (objMethodDesc (length args)) (instrs <> [AReturn]))
   CValDef nm rhs | emitIOk rhs -> do
     let namedSlots = namedSlotAssignments 0 rhs
         next0 = Map.size namedSlots
         ctx = mkCtx Map.empty next0 namedSlots
     instrs <- emitExprI ctx rhs
-    pure (userMethod (mangle nm) "()Ljava/lang/Object;" rhs 0 (Map.size namedSlots) (instrs <> [AReturn]))
+    pure (userMethod (mangle nm) "()Ljava/lang/Object;" (instrs <> [AReturn]))
   CFunDef nm _ _ -> error ("JVM: unified emitter gate missed function " <> nm)
   CValDef nm _ -> error ("JVM: unified emitter gate missed value " <> nm)
   where
@@ -1258,13 +1091,16 @@ declJvmMethod valDefs funDefs arities = \case
           cArmPatternByScrut = Map.empty,
           cJoinTargets = Map.empty
         }
-    userMethod name desc body nParams nLets instrs =
+    -- @max_stack@ / @max_locals@ are not set here — 'renderMethod' /
+    -- 'assembleMethod' derive them from 'jmBody' ('methodMaxStack' /
+    -- 'methodMaxLocals'), the one path shared with every hand-written helper, so
+    -- the declared limits cannot disagree with the instructions the method
+    -- actually emits.
+    userMethod name desc instrs =
       JvmMethod
         { jmName = name,
           jmDesc = desc,
           jmPublic = False,
-          jmMaxStack = max 1 (exprMaxStack body),
-          jmMaxLocals = nParams + nLets + exprMaxLocals valDefs funDefs body,
           jmBody = instrs
         }
 
@@ -1448,8 +1284,8 @@ emitLetBindI ctx x rhs = do
 --   @Object[]@ on the stack at each read, so no 'cArrSlots' registration is
 --   needed. 'Nothing' for anything that must evaluate into an @arrSlot@
 --   copy — calls, constructions, and a 'CVar' naming a 'CValDef' (a getter
---   call). Must mirror 'caseHeadSlots', which charges the head slots in
---   'exprMaxLocals'.
+--   call). Whichever slots this path takes are counted straight off the
+--   emitted stream by 'maxLocalsOf' — no separate sizing to keep in step.
 scrutInPlaceLoad :: ECtx -> CExpr -> Maybe [JvmInstr]
 scrutInPlaceLoad ctx = \case
   CVar n
@@ -1465,8 +1301,8 @@ scrutInPlaceLoad ctx = \case
 --   tag, so none is extracted and no slot is taken), the first binding
 --   slot, and the region-registered context for frames. An in-place
 --   scrutinee ('scrutInPlaceLoad') is re-loaded per read and skips the
---   @arrSlot@ copy. Must mirror 'caseHeadSlots', which charges these slots
---   in 'exprMaxLocals'.
+--   @arrSlot@ copy. The head slots it takes are counted from the emitted
+--   stream by 'maxLocalsOf' — no separate sizing to keep in step.
 caseHeadI :: ECtx -> CExpr -> Int -> AsmM ([JvmInstr], [JvmInstr], Maybe Int, Int, ECtx)
 caseHeadI ctx scrut nAlts = do
   (arrHead, loadScrut, afterArr, ctxArr) <- case scrutInPlaceLoad ctx scrut of

@@ -672,7 +672,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
       i32.load
@@ -682,27 +681,27 @@
         block (result i32)
           local.get 0
           i32.load offset=4
-          local.tee 6
+          local.tee 2
           call 11
-          local.get 6
-          local.set 5
+          local.get 2
+          local.set 2
           local.get 0
           call 12
-          local.get 5
+          local.get 2
         end
       else
         local.get 0
         i32.load offset=4
-        local.tee 6
+        local.tee 3
         call 11
-        local.get 6
+        local.get 3
         call 7
         local.set 3
         local.get 0
         i32.load offset=8
-        local.tee 6
+        local.tee 5
         call 11
-        local.get 6
+        local.get 5
         local.set 4
         local.get 0
         call 12
@@ -721,10 +720,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
     i32.const 12
     i32.const 2
     call 10
@@ -736,29 +731,29 @@
     i32.const 96
     i32.const 117
     call 8
-    local.set 3
-    local.get 3
+    local.set 1
+    local.get 1
     i32.load
     i32.const 11
     i32.eq
     if (result i32)
-      local.get 3
+      local.get 1
       call 12
       i32.const 142
     else
-      local.get 3
+      local.get 1
       i32.load offset=4
-      local.set 4
-      local.get 4
+      local.set 2
+      local.get 2
       call 11
-      local.get 3
+      local.get 1
       call 12
       i32.const 96
-      local.get 4
+      local.get 2
       i32.load offset=8
-      local.tee 7
+      local.tee 3
       call 11
-      local.get 7
+      local.get 3
       call 8
       local.set 3
       local.get 3
@@ -772,11 +767,11 @@
       else
         local.get 3
         call 12
-        local.get 4
+        local.get 2
         i32.load offset=4
-        local.tee 7
+        local.tee 5
         call 11
-        local.get 7
+        local.get 5
       end
     end
     i32.store offset=4

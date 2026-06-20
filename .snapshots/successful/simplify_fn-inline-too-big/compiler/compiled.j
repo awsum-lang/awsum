@@ -28,7 +28,7 @@
 .end method
 
 .method static __eqUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/Integer
@@ -79,8 +79,8 @@ L_eq_u32_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -116,7 +116,7 @@ L_tarm1:
 
 
 .method static v_describe(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
+  .limit stack 2
   .limit locals 9
   aload_0
   iconst_0
@@ -201,7 +201,7 @@ L_join2:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 11
+  .limit stack 10
   .limit locals 0
   iconst_3
   anewarray java/lang/Object
@@ -252,7 +252,7 @@ L_join2:
 
 
 .method static v__cps__df_andThenIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco10:
   aload_0

@@ -701,7 +701,7 @@
   .method private hidebysig static object v_render() cil managed
   {
     .maxstack 4
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9, object V_10, object V_11)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9, object V_10)
     ldstr "mappedA"
     call object AwsumMain::v_mappedA()
     stloc.0

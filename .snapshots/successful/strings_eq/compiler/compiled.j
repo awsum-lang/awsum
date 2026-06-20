@@ -86,7 +86,7 @@ L_concat_too_long:
 .end method
 
 .method static __eqString(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 5
+  .limit stack 4
   .limit locals 2
   aload_0
   checkcast java/lang/String
@@ -114,8 +114,8 @@ L_eq_str_ne:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -151,8 +151,8 @@ L_tarm1:
 
 
 .method static v_res()Ljava/lang/Object;
-  .limit stack 5
-  .limit locals 14
+  .limit stack 4
+  .limit locals 13
   ldc ""
   ldc ""
   invokestatic AwsumMain/__eqString(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -375,8 +375,8 @@ L_join6:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   invokestatic AwsumMain/v_res()Ljava/lang/Object;
   astore_0
   aload_0
@@ -449,7 +449,7 @@ L_join18:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco20:
   aload_0
@@ -606,7 +606,7 @@ L_tarm24:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco25:
   aload_0

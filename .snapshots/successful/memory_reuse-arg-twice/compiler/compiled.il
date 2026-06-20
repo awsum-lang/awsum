@@ -315,7 +315,7 @@
   .method private hidebysig static object v_main() cil managed
   {
     .maxstack 7
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
     ldc.i4.3
     box [System.Runtime]System.Int32
     ldc.i4.1

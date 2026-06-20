@@ -224,7 +224,7 @@
   .method private hidebysig static object v_runTest() cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.0

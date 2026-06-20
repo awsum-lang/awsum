@@ -28,7 +28,7 @@
 .end method
 
 .method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 6
   aload_0
   checkcast java/lang/Integer
@@ -134,8 +134,8 @@ L_addi32_under:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -172,7 +172,7 @@ L_tarm1:
 
 .method static v__cps_sumRow(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
-  .limit locals 7
+  .limit locals 6
 L_tco2:
   aload_0
   checkcast [Ljava/lang/Object;

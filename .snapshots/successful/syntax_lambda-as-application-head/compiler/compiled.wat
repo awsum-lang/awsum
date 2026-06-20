@@ -554,7 +554,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
       i32.load
@@ -564,27 +563,27 @@
         block (result i32)
           local.get 0
           i32.load offset=4
-          local.tee 6
+          local.tee 2
           call 11
-          local.get 6
-          local.set 5
+          local.get 2
+          local.set 2
           local.get 0
           call 12
-          local.get 5
+          local.get 2
         end
       else
         local.get 0
         i32.load offset=4
-        local.tee 6
+        local.tee 3
         call 11
-        local.get 6
+        local.get 3
         call 7
         local.set 3
         local.get 0
         i32.load offset=8
-        local.tee 6
+        local.tee 5
         call 11
-        local.get 6
+        local.get 5
         local.set 4
         local.get 0
         call 12
@@ -597,19 +596,13 @@
     end)
 
   (func $v_runMe (result i32)
-    (local i32)
-    (local i32)
     i32.const 5
     call 8)
 
   (func $v_doubled (result i32)
-    (local i32)
-    (local i32)
     call 15)
 
   (func $v_main (result i32)
-    (local i32)
-    (local i32)
     (local i32)
     (local i32)
     (local i32)

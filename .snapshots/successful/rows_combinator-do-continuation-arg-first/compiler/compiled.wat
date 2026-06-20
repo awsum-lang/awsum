@@ -545,7 +545,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
     loop (result i32)
       local.get 0
       i32.load
@@ -555,27 +554,27 @@
         block (result i32)
           local.get 0
           i32.load offset=4
-          local.tee 6
+          local.tee 2
           call 10
-          local.get 6
-          local.set 5
+          local.get 2
+          local.set 2
           local.get 0
           call 11
-          local.get 5
+          local.get 2
         end
       else
         local.get 0
         i32.load offset=4
-        local.tee 6
+        local.tee 3
         call 10
-        local.get 6
+        local.get 3
         call 7
         local.set 3
         local.get 0
         i32.load offset=8
-        local.tee 6
+        local.tee 5
         call 10
-        local.get 6
+        local.get 5
         local.set 4
         local.get 0
         call 11
@@ -588,8 +587,6 @@
     end)
 
   (func $v_cAt (result i32)
-    (local i32)
-    (local i32)
     (local i32)
     (local i32)
     (local i32)
@@ -627,12 +624,6 @@
     (local i32)
     (local i32)
     (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
     i32.const 12
     i32.const 2
     call 9
@@ -642,34 +633,34 @@
     i32.store
     local.get 0
     call 14
-    local.set 4
+    local.set 1
     block (result i32)
-      local.get 4
+      local.get 1
       i32.load
       i32.const 3
       i32.eq
       if (result i32)
-        local.get 4
+        local.get 1
         i32.load offset=4
-        local.tee 8
+        local.tee 3
         call 10
-        local.get 8
+        local.get 3
         local.set 3
         local.get 3
         call 11
         i32.const 96
       else
-        local.get 4
+        local.get 1
         i32.load offset=4
-        local.tee 8
+        local.tee 3
         call 10
-        local.get 8
+        local.get 3
         call 8
       end
-      local.set 7
-      local.get 4
+      local.set 2
+      local.get 1
       call 11
-      local.get 7
+      local.get 2
     end
     i32.store offset=4
     local.get 0

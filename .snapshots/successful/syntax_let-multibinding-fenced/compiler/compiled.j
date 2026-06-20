@@ -86,8 +86,8 @@ L_concat_too_long:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -123,8 +123,8 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   ldc "hi "
   ldc "bob"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -199,7 +199,7 @@ L_join2:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco4:
   aload_0
@@ -356,7 +356,7 @@ L_tarm8:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco9:
   aload_0

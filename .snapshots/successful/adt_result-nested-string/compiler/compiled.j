@@ -86,8 +86,8 @@ L_concat_too_long:
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -123,8 +123,8 @@ L_tarm1:
 
 
 .method static v_res()Ljava/lang/Object;
-  .limit stack 9
-  .limit locals 21
+  .limit stack 7
+  .limit locals 20
   iconst_2
   anewarray java/lang/Object
   dup
@@ -529,8 +529,8 @@ L_join4:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 7
-  .limit locals 9
+  .limit stack 5
+  .limit locals 7
   invokestatic AwsumMain/v_res()Ljava/lang/Object;
   astore_0
   aload_0
@@ -603,7 +603,7 @@ L_join20:
 
 
 .method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco22:
   aload_0
@@ -760,7 +760,7 @@ L_tarm26:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
+  .limit stack 11
   .limit locals 5
 L_tco27:
   aload_0

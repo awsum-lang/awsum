@@ -277,7 +277,7 @@
   .method private hidebysig static object v_main() cil managed
   {
     .maxstack 7
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
     ldc.i4.2
     box [System.Runtime]System.Int32
     ldc.i4.1
@@ -375,7 +375,7 @@
   .method private hidebysig static object v__cps__df_andThenIO_0(object,object,object) cil managed
   {
     .maxstack 8
-    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9)
+    .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
   IL_tco_loop:
     ldarg.0
     castclass object[]

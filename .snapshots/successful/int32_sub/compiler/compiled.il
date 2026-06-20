@@ -247,7 +247,7 @@
   .method private hidebysig static object v_render(object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2)
+    .locals init (object[] V_0, object V_1)
     ldarg.0
     castclass object[]
     ldc.i4.0

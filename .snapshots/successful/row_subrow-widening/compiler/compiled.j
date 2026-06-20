@@ -28,8 +28,8 @@
 .end method
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 3
-  .limit locals 5
+  .limit stack 2
+  .limit locals 3
 L_tco0:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -83,8 +83,8 @@ L_tarm1:
 
 
 .method static v_main()Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 11
+  .limit stack 7
+  .limit locals 9
   invokestatic AwsumMain/v_asc()Ljava/lang/Object;
   astore_0
   aload_0
@@ -173,8 +173,8 @@ L_join2:
 
 
 .method static v__cps__df_andThenIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 13
+  .limit stack 7
+  .limit locals 12
 L_tco4:
   aload_0
   checkcast [Ljava/lang/Object;
@@ -361,8 +361,8 @@ L_tarm9:
 
 
 .method static v__cps__df_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 12
-  .limit locals 13
+  .limit stack 7
+  .limit locals 12
 L_tco10:
   aload_0
   checkcast [Ljava/lang/Object;

@@ -25,6 +25,7 @@ module Awsum.Codegen.CLR.Instr
     renderTypeRef,
     renderSigElem,
     maxStackOf,
+    maxLocalsOf,
     int32Ref,
     objectRef,
     strRef,
@@ -216,6 +217,21 @@ data CilMethod = CilMethod
 --   next label. This is exact regardless of base depth, so it handles values
 --   left live across case-arm / join labels (depth 1+), not just depth-0 labels.
 --   @Call@/@Callvirt@ deltas come from the member signature.
+-- | Number of local slots a method body reserves: one past the highest slot
+--   any @ldloc@ / @stloc@ names (CIL locals are one slot each — no @long@/@double@
+--   doubling). Read off the emitted stream, so it tracks the slots the emitter
+--   actually used rather than a second prediction over the source IR. CIL has no
+--   StackMapTable, so — unlike the JVM — there is no frame breadth to also cover;
+--   the @.locals@ vector only needs to span the slots the code touches.
+maxLocalsOf :: [CilInstr] -> Int
+maxLocalsOf = foldl' (\acc i -> max acc (slotsOf i)) 0
+  where
+    slotsOf :: CilInstr -> Int
+    slotsOf = \case
+      Ldloc n -> n + 1
+      Stloc n -> n + 1
+      _ -> 0
+
 maxStackOf :: [CilInstr] -> Int
 maxStackOf = go (Just 0) 0 mempty
   where

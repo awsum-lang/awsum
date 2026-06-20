@@ -330,7 +330,6 @@
   .method private hidebysig static object v_spineLast(object,object) cil managed
   {
     .maxstack 3
-    .locals init (object[] V_0, object V_1, object V_2)
   IL_tco_loop:
     ldarg.0
     castclass object[]
