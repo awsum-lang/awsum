@@ -184,14 +184,16 @@ unify t1 t2 = case (t1, t2) of
   (TyCon _ c1, TyCon _ c2)
     | c1 == c2 -> Right mempty
     | otherwise -> Left (CannotUnify t1 t2)
-  -- Two 'TyEmpty' references unify regardless of declared name. Every
-  -- @empty type@ declaration introduces the same row-identity type up
-  -- to renaming, so the user-side names ('Never', 'Whatever', ...) are
-  -- diagnostic only — the typechecker treats them as a single
-  -- canonical type. 'canonicalLabel' folds them to "_empty" for the
-  -- same reason. Pairing 'TyEmpty' with anything non-'TyEmpty' (other
-  -- than a free 'TyVar', already handled above) is a real mismatch:
-  -- a populated 'TyCon' or row carries values; an empty type has none.
+  -- Two 'TyEmpty' references unify regardless of declared name. An
+  -- @empty type@ is the row identity; the standard library declares the
+  -- one such type, @Never@ (user code may not declare its own — see
+  -- 'Awsum.RestrictEmptyTypeDecls'). The rule still folds any two
+  -- 'TyEmpty's to a single canonical type, so the name is diagnostic
+  -- only and the identity stays robust; 'canonicalLabel' folds them to
+  -- "_empty" for the same reason. Pairing 'TyEmpty' with anything
+  -- non-'TyEmpty' (other than a free 'TyVar', already handled above) is
+  -- a real mismatch: a populated 'TyCon' or row carries values; an
+  -- empty type has none.
   (TyEmpty _ _, TyEmpty _ _) -> Right mempty
   (TyApp _ f1 x1, TyApp _ f2 x2) -> do
     s1 <- unify f1 f2
@@ -253,16 +255,16 @@ rowRetagNeeded src tgt =
 --   nominal heads.
 rowSubsume :: Type' -> Type' -> Bool
 rowSubsume expected actual = case (expected, actual) of
-  -- A 'TyEmpty' (any @empty type X@ declaration — 'Never' in the
-  -- prelude, user-defined ones too) is the row identity: it has no
-  -- inhabitants, so a value typed at it fits any expected position
-  -- vacuously. This is what lets @IO Never X <: IO r X@ for any row
-  -- @r@, so 'IO.Stdout.print' (currently @IO Never Unit@) flows into
-  -- a position expecting an IO with errors without a user-written
-  -- wrapper. Plain @type X@ with zero constructors is uninhabited but
-  -- a 'TyCon', not a 'TyEmpty', and remains a distinct row label —
-  -- the @empty@ keyword on the declaration is what opts the type into
-  -- this rule.
+  -- A 'TyEmpty' (the prelude's @empty type Never@ — the one empty type;
+  -- user code may not declare its own, see 'Awsum.RestrictEmptyTypeDecls')
+  -- is the row identity: it has no inhabitants, so a value typed at it
+  -- fits any expected position vacuously. This is what lets
+  -- @IO Never X <: IO r X@ for any row @r@, so 'IO.Stdout.print'
+  -- (currently @IO Never Unit@) flows into a position expecting an IO
+  -- with errors without a user-written wrapper. Plain @type X@ with zero
+  -- constructors is uninhabited but a 'TyCon', not a 'TyEmpty', and
+  -- remains a distinct row label — the @empty@ keyword on the
+  -- declaration is what opts the type into this rule.
   (_, TyEmpty _ _) -> True
   -- A free tyvar on either side accepts anything: the checker will
   -- have already pinned constraints in the synthesis path; here we

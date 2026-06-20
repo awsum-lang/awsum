@@ -30,7 +30,12 @@ TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , Co
    interchangeable in row positions. The form forbids type parameters
    and constructors (the parser rejects `empty type X a` and
    `empty type X = …`); a plain `type X` with zero constructors stays
-   uninhabited but a distinct row label. *)
+   uninhabited but a distinct row label. The keyword is reserved to the
+   standard library, which declares the one such type — `Never`: an
+   `empty type` in user code parses but is rejected afterwards (every
+   empty type is interchangeable with `Never`, so a user one would only
+   alias it). The production stays here because the grammar describes what
+   the parser accepts. *)
 EmptyTypeDecl       = "empty" , "type" , UIdent , [ TrailingLineComment ] ;
 ConDef              = UIdent , { TypeAtom } ;
 

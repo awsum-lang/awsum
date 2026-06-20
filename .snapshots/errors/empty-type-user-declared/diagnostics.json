@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":9,"startCol":1,"endLine":9,"endCol":20,"message":"'empty type' may not be declared in user code: 'Never' is the standard library's single empty type (the row identity). Use 'Never' where you need it, or a plain 'type Whatever' for a distinct uninhabited type","fixes":[]}]

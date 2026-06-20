@@ -64,6 +64,7 @@ import Data.Set qualified as S
 import Data.Text qualified as T
 import Numeric (showHex)
 import Relude
+import Relude.Extra.Bifunctor (firstF)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- 'Check' monad
@@ -875,7 +876,47 @@ markEmptyTypesInDecl emptyNames = \case
     where
       markCon (ConDef cSp cName flds) =
         ConDef cSp cName (map (markEmptyType emptyNames) flds)
-  d@FunDef {} -> d
+  -- A function body carries type annotations the user wrote inline —
+  -- ascriptions @(e : T)@, @let n : T = …@, lambda-parameter annotations
+  -- @\\(x : T) -> …@, ascribed patterns @(p : T)@. An empty type ('Never')
+  -- named in one of those must be rewritten to 'TyEmpty' just like in a
+  -- signature; otherwise it stays a 'TyCon' that no longer matches the
+  -- same name a signature carries as 'TyEmpty', so a row position fails to
+  -- unify against itself (rendering identically — @Never | A@ vs
+  -- @Never | A@ — while one is 'TyEmpty' and the other 'TyCon').
+  FunDef sp n ps body tc doc ->
+    FunDef sp n (map markParam ps) (markExpr body) tc doc
+    where
+      markT = markEmptyType emptyNames
+      markExpr = \case
+        EVar sp' q -> EVar sp' q
+        EApp sp' f x -> EApp sp' (markExpr f) (markExpr x)
+        EInfix sp' op l r -> EInfix sp' op (markExpr l) (markExpr r)
+        EParens sp' e -> EParens sp' (markExpr e)
+        ELit sp' l -> ELit sp' l
+        ECon sp' c -> ECon sp' c
+        ECase sp' scrut alts cs -> ECase sp' (markExpr scrut) (fmap markAlt alts) cs
+        EBuiltIn sp' bn -> EBuiltIn sp' bn
+        ELam sp' params bdy -> ELam sp' (map markParam params) (markExpr bdy)
+        EDo sp' stmts -> EDo sp' (map markStmt stmts)
+        ELet sp' pat mAnnot rhs bdy ->
+          ELet sp' (markPat pat) (firstF markT mAnnot) (markExpr rhs) (markExpr bdy)
+        EAscribe sp' e t -> EAscribe sp' (markExpr e) (markT t)
+      markParam = \case
+        Param sp' nm -> Param sp' nm
+        ParamPat sp' pat -> ParamPat sp' (markPat pat)
+      markPat = \case
+        PCon sp' nm flds -> PCon sp' nm (map markPat flds)
+        PVar sp' nm -> PVar sp' nm
+        PWild sp' -> PWild sp'
+        PAscribe sp' inner t -> PAscribe sp' (markPat inner) (markT t)
+      markAlt = \case
+        CaseAltLeaf cs pat e mt -> CaseAltLeaf cs (markPat pat) (markExpr e) mt
+        CaseAltBlock cs pat e -> CaseAltBlock cs (markPat pat) (markExpr e)
+      markStmt = \case
+        DoBind sp' pat e -> DoBind sp' (markPat pat) (markExpr e)
+        DoLet sp' pat mAnnot e -> DoLet sp' (markPat pat) (firstF markT mAnnot) (markExpr e)
+        DoExpr sp' e -> DoExpr sp' (markExpr e)
   d@CommentDecl {} -> d
 
 -- | Build the return type of a constructor given the type name and type parameters.

@@ -20,7 +20,6 @@ import Awsum.Lsp (runLspServer)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Program (ProgramType, parseProgramType)
-import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain)
@@ -278,7 +277,7 @@ runCommand = \case
   CmdCore filePath progType -> do
     verifyPreludeOrDie progType
     userProg <- parseFileOrDie filePath
-    checkPreludeRefsOrDie filePath userProg
+    checkUserRestrictionsOrDie filePath userProg
     let prog = withPrelude userProg
     case elaborateLowerProgram progType prog of
       Left err -> die $ toString (prettyPrintTypeError err)
@@ -453,7 +452,7 @@ compileToCoreOrDie :: ProgramType -> FilePath -> IO (PreludeTags, CoreProgram)
 compileToCoreOrDie progType filePath = do
   verifyPreludeOrDie progType
   userProg <- parseFileOrDie filePath
-  checkPreludeRefsOrDie filePath userProg
+  checkUserRestrictionsOrDie filePath userProg
   let prog = withPrelude userProg
   case requireMain prog of
     Left err -> dieWithTypeError filePath err
@@ -477,16 +476,18 @@ verifyPreludeOrDie progType = case verifyPrelude progType of
       $ "Internal compiler error: stdlib/Prelude.aww failed to typecheck:\n"
       <> prettyPrintTypeError err
 
--- | Reject user-source references to prelude-private names (the
---   constructors of @type IO@ and @runIO@). Runs after parse, before
---   'withPrelude' splices the prelude in, so the diagnostic precedes
---   any \"Unbound name\" cascade the typechecker would otherwise emit
---   for the same identifier. Idempotent on the prelude itself; see
---   "Awsum.RestrictPreludeRefs".
-checkPreludeRefsOrDie :: FilePath -> Program -> IO ()
-checkPreludeRefsOrDie filePath userProg = case restrictPreludeRefs userProg of
-  [] -> pass
-  vs -> dieWithDiagnostics filePath (map preludeRefViolationToDiagnostic vs)
+-- | Reject the constructs user code may not use, before the prelude is
+--   merged in: references to prelude-private names (the constructors of
+--   @type IO@ and @runIO@) and user-declared @empty type@s. Runs after
+--   parse, before 'withPrelude' splices the prelude in, so the diagnostic
+--   precedes any \"Unbound name\" cascade the typechecker would otherwise
+--   emit. Idempotent on the prelude itself; see
+--   'Awsum.Diagnostic.userProgramRestrictionDiagnostics'.
+checkUserRestrictionsOrDie :: FilePath -> Program -> IO ()
+checkUserRestrictionsOrDie filePath userProg =
+  case userProgramRestrictionDiagnostics userProg of
+    [] -> pass
+    ds -> dieWithDiagnostics filePath ds
 
 -- | Render warnings on stderr in human-readable form so build/run/asm
 --   commands surface them without breaking their stdout contract.
@@ -530,8 +531,8 @@ runCheck filePath progType useJson strict = do
   -- through the same 'Either' channel.
   let result = case parseProgramDiagnostic src of
         Left parseErrs -> Left (map parseErrorToDiagnostic parseErrs)
-        Right userProg -> case restrictPreludeRefs userProg of
-          vs@(_ : _) -> Left (map preludeRefViolationToDiagnostic vs)
+        Right userProg -> case userProgramRestrictionDiagnostics userProg of
+          ds@(_ : _) -> Left ds
           [] ->
             case elaborateLowerProgram progType (withPrelude userProg) of
               Left typeErr -> Left [typeErrorToDiagnostic typeErr]

@@ -82,6 +82,7 @@ library
       Awsum.Program
       Awsum.Program.Cli
       Awsum.Render
+      Awsum.RestrictEmptyTypeDecls
       Awsum.RestrictPreludeRefs
       Awsum.Reuse
       Awsum.Scc

@@ -5,7 +5,6 @@ import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
-import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Typing (requireMain)
 import Common.File
 import Matchers
@@ -33,8 +32,8 @@ testError testName = do
         src <- readFileTextUtf8 $ sourcesDir </> testName </> "code" </> "Main.aww"
         pure $ diagnosticsToJson $ case parseProgramDiagnostic src of
           Left parseErrs -> map parseErrorToDiagnostic parseErrs
-          Right userProg -> case restrictPreludeRefs userProg of
-            vs@(_ : _) -> map preludeRefViolationToDiagnostic vs
+          Right userProg -> case userProgramRestrictionDiagnostics userProg of
+            ds@(_ : _) -> ds
             [] ->
               let prog = withPrelude userProg
                in case elaborateLowerProgram ProgramCli prog of
