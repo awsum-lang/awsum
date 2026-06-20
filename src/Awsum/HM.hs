@@ -276,9 +276,20 @@ rowSubsume expected actual = case (expected, actual) of
   -- by an expected row containing @Maybe (Bool | Unit)@: outer
   -- @Maybe ~ Maybe@ matches as TyApp, inner @Bool ⊆ (Bool | Unit)@
   -- via the recursive call into 'rowSubsume'.
-  (TyOr {}, _) -> all (\al -> any (`rowSubsume` al) exLabels) (flattenRow actual)
-    where
-      exLabels = flattenRow expected
+  (TyOr {}, _) ->
+    -- An exact canonical-label hit — the common case, since widening,
+    -- narrowing and reordering all leave a label's canonical form intact
+    -- — is resolved by one 'Set' lookup before the structural scan: a
+    -- canonical-equal expected label subsumes @al@ by reflexivity, so the
+    -- lookup only ever skips the scan, never changes the verdict. The
+    -- O(N) scan still runs for genuinely-subsumed-but-not-equal labels
+    -- (an inner row that grew — @Maybe Bool@ fitting an expected
+    -- @Maybe (Bool | Unit)@), keeping those cases exact.
+    let exLabels = flattenRow expected
+        exSet = S.fromList (map canonicalLabel exLabels)
+     in all
+          (\al -> S.member (canonicalLabel al) exSet || any (`rowSubsume` al) exLabels)
+          (flattenRow actual)
   -- Row on actual but not expected: a multi-label value cannot flow
   -- into a single-label position.
   (_, TyOr {}) -> False
@@ -309,7 +320,24 @@ unifyRows lhs rhs =
       rs = flattenRow rhs
       mismatch = Left (CannotUnify lhs rhs)
    in if length ls == length rs
-        then goMatch mismatch ls rs mempty
+        then
+          -- Ground fast path. When neither flattened side carries a free
+          -- tyvar, every successful 'unify' yields the identity
+          -- substitution, so the equal-cardinality match collapses to
+          -- multiset equality of canonical labels: a perfect matching
+          -- exists iff the two label multisets agree. 'goMatch' would
+          -- rediscover that matching by an O(N²) greedy scan — worst case
+          -- when the rows list the same labels in opposite order. Sorting
+          -- canonical labels decides it in O(N log N) with the identical
+          -- verdict. 'canonicalLabel' folds empty-type names and sorts
+          -- nested 'TyOr's exactly as 'unify' treats them as
+          -- interchangeable, so set-equal ground rows agree here too.
+          if all isGround ls && all isGround rs
+            then
+              if sort (map canonicalLabel ls) == sort (map canonicalLabel rs)
+                then Right mempty
+                else mismatch
+            else goMatch mismatch ls rs mempty
         else absorbAndMatch lhs rhs ls rs mismatch
 
 -- | Length-mismatch path of 'unifyRows'. The two flattened, deduped
@@ -381,6 +409,14 @@ absorbAndMatch lhs rhs ls rs mismatch =
 isRowTyVar :: Type' -> Bool
 isRowTyVar (TyVar _ _) = True
 isRowTyVar _ = False
+
+-- | True when a type carries no free type variables — every label is a
+--   fully-determined ground type. The ground fast path in 'unifyRows'
+--   uses it: with no tyvar to bind, a successful 'unify' between two
+--   labels yields the identity substitution, so equal-cardinality row
+--   unification reduces to multiset equality of canonical labels.
+isGround :: Type' -> Bool
+isGround = S.null . collectTypeVars
 
 -- | Bind a 'TyVar'-shaped row element to a target type. No-op when the
 --   element isn't actually a tyvar — defensive against caller mistakes.

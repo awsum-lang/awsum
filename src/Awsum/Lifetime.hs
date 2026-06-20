@@ -511,6 +511,11 @@ soleScrutineeUse v e0 = not (reboundIn e0) && counts True e0 == (1, 0, 1)
       CCase (CVar s) alts
         | s == v -> foldl' addC (1, 0 :: Int, if spine then 1 else 0) [counts False b | (_, _, b) <- alts]
       CCase s alts -> foldl' addC (counts spine s) [counts False b | (_, _, b) <- alts]
+      -- No symmetric @CRowCase (CVar v)@ branch on purpose: the spine flag
+      -- (third component) exists only to mark a sink-then-reuse target, and
+      -- 'Awsum.Reuse' never reuses a row scrutinee cell ('reuseArm' fires under
+      -- 'CCase' only — see 'scrutReuseEligible'). A row scrutinee stays
+      -- scope-wrapped, which is all its drop needs.
       CRowCase s alts -> foldl' addC (counts spine s) [counts False b | (_, _, b) <- alts]
       CLet _ rhs b -> addC (counts spine rhs) (counts spine b)
       CJoin _ _ body inner -> addC (counts False body) (counts spine inner)
