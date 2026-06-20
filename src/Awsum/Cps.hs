@@ -189,10 +189,9 @@ goTail env = go
             pure (t, vs, b')
           pure (CCase scrutVal alts')
       -- Tail row-case (structural sum): same shape as the nominal 'CCase'
-      -- above — scrutinee non-tail, each arm body in tail position. Without
-      -- this arm a tail-position row-case falls to the 'other' catch-all,
-      -- which wraps the whole case (self-call and all) in 'applyK' and leaves
-      -- a buried non-tail self-call un-CPS'd.
+      -- above — scrutinee non-tail, each arm body in tail position, so a buried
+      -- self-call in an arm is CPS'd instead of being wrapped whole in 'applyK'
+      -- with the self-call left un-CPS'd.
       CRowCase scrut alts ->
         goNonTail env scrut $ \scrutVal -> do
           alts' <- forM alts $ \(t, v, b) -> do
@@ -209,13 +208,26 @@ goTail env = go
           pure (applyK env (CCon tag fieldVals))
       -- Tail row injection: the injected value is the only sub-expression,
       -- like a one-field 'CCon' — evaluate it non-tail so a buried self-call
-      -- is CPS'd, then apply the continuation to the tagged value. Identical
-      -- to the 'other' catch-all when the value harbours no self-call.
+      -- is CPS'd, then apply the continuation to the tagged value.
       CRow tag v ->
         goNonTail env v $ \vVal ->
           pure (applyK env (CRow tag vVal))
-      -- Tail trivial: pass straight to apply.
-      other -> pure (applyK env other)
+      -- Tail trivial leaves: hand the value straight to the continuation.
+      e@(CVar _) -> pure (applyK env e)
+      e@(CString _) -> pure (applyK env e)
+      e@(CIntLit _ _) -> pure (applyK env e)
+      e@(CBuiltIn _) -> pure (applyK env e)
+      -- Impossible in Cps's input: every node below is minted by a later pass
+      -- (see 'goNonTail'). Enumerated so a catch-all can't silently wrap one in
+      -- 'applyK' and bury a self-call sitting in its tail sub-position.
+      CLoop _ -> error "Awsum.Cps: CLoop reached goTail — Cps must run before Tco"
+      CContinue _ -> error "Awsum.Cps: CContinue reached goTail — Cps must run before Tco"
+      CDrop {} -> error "Awsum.Cps: CDrop reached goTail — Cps must run before insertDrops"
+      CReuse {} -> error "Awsum.Cps: CReuse reached goTail — Cps must run before insertReuse"
+      CLet {} -> error "Awsum.Cps: CLet reached goTail — Cps must run before Simplify"
+      CProj {} -> error "Awsum.Cps: CProj reached goTail — Cps must run before Simplify"
+      CJoin {} -> error "Awsum.Cps: CJoin reached goTail — Cps must run before Simplify"
+      CJump {} -> error "Awsum.Cps: CJump reached goTail — Cps must run before Simplify"
 
 -- | Build @$apply$f $k e@.
 applyK :: CpsEnv -> CExpr -> CExpr
@@ -251,8 +263,6 @@ goNonTail env expr kont = case expr of
   CString _ -> kont expr
   CIntLit _ _ -> kont expr
   CBuiltIn _ -> kont expr
-  CProj _ _ -> kont expr -- trivial: a pure field read, no buried self-call
-  CLet {} -> error "Cps goNonTail: CLet is handled in core-simplifier step 2 (CPS over ANF)"
   -- Non-self call: evaluate args in non-tail, then synchronous call.
   CCall (CVar n) args
     | n == env.cpsSelfF ->
@@ -312,23 +322,26 @@ goNonTail env expr kont = case expr of
         b' <- goNonTail env b kont
         pure (t, v, b')
       pure (CRowCase scrutVal alts')
-  -- 'CLoop' / 'CContinue' are produced by 'Awsum.Tco' /after/ this
-  -- pass, so seeing them here would be a pipeline bug.
+  -- Every constructor below is minted by a /later/ pass, so reaching it in
+  -- Cps's input is a pipeline bug. Enumerated (no catch-all) so a future
+  -- 'CExpr' node surfaces as an incomplete-pattern failure, not a silent slip.
+  --
+  -- 'CLoop' / 'CContinue' are produced by 'Awsum.Tco' /after/ this pass.
   CLoop _ ->
     error "Awsum.Cps: CLoop reached goNonTail — Cps must run before Tco"
   CContinue _ ->
     error "Awsum.Cps: CContinue reached goNonTail — Cps must run before Tco"
-  -- 'CDrop' is produced by 'Awsum.Lifetime.insertDrops' /after/ Tco,
-  -- so seeing it here would also be a pipeline bug.
+  -- 'CDrop' is produced by 'Awsum.Lifetime.insertDrops' /after/ Tco.
   CDrop {} ->
     error "Awsum.Cps: CDrop reached goNonTail — Cps must run before insertDrops"
-  -- 'CReuse' is produced by 'Awsum.Reuse.insertReuse' /after/
-  -- insertDrops (which is after Tco, which is after Cps), so seeing
-  -- it here would also be a pipeline bug.
+  -- 'CReuse' is produced by 'Awsum.Reuse.insertReuse' /after/ insertDrops.
   CReuse {} ->
     error "Awsum.Cps: CReuse reached goNonTail — Cps must run before insertReuse"
-  -- 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' /after/ Tco, so
-  -- seeing them here would also be a pipeline bug.
+  -- 'CLet' / 'CProj' / 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' /after/ Tco.
+  CLet {} ->
+    error "Awsum.Cps: CLet reached goNonTail — Cps must run before Simplify"
+  CProj {} ->
+    error "Awsum.Cps: CProj reached goNonTail — Cps must run before Simplify"
   CJoin {} ->
     error "Awsum.Cps: CJoin reached goNonTail — Cps must run before Simplify"
   CJump {} ->

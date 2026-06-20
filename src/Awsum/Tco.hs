@@ -52,12 +52,31 @@ rewriteTail fn = go
             alts' = [(tag, v, body') | (tag, v, (body', _)) <- results]
             anyChanged = any (\(_, _, (_, c)) -> c) results
          in (CRowCase scrut alts', anyChanged)
-      -- A 'CLet' in tail position has @body@ as its tail; @rhs@ is non-tail
-      -- (a self-call there must stay a 'CCall', not become a 'CContinue'),
-      -- so only @body@ is rewritten. Matches the tail/non-tail split
-      -- documented on 'CLet' in "Awsum.Core". (No pass emits 'CLet' before
-      -- 'Awsum.Tco' today; this keeps the traversal honest for that step.)
-      CLet x rhs body ->
-        let (body', changed) = go body
-         in (CLet x rhs body', changed)
-      other -> (other, False)
+      -- Tail leaves: a non-self 'CCall', a 'CCon' / 'CRow', or an atom is the
+      -- function's result value, and its sub-expressions are non-tail (a
+      -- self-call there stays a 'CCall'), so there is nothing to rewrite.
+      e@(CCall _ _) -> (e, False)
+      e@(CCon _ _) -> (e, False)
+      e@(CRow _ _) -> (e, False)
+      e@(CVar _) -> (e, False)
+      e@(CString _) -> (e, False)
+      e@(CIntLit _ _) -> (e, False)
+      e@(CBuiltIn _) -> (e, False)
+      -- Every node below is minted by a /later/ pass, so reaching it in Tco's
+      -- input is a pipeline bug. Enumerated (no catch-all): a uniform policy
+      -- with 'Awsum.Cps', and a guard that a future 'CExpr' node can't be
+      -- silently leafed. The sharp case is 'CJoin' — a tail self-call in its
+      -- body left un-rewritten would stay a 'CCall' past 'StackSafety', i.e.
+      -- unbounded stack on JVM/JS.
+      --
+      -- 'CLoop' / 'CContinue' are produced by this pass; 'CDrop' / 'CReuse' by
+      -- 'Awsum.Lifetime' / 'Awsum.Reuse' after it.
+      CLoop _ -> error "Awsum.Tco: CLoop reached rewriteTail — Tco is its only producer"
+      CContinue _ -> error "Awsum.Tco: CContinue reached rewriteTail — Tco is its only producer"
+      CDrop {} -> error "Awsum.Tco: CDrop reached rewriteTail — Tco must run before insertDrops"
+      CReuse {} -> error "Awsum.Tco: CReuse reached rewriteTail — Tco must run before insertReuse"
+      -- 'CLet' / 'CProj' / 'CJoin' / 'CJump' are minted by 'Awsum.Simplify' after Tco.
+      CLet {} -> error "Awsum.Tco: CLet reached rewriteTail — Tco must run before Simplify"
+      CProj {} -> error "Awsum.Tco: CProj reached rewriteTail — Tco must run before Simplify"
+      CJoin {} -> error "Awsum.Tco: CJoin reached rewriteTail — Tco must run before Simplify"
+      CJump {} -> error "Awsum.Tco: CJump reached rewriteTail — Tco must run before Simplify"

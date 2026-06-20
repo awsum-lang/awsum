@@ -7,7 +7,10 @@
 --   are therefore exercised on synthetic 'CExpr' here, the same way
 --   'jsSyntaxSpec' exercises a renderer path the codegen builder never emits.
 --   'effectfulIn' is exercised here too, for the distinct latent reason
---   spelled out on 'effectfulInSpec' below.
+--   spelled out on 'effectfulInSpec' below. The 'pipelineNodeGuardSpec'
+--   assertions ride the same rationale — that 'Awsum.Cps' / 'Awsum.Tco'
+--   /raise/ on a node 'Awsum.Simplify' mints, unreachable from any .aww
+--   program.
 --
 --   The load-bearing assertions are the @CDrop@ ones: the previous
 --   'Awsum.Cps.alphaRename' treated @CDrop n@ as a /binder/ of @n@ (renaming
@@ -18,8 +21,13 @@ module Awsum.CoreSpec (spec) where
 
 import Awsum.BuiltIn (builtIns, effectfulBuiltIns)
 import Awsum.Core
+import Awsum.Cps (cpsProgram)
+import Awsum.Syntax (Name)
+import Awsum.Tco (tcoProgram)
+import Control.Exception (ErrorCall (..))
 import Data.Map.Strict qualified as M
 import Data.Set qualified as Set
+import Data.Text qualified as T
 import Relude
 import Test.Hspec
 
@@ -29,6 +37,7 @@ spec = do
   freeVarsSpec
   childrenSpec
   effectfulInSpec
+  pipelineNodeGuardSpec
 
 renameVarSpec :: Spec
 renameVarSpec = describe "Awsum.Core.renameVar" $ do
@@ -141,3 +150,73 @@ effectfulInSpec = describe "Awsum.Core.effectfulIn" $ do
   it "is False for a pure expression with no built-in call"
     $ effectfulIn (CCase (CVar "s") [(1, ["v"], CVar "v"), (2, [], CIntLit 0 TInt32)])
     `shouldBe` False
+
+-- | Force a Core program deep enough to raise a buried pipeline-bug 'error':
+--   'show' walks the whole tree, 'length' forces every character of it.
+forceProgram :: CoreProgram -> IO Int
+forceProgram p = evaluateWHNF (length (show p :: String))
+
+-- | A 'shouldThrow' selector matching an 'ErrorCall' whose message contains
+--   @needle@ — enough to pin which arm fired, without nailing the full wording.
+errorContaining :: Text -> Selector ErrorCall
+errorContaining needle (ErrorCall msg) = needle `T.isInfixOf` toText msg
+
+-- | 'Awsum.Cps' and 'Awsum.Tco' run before 'Awsum.Simplify', so their input
+--   never carries the nodes Simplify mints ('CLet' / 'CProj' / 'CJoin' /
+--   'CJump'). Both passes enumerate every 'CExpr' constructor and reject those
+--   four loudly instead of leafing them through a catch-all. The hazard this
+--   guards is concrete: were 'Awsum.Tco' ever reordered after Simplify, a tail
+--   self-call inside a 'CJoin' body left un-rewritten would stay a 'CCall' past
+--   'Awsum.StackSafety' and blow the stack on JVM/JS. Compile-time
+--   exhaustiveness already forces every constructor to be /handled/; these
+--   assertions add what it cannot see — that the arm /raises/ rather than
+--   quietly returning a value, the exact regression the original defect was.
+--   Synthetic 'CExpr', because no .aww program can route a post-Simplify node
+--   into a pre-Simplify pass.
+pipelineNodeGuardSpec :: Spec
+pipelineNodeGuardSpec = do
+  describe "Awsum.Tco.tcoProgram rejects post-Simplify nodes (CJoin the sharp one)"
+    $ for_ minted
+    $ \(label, node) ->
+      it ("raises on " <> label <> " in tail position")
+        $ forceProgram (tcoProgram (oneFn [] node))
+        `shouldThrow` errorContaining (toText label <> " reached rewriteTail")
+
+  describe "Awsum.Cps.cpsProgram rejects post-Simplify nodes" $ do
+    for_ minted $ \(label, node) ->
+      it ("raises on " <> label <> " in non-tail position (goNonTail)")
+        $ forceProgram (cpsProgram (oneFn ["x"] (besideNonTailSelfCall node)))
+        `shouldThrow` errorContaining (toText label <> " reached goNonTail")
+
+    it "raises on a CJoin reached in tail position (goTail)"
+      $ forceProgram (cpsProgram (oneFn ["x"] (tailArmBesideSelfCall (CJoin "$j" [] (CVar "y") (CVar "z")))))
+      `shouldThrow` errorContaining "CJoin reached goTail"
+  where
+    -- The four nodes 'Awsum.Simplify' mints, each a minimal instance — only the
+    -- constructor reaches the rejecting arm, so well-formedness is irrelevant.
+    minted :: [(String, CExpr)]
+    minted =
+      [ ("CLet", CLet "v" (CIntLit 0 TInt32) (CVar "v")),
+        ("CProj", CProj "x" 0),
+        ("CJoin", CJoin "$j" [] (CVar "y") (CVar "z")),
+        ("CJump", CJump "$j" [CVar "y"])
+      ]
+
+    oneFn :: [Name] -> CExpr -> CoreProgram
+    oneFn ps body = CoreProgram [CFunDef "f" ps body]
+
+    -- A non-tail self-call (so 'cpsProgram' transforms the body at all) sitting
+    -- in a 'CCon' field beside the node; both fields are non-tail, so the node
+    -- reaches 'goNonTail'.
+    besideNonTailSelfCall :: CExpr -> CExpr
+    besideNonTailSelfCall node = CCon 0 [CCall (CVar "f") [CVar "x"], node]
+
+    -- A non-tail self-call in one case arm forces CPS; the node sits in the
+    -- sibling arm's tail position, where 'goTail' walks it.
+    tailArmBesideSelfCall :: CExpr -> CExpr
+    tailArmBesideSelfCall node =
+      CCase
+        (CVar "x")
+        [ (0, [], CCon 0 [CCall (CVar "f") [CVar "x"]]),
+          (1, [], node)
+        ]
