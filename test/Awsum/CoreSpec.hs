@@ -6,6 +6,8 @@
 --   such pass, so no snapshot or property program can reach it. The functions
 --   are therefore exercised on synthetic 'CExpr' here, the same way
 --   'jsSyntaxSpec' exercises a renderer path the codegen builder never emits.
+--   'effectfulIn' is exercised here too, for the distinct latent reason
+--   spelled out on 'effectfulInSpec' below.
 --
 --   The load-bearing assertions are the @CDrop@ ones: the previous
 --   'Awsum.Cps.alphaRename' treated @CDrop n@ as a /binder/ of @n@ (renaming
@@ -14,7 +16,9 @@
 --   reclaiming the wrong (or a freed) cell on the reference-counted backends.
 module Awsum.CoreSpec (spec) where
 
+import Awsum.BuiltIn (builtIns, effectfulBuiltIns)
 import Awsum.Core
+import Data.Map.Strict qualified as M
 import Data.Set qualified as Set
 import Relude
 import Test.Hspec
@@ -24,6 +28,7 @@ spec = do
   renameVarSpec
   freeVarsSpec
   childrenSpec
+  effectfulInSpec
 
 renameVarSpec :: Spec
 renameVarSpec = describe "Awsum.Core.renameVar" $ do
@@ -97,3 +102,42 @@ childrenSpec = describe "Awsum.Core.children" $ do
     -- 'children', so callee-before-args must survive the refactor.
     reusedBinders (CCall (CReuse ReuseUnique "a" 1 []) [CReuse ReuseUnique "b" 1 []])
     `shouldBe` ["a", "b"]
+
+-- | 'effectfulIn' must flag exactly the built-ins the 'Awsum.BuiltIn'
+--   registry marks 'Effectful', and nothing else — the property that keeps
+--   'Awsum.Simplify' from deleting a platform effect it mistook for pure.
+--   The defect is latent: today the effectful primitives are precisely the
+--   four @internal*@ built-ins, so the old hardcoded list in 'effectfulIn' and
+--   the registry happened to agree. A fifth platform effect added only to the
+--   registry would, under that hardcoded list, slip past 'effectfulIn' and be
+--   dropped with every backend's stdout still identical — invisible to the
+--   snapshot and property suites. Deriving the set from the registry
+--   ('effectfulBuiltIns') closes the hole; this spec is the tripwire if
+--   'effectfulIn' ever regrows a parallel list. Synthetic 'CExpr', because no
+--   .aww program reaches the divergence (the fifth effect doesn't exist yet).
+effectfulInSpec :: Spec
+effectfulInSpec = describe "Awsum.Core.effectfulIn" $ do
+  -- A bare CBuiltIn only ever appears in CCall function position (the CExpr
+  -- invariants), so feed well-formed calls.
+  let callOf n = CCall (CBuiltIn n) []
+      pureBuiltInNames = Set.toList (M.keysSet builtIns `Set.difference` effectfulBuiltIns)
+
+  it "flags every built-in the registry marks Effectful"
+    $ for_ (Set.toList effectfulBuiltIns) (\n -> effectfulIn (callOf n) `shouldBe` True)
+
+  it "flags no built-in the registry marks Pure"
+    $ for_ pureBuiltInNames (\n -> effectfulIn (callOf n) `shouldBe` False)
+
+  it "has a non-empty effectful set anchored at a known I/O primitive" $ do
+    -- Catches a catastrophic "everything marked Pure" regression and ties the
+    -- derived set to a concrete real effect.
+    Set.null effectfulBuiltIns `shouldBe` False
+    Set.member "internalStdoutPrint" effectfulBuiltIns `shouldBe` True
+
+  it "finds an effectful call nested inside a case arm"
+    $ effectfulIn (CCase (CVar "s") [(1, [], callOf "internalStdoutPrint"), (2, [], CVar "x")])
+    `shouldBe` True
+
+  it "is False for a pure expression with no built-in call"
+    $ effectfulIn (CCase (CVar "s") [(1, ["v"], CVar "v"), (2, [], CIntLit 0 TInt32)])
+    `shouldBe` False

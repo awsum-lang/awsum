@@ -36,6 +36,7 @@ module Awsum.Core
   )
 where
 
+import Awsum.BuiltIn (effectfulBuiltIns)
 import Awsum.Syntax (Name)
 import Data.Set qualified as Set
 import Relude
@@ -384,8 +385,8 @@ binderUsedIn v = go
       CBuiltIn _ -> False
 
 -- | Does evaluating this expression perform I/O — does it call one of the
---   platform-effect primitives? The four @internal*@ built-ins are the
---   only calls in Core whose evaluation is observable: user-facing
+--   platform-effect primitives? The @internal*@ built-ins 'runIO' invokes
+--   are the only calls in Core whose evaluation is observable: user-facing
 --   platform effects are lowered to constructor cells (effects are data),
 --   and the primitives survive only inside @runIO@'s walker, where the
 --   call /is/ the effect. Everything else is pure — droppable when unused
@@ -394,15 +395,18 @@ binderUsedIn v = go
 --   case's scrutinee, a dead let's right-hand side, an unused inline
 --   argument, a dropped known-constructor field) and the JS codegen's
 --   parameter-rebind scheduling.
+--
+--   The effectful set is 'Awsum.BuiltIn.effectfulBuiltIns', derived from
+--   the per-entry 'Effectful' flag in the built-in registry — so a new
+--   platform primitive is covered the moment it's declared, with no
+--   parallel list here to keep in sync.
 effectfulIn :: CExpr -> Bool
 effectfulIn = goE
   where
-    effectful :: Set Name
-    effectful = Set.fromList ["internalStdoutPrint", "internalGetArgs", "internalStdinReadAllString", "internalStdinReadAllBytes"]
     goE e = self || any goE (children e)
       where
         self = case e of
-          CBuiltIn n -> n `Set.member` effectful
+          CBuiltIn n -> n `Set.member` effectfulBuiltIns
           _ -> False
 
 -- | Every binder whose cell a 'CReuse' inside this expression overwrites.
