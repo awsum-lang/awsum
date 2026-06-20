@@ -1,0 +1,10 @@
+{- Error: an unknown type constructor nested inside a known one. Field
+   resolution recurses through type application, so `Bogus` is rejected
+   even though it sits as the argument of the existing `Maybe`. -}
+
+import IO.Stdout
+
+type Holder = Holder (Maybe Bogus)
+
+main : IO Never Unit
+main = IO.Stdout.print "x"

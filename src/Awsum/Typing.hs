@@ -273,6 +273,15 @@ data TypeError
     UnnamedTypeParameter SrcSpan
   | -- | Two type parameters of the same type declaration share a name.
     DuplicateTypeParameter SrcSpan Name
+  | -- | A type parameter's name is @_@ followed by an uppercase letter
+    --   (e.g. @_T@). Such a name lexes as a type /constructor/ in any
+    --   use position, so the parameter could never be referenced as a
+    --   type variable in a constructor field — it is unusable by
+    --   construction. (A bare uppercase name like @T@ is already rejected
+    --   by the parser, which only accepts a lowercase- or @_@-initial
+    --   binder; @_@-then-uppercase is the one shape that slips through.)
+    --   Span covers just the parameter identifier.
+    UppercaseTypeParameter SrcSpan Name
   | -- | A constructor field references a type variable that is not in
     --   the type declaration's parameter list. Without this check the
     --   typechecker would silently treat the free variable as a fresh
@@ -468,6 +477,7 @@ typeErrorSpan = \case
   ReferencingIgnoredTypeVar sp _ -> Just sp
   UnnamedTypeParameter sp -> Just sp
   DuplicateTypeParameter sp _ -> Just sp
+  UppercaseTypeParameter sp _ -> Just sp
   UnknownTypeVariable sp _ -> Just sp
   UnnamedType sp -> Just sp
   UnnamedConstructor sp -> Just sp
@@ -601,6 +611,8 @@ prettyPrintTypeError = \case
     "Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused"
   DuplicateTypeParameter _ n ->
     "Duplicate type parameter: '" <> n <> "' is already declared in this type"
+  UppercaseTypeParameter _ n ->
+    "Type parameter '" <> n <> "' starts with '_' and an uppercase letter, so it reads as a type constructor and can never be used as a type variable. Use a lowercase name like '_t' (intentionally unused) or 't'."
   UnknownTypeVariable _ n ->
     "Unknown type variable: '" <> n <> "' is not declared as a type parameter"
   UnnamedType _ ->
@@ -961,10 +973,16 @@ type TypeConsMap = M.Map Name [Name]
 buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
   let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ _ _ <- decls]
+      -- Every declared type name, needed up front so a field referencing
+      -- a type declared later in the program still resolves (forward
+      -- reference). This is the same set the signature path validates
+      -- against — it is recomputed as 'typeNames' below for the return.
+      allTypeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDecls]
   -- Validate each declaration before building anything else:
   --   • bare '_' as type or constructor name — rejected;
-  --   • bare '_' or duplicate type-parameter names — rejected;
-  --   • '_foo' type-variable references inside constructor fields — rejected.
+  --   • bare '_', '_'-uppercase, or duplicate type-parameter names — rejected;
+  --   • '_foo' type-variable references inside constructor fields — rejected;
+  --   • unknown / '_'-prefixed type constructors in fields — rejected.
   forM_ typeDecls $ \(sp, n, tvs, cs) -> do
     -- The TypeDecl span starts at the @type@ keyword; the name sits
     -- @length "type "@ chars later (formatter guarantees this shape).
@@ -973,7 +991,7 @@ buildConEnv decls = do
     when (n == "_") $ Left (UnnamedType nameSp)
     forM_ cs $ \(ConDef cSp cName _) ->
       when (cName == "_") $ Left (UnnamedConstructor cSp)
-    validateTypeParams sp tvs cs
+    validateTypeParams allTypeNames sp tvs cs
   -- 'tvs' here is already reduced to bare names — the per-parameter spans
   -- only matter for the unused-type-parameter warning (emitted separately).
   let typeDefs = [(sp, n, map paramName tvs, cs) | (sp, n, tvs, cs) <- typeDecls]
@@ -1020,38 +1038,71 @@ buildConEnv decls = do
            in Right (M.insert cName (ConInfo tName tvs (concat flds) siblings cSp) m)
 
 -- | Validate a single type declaration's parameter list and constructor
---   field types. Enforces four invariants:
+--   field types. @allTypeNames@ is the set of every type name declared
+--   in the program (the same set the signature path resolves against).
+--   Enforces six invariants:
 --
 --     1. Every parameter has a name; bare @_@ is rejected ('UnnamedTypeParameter').
---     2. No two parameters share a name ('DuplicateTypeParameter').
---     3. No constructor field mentions an ignored type variable (a
+--     2. No parameter name is @_@ followed by an uppercase letter
+--        ('UppercaseTypeParameter') — such a name lexes as a type
+--        constructor in any use position, so the parameter could never
+--        be referenced as a type variable in a field.
+--     3. No two parameters share a name ('DuplicateTypeParameter').
+--     4. No constructor field mentions an ignored type variable (a
 --        'TyVar' whose name starts with @_@) — if the user marks a type
 --        parameter as intentionally unused, they must not then turn
 --        around and use it ('ReferencingIgnoredTypeVar').
---     4. Every type variable in a constructor field must appear in the
+--     5. Every type variable in a constructor field must appear in the
 --        declaration's parameter list ('UnknownTypeVariable'). Without
 --        this, @type X = X a@ would silently treat @a@ as a fresh
 --        per-constructor tyvar disconnected from the type's parameters.
-validateTypeParams :: SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
-validateTypeParams _declSp params cons = do
-  -- 1) Reject bare '_' as a type parameter name. Type parameters are
-  --    always 'Param' (the parser uses 'paramBinderNoLine' which only
-  --    accepts a simple name), so 'paramName' / 'paramSpan' return
-  --    the user-written values directly here.
-  forM_ params $ \p ->
-    when (paramName p == "_") $ Left (UnnamedTypeParameter (paramSpan p))
-  -- 2) Reject duplicate parameter names.
+--     6. Every type /constructor/ head in a constructor field resolves
+--        against @allTypeNames@ (or a built-in primitive), else
+--        'UnknownTypeCon'; an @_@-prefixed one is rejected as
+--        'ReferencingIgnored'. This is the very check the signature path
+--        runs ('wellFormedTypeWith'), so a field type and a signature
+--        type are held to the same standard — @type Phantom = Phantom
+--        Nonexistent@ is rejected at the declaration, not silently
+--        accepted until a confusing use-site mismatch (or never, when
+--        the constructor goes unused).
+--
+--   Invariants 4–5 (type variables) and 6 (type constructors) are
+--   disjoint by node, so neither masks the other; the variable checks
+--   run first, keeping their more specific diagnostics when a field
+--   carries both kinds of error.
+validateTypeParams :: S.Set Name -> SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
+validateTypeParams allTypeNames _declSp params cons = do
+  -- 1+2) Reject an unusable type-parameter name: bare '_', or '_' then an
+  --      uppercase letter (which would lex as a 'TyCon' in use position,
+  --      so the parameter could never be referenced). Type parameters are
+  --      always 'Param' (the parser uses 'paramBinderNoLine' which only
+  --      accepts a simple name), so 'paramName' / 'paramSpan' return the
+  --      user-written values directly here.
+  forM_ params $ \p -> do
+    let n = paramName p
+    when (n == "_") $ Left (UnnamedTypeParameter (paramSpan p))
+    when (uppercaseAfterUnderscore n) $ Left (UppercaseTypeParameter (paramSpan p) n)
+  -- 3) Reject duplicate parameter names.
   foldM_ checkDup S.empty params
-  -- 3) Reject references to ignored type variables inside constructor fields.
+  -- 4) Reject references to ignored type variables inside constructor fields.
   --    The 'TyVar' carries its own source span, so the error points at
   --    the exact identifier rather than the whole type declaration.
   forM_ cons $ \(ConDef _ _ flds) ->
     forM_ flds checkNoIgnoredTyVar
-  -- 4) Reject type variables that aren't in the parameter list.
+  -- 5) Reject type variables that aren't in the parameter list.
   let declared = S.fromList (map paramName params)
   forM_ cons $ \(ConDef _ _ flds) ->
     forM_ flds (checkDeclaredTyVar declared)
+  -- 6) Reject unknown / ignored type constructors in constructor fields,
+  --    mirroring the signature-resolution path exactly.
+  forM_ cons $ \(ConDef _ _ flds) ->
+    forM_ flds (wellFormedTypeWith allTypeNames)
   where
+    -- A '_'-prefixed name whose first real character is uppercase.
+    uppercaseAfterUnderscore n = case T.uncons (T.drop 1 n) of
+      Just (c, _) -> Char.isUpper c
+      Nothing -> False
+
     checkDup seen p =
       let n = paramName p
        in if S.member n seen

@@ -1,0 +1,11 @@
+{- Error: a type parameter named `_T` — `_` then an uppercase letter.
+   Such a name lexes as a type constructor in any use position, so the
+   parameter could never be referenced as a type variable in a field. Use
+   a lowercase name (`_t` to keep it unused, or `t` to use it). -}
+
+import IO.Stdout
+
+type Foo _T = Foo Int32
+
+main : IO Never Unit
+main = IO.Stdout.print "x"

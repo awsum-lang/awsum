@@ -1,0 +1,12 @@
+{- Error: a constructor field references `_T`, a type-constructor name
+   marked intentionally unused. `_` followed by an uppercase letter lexes
+   as a type constructor (not a type variable), so the underscore rule —
+   referencing a `_`-prefixed name is an error — applies here exactly as
+   it does in a signature. -}
+
+import IO.Stdout
+
+type Bad = Bad _T
+
+main : IO Never Unit
+main = IO.Stdout.print "x"

@@ -1,0 +1,12 @@
+{- Error: a constructor field names a type that doesn't exist. The head
+   of a field type is resolved against the program's type names just like
+   a signature is, so the typo surfaces here at the declaration rather
+   than silently at a confusing use site (or never, if `Phantom` is
+   unused). -}
+
+import IO.Stdout
+
+type Phantom = Phantom Nonexistent
+
+main : IO Never Unit
+main = IO.Stdout.print "x"
