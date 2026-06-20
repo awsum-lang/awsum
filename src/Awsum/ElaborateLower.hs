@@ -21,7 +21,7 @@ module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborate
 
 import Awsum.BuiltIn (builtIns, lookupBuiltIn)
 import Awsum.Core
-import Awsum.Cps (alphaRename, cpsProgram)
+import Awsum.Cps (cpsProgram)
 import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
@@ -1286,32 +1286,6 @@ saturateExpr am locals = go
           put (papDecl : extras)
           pure (CVar papName)
 
-freeVars :: CExpr -> Set Name
-freeVars = \case
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CVar n -> one n
-  CBuiltIn _ -> mempty
-  CCon _ fs -> foldMap freeVars fs
-  CCase s alts ->
-    freeVars s
-      <> foldMap (\(_, vs, b) -> freeVars b `Set.difference` fromList vs) alts
-  CRow _ v -> freeVars v
-  CRowCase s alts ->
-    freeVars s
-      <> foldMap (\(_, v, b) -> freeVars b `Set.difference` Set.singleton v) alts
-  CCall f xs -> freeVars f <> foldMap freeVars xs
-  CLoop b -> freeVars b
-  CContinue xs -> foldMap freeVars xs
-  CDrop n b -> Set.delete n (freeVars b)
-  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
-  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
-  CProj n _ -> one n
-  -- The join name is a label, not a reference; the parameters scope over
-  -- the body only.
-  CJoin _ ps body inner -> (freeVars body `Set.difference` Set.fromList ps) <> freeVars inner
-  CJump _ args -> foldMap freeVars args
-
 -- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
 extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv
 extendLowerEnv env entries =
@@ -2054,14 +2028,14 @@ reconcileVar arms@((var0, _) : _)
   | all ((== var0) . fst) arms = pure (var0, map snd arms)
   | otherwise = do
       fresh <- freshMergeName
-      pure (fresh, [alphaRename v fresh body | (v, body) <- arms])
+      pure (fresh, [renameVar v fresh body | (v, body) <- arms])
 
 -- | Apply a positional binder renaming to a body. The targets are fresh
 --   (so distinct from every source name and from each other), which is why
---   folding single-variable 'alphaRename's is equivalent to a simultaneous
---   substitution here — no rename can feed another.
+--   folding single-variable 'Awsum.Core.renameVar's is equivalent to a
+--   simultaneous substitution here — no rename can feed another.
 renameBinders :: [(Name, Name)] -> CExpr -> CExpr
-renameBinders pairs body = foldl' (\acc (from, to) -> alphaRename from to acc) body pairs
+renameBinders pairs body = foldl' (\acc (from, to) -> renameVar from to acc) body pairs
 
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body with the right Core dispatchers:

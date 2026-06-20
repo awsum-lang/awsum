@@ -45,7 +45,7 @@
 -- captured parent-k back to @$k@ (Core-level shadowing). Awsum's
 -- no-shadowing rule is a typechecker concern; post-elaboration Core
 -- is exempt.
-module Awsum.Cps (cpsProgram, alphaRename) where
+module Awsum.Cps (cpsProgram) where
 
 import Awsum.CallGraph (hasNonTailSelfCall)
 import Awsum.Core
@@ -79,31 +79,6 @@ transformDecl topLevel nextTag = \case
          in (nextTag + consumed, decls)
     | otherwise -> (nextTag, [CFunDef f params body])
   d@CValDef {} -> (nextTag, [d])
-
--- | Free variables of a Core expression. Arm pattern binders scope over
--- their body only and are subtracted.
-freeVars :: CExpr -> Set Name
-freeVars = \case
-  CVar n -> Set.singleton n
-  CString _ -> mempty
-  CIntLit _ _ -> mempty
-  CBuiltIn _ -> mempty
-  CCall c xs -> freeVars c <> foldMap freeVars xs
-  CCon _ fs -> foldMap freeVars fs
-  CCase s alts -> freeVars s <> foldMap armFv alts
-  CRow _ v -> freeVars v
-  CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
-  CLoop b -> freeVars b
-  CContinue xs -> foldMap freeVars xs
-  CDrop n b -> Set.delete n (freeVars b)
-  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
-  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
-  CProj n _ -> Set.singleton n
-  CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
-  CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
-  where
-    armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
-    rowArmFv (_, bound, body) = freeVars body `Set.difference` Set.singleton bound
 
 -- | One defunctionalized continuation.
 data KCon = KCon
@@ -386,51 +361,11 @@ genApplyBody kTopTag kParam xParam kcons =
       let pkName :: Name
           pkName = "$pk_" <> show (kconTag kcon)
           binders = pkName : kconCaptured kcon
-          -- Two alpha-renames: 'kconReceivedVar' → $x (received value
-          -- lives in the apply's second parameter), and kParam ($k)
-          -- → pkName (parent continuation lives in the arm binder).
+          -- Two renames: 'kconReceivedVar' → $x (received value lives in
+          -- the apply's second parameter), and kParam ($k) → pkName (parent
+          -- continuation lives in the arm binder). 'Awsum.Core.renameVar'
+          -- is fresh-target, so folding the two doesn't capture.
           renamed =
-            alphaRename kParam pkName
-              $ alphaRename (kconReceivedVar kcon) xParam (kconApplyBody kcon)
+            renameVar kParam pkName
+              $ renameVar (kconReceivedVar kcon) xParam (kconApplyBody kcon)
        in (kconTag kcon, binders, renamed)
-
--- | Replace every free occurrence of @from@ in @e@ with @to@. Arm
--- binders shadow, so don't descend under one that reintroduces @from@.
-alphaRename :: Name -> Name -> CExpr -> CExpr
-alphaRename from to = go
-  where
-    go = \case
-      CVar n | n == from -> CVar to
-      e@(CVar _) -> e
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
-      CCall c xs -> CCall (go c) (map go xs)
-      CCon t fs -> CCon t (map go fs)
-      CCase s alts -> CCase (go s) (map goAlt alts)
-      CRow t v -> CRow t (go v)
-      CRowCase s alts -> CRowCase (go s) (map goRowAlt alts)
-      CLoop b -> CLoop (go b)
-      CContinue xs -> CContinue (map go xs)
-      CDrop n b
-        | n == from -> CDrop n b -- the drop kills 'from'; stop descending
-        | otherwise -> CDrop n (go b)
-      CReuse rm n t fs
-        | n == from -> CReuse rm to t (map go fs)
-        | otherwise -> CReuse rm n t (map go fs)
-      CLet x rhs body
-        | x == from -> CLet x (go rhs) body -- x shadows 'from' in body
-        | otherwise -> CLet x (go rhs) (go body)
-      CProj n i
-        | n == from -> CProj to i
-        | otherwise -> CProj n i
-      CJoin {} -> error "Cps: CJoin is minted by Awsum.Simplify, which runs later"
-      CJump {} -> error "Cps: CJump is minted by Awsum.Simplify, which runs later"
-
-    goAlt (t, vs, b)
-      | from `elem` vs = (t, vs, b) -- shadowed; don't rename further in
-      | otherwise = (t, vs, go b)
-
-    goRowAlt (t, v, b)
-      | v == from = (t, v, b) -- shadowed
-      | otherwise = (t, v, go b)

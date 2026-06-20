@@ -2,6 +2,7 @@ module Main (main) where
 
 import Awsum.ArbitraryInstances ()
 import Awsum.Codegen.JS.Syntax qualified as JS
+import Awsum.CoreSpec qualified
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
@@ -42,6 +43,7 @@ main = do
     preludeSpec
     elaborateSpec
     Awsum.HMSpec.spec
+    Awsum.CoreSpec.spec
     Awsum.HoverSpec.spec
     Awsum.ProgramSnapshotsSpec.spec
     Awsum.FormattingSnapshotsSpec.spec

@@ -30,6 +30,9 @@ module Awsum.Core
     binderUsedIn,
     effectfulIn,
     reusedBinders,
+    children,
+    freeVars,
+    renameVar,
   )
 where
 
@@ -150,6 +153,19 @@ data CExpr
     --   and ownership discipline (CCall/CCon/CContinue arg uses
     --   transfer ownership; no drop is emitted for transferred
     --   binders).
+    --
+    --   Convention (resolved once here, relied on by 'freeVars' and
+    --   'renameVar'): @n@ is a /reference/ position, not a binder.
+    --   'CDrop' does not bind @n@ — it annotates the death of a name
+    --   bound by an enclosing scope (a parameter, a 'CLet', a case-arm
+    --   binder), and evaluating the reclaim needs that cell. So @n@
+    --   counts as free in @CDrop n body@ (like the cell name of
+    --   'CReuse'), and a rename of the enclosing binder must rewrite
+    --   @n@ and descend into @body@ — treating it as a binder would
+    --   leave a drop naming a renamed-away (or freed) cell. ('binderUsedIn'
+    --   answers a different question — "is the binder still really used,
+    --   such that eliding it loses a use" — and deliberately does /not/
+    --   count a drop, since eliding a binder elides its drop too.)
     CDrop Name CExpr
   | -- | Cell reuse à la Lean 4. @CReuse mode n tag fields@ writes @tag@
     --   into slot 0 of the existing user-pointer at @n@ and the
@@ -279,24 +295,11 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
   where
     declBuiltIns (CFunDef _ _ body) = exprBuiltIns body
     declBuiltIns (CValDef _ body) = exprBuiltIns body
-    exprBuiltIns = \case
-      CBuiltIn n -> Set.singleton n
-      CVar _ -> mempty
-      CString _ -> mempty
-      CIntLit _ _ -> mempty
-      CCall f xs -> exprBuiltIns f <> foldMap exprBuiltIns xs
-      CCon _ fs -> foldMap exprBuiltIns fs
-      CCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
-      CRow _ v -> exprBuiltIns v
-      CRowCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
-      CLoop b -> exprBuiltIns b
-      CContinue xs -> foldMap exprBuiltIns xs
-      CDrop _ b -> exprBuiltIns b
-      CReuse _ _ _ fs -> foldMap exprBuiltIns fs
-      CLet _ rhs body -> exprBuiltIns rhs <> exprBuiltIns body
-      CProj _ _ -> mempty
-      CJoin _ _ body inner -> exprBuiltIns body <> exprBuiltIns inner
-      CJump _ args -> foldMap exprBuiltIns args
+    exprBuiltIns e = self <> foldMap exprBuiltIns (children e)
+      where
+        self = case e of
+          CBuiltIn n -> Set.singleton n
+          _ -> mempty
 
 -- | Smallest 'Int' strictly greater than every constructor tag used
 --   anywhere in the program ('CCon' construction sites and 'CCase'
@@ -319,24 +322,13 @@ nextFreshConTag (CoreProgram ds) =
       CFunDef _ _ body -> exprConTags body
       CValDef _ body -> exprConTags body
     exprConTags :: CExpr -> [Int]
-    exprConTags = \case
-      CCon t fs -> t : concatMap exprConTags fs
-      CCase s alts -> exprConTags s <> [t | (t, _, _) <- alts] <> concatMap (\(_, _, b) -> exprConTags b) alts
-      CCall f xs -> exprConTags f <> concatMap exprConTags xs
-      CRow _ v -> exprConTags v
-      CRowCase s alts -> exprConTags s <> concatMap (\(_, _, b) -> exprConTags b) alts
-      CLoop b -> exprConTags b
-      CContinue xs -> concatMap exprConTags xs
-      CDrop _ b -> exprConTags b
-      CReuse _ _ t fs -> t : concatMap exprConTags fs
-      CLet _ rhs body -> exprConTags rhs <> exprConTags body
-      CProj _ _ -> []
-      CJoin _ _ body inner -> exprConTags body <> exprConTags inner
-      CJump _ args -> concatMap exprConTags args
-      CVar _ -> []
-      CString _ -> []
-      CIntLit _ _ -> []
-      CBuiltIn _ -> []
+    exprConTags e = self <> concatMap exprConTags (children e)
+      where
+        self = case e of
+          CCon t _ -> [t]
+          CReuse _ _ t _ -> [t]
+          CCase _ alts -> [t | (t, _, _) <- alts]
+          _ -> []
 
 -- | Does the program contain any integer literal? Backends that rely on
 --   boxing helpers (e.g. WASM's @__box_i32@) can drop them when the
@@ -346,24 +338,11 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
   where
     declHasInt (CFunDef _ _ body) = exprHasInt body
     declHasInt (CValDef _ body) = exprHasInt body
-    exprHasInt = \case
-      CIntLit _ _ -> True
-      CBuiltIn _ -> False
-      CVar _ -> False
-      CString _ -> False
-      CCall f xs -> exprHasInt f || any exprHasInt xs
-      CCon _ fs -> any exprHasInt fs
-      CCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
-      CRow _ v -> exprHasInt v
-      CRowCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
-      CLoop b -> exprHasInt b
-      CContinue xs -> any exprHasInt xs
-      CDrop _ b -> exprHasInt b
-      CReuse _ _ _ fs -> any exprHasInt fs
-      CLet _ rhs body -> exprHasInt rhs || exprHasInt body
-      CProj _ _ -> False
-      CJoin _ _ body inner -> exprHasInt body || exprHasInt inner
-      CJump _ args -> any exprHasInt args
+    exprHasInt e = self || any exprHasInt (children e)
+      where
+        self = case e of
+          CIntLit _ _ -> True
+          _ -> False
 
 -- | Does @v@ appear in @e@ — as a 'CVar', or as the variable of a 'CProj' /
 --   'CReuse'? Shadowing-aware: does not descend under a binder that
@@ -420,24 +399,11 @@ effectfulIn = goE
   where
     effectful :: Set Name
     effectful = Set.fromList ["internalStdoutPrint", "internalGetArgs", "internalStdinReadAllString", "internalStdinReadAllBytes"]
-    goE = \case
-      CBuiltIn n -> n `Set.member` effectful
-      CVar _ -> False
-      CString _ -> False
-      CIntLit _ _ -> False
-      CProj _ _ -> False
-      CCall f xs -> goE f || any goE xs
-      CCon _ fs -> any goE fs
-      CRow _ v -> goE v
-      CCase s alts -> goE s || any (\(_, _, b) -> goE b) alts
-      CRowCase s alts -> goE s || any (\(_, _, b) -> goE b) alts
-      CLoop b -> goE b
-      CContinue xs -> any goE xs
-      CLet _ rhs b -> goE rhs || goE b
-      CDrop _ b -> goE b
-      CReuse _ _ _ fs -> any goE fs
-      CJoin _ _ body inner -> goE body || goE inner
-      CJump _ args -> any goE args
+    goE e = self || any goE (children e)
+      where
+        self = case e of
+          CBuiltIn n -> n `Set.member` effectful
+          _ -> False
 
 -- | Every binder whose cell a 'CReuse' inside this expression overwrites.
 --   'effectfulIn' is about evaluation being observable outside the
@@ -450,23 +416,110 @@ effectfulIn = goE
 --   codegen's parameter-rebind scheduling, which keeps such conflicting
 --   pairs in source evaluation order.
 reusedBinders :: CExpr -> [Name]
-reusedBinders = goE
+reusedBinders e = self <> concatMap reusedBinders (children e)
   where
-    goE = \case
-      CReuse _ n _ fs -> n : concatMap goE fs
-      CVar _ -> []
-      CString _ -> []
-      CIntLit _ _ -> []
-      CBuiltIn _ -> []
-      CProj _ _ -> []
-      CCall f xs -> goE f <> concatMap goE xs
-      CCon _ fs -> concatMap goE fs
-      CRow _ v -> goE v
-      CCase s alts -> goE s <> concatMap (\(_, _, b) -> goE b) alts
-      CRowCase s alts -> goE s <> concatMap (\(_, _, b) -> goE b) alts
-      CLoop b -> goE b
-      CContinue xs -> concatMap goE xs
-      CLet _ rhs b -> goE rhs <> goE b
-      CDrop _ b -> goE b
-      CJoin _ _ body inner -> goE body <> goE inner
-      CJump _ args -> concatMap goE args
+    self = case e of
+      CReuse _ n _ _ -> [n]
+      _ -> []
+
+-- | The immediate sub-expressions of a node, in source-evaluation order
+--   (callee before args, scrutinee before arms, @rhs@ before @body@, …).
+--   The single structural-recursion point the binder-/unaware/ folds above
+--   ('usedBuiltIns', 'nextFreshConTag', 'usesIntLit', 'effectfulIn',
+--   'reusedBinders') share: each is "this node's own contribution" combined
+--   over @children@, so a new 'CExpr' constructor forces an update here once
+--   rather than in every fold. Leaves ('CVar', 'CString', 'CIntLit',
+--   'CBuiltIn', 'CProj') have none.
+--
+--   The /order/ is load-bearing for the list-valued fold 'reusedBinders'
+--   (the JS codegen keeps reuse-conflicting pairs in this order), so it
+--   mirrors the left-to-right evaluation order of each constructor.
+--
+--   Binder-/aware/ traversals ('freeVars', 'binderUsedIn', 'renameVar')
+--   cannot use this: they must subtract or stop at the binders a node
+--   introduces (case/row arms, 'CLet', 'CJoin' params), which a flat child
+--   list discards. They stay explicit recursions — one copy each, here.
+children :: CExpr -> [CExpr]
+children = \case
+  CVar _ -> []
+  CString _ -> []
+  CIntLit _ _ -> []
+  CBuiltIn _ -> []
+  CProj _ _ -> []
+  CCall f xs -> f : xs
+  CCon _ fs -> fs
+  CCase s alts -> s : [b | (_, _, b) <- alts]
+  CRow _ v -> [v]
+  CRowCase s alts -> s : [b | (_, _, b) <- alts]
+  CLoop b -> [b]
+  CContinue xs -> xs
+  CDrop _ b -> [b]
+  CReuse _ _ _ fs -> fs
+  CLet _ rhs body -> [rhs, body]
+  CJoin _ _ body inner -> [body, inner]
+  CJump _ args -> args
+
+-- | Free variables of a Core expression: every name referenced from an
+--   enclosing scope. Binder-aware — the binders a node introduces (case /
+--   row arms, 'CLet', 'CJoin' params) scope over their sub-expressions and
+--   are subtracted. The reference positions are 'CVar', 'CProj', and the
+--   cell name of 'CReuse' and 'CDrop': all count the named cell as free,
+--   because evaluating the node needs it (see the 'CDrop' convention on the
+--   node). One copy for the whole compiler — 'Awsum.Cps' (continuation
+--   capture) and 'Awsum.ElaborateLower' (tree-shake, partial-application
+--   lift) both call this.
+freeVars :: CExpr -> Set Name
+freeVars = \case
+  CVar n -> Set.singleton n
+  CProj n _ -> Set.singleton n
+  CString _ -> mempty
+  CIntLit _ _ -> mempty
+  CBuiltIn _ -> mempty
+  CCall f xs -> freeVars f <> foldMap freeVars xs
+  CCon _ fs -> foldMap freeVars fs
+  CCase s alts -> freeVars s <> foldMap armFv alts
+  CRow _ v -> freeVars v
+  CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
+  CLoop b -> freeVars b
+  CContinue xs -> foldMap freeVars xs
+  CDrop n b -> Set.insert n (freeVars b)
+  CReuse _ n _ fs -> Set.insert n (foldMap freeVars fs)
+  CLet n rhs body -> freeVars rhs <> Set.delete n (freeVars body)
+  CJoin _ ps body inner -> (freeVars body `Set.difference` Set.fromList ps) <> freeVars inner
+  CJump _ args -> foldMap freeVars args
+  where
+    armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
+    rowArmFv (_, bound, body) = Set.delete bound (freeVars body)
+
+-- | Rename every free occurrence of @from@ to @to@ — every reference
+--   position ('CVar', 'CProj', and the cell name of 'CReuse' / 'CDrop'),
+--   stopping under a binder that re-introduces @from@ (case / row arm,
+--   'CLet', 'CJoin' param). The caller supplies a fresh @to@, so there is no
+--   capture to avoid. The 'CDrop' name is a reference (see the node), so it
+--   is renamed and descended into — never treated as a binder, which would
+--   leave a drop naming the wrong cell. One copy for the whole compiler:
+--   'Awsum.Cps' (apply-arm freshening), 'Awsum.ElaborateLower' (arm-binder
+--   reconciliation), and 'Awsum.Simplify' (single-use binder inline) all
+--   call this.
+renameVar :: Name -> Name -> CExpr -> CExpr
+renameVar from to = go
+  where
+    rn v = if v == from then to else v
+    go = \case
+      CVar v -> CVar (rn v)
+      CProj v i -> CProj (rn v) i
+      CReuse rm v t fs -> CReuse rm (rn v) t (map go fs)
+      CCall f xs -> CCall (go f) (map go xs)
+      CCon t fs -> CCon t (map go fs)
+      CRow t v -> CRow t (go v)
+      CCase s alts -> CCase (go s) [(t, vs, if from `elem` vs then b else go b) | (t, vs, b) <- alts]
+      CRowCase s alts -> CRowCase (go s) [(t, v, if v == from then b else go b) | (t, v, b) <- alts]
+      CLoop b -> CLoop (go b)
+      CContinue xs -> CContinue (map go xs)
+      CLet x rhs b -> CLet x (go rhs) (if x == from then b else go b)
+      CDrop x b -> CDrop (rn x) (go b)
+      CJoin j ps body inner -> CJoin j ps (if from `elem` ps then body else go body) (go inner)
+      CJump j args -> CJump j (map go args)
+      e@(CString _) -> e
+      e@(CIntLit _ _) -> e
+      e@(CBuiltIn _) -> e

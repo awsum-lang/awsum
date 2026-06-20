@@ -569,7 +569,7 @@ finishLet valDefs n rhs body =
       CVar v
         | not (Set.member v valDefs),
           v `Set.notMember` boundNamesIn body ->
-            renameVarFull n v body
+            renameVar n v body
       _ -> CLet n rhs body
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -952,8 +952,8 @@ inlineCallSite valDefs (InlineInfo ps body) args = do
       -- The parameter is a 'CProj' / 'CReuse' name somewhere: the binding
       -- must stay a /name/. A plain non-'CValDef' variable argument renames
       -- straight to it — unless it is spelled like another parameter, which
-      -- the rename pass below would then hit ('renameVarFull' has no scope
-      -- to tell them apart); anything else — including a 'CValDef'
+      -- the rename pass below would then hit ('Awsum.Core.renameVar' has no
+      -- scope to tell them apart); anything else — including a 'CValDef'
       -- reference, whose getter must not re-run per projection (the
       -- @borrowedSource@ boundary; the extra cells would leak) — binds to a
       -- fresh 'CLet' binder, so the getter runs once and the projections
@@ -988,7 +988,7 @@ inlineCallSite valDefs (InlineInfo ps body) args = do
       -- where the second argument mentions the caller's own 'a'). Renamed
       -- first, the body's parameter references are out of the way, and
       -- 'substVars' never re-walks what it injects.
-      bound = substVars substMap (foldl' (\e (p, t) -> renameVarFull p t e) body' renames)
+      bound = substVars substMap (foldl' (\e (p, t) -> renameVar p t e) body' renames)
   pure (foldr (uncurry CLet) bound lets)
   where
     duplicableArg = \case
@@ -1061,34 +1061,6 @@ freshenBinders = go Map.empty
       e@(CIntLit _ _) -> pure e
       e@(CBuiltIn _) -> pure e
 
--- | Rename @old@ to @new@ in every reference position — 'CVar' and the name
---   positions of 'CProj' / 'CReuse'. Stops under a binder that re-introduces
---   @old@ (defensive; freshened bodies never re-bind a parameter).
-renameVarFull :: Name -> Name -> CExpr -> CExpr
-renameVarFull old new = go
-  where
-    rn v = if v == old then new else v
-    go = \case
-      CVar v -> CVar (rn v)
-      CProj v i -> CProj (rn v) i
-      CReuse rm v t fs -> CReuse rm (rn v) t (map go fs)
-      CCall f xs -> CCall (go f) (map go xs)
-      CCon t fs -> CCon t (map go fs)
-      CRow t v -> CRow t (go v)
-      CCase s alts -> CCase (go s) [(t, vs, if old `elem` vs then b else go b) | (t, vs, b) <- alts]
-      CRowCase s alts -> CRowCase (go s) [(t, v, if v == old then b else go b) | (t, v, b) <- alts]
-      CLoop b -> CLoop (go b)
-      CContinue xs -> CContinue (map go xs)
-      CLet x rhs b -> CLet x (go rhs) (if x == old then b else go b)
-      CDrop x b -> CDrop (rn x) (go b)
-      -- Join names live in their own namespace; only the parameters can
-      -- shadow a value name, and only inside the join body.
-      CJoin j ps body inner -> CJoin j ps (if old `elem` ps then body else go body) (go inner)
-      CJump j args -> CJump j (map go args)
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
-
 -- | Per top-level name: how many times it is called directly (callee
 --   position) and how many times it is referenced any other way ('CVar' in
 --   term position, 'CProj' / 'CReuse' name). Local binders pollute the map
@@ -1128,51 +1100,17 @@ programRefs (CoreProgram ds) = foldl' (Map.unionWith plus) Map.empty (map declRe
 
 -- | Node count of an expression — the inliner's size measure.
 exprSize :: CExpr -> Int
-exprSize = go
-  where
-    go :: CExpr -> Int
-    go = \case
-      CCall f xs -> 1 + go f + sum (map go xs)
-      CCon _ fs -> 1 + sum (map go fs)
-      CRow _ v -> 1 + go v
-      CCase s alts -> 1 + go s + sum [go b | (_, _, b) <- alts]
-      CRowCase s alts -> 1 + go s + sum [go b | (_, _, b) <- alts]
-      CLoop b -> 1 + go b
-      CContinue xs -> 1 + sum (map go xs)
-      CLet _ rhs b -> 1 + go rhs + go b
-      CDrop _ b -> 1 + go b
-      CReuse _ _ _ fs -> 1 + sum (map go fs)
-      CJoin _ _ body inner -> 1 + go body + go inner
-      CJump _ args -> 1 + sum (map go args)
-      CVar _ -> 1
-      CProj _ _ -> 1
-      CString _ -> 1
-      CIntLit _ _ -> 1
-      CBuiltIn _ -> 1
+exprSize e = 1 + sum (map exprSize (children e))
 
 -- | Does the body contain the TCO loop forms? Their presence marks the
 --   declaration as (formerly) self-recursive — never inlined.
 hasLoopOrContinue :: CExpr -> Bool
-hasLoopOrContinue = go
+hasLoopOrContinue e = self || any hasLoopOrContinue (children e)
   where
-    go = \case
+    self = case e of
       CLoop _ -> True
       CContinue _ -> True
-      CCall f xs -> go f || any go xs
-      CCon _ fs -> any go fs
-      CRow _ v -> go v
-      CCase s alts -> go s || any (\(_, _, b) -> go b) alts
-      CRowCase s alts -> go s || any (\(_, _, b) -> go b) alts
-      CLet _ rhs b -> go rhs || go b
-      CDrop _ b -> go b
-      CReuse _ _ _ fs -> any go fs
-      CJoin _ _ body inner -> go body || go inner
-      CJump _ args -> any go args
-      CVar _ -> False
-      CProj _ _ -> False
-      CString _ -> False
-      CIntLit _ _ -> False
-      CBuiltIn _ -> False
+      _ -> False
 
 -- | Compile-time evaluation of the integer built-ins over literal operands
 --   (see the module header). The result is exactly the cell the runtime
