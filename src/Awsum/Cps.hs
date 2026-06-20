@@ -45,7 +45,7 @@
 -- captured parent-k back to @$k@ (Core-level shadowing). Awsum's
 -- no-shadowing rule is a typechecker concern; post-elaboration Core
 -- is exempt.
-module Awsum.Cps (cpsProgram) where
+module Awsum.Cps (cpsProgram, alphaRename) where
 
 import Awsum.CallGraph (hasNonTailSelfCall)
 import Awsum.Core

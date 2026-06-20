@@ -1,0 +1,17 @@
+{- Two arms match the same constructor `M`, one ascribing its field
+   `(n : Int32)` and one binding it whole (`m`). `(x : T)` discriminates a
+   structural sum; on a non-row (primitive) field the ascription is
+   rejected at the typechecker, before the arm-merge in lowering. Bind the
+   field with a name in both arms instead. -}
+
+import IO.Stdout
+
+type M = M Int32
+
+classify : M -> Int32
+classify x = case x of
+  M (n : Int32) -> n
+  M m -> m
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (classify (M 5)))

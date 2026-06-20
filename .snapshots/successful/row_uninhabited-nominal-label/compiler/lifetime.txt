@@ -1,0 +1,10 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+main:
+  let             $inl1$x                         count=0
+

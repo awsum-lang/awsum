@@ -1,0 +1,21 @@
+{- Deep alternation row(adt(row(adt))): the outer row's `Wrap` label
+   wraps a row `(Pair | Int32)` whose `Pair` carries two `Bool` fields.
+   Covering the `True True` and `False False` diagonals leaves
+   `Pair True False` uncovered. The matrix recurses through every
+   row↔adt boundary and reports the full-shape uncovered value. -}
+
+import IO.Stdout
+
+type Pair = Pair Bool Bool
+
+type Wrap = Wrap (Pair | Int32)
+
+label : (Wrap | String) -> String
+label x = case x of
+  (s : String) -> s
+  Wrap (Pair True True) -> "tt"
+  Wrap (Pair False False) -> "ff"
+  Wrap (i : Int32) -> showInt32 i
+
+main : IO Never Unit
+main = IO.Stdout.print (label (Wrap (Pair True False)))

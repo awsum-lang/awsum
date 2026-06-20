@@ -1,0 +1,55 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop DropFreeUnchecked "$inl0$eff"
+                                ( CDrop DropFreeUnchecked "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCase
+                    ( CCon 24
+                        [ CRow 2711245919
+                            ( CIntLit 5 TInt32 )
+                        ]
+                    )
+                    [
+                        ( 24
+                        , [ "$inl1$__pa0" ]
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CProj "$inl1$__pa0" 1 ]
+                        )
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

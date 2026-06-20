@@ -1,0 +1,15 @@
+{- A constructor pattern on a primitive field: `Wrap`'s field is `Int32`,
+   matched by `Nothing` — a constructor of an unrelated type. A primitive
+   is not a sum, so there is no constructor to match and the pattern is
+   rejected (`Case on non-sum type`). Bind the field with a name instead. -}
+
+import IO.Stdout
+
+type W = Wrap Int32
+
+describe : W -> String
+describe x = case x of
+  Wrap Nothing -> "got nothing"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (Wrap 5))

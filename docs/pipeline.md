@@ -12,7 +12,8 @@ Source (.aww)
 [ MonomorphizeRows  →  Typed AST → Core IR  (+ row-tag collision check)  →  lazy-IO lowering  →  tree-shake from main, runIO ]
   │
   ▼  Core-to-Core passes
-[ Defunctionalize → tree-shake
+[ UniquifyLocals         (rename locals colliding with a top-level name)
+  Defunctionalize → tree-shake
   LowerClosures → tree-shake
   Saturate
   Scc-merge → tree-shake
@@ -57,8 +58,9 @@ Every phase below is orchestrated by `elaborateLowerProgram` in [../src/Awsum/El
 
 ## Core-to-Core passes
 
-These run in order inside `Awsum.ElaborateLower` after the initial tree-shake. Their job is to flatten everything that any backend would otherwise need a runtime feature to handle (closures, mutual recursion, non-tail recursion, partial application).
+These run in order inside `Awsum.ElaborateLower` after the initial tree-shake. The first is a naming-hygiene prerequisite; the rest flatten everything that any backend would otherwise need a runtime feature to handle (closures, mutual recursion, non-tail recursion, partial application).
 
+- **UniquifyLocals** (`Awsum.UniquifyLocals`) — Renames any local binder whose name collides with a top-level declaration. Cross-module shadowing is legal (a prelude pattern variable like `cont` in `bindIO`'s `IOGetArgs` arm may reuse a user top-level's name), but every pass below resolves a bare `CVar` against the global declaration table — `Defunctionalize`, `LowerClosures`, and `Cps` would mistake the local for the global, drop its captures, and emit a dangling closure. Pure hygiene, no flattening: it restores the no-collision invariant the flattening passes assume before the first one runs.
 - **Defunctionalize** (`Awsum.Defunctionalize`) — No backend has a closure runtime. Each HOF call site that statically resolves to a known closure has its `fn`-typed slot replaced with a first-order specialisation whose parameter list adds the closure's captures up front. *(Tree-shake re-runs — original polymorphic HOFs whose calls were all replaced by specialisations fall out as dead code.)*
 - **LowerClosures** (`Awsum.LowerClosures`) — Reynolds defunctionalization for residual function values: closures that survived the previous pass because they flow through positions Defunctionalize cannot specialise (stored in a constructor field, passed through a case-arm-binder, captured into a partial application inside a non-statically-resolvable HOF). Each such closure is encoded as a tagged `CCon` and every residual call routed through a per-arity `$applyN` dispatcher. After this pass no first-class function value remains in any reachable position; every `CCall` callee is either a top-level fn name or one of the synthetic `$applyN` helpers. *(Tree-shake re-runs.)*
 - **Saturate** — Lambda-lift under-applied direct calls so codegen sees only full-arity calls. Also asserts the post-Defunctionalize/LowerClosures invariant that no partial application with local captures survives — both passes cooperate to maintain it.

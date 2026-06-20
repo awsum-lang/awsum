@@ -21,7 +21,7 @@ module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborate
 
 import Awsum.BuiltIn (builtIns, lookupBuiltIn)
 import Awsum.Core
-import Awsum.Cps (cpsProgram)
+import Awsum.Cps (alphaRename, cpsProgram)
 import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
@@ -39,7 +39,7 @@ import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), texprType, tparamType)
 import Awsum.Tco (tcoProgram)
-import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, markEmptyTypesInDecl, splitArrow, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, extractTyCon, markEmptyTypesInDecl, splitArrow, typecheckProgram)
 import Awsum.UniquifyLocals (uniquifyLocals)
 import Control.Monad (foldM)
 import Data.List (groupBy)
@@ -234,6 +234,18 @@ freshLetWildName = do
   s <- get
   put s {lsFresh = lsFresh s + 1}
   pure ("$let_w_" <> show (lsFresh s))
+
+-- | Mint a fresh binder name '$m$N' for reconciling the field binders of
+--   case arms being merged. When same-tag arms bind a field to different
+--   source names, the union keeps one canonical list — these globally
+--   unique names — and alpha-renames each arm's body onto it. A fresh
+--   target can neither chain (every name distinct) nor be captured (it
+--   appears in no other binder), so the rename is unconditionally safe.
+freshMergeName :: LowerM Name
+freshMergeName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$m$" <> show (lsFresh s))
 
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
@@ -1399,7 +1411,7 @@ lowerTExpr env locals = \case
   TCase _ _ scrut alts -> do
     scrut' <- lowerTExpr env locals scrut
     alts' <- traverse (lowerTAltM env locals) alts
-    merged <- liftEither (mergeAlts alts')
+    merged <- mergeAlts alts'
     pure (CCase scrut' merged)
   TRowCase _ _ scrut alts -> do
     scrut' <- lowerTExpr env locals scrut
@@ -1553,7 +1565,7 @@ buildRowAltsT env locals alts = do
         [(tag, _, AscribeShape var body)] -> pure (tag, var, body)
         ((tag, _, ConShape {}) : _) -> do
           let conAlts = [(t, vs, b) | (_, _, ConShape t vs b) <- g]
-          merged <- liftEither (mergeAlts conAlts)
+          merged <- mergeAlts conAlts
           let var = "__rw" :: Name
           pure (tag, var, CCase (CVar var) merged)
         ((_, _, AscribeShape _ _) : _ : _) ->
@@ -1695,8 +1707,8 @@ synthCoerce conInfo src tgt@(TyOr {}) =
               )
           )
 synthCoerce conInfo src tgt
-  | Just headName <- tyConHead src,
-    Just headName' <- tyConHead tgt,
+  | Just headName <- extractTyCon src,
+    Just headName' <- extractTyCon tgt,
     headName == headName' =
       synthNominalHeadCoerce conInfo headName src tgt
 -- Function-typed coercion: pointwise rebuild via a top-level helper
@@ -1835,8 +1847,8 @@ coercionIsIdentity conInfo = go Set.empty
       | TyArrow _ sA sB <- src,
         TyArrow _ tA tB <- tgt =
           go seen tA sA && go seen sB tB
-      | Just h1 <- tyConHead src,
-        Just h2 <- tyConHead tgt,
+      | Just h1 <- extractTyCon src,
+        Just h2 <- extractTyCon tgt,
         h1 == h2 =
           let key = (canonicalLabel src, canonicalLabel tgt)
            in Set.member key seen
@@ -1905,59 +1917,113 @@ data RowArmShape
   = AscribeShape Name CExpr
   | ConShape Int [Name] CExpr
 
--- | Extract the head 'TyCon' name from a type, peeling 'TyApp' chains.
---   Returns 'Nothing' for 'TyVar', 'TyArrow', 'TyOr'.
-tyConHead :: Type' -> Maybe Name
-tyConHead (TyCon _ n) = Just n
-tyConHead (TyApp _ f _) = tyConHead f
-tyConHead _ = Nothing
-
--- | Merge case alternatives that have the same outer tag.
---   When multiple alts match the same constructor with nested patterns,
---   merge their inner case expressions into a single nested case.
---   Example: @Ok (Ok x) -> ...@ and @Ok (Err x) -> ...@ both have tag 0 for Ok,
---   so we merge them into a single alt with a nested case on the inner Result.
-mergeAlts :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
-mergeAlts alts =
-  let grouped = groupBy (\(t1, _, _) (t2, _, _) -> t1 == t2) (sortOn (\(t, _, _) -> t) alts)
-   in traverse mergeGroup grouped >>= Right . concat
+-- | Merge case alternatives that share an outer tag. Arms that match the
+--   same constructor but differ only in deeper fields are unioned into one
+--   arm whose body dispatches on those fields — e.g. @Ok (Ok x) -> …@ and
+--   @Ok (Err x) -> …@ (both tag @Ok@) fold into one @Ok@ arm with a nested
+--   case on the inner @Result@. Two obligations beyond plain concatenation:
+--
+--     * /Row fields/ merge recursively ('mergeRowAlts'), exactly like
+--       nominal fields ('mergeAlts'). A row field followed by a further
+--       discriminating field produces two arms with the same row tag; left
+--       merely concatenated, the second tag duplicates the first and its
+--       dispatch is lost.
+--     * /Binders/ are reconciled ('reconcileVars' / 'reconcileVar'). The
+--       union keeps one binder list; an arm whose binders differ is
+--       alpha-renamed onto a fresh canonical list first, so no body
+--       references a binder the merge dropped.
+--
+--   A residual shape conflict (one arm dispatches on a field, a sibling
+--   binds it whole) is the forbidden partial-catch-all, which
+--   'Awsum.Typing.rejectPartialCatchAll' rejects before lowering — so the
+--   'TELowering' branches in 'mergeBodies' are defensive and unreachable
+--   on well-typed input.
+mergeAlts :: [(Int, [Name], CExpr)] -> LowerM [(Int, [Name], CExpr)]
+mergeAlts alts = concat <$> traverse mergeGroup (groupByTag alts)
   where
-    mergeGroup :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
-    mergeGroup [] = Right []
-    mergeGroup [alt] = Right [alt]
-    mergeGroup ((tag, vars, body) : rest) = do
-      -- Check if all alts in this group have the same structure
-      -- (same number of vars, all bodies are CCase or CRowCase on
-      -- the first var). The 'CRowCase' branch covers row-case arms
-      -- whose outer constructor is the same and whose ascription-
-      -- driven inner 'CRowCase' wrappers (introduced by
-      -- 'lowerRowConInnerPats') need to be unioned into a single
-      -- multi-arm 'CRowCase'.
-      case (body, map (\(_, vs, b) -> (vs, b)) rest) of
-        (CCase (CVar scrutVar) innerAlts, otherBodies) -> do
-          allInnerAlts <- foldM collectInnerAlts innerAlts otherBodies
-          mergedInnerAlts <- mergeAlts allInnerAlts
-          Right [(tag, vars, CCase (CVar scrutVar) mergedInnerAlts)]
-        (CRowCase (CVar scrutVar) innerAlts, otherBodies) -> do
-          allInnerAlts <- foldM collectInnerRowAlts innerAlts otherBodies
-          Right [(tag, vars, CRowCase (CVar scrutVar) allInnerAlts)]
-        _ ->
-          Left (TELowering $ "conflicting pattern shapes for constructor tag " <> show tag)
+    mergeGroup :: [(Int, [Name], CExpr)] -> LowerM [(Int, [Name], CExpr)]
+    mergeGroup [] = pure []
+    mergeGroup [alt] = pure [alt]
+    mergeGroup grp@((tag, _, _) : _) = do
+      (vars, bodies) <- reconcileVars [(vs, b) | (_, vs, b) <- grp]
+      merged <- mergeBodies bodies
+      pure [(tag, vars, merged)]
 
-    collectInnerAlts :: [(Int, [Name], CExpr)] -> ([Name], CExpr) -> Either TypeError [(Int, [Name], CExpr)]
-    collectInnerAlts acc (_vars, CCase (CVar _scrutVar) innerAlts) =
-      Right (acc <> innerAlts)
-    collectInnerAlts _ _ =
-      Left (TELowering "conflicting pattern shapes in merge")
+-- | Group case-alt triples by their (orderable) tag, sorting first so
+--   'groupBy' collects all same-tag arms into one group. One copy shared by
+--   'mergeAlts' and 'mergeRowAlts' so the sort key and the group predicate
+--   can never drift apart (a mismatch would split same-tag arms and skip
+--   the merge they require).
+groupByTag :: (Ord t) => [(t, a, b)] -> [[(t, a, b)]]
+groupByTag = groupBy (\(t1, _, _) (t2, _, _) -> t1 == t2) . sortOn (\(t, _, _) -> t)
 
-    collectInnerRowAlts ::
-      [(Word32, Name, CExpr)] ->
-      ([Name], CExpr) ->
-      Either TypeError [(Word32, Name, CExpr)]
-    collectInnerRowAlts acc (_vars, CRowCase (CVar _scrutVar) innerAlts) =
-      Right (acc <> innerAlts)
-    collectInnerRowAlts _ _ =
-      Left (TELowering "conflicting row-case shapes in merge")
+-- | The structural-sum analogue of 'mergeAlts': merge row-case arms that
+--   share a row tag, unioning their inner dispatchers. A group of size one
+--   (a row label matched once) is left untouched.
+mergeRowAlts :: [(Word32, Name, CExpr)] -> LowerM [(Word32, Name, CExpr)]
+mergeRowAlts alts = concat <$> traverse mergeRowGroup (groupByTag alts)
+  where
+    mergeRowGroup :: [(Word32, Name, CExpr)] -> LowerM [(Word32, Name, CExpr)]
+    mergeRowGroup [] = pure []
+    mergeRowGroup [alt] = pure [alt]
+    mergeRowGroup grp@((tag, _, _) : _) = do
+      (var, bodies) <- reconcileVar [(v, b) | (_, v, b) <- grp]
+      merged <- mergeBodies bodies
+      pure [(tag, var, merged)]
+
+-- | Union the inner dispatchers of same-tag arms. Every body in a
+--   multi-arm group is the same shape — a 'CCase' / 'CRowCase' on the same
+--   field binder — because the arms matched the same constructor and
+--   differ only deeper; the field binders are positional and so identical
+--   across the arms ('reconcileVars' has already made the top-level ones
+--   coincide). A mismatched shape is the forbidden partial-catch-all
+--   rejected upstream (see 'mergeAlts').
+mergeBodies :: [CExpr] -> LowerM CExpr
+mergeBodies [] = liftEither $ Left (TELowering "mergeBodies: empty group (unreachable)")
+mergeBodies [body] = pure body
+mergeBodies (body0 : rest) = case body0 of
+  CCase (CVar scrutVar) innerAlts -> do
+    allInnerAlts <- foldM collectCase innerAlts rest
+    CCase (CVar scrutVar) <$> mergeAlts allInnerAlts
+  CRowCase (CVar scrutVar) innerAlts -> do
+    allInnerAlts <- foldM collectRow innerAlts rest
+    CRowCase (CVar scrutVar) <$> mergeRowAlts allInnerAlts
+  _ -> liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+  where
+    collectCase acc (CCase (CVar _) innerAlts) = pure (acc <> innerAlts)
+    collectCase _ _ = liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+    collectRow acc (CRowCase (CVar _) innerAlts) = pure (acc <> innerAlts)
+    collectRow _ _ = liftEither $ Left (TELowering "conflicting row-case shapes in merge")
+
+-- | Reconcile the field-binder lists of arms being merged. When every arm
+--   already uses the same binders (the common case — deterministic
+--   @__pN@ field names, or the same source name) keep them, so Core stays
+--   readable. Otherwise mint a fresh canonical list and alpha-rename each
+--   arm's body onto it; fresh targets ('freshMergeName') are globally
+--   unique, so the rename neither chains nor captures.
+reconcileVars :: [([Name], CExpr)] -> LowerM ([Name], [CExpr])
+reconcileVars [] = pure ([], [])
+reconcileVars arms@((vars0, _) : _)
+  | all ((== vars0) . fst) arms = pure (vars0, map snd arms)
+  | otherwise = do
+      fresh <- traverse (const freshMergeName) vars0
+      pure (fresh, [renameBinders (zip vs fresh) body | (vs, body) <- arms])
+
+-- | Single-binder ('CRowCase' arm) counterpart of 'reconcileVars'.
+reconcileVar :: [(Name, CExpr)] -> LowerM (Name, [CExpr])
+reconcileVar [] = pure ("__rw", [])
+reconcileVar arms@((var0, _) : _)
+  | all ((== var0) . fst) arms = pure (var0, map snd arms)
+  | otherwise = do
+      fresh <- freshMergeName
+      pure (fresh, [alphaRename v fresh body | (v, body) <- arms])
+
+-- | Apply a positional binder renaming to a body. The targets are fresh
+--   (so distinct from every source name and from each other), which is why
+--   folding single-variable 'alphaRename's is equivalent to a simultaneous
+--   substitution here — no rename can feed another.
+renameBinders :: [(Name, Name)] -> CExpr -> CExpr
+renameBinders pairs body = foldl' (\acc (from, to) -> alphaRename from to acc) body pairs
 
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body with the right Core dispatchers:
@@ -1996,13 +2062,38 @@ desugarPatsM conInfo prefix idx ((p, mFieldTy) : ps) body = do
       let fresh = prefix <> "w" <> show idx
        in pure (fresh : restVars, restBody)
     PCon _ innerCon innerPats -> do
-      let fresh = prefix <> "p" <> show idx
-          innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
-          innerPrefix = fresh <> "_"
-          innerFieldTys = innerFieldTypes conInfo innerCon mFieldTy (length innerPats)
-      (innerVars, innerBody) <-
-        desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
-      pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
+      let innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
+      case rowLabelForCon conInfo innerCon mFieldTy of
+        -- Row-typed field whose value is tagged by the label `innerCon`
+        -- belongs to: dispatch on the row tag first — binding the
+        -- unwrapped value — then on the constructor, mirroring the
+        -- row-case path's `ConShape`. A bare `CCase` on the constructor
+        -- tag would read the row tag instead and never match. The outer
+        -- binder uses the shared `__pa<idx>` name (as `PAscribe` does), so
+        -- a sibling ascription arm or another label-descent on the same
+        -- field merges into one `CRowCase` rather than bailing with
+        -- "conflicting pattern shapes in merge".
+        Just label -> do
+          let rowVar = prefix <> "pa" <> show idx
+              rowInner = rowVar <> "c"
+              innerPrefix = rowInner <> "_"
+              innerFieldTys = innerFieldTypes conInfo innerCon (Just label) (length innerPats)
+          labelTag <- recordRowTag label
+          (innerVars, innerBody) <-
+            desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
+          pure
+            ( rowVar : restVars,
+              CRowCase
+                (CVar rowVar)
+                [(labelTag, rowInner, CCase (CVar rowInner) [(innerTag, innerVars, innerBody)])]
+            )
+        Nothing -> do
+          let fresh = prefix <> "p" <> show idx
+              innerPrefix = fresh <> "_"
+              innerFieldTys = innerFieldTypes conInfo innerCon mFieldTy (length innerPats)
+          (innerVars, innerBody) <-
+            desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
+          pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
     PAscribe _ inner ascrTy -> do
       let topVar = prefix <> "pa" <> show idx
       tag <- recordRowTag ascrTy
@@ -2023,6 +2114,19 @@ ascribeInner conInfo prefix idx other body = do
   case vars of
     [v] -> pure (v, wrappedBody)
     _ -> liftEither $ Left (TELowering "ascribeInner: nested pattern produced unexpected binders")
+
+-- | When a 'PCon' field pattern's field type is a structural sum and the
+--   constructor belongs to one of its labels (a nominal type appearing as
+--   an alternative), return that label. The pattern then /descends/ into
+--   the label — the field's value is row-tagged, so the match dispatches
+--   on the row tag first and on the constructor second. 'Nothing' for a
+--   nominal field, where the constructor matches the value directly.
+rowLabelForCon :: ConInfoEnv -> Name -> Maybe Type' -> Maybe Type'
+rowLabelForCon conInfo innerCon (Just fieldTy)
+  | TyOr {} <- fieldTy,
+    Just ci <- M.lookup innerCon conInfo =
+      find (\l -> extractTyCon l == Just (ciTypeName ci)) (flattenRow fieldTy)
+rowLabelForCon _ _ _ = Nothing
 
 -- | Substituted field types of an inner constructor application,
 --   given the outer field's known type. Falls back to 'Nothing's when

@@ -1,0 +1,18 @@
+{- Error: a bare `Nothing` injected into `(Maybe T | Maybe U)` is
+   ambiguous — its type parameter is unpinned and both alternatives
+   share the `Maybe` head, so the target alternative is undetermined.
+   No-defaulting requires an ascription naming the intended one. -}
+
+import IO.Stdout
+
+type T = A | B
+
+type U = C | D
+
+classify : (Maybe T | Maybe U) -> String
+classify x = case x of
+  (_m : Maybe T) -> "mt"
+  (_n : Maybe U) -> "mu"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify Nothing)

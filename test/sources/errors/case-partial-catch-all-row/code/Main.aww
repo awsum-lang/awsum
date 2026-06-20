@@ -1,0 +1,16 @@
+{- A nested row field matches one alternative and catches the rest with a
+   wildcard: `Just (n : Int32)` names the `Int32` alternative, `Just _`
+   would swallow `String`. The partial catch-all on a structural sum is
+   rejected; match every alternative with `(x : T)` or ignore the whole
+   field with `_` in every arm. -}
+
+import IO.Stdout
+
+classify : Maybe (Int32 | String) -> String
+classify x = case x of
+  Just (n : Int32) -> showInt32 n
+  Just _ -> "rest"
+  Nothing -> "n"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Just "hi"))

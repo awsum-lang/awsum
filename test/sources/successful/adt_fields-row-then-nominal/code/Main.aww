@@ -1,0 +1,23 @@
+{- A constructor whose first field is a row `(Int32 | String)` and second
+   is a nominal `T`, matched across all four field combinations. The two
+   Int32 arms and the two String arms each share a first-field row tag,
+   split by the second field; prints "iAiBsAsB". -}
+
+import IO.Stdout
+
+type T = A | B
+
+type W2 = W2 (Int32 | String) T
+
+classify : W2 -> String
+classify w = case w of
+  W2 (_n : Int32) A -> "iA"
+  W2 (_n : Int32) B -> "iB"
+  W2 (_s : String) A -> "sA"
+  W2 (_s : String) B -> "sB"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (W2 (1 : Int32) A))
+  |> andThenIO (\_u -> IO.Stdout.print (classify (W2 (1 : Int32) B)))
+  |> andThenIO (\_v -> IO.Stdout.print (classify (W2 "x" A)))
+  |> andThenIO (\_w -> IO.Stdout.print (classify (W2 "x" B)))

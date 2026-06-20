@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":18,"startCol":34,"endLine":18,"endCol":41,"message":"Ambiguous injection of Maybe a into Maybe T | Maybe U: more than one alternative could accept it, and the value's type is not pinned. Add an explicit type annotation that names the intended alternative.","fixes":[]}]

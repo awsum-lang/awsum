@@ -1,0 +1,17 @@
+{- A nested field enumerates one constructor and catches the rest with a
+   wildcard: `Just A` names `A`, `Just _` would swallow `B` (and anything
+   added later). The partial catch-all is rejected; either enumerate every
+   constructor or ignore the whole field with `_` in every arm. -}
+
+import IO.Stdout
+
+type T = A | B
+
+classify : Maybe T -> String
+classify x = case x of
+  Just A -> "ja"
+  Just _ -> "jrest"
+  Nothing -> "n"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (Just B))

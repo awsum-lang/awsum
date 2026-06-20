@@ -1,0 +1,17 @@
+{- A single missing combination is enough: three of the four `T × T`
+   pairs are covered, leaving only `Tuple2 B B`. Matrix exhaustiveness
+   names exactly that uncovered combination rather than accepting because
+   each field column is individually covered. -}
+
+import IO.Stdout
+
+type T = A | B
+
+label : Tuple2 T T -> String
+label p = case p of
+  Tuple2 A A -> "AA"
+  Tuple2 A B -> "AB"
+  Tuple2 B A -> "BA"
+
+main : IO Never Unit
+main = IO.Stdout.print (label (Tuple2 B B))

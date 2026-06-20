@@ -1,0 +1,20 @@
+{- A structural-sum field next to a nominal field: `W2`'s first field is
+   the row `(Int32 | String)`, its second is `T`. Covering only the
+   `Int32`-then-`A` and `String`-then-`B` combinations leaves
+   `Int32`-then-`B` uncovered. Matrix exhaustiveness treats the row field
+   as its own column and names the uncovered combination, with `_` for
+   the don't-care row value. -}
+
+import IO.Stdout
+
+type T = A | B
+
+type W2 = W2 (Int32 | String) T
+
+classify : W2 -> String
+classify w = case w of
+  W2 (_n : Int32) A -> "iA"
+  W2 (_s : String) B -> "sB"
+
+main : IO Never Unit
+main = IO.Stdout.print (classify (W2 (1 : Int32) B))

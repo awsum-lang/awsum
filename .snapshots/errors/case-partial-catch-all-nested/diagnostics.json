@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":13,"startCol":8,"endLine":13,"endCol":9,"message":"Catch-all pattern not allowed here: another arm matches a specific constructor of T, so this wildcard would swallow the remaining constructors — and any added later. Match every constructor, or ignore the whole field with a single '_' in every arm.","fixes":[]}]

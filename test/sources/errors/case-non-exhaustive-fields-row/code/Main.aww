@@ -1,0 +1,18 @@
+{- The same field-combination gap reached through a structural-sum
+   scrutinee: the `Tuple2 T T` label is covered by `Tuple2 A A` /
+   `Tuple2 B B`, so the label itself is present, but `Tuple2 A B` is
+   uncovered. The row branch runs the same matrix check on the label's
+   fields and names the uncovered combination. -}
+
+import IO.Stdout
+
+type T = A | B
+
+label : (Tuple2 T T | String) -> String
+label x = case x of
+  (s : String) -> s
+  Tuple2 A A -> "AA"
+  Tuple2 B B -> "BB"
+
+main : IO Never Unit
+main = IO.Stdout.print (label (Tuple2 A B))
