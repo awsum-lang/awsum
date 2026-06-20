@@ -1,0 +1,15 @@
+{- Error: arity is checked at every depth — the outer 'Just' is well-formed,
+   but the nested 'Single' has one field and the pattern binds three. -}
+
+import IO.Stdout
+
+type T = Single Int32 | Empty
+
+describe : Maybe T -> Int32
+describe x = case x of
+  Just (Single a b c) -> a
+  Just Empty -> 0
+  Nothing -> 0
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (describe Nothing))

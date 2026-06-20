@@ -1,0 +1,13 @@
+{- Error: a destructuring parameter binds fewer sub-patterns than the
+   constructor has fields — 'Tup' has three, the pattern names one. The
+   mismatch is an arity error, not a non-exhaustiveness witness. -}
+
+import IO.Stdout
+
+type Tup = Tup Int32 Int32 Int32
+
+first : Tup -> Int32
+first (Tup a) = a
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (first (Tup 1 2 3)))

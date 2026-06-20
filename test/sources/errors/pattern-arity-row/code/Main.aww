@@ -1,0 +1,15 @@
+{- Error: arity is checked on a constructor arm of a structural-sum
+   scrutinee too — 'Single' has one field, the arm binds two. -}
+
+import IO.Stdout
+
+type T = Single Int32 | Empty
+
+classify : (T | String) -> String
+classify x = case x of
+  Single a b -> showInt32 a
+  Empty -> "e"
+  (s : String) -> s
+
+main : IO Never Unit
+main = IO.Stdout.print (classify "x")

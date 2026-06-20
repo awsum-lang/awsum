@@ -120,6 +120,20 @@ data TypeError
     TypeMismatch Type' Type' Expr
   | -- | (function name, expected #args, actual #args)
     ArityMismatch SrcSpan Name Int Int
+  | -- | A constructor pattern binds a different number of sub-patterns
+    --   than the constructor has fields — @Single a b c@ where @Single@
+    --   has one field, or @Tuple3 a@ where it has three. The field count
+    --   is fixed by the constructor declaration and independent of how the
+    --   type is instantiated, so a mismatch is ill-formed at every pattern
+    --   position (case arm, nested field, @let@ / parameter
+    --   destructuring). Without this check the @zip@-based field walks
+    --   silently truncate: extra sub-patterns vanish unbound, and too-few
+    --   surfaces as a confusing non-exhaustiveness witness. Carries the
+    --   pattern's span, the constructor name, its declared field count, and
+    --   the count written. Distinct from the function-application
+    --   'ArityMismatch' — that is about arguments to a call, this about
+    --   fields of a match.
+    PatternArityMismatch SrcSpan Name Int Int
   | -- | Top-level definition without a signature.
     MissingSignature SrcSpan Name
   | DuplicateSignature SrcSpan Name
@@ -423,6 +437,7 @@ typeErrorSpan = \case
   NotAFunction e _ -> Just (exprSpan e)
   TypeMismatch _ _ e -> Just (exprSpan e)
   ArityMismatch sp _ _ _ -> Just sp
+  PatternArityMismatch sp _ _ _ -> Just sp
   MissingSignature sp _ -> Just sp
   DuplicateSignature sp _ -> Just sp
   DuplicateDefinition sp _ -> Just sp
@@ -511,6 +526,13 @@ prettyPrintTypeError = \case
   NotAFunction _ ty -> "Not a function; has type " <> showType ty
   TypeMismatch expected actual _ -> "Type mismatch: expected " <> showType expected <> ", got " <> showType actual
   ArityMismatch _ name expected actual -> "Arity mismatch for " <> name <> ": expected " <> show expected <> " arguments, got " <> show actual
+  PatternArityMismatch _ cName expected actual ->
+    "Pattern arity mismatch for '"
+      <> cName
+      <> "': expected "
+      <> show expected
+      <> (if expected == 1 then " field, got " else " fields, got ")
+      <> show actual
   MissingSignature _ name -> "Missing type signature for: " <> name
   DuplicateSignature _ name -> "Duplicate type signature for: " <> name
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
@@ -2159,6 +2181,7 @@ elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
       when (unmonomorphizableRowLet te)
         $ throwTE (PolymorphicRowLet lsp (patternBinderName pat))
       pure (eE, te)
+  liftEither (checkPatternArity conEnv pat)
   liftEither (checkNoShadow env exempt (collectPatternVars [pat]))
   let bindings = patternBindings conEnv [pat] [te]
       envNext = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
@@ -2524,6 +2547,14 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
             | anyArmBelongs && ciTypeName ci /= scrutName ->
                 throwTE (ConstructorNotInType patSp cName scrutTy)
           _ -> pass
+        -- The pattern must bind exactly as many sub-patterns as the
+        -- constructor has fields, at every depth. The 'zip'-based walks
+        -- below (shape validation, binding, elaboration) truncate a
+        -- mismatch silently; checked here, before per-binder analysis, so
+        -- the arity error precedes any shadow / shape complaint about the
+        -- surplus binders, and (running per-arm) precedes the matrix
+        -- non-exhaustiveness check that a too-few pattern would otherwise hit.
+        liftEither (checkPatternArity conEnv (PCon patSp cName pats))
         -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
         let currentPattern = (cName, pats)
         when (patternMatches conEnv currentPattern patterns) $ throwTE (UnreachableCase caseSp cName)
@@ -2621,6 +2652,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         when (ascrTy `M.member` perCon)
           $ throwTE (DuplicateRowArm patSp ascrTy)
         liftEither (rejectIgnoredConstructor conEnv inner)
+        liftEither (checkPatternArity conEnv inner)
         liftEither (checkNoShadow env crossExempt (collectPatternVars [inner]))
         -- The inner pattern matches at the ascribed alternative; validate
         -- its shape against that type before binding.
@@ -2646,6 +2678,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         when (label `elem` ascribed)
           $ throwTE (DuplicateRowArm patSp label)
         liftEither (rejectIgnoredConstructor conEnv (PCon patSp cName innerPats))
+        liftEither (checkPatternArity conEnv (PCon patSp cName innerPats))
         liftEither (checkNoShadow env crossExempt (collectPatternVars innerPats))
         -- Substitute the constructor's generic field types using the
         -- row label as the concrete return type — this gives the same
@@ -3113,6 +3146,30 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
     -- The membership check (the ascribed type really is a label of the
     -- scrutinee's row) lives in the caseArms helper.
     go (PAscribe _ inner ty, _) = patternBindings conEnv [inner] [ty]
+
+-- | Check that every constructor pattern binds exactly as many
+--   sub-patterns as its constructor has fields. Arity is fixed by the
+--   constructor declaration and independent of the type instantiation, so
+--   this is a purely structural walk — no types, no substitution — and
+--   recursing means one call on a whole arm / @let@ pattern covers every
+--   depth. An unknown constructor is left to the unknown-constructor
+--   check; a 'PAscribe' delegates to its inner pattern. The mismatch is
+--   reported before descending, so a wrong-arity outer pattern wins over
+--   any error inside its (already mis-shaped) sub-patterns.
+checkPatternArity :: ConEnv -> Pattern -> Either TypeError ()
+checkPatternArity conEnv = go
+  where
+    go :: Pattern -> Either TypeError ()
+    go (PVar _ _) = Right ()
+    go (PWild _) = Right ()
+    go (PAscribe _ inner _) = go inner
+    go (PCon sp cName subs) = case M.lookup cName conEnv of
+      Nothing -> Right () -- deferred to 'UnknownConstructor'
+      Just ci -> do
+        let expected = length (ciFieldTypes ci)
+        when (length subs /= expected)
+          $ Left (PatternArityMismatch sp cName expected (length subs))
+        traverse_ go subs
 
 -- | Validate that a nested field pattern's /shape/ fits its field type,
 --   extending the top-level case rules to every nested position. The old

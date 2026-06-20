@@ -1,0 +1,14 @@
+{- Error: a destructuring 'let' binds more sub-patterns than the
+   constructor has fields — 'Single' has one field, the pattern names three. -}
+
+import IO.Stdout
+
+type T = Single Int32
+
+unwrap : T -> Int32
+unwrap x =
+  let (Single a b c) = x
+   in a
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (unwrap (Single 1)))
