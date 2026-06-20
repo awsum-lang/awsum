@@ -1,0 +1,27 @@
+{- Partial application of multi-argument built-ins used as first-class
+   values: `mulInt32 5` is let-bound then applied, and `addInt32 100` is
+   passed to a higher-order function — each supplies one of the built-in's
+   two arguments. Prints `115`. -}
+
+import IO.Stdout
+
+applyArg : (Int32 -> Either (UnderflowError | OverflowError) Int32) -> Int32 -> Either (UnderflowError | OverflowError) Int32
+applyArg f x = f x
+
+result : Either (UnderflowError | OverflowError) String
+result =
+  let timesFive = mulInt32 5
+   in do
+        a <- timesFive 3
+        b <- applyArg (addInt32 100) a
+        pureEither (showInt32 b)
+
+main : IO Never Unit
+main = eitherToIO result
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError
+
+onError : (UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  (_u : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
+  (_o : OverflowError) -> IO.Stdout.print "OVERFLOW"

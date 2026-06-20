@@ -15,7 +15,7 @@
 --
 -- Invariants (assumed by codegen/tests):
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
---   • 'CBuiltIn' only appears in callee position of 'CCall'.
+--   • 'CBuiltIn' only appears as the callee of a /saturated/ 'CCall'.
 --   • Unsupported qualified names fail fast with a clear error.
 module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborateLowerProgramWith) where
 
@@ -336,27 +336,54 @@ genConWrappers conInfo =
     let params = ["$x" <> show i | i <- [0 .. ciArity ci - 1]]
   ]
 
--- | Replace every bare 'CBuiltIn' in /value position/ with a reference to
---   a synthesised eta-wrapper, returning the rewritten expression plus the
---   set of built-in names that need wrappers generated.
+-- | Replace every 'CBuiltIn' that is not the callee of a /saturated/
+--   'CCall' with a reference to a synthesised eta-wrapper, returning the
+--   rewritten expression plus the set of built-in names that need wrappers
+--   generated. Two shapes trigger the rewrite:
+--
+--   * /Value position/ — a bare 'CBuiltIn' used as a value (constructor
+--     field, call argument, case scrutinee). When a user writes
+--     @bindIO io IO.Stdout.print@ or @apply showInt32 42@, the surrounding
+--     'EApp' doesn't wrap the built-in reference, so a bare 'CBuiltIn'
+--     would otherwise flow into a fn-typed slot — Defunctionalize/
+--     LowerClosures don't encode it as a closure, and the runtime
+--     '$applyN' dispatcher crashes on the non-'CCon' value.
+--
+--   * /Under-saturated callee/ — @CCall (CBuiltIn name) args@ with
+--     @length args < arity name@, i.e. a partial application such as
+--     @mulInt32 5@ (one of two arguments). A bare 'CBuiltIn' callee is
+--     legal only for an /exactly saturated/ call; codegen requires every
+--     built-in call to supply the full argument list. Routing the partial
+--     application through the wrapper turns it into
+--     @CCall (CVar ('$bi$' <> name)) args@ — a partial application of a
+--     top-level 'CFunDef', the shape 'Awsum.LowerClosures' / 'saturateProgram'
+--     already encode as a closure. (Over-application can't arise: no
+--     built-in returns a function.)
 --
 --   The pipeline invariant ('Awsum.LowerClosures' header) is that
---   'CBuiltIn' may only appear as the callee of a 'CCall'. When a user
---   writes @bindIO io IO.Stdout.print@ or @apply showInt32 42@, the
---   surrounding 'EApp' doesn't wrap the built-in reference (it's used as a
---   value), so a bare 'CBuiltIn' would otherwise flow into a fn-typed
---   slot — Defunctionalize/LowerClosures don't encode it as a closure,
---   and the runtime '$applyN' dispatcher crashes on the non-'CCon' value.
---   This walk rewrites every such occurrence to @CVar ('$bi$' <> name)@;
---   the generator 'genBuiltInEtaWrappers' then materialises the matching
+--   'CBuiltIn' may only appear as the callee of a /saturated/ 'CCall'. This
+--   walk rewrites every other occurrence to @CVar ('$bi$' <> name)@; the
+--   generator 'genBuiltInEtaWrappers' then materialises the matching
 --   'CFunDef' whose body is a saturated 'CCall (CBuiltIn name) [args]'.
-etaExpandBuiltInValues :: CExpr -> (CExpr, Set Name)
-etaExpandBuiltInValues = goValue
+--
+--   @arityOf@ maps each built-in name to its arrow arity (from
+--   'builtInTypeByName'); a name absent from the map keeps the bare callee
+--   (a registry bug surfaces at codegen exactly as before, not silently).
+etaExpandBuiltInValues :: Map Name Int -> CExpr -> (CExpr, Set Name)
+etaExpandBuiltInValues arityOf = goValue
   where
     -- /Value position/: a 'CBuiltIn' must be eta-wrapped.
     goValue :: CExpr -> (CExpr, Set Name)
     goValue = \case
       CBuiltIn n -> (CVar (builtInEtaWrapperName n), Set.singleton n)
+      -- Under-saturated built-in call: route through the wrapper so the
+      -- partial application becomes a partial application of a top-level
+      -- 'CFunDef'. A saturated call (or an unknown name) falls through to
+      -- the general 'CCall' case below, keeping the bare 'CBuiltIn' callee.
+      CCall (CBuiltIn name) args
+        | maybe False (length args <) (M.lookup name arityOf) ->
+            let (args', n2) = unzipFold (map goValue args)
+             in (CCall (CVar (builtInEtaWrapperName name)) args', Set.insert name n2)
       CCall callee args ->
         let (callee', n1) = goCallee callee
             (args', n2) = unzipFold (map goValue args)
@@ -398,10 +425,11 @@ etaExpandBuiltInValues = goValue
       e@(CString _) -> (e, mempty)
       e@(CIntLit _ _) -> (e, mempty)
 
-    -- /Callee position/ of a 'CCall': bare 'CBuiltIn' is legal here, so
-    -- direct built-in calls 'CCall (CBuiltIn name) [args]' stay untouched.
-    -- Any other callee shape (e.g. a 'CCall' producing a function value)
-    -- is itself in value position and recurses through 'goValue'.
+    -- /Callee position/ of a 'CCall' that reached here: a bare 'CBuiltIn'
+    -- is a /saturated/ call (the under-saturated case is handled in
+    -- 'goValue' above), which is legal, so it stays untouched. Any other
+    -- callee shape (e.g. a 'CCall' producing a function value) is itself
+    -- in value position and recurses through 'goValue'.
     goCallee :: CExpr -> (CExpr, Set Name)
     goCallee = \case
       e@(CBuiltIn _) -> (e, mempty)
@@ -421,47 +449,54 @@ etaExpandBuiltInValues = goValue
     unzipFold xs = (map fst xs, foldMap snd xs)
 
 -- | Lift 'etaExpandBuiltInValues' over a single top-level declaration.
-etaExpandDeclBuiltInValues :: CDecl -> (CDecl, Set Name)
-etaExpandDeclBuiltInValues = \case
+etaExpandDeclBuiltInValues :: Map Name Int -> CDecl -> (CDecl, Set Name)
+etaExpandDeclBuiltInValues arityOf = \case
   CValDef n e ->
-    let (e', ns) = etaExpandBuiltInValues e
+    let (e', ns) = etaExpandBuiltInValues arityOf e
      in (CValDef n e', ns)
   CFunDef n ps body ->
-    let (body', ns) = etaExpandBuiltInValues body
+    let (body', ns) = etaExpandBuiltInValues arityOf body
      in (CFunDef n ps body', ns)
 
--- | Generate eta-wrapper 'CFunDef's for the listed built-in names.
---   Looks up each name's arity from 'Awsum.BuiltIn.builtIns' (unqualified
---   prelude built-ins) or 'Awsum.Program.platformTable' (qualified platform
---   effects keyed by their dotted form). Names that don't resolve (or
---   resolve to non-arrow types) are silently skipped — by construction the
---   walker only adds names that originated from 'CBuiltIn' positions, so
---   any missing entry is a registry bug, not a user error.
-genBuiltInEtaWrappers :: ProgramType -> Set Name -> [CDecl]
-genBuiltInEtaWrappers progType names =
-  let tymap = builtInTypeByName progType
-   in [ CFunDef wname params (CCall (CBuiltIn name) (map CVar params))
-      | name <- Set.toList names,
-        Just ty <- [M.lookup name tymap],
-        let arity = countArrows ty,
-        arity > 0,
-        let wname = builtInEtaWrapperName name,
-        let params = ["$x" <> show i | i <- [0 .. arity - 1]]
-      ]
+-- | Surface type of every built-in reachable in this program type, keyed
+--   by the name a 'CBuiltIn' node carries: unqualified for prelude
+--   built-ins ('Awsum.BuiltIn.builtIns'), dotted for the qualified platform
+--   effects ('Awsum.Program.platformTable').
+builtInTypeByName :: ProgramType -> Map Name Type'
+builtInTypeByName pt =
+  let preludeMap = builtIns
+      platformMap = M.mapKeys prettyQName (platformTable pt)
+   in M.union preludeMap platformMap
   where
-    builtInTypeByName :: ProgramType -> Map Name Type'
-    builtInTypeByName pt =
-      let preludeMap = builtIns
-          platformMap = M.mapKeys prettyQName (platformTable pt)
-       in M.union preludeMap platformMap
-
     prettyQName :: QName -> Name
     prettyQName (QName mods n) = T.intercalate "." (mods <> [n])
 
+-- | Arrow arity of every built-in reachable in this program type. Both
+--   the eta-expansion walk (to spot under-saturated calls) and
+--   'genBuiltInEtaWrappers' (to size the wrapper's parameter list) consult
+--   this one source of truth.
+builtInArities :: ProgramType -> Map Name Int
+builtInArities = M.map countArrows . builtInTypeByName
+  where
     countArrows :: Type' -> Int
     countArrows = \case
       TyArrow _ _ rest -> 1 + countArrows rest
       _ -> 0
+
+-- | Generate eta-wrapper 'CFunDef's for the listed built-in names, using
+--   the precomputed 'builtInArities' map. Names that don't resolve (or
+--   resolve to non-arrow types, arity 0) are silently skipped — by
+--   construction the walker only adds names that originated from 'CBuiltIn'
+--   positions, so any missing entry is a registry bug, not a user error.
+genBuiltInEtaWrappers :: Map Name Int -> Set Name -> [CDecl]
+genBuiltInEtaWrappers arityOf names =
+  [ CFunDef wname params (CCall (CBuiltIn name) (map CVar params))
+  | name <- Set.toList names,
+    Just arity <- [M.lookup name arityOf],
+    arity > 0,
+    let wname = builtInEtaWrapperName name,
+    let params = ["$x" <> show i | i <- [0 .. arity - 1]]
+  ]
 
 -- | Run a 'LowerM' computation, returning its result and the
 --   accumulated lifted helpers (in source order — they're appended
@@ -556,17 +591,20 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
       declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo, ioStdinReadAllStringContDecl conInfo, ioStdinReadAllBytesContDecl conInfo]
-      -- Eta-expand every bare 'CBuiltIn' that appears in value position
-      -- (constructor field, call argument, case scrutinee, etc.) into a
-      -- reference to a synthesised wrapper. Restores the pipeline invariant
-      -- that 'CBuiltIn' only appears as a 'CCall' callee. Runs before
+      -- Eta-expand every 'CBuiltIn' that is not the callee of a saturated
+      -- 'CCall' — a bare value reference (constructor field, call argument,
+      -- case scrutinee, …) or an under-saturated callee (a partial
+      -- application like @mulInt32 5@) — into a reference to a synthesised
+      -- wrapper. Restores the pipeline invariant that 'CBuiltIn' only
+      -- appears as the callee of a saturated 'CCall'. Runs before
       -- 'lowerIOPlatformBuiltinsDecl' so the wrapper bodies — themselves
       -- saturated 'CCall (CBuiltIn name) [args]' — get rewritten in the
       -- same pass when 'name' is a platform built-in like @IO.Stdout.print@.
+      arityOf = builtInArities progType
       (declsAfterEta, etaNeeded) =
-        let pairs = map etaExpandDeclBuiltInValues declsBeforeBI
+        let pairs = map (etaExpandDeclBuiltInValues arityOf) declsBeforeBI
          in (map fst pairs, foldMap snd pairs)
-      builtInWrappers = genBuiltInEtaWrappers progType etaNeeded
+      builtInWrappers = genBuiltInEtaWrappers arityOf etaNeeded
       allDeclsRaw = declsAfterEta <> builtInWrappers
       allDecls = map (lowerIOPlatformBuiltinsDecl conInfo) allDeclsRaw
   --    Then tree-shake: drop Core declarations unreachable from 'main'.
