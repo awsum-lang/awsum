@@ -1342,13 +1342,20 @@ peelTLams :: TExpr -> ([TParam], TExpr)
 peelTLams (TLam _ _ ps b) = let (ps', b') = peelTLams b in (ps <> ps', b')
 peelTLams e = ([], e)
 
--- | Lower a typed top-level definition. Bare-built-in aliases
---   (@showInt32 = BuiltIn.showInt32@) are dropped — references resolve
---   to the built-in directly through 'lowerVar'. A zero-parameter def
---   whose body has an arrow type is the alias form (@foo = otherFn@) and
---   is eta-expanded; otherwise it is a constant.
+-- | Lower a typed top-level definition. A same-name built-in alias
+--   (@showInt32 = BuiltIn.showInt32@, as the prelude forwards every
+--   built-in) is dropped: 'lowerVar' resolves a reference to @showInt32@
+--   straight to @CBuiltIn "showInt32"@ by name, so the decl carries no
+--   information. That name-resolution is the load-bearing condition —
+--   for a /renaming/ alias (@f = BuiltIn.showInt32@, @f \/= showInt32@)
+--   dropping the decl would leave every @f@ reference resolving to a
+--   dangling @CVar "f"@. So only the same-name form is dropped; the
+--   renaming form falls through to the alias-eta path below and lowers
+--   exactly like the hand-written @f x = BuiltIn.showInt32 x@. A
+--   zero-parameter def whose body has an arrow type is the alias form
+--   (@foo = otherFn@) and is eta-expanded; otherwise it is a constant.
 lowerTDecl :: LowerEnv -> TDecl -> LowerM (Maybe CDecl)
-lowerTDecl _ (TValDef _ (TBuiltIn {})) = pure Nothing
+lowerTDecl _ (TValDef n (TBuiltIn _ _ bn)) | n == bn = pure Nothing
 lowerTDecl env (TValDef n body)
   -- @f = \\a b -> e@ — move the lambda parameters onto the LHS (the
   -- typed equivalent of the old surface eta-contraction), so the body
