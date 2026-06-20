@@ -1,0 +1,28 @@
+{- A tower of boolean `and` / `or` / `not` over a runtime-dependent seed. Each
+   level's `case` reconstructs its own scrutinee in one arm, so identity
+   reconstruction rewrites that arm to the scrutinee and the levels collapse
+   into a single dispatch — no join is minted. Prints `F`. -}
+
+import IO.Stdout
+
+mix : Bool -> Bool
+mix b = case b of
+  True -> eqUInt32 (lengthUtf8Bytes "xyz") 3
+  False -> False
+
+seed : Bool
+seed = eqUInt32 (lengthUtf8Bytes (showInt32 42)) 2
+
+result : String
+result =
+  let s0 = seed
+      s1 = and (mix s0) True
+      s2 = and s1 True
+      s3 = or s2 False
+      s4 = not s3
+   in case s4 of
+        True -> "T"
+        False -> "F"
+
+main : IO Never Unit
+main = IO.Stdout.print result
