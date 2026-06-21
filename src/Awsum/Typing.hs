@@ -1888,6 +1888,23 @@ checkExpr conEnv tcm crossExempt env expected = \case
               let sFinal =
                     solveRowVars True (collectTypeVars expected) resultOnlyVars (applySubst sBeforeFinal resultTy) expected
                       <> sBeforeFinal
+              -- Boundary guard: the result @TApp@ is stamped with @expected@
+              -- below, so verify the /threaded/ result type actually subsumes
+              -- into it. The early 'unifyOrSubsume' above ran while the
+              -- combinator's result-row variables were still free, when
+              -- @(e1 | e2) ~ Never@ legitimately binds both to @Never@ and
+              -- passes; the operands then pin @e1@ to a concrete label
+              -- (@bindEither op _@ with @op : Either ErrA _@ pins @e1 := ErrA@).
+              -- Without this check the concrete label is silently absorbed —
+              -- @Either (ErrA | e2) Int32@ stamped as @Either Never Int32@ — and
+              -- the consuming @case@ drops the now-"impossible" @Left@ arm,
+              -- misdispatching at runtime. 'rowSubsume' (set-semantic on the
+              -- actual side) accepts a degenerate @(Never | Never)@ and an
+              -- open-tail widening @(EZ | e) <: (EA | EB | EZ)@ while rejecting
+              -- the concrete-label-into-@Never@ hole.
+              let actualFinal = applySubst sFinal resultTy
+              unless (rowSubsume expected actualFinal)
+                $ throwTE (TypeMismatch expected actualFinal e)
               -- Substitute the call head with the fully-threaded
               -- substitution. Without this the head keeps its abstract
               -- instantiated type, so 'monomorphizeRows' sees no row

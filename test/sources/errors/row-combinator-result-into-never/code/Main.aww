@@ -1,0 +1,21 @@
+{- A row combinator's result row `(e1 | e2)` carries a concrete error label,
+   but the binding is ascribed `Either Never`. `op1` fails with `ErrA`, so
+   `bindEither op1 (\_n -> pureEither 0)` has type `Either (ErrA | e2) Int32`.
+   Accepting it at `Either Never Int32` would promise the `Left ErrA` away,
+   and a downstream `case` that drops the now-"impossible" `Left` arm would
+   misdispatch the live `Left` at runtime. `Never` is uninhabited — a
+   concrete label cannot vanish into it — so the call is rejected. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+op1 : Either ErrA Int32
+op1 = Left ErrA
+
+bad : Either Never Int32
+bad = bindEither op1 (\_n -> pureEither 0)
+
+main : IO Never Unit
+main = case bad of
+  Right n -> IO.Stdout.print (showInt32 n)

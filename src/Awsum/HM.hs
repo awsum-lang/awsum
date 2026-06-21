@@ -292,9 +292,17 @@ rowSubsume expected actual = case (expected, actual) of
      in all
           (\al -> S.member (canonicalLabel al) exSet || any (`rowSubsume` al) exLabels)
           (flattenRow actual)
-  -- Row on actual but not expected: a multi-label value cannot flow
-  -- into a single-label position.
-  (_, TyOr {}) -> False
+  -- Row on actual but not expected. A value of @actual@ could be any of
+  -- its alternatives, so /every/ one must subsume into the single
+  -- @expected@ label. Not a blanket reject: rows are set-semantic, so a
+  -- degenerate row that flattens to one label — @(Never | Never)@, a
+  -- duplicate @(A | A)@, or @(A | Never)@ where the empty drops — really
+  -- is that single label and must be accepted (as 'unify' and
+  -- 'canonicalLabel' already treat it). 'flattenRow' dedupes; the
+  -- per-label 'TyEmpty' rule above drops any 'Never'. A genuinely
+  -- multi-label value (@(A | B)@ into @A@) still fails — @B@ does not
+  -- subsume into @A@.
+  (_, TyOr {}) -> all (rowSubsume expected) (flattenRow actual)
   (TyApp _ f1 x1, TyApp _ f2 x2) -> rowSubsume f1 f2 && rowSubsume x1 x2
   (TyArrow _ a1 b1, TyArrow _ a2 b2) -> rowSubsume a2 a1 && rowSubsume b1 b2
   (TyCon _ c1, TyCon _ c2) -> c1 == c2
