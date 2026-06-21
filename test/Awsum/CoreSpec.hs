@@ -22,6 +22,7 @@ module Awsum.CoreSpec (spec) where
 import Awsum.BuiltIn (builtIns, effectfulBuiltIns)
 import Awsum.Core
 import Awsum.Cps (cpsProgram)
+import Awsum.Reuse (insertReuse)
 import Awsum.Syntax (Name)
 import Awsum.Tco (tcoProgram)
 import Control.Exception (ErrorCall (..))
@@ -38,6 +39,7 @@ spec = do
   childrenSpec
   effectfulInSpec
   pipelineNodeGuardSpec
+  reuseSpec
 
 renameVarSpec :: Spec
 renameVarSpec = describe "Awsum.Core.renameVar" $ do
@@ -220,3 +222,50 @@ pipelineNodeGuardSpec = do
         [ (0, [], CCon 0 [CCall (CVar "f") [CVar "x"]]),
           (1, [], node)
         ]
+
+-- | 'Awsum.Reuse.insertReuse' strips the single 'CDrop scrut' that
+--   'Awsum.Lifetime' places over a matched-cell scope, on the premise that an
+--   enclosed same-arity 'CCon' reuses the cell in place. When that scope holds
+--   a 'case' whose arms split into a reuse path and a non-reuse path, the
+--   non-reuse arm must re-acquire the drop, or the scrut cell leaks on that
+--   path. This is the CPS-continuation leak: an 'Either'-returning non-tail
+--   recursion's '$apply' reuses its continuation cell only on the @Left@ arm,
+--   so the @Right@ (success) arm would lose its drop and leak one cell per
+--   recursion step on LLVM/WASM. Invisible to the stdout snapshot/property
+--   suites (output is unchanged — only peak RSS grows), so it is pinned here on
+--   synthetic 'CExpr': the exact shape after a 'CDrop' wraps a two-arm case.
+reuseSpec :: Spec
+reuseSpec = describe "Awsum.Reuse.insertReuse" $ do
+  it "re-acquires the scrut drop on a sibling arm that does not reuse the cell"
+    $ insertReuse 0 (oneFn ["k", "x"] (dropOverSplit (CVar "pk")))
+    `shouldBe` oneFn
+      ["k", "x"]
+      ( splitCase
+          (CReuse ReuseUnique "k" 100 [CVar "pk"]) -- reuse path: cell rebuilt
+          (CDrop "k" (CVar "pk")) -- forward path: drop restored, not leaked
+      )
+
+  it "absorbs the drop on every arm when all arms reuse the cell (no spurious drop)"
+    $ insertReuse 0 (oneFn ["k", "x"] (dropOverSplit (CCon 101 [CVar "pk"])))
+    `shouldBe` oneFn
+      ["k", "x"]
+      ( splitCase
+          (CReuse ReuseUnique "k" 100 [CVar "pk"])
+          (CReuse ReuseUnique "k" 101 [CVar "pk"])
+      )
+  where
+    oneFn :: [Name] -> CExpr -> CoreProgram
+    oneFn ps body = CoreProgram [CFunDef "f" ps body]
+
+    -- The Lifetime-produced shape: outer match on "k" (one binder ⇒ reuse
+    -- arity 1) whose arm drops "k" over an inner two-arm case. Arm 3 rebuilds a
+    -- 1-field cell (a reuse target); arm 4's leaf is the parameter.
+    dropOverSplit :: CExpr -> CExpr
+    dropOverSplit arm4 =
+      CCase
+        (CVar "k")
+        [(9, ["pk"], CDrop "k" (CCase (CVar "x") [(3, ["a"], CCon 100 [CVar "pk"]), (4, ["b"], arm4)]))]
+
+    splitCase :: CExpr -> CExpr -> CExpr
+    splitCase arm3 arm4 =
+      CCase (CVar "k") [(9, ["pk"], CCase (CVar "x") [(3, ["a"], arm3), (4, ["b"], arm4)])]

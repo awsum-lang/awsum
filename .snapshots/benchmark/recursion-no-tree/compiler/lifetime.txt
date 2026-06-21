@@ -1,0 +1,72 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+main:
+  case-pattern    e                               count=1
+  row-case        $inl4$o                         count=0
+  row-case        $inl5$u                         count=0
+  case-pattern    n                               count=1
+
+runDemo:
+  case-pattern    $do_e_1                         count=1
+  case-pattern    tailed                          count=1
+  case-pattern    $do_e_0                         count=1
+  case-pattern    looped                          count=1
+
+countTail:
+  param           remaining                       count=2
+  param           acc                             count=2
+  case-pattern    $do_e_3                         count=0
+  case-pattern    a                               count=0
+  case-pattern    $do_e_2                         count=0
+  case-pattern    r                               count=0
+
+descendN:
+  param           rounds                          count=2
+  param           depth                           count=2
+  case-pattern    $do_e_5                         count=0
+  case-pattern    d                               count=0
+  case-pattern    $do_e_4                         count=0
+  case-pattern    r                               count=0
+
+$cps$descend:
+  param           n                               count=2
+  param           $k                              count=2
+  case-pattern    $do_e_7                         count=0
+  case-pattern    p                               count=0
+
+$apply$descend:
+  param           $k                              count=2
+  param           $x                              count=2
+  case-pattern    $pk_12                          count=0
+  case-pattern    $do_e_6                         count=0
+  case-pattern    r                               count=0
+  let             $inl3$__input                   count=0
+  case-pattern    $inl1$__f0                      count=0
+  case-pattern    $inl2$__f0                      count=0
+
+$scc$spinA_spinB_spinC:
+  param           $args                           count=4
+  case-pattern    remaining                       count=0
+  case-pattern    acc                             count=0
+  case-pattern    $do_e_9                         count=0
+  case-pattern    a                               count=0
+  case-pattern    $do_e_8                         count=0
+  case-pattern    r                               count=0
+  case-pattern    remaining                       count=0
+  case-pattern    acc                             count=0
+  case-pattern    $do_e_11                        count=0
+  case-pattern    a                               count=0
+  case-pattern    $do_e_10                        count=0
+  case-pattern    r                               count=0
+  case-pattern    remaining                       count=0
+  case-pattern    acc                             count=0
+  case-pattern    $do_e_13                        count=0
+  case-pattern    a                               count=0
+  case-pattern    $do_e_12                        count=0
+  case-pattern    r                               count=0
+

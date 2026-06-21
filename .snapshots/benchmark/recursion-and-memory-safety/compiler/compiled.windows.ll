@@ -552,12 +552,10 @@ tco.case.arm.4.31:
   store ptr %t40, ptr %t41
   %t42 = getelementptr ptr, ptr %t34, i32 3
   store ptr %t39, ptr %t42
-  call void @__inc_ref(ptr %t33)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t34, ptr %t4
   br label %tco.loop.0
@@ -647,12 +645,10 @@ tco.case.arm.4.31:
   call void @__inc_ref(ptr %t6)
   %t42 = getelementptr ptr, ptr %t34, i32 3
   store ptr %t6, ptr %t42
-  call void @__inc_ref(ptr %t33)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t34, ptr %t4
   br label %tco.loop.0
@@ -740,12 +736,10 @@ tco.case.arm.4.31:
   %t41 = getelementptr ptr, ptr %t34, i32 2
   store ptr %t38, ptr %t41
   %t42 = call ptr @v__scc__apply_mirror__cps_mirror(ptr %t34)
-  call void @__inc_ref(ptr %t33)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t42, ptr %t4
   br label %tco.loop.0

@@ -1,0 +1,19 @@
+{- The `IO` analogue: a concrete error label absorbed into `Never`. `boom`
+   fails with `ErrA`, so `boom |> andThenIO (\_u -> pureIO Unit)` has type
+   `IO (ErrA | e2) Unit`. Ascribing it `IO Never Unit` would hand the runtime
+   an `IOFail ErrA` node inside a tree whose type says failure is impossible,
+   and the `runIO` walker would crash on the arm the type let it drop.
+   Rejected at the call, where the concrete `ErrA` meets the empty row. -}
+
+import IO.Stdout
+
+type ErrA = ErrA
+
+boom : IO ErrA Unit
+boom = failIO ErrA
+
+bad : IO Never Unit
+bad = boom |> andThenIO (\_u -> pureIO Unit)
+
+main : IO Never Unit
+main = bad

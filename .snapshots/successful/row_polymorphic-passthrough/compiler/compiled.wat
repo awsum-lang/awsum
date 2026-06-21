@@ -663,11 +663,7 @@
           call 9
         end
         local.set 5
-        local.get 4
-        call 8
         local.get 1
-        call 9
-        local.get 3
         call 9
         local.get 2
         call 9
@@ -733,13 +729,9 @@
         call 8
         local.get 0
         local.set 5
-        local.get 4
-        call 8
         local.get 1
         call 9
         local.get 3
-        call 9
-        local.get 2
         call 9
         local.get 4
         local.set 0

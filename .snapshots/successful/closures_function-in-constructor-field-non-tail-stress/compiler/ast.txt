@@ -6,51 +6,52 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 7
-            , spanStartCol = 1
-            , spanEndLine = 7
-            , spanEndCol = 32
-            }
-        ) "Box" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 7
-                , spanStartCol = 12
+                , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 15
+                , spanEndCol = 32
                 }
-            ) "Box"
-            [ TyArrow
+            ) "Box" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 7
-                    , spanStartCol = 16
+                    , spanStartCol = 12
                     , spanEndLine = 7
-                    , spanEndCol = 32
+                    , spanEndCol = 15
                     }
-                )
-                ( TyCon
+                ) "Box"
+                [ TyArrow
                     ( SrcSpan
                         { spanStartLine = 7
-                        , spanStartCol = 17
+                        , spanStartCol = 16
                         , spanEndLine = 7
-                        , spanEndCol = 22
+                        , spanEndCol = 32
                         }
-                    ) "Int32"
-                )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 7
-                        , spanStartCol = 26
-                        , spanEndLine = 7
-                        , spanEndCol = 31
-                        }
-                    ) "Int32"
-                )
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 17
+                            , spanEndLine = 7
+                            , spanEndCol = 22
+                            }
+                        ) "Int32"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 26
+                            , spanEndLine = 7
+                            , spanEndCol = 31
+                            }
+                        ) "Int32"
+                    )
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 9
                 , spanStartCol = 1

@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":9,"startCol":8,"endLine":11,"endCol":21,"message":"Cannot match on Int32 | r: it has a structural sum with an open tail (a type variable the caller chooses), so its set of alternatives is not fixed and a catch-all is not allowed. Close the row to concrete alternatives before matching on it.","fixes":[]}]

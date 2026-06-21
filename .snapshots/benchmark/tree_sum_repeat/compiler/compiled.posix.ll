@@ -359,12 +359,10 @@ tco.case.arm.4.31:
   store ptr %t41, ptr %t42
   %t43 = getelementptr ptr, ptr %t34, i32 3
   store ptr %t40, ptr %t43
-  call void @__inc_ref(ptr %t33)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t34, ptr %t4
   br label %tco.loop.0
@@ -439,14 +437,12 @@ tco.case.arm.4.23:
   %t35 = getelementptr ptr, ptr %t26, i32 3
   store ptr %t32, ptr %t35
   %t36 = call ptr @v__scc__apply_sumTree__cps_sumTree(ptr %t26)
-  call void @__inc_ref(ptr %t25)
   call void @__inc_ref(ptr %t7)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t25)
   store ptr %t25, ptr %t3
   store ptr %t7, ptr %t4
   store ptr %t36, ptr %t5

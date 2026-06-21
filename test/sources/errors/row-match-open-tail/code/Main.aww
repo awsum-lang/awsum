@@ -1,0 +1,14 @@
+{- Error: '(Int32 | r)' has an open tail 'r' — a type variable the caller
+   chooses via implicit injection. No finite set of arms can be exhaustive
+   and catch-all is forbidden, so matching on the row is rejected: a caller
+   that picks 'r := Bool' would otherwise reach an arm-less 'CRowCase' with
+   a 'Bool' value, an unsound cross-target coerce. Close the row first. -}
+
+import IO.Stdout
+
+_f : (Int32 | r) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

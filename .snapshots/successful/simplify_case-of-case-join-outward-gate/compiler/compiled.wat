@@ -1291,8 +1291,6 @@
           call 16
           local.get 7
           local.set 6
-          local.get 5
-          call 16
           local.get 2
           call 17
           local.get 3
@@ -1300,8 +1298,6 @@
           local.get 1
           call 17
           local.get 0
-          call 17
-          local.get 4
           call 17
           local.get 5
           local.set 0
@@ -1366,13 +1362,9 @@
         call 16
         local.get 0
         local.set 5
-        local.get 4
-        call 16
         local.get 1
         call 17
         local.get 3
-        call 17
-        local.get 2
         call 17
         local.get 4
         local.set 0
@@ -1492,8 +1484,6 @@
           call 16
           local.get 7
           local.set 6
-          local.get 5
-          call 16
           local.get 2
           call 17
           local.get 3
@@ -1501,8 +1491,6 @@
           local.get 1
           call 17
           local.get 0
-          call 17
-          local.get 4
           call 17
           local.get 5
           local.set 0
@@ -1562,13 +1550,9 @@
           i32.store offset=4
           local.get 6
           local.set 5
-          local.get 4
-          call 16
           local.get 1
           call 17
           local.get 0
-          call 17
-          local.get 2
           call 17
           local.get 4
           local.set 0
@@ -1580,15 +1564,7 @@
           local.set 5
           local.get 1
           local.set 6
-          local.get 5
-          call 16
-          local.get 6
-          call 16
-          local.get 1
-          call 17
           local.get 0
-          call 17
-          local.get 2
           call 17
           local.get 5
           local.set 0
@@ -1839,11 +1815,7 @@
               call 17
             end
             local.set 5
-            local.get 4
-            call 16
             local.get 1
-            call 17
-            local.get 3
             call 17
             local.get 2
             call 17
@@ -1956,13 +1928,9 @@
         call 16
         local.get 0
         local.set 5
-        local.get 4
-        call 16
         local.get 1
         call 17
         local.get 3
-        call 17
-        local.get 2
         call 17
         local.get 4
         local.set 0
@@ -2289,11 +2257,7 @@
               call 17
             end
             local.set 5
-            local.get 4
-            call 16
             local.get 1
-            call 17
-            local.get 3
             call 17
             local.get 2
             call 17
@@ -2406,13 +2370,9 @@
         call 16
         local.get 0
         local.set 5
-        local.get 4
-        call 16
         local.get 1
         call 17
         local.get 3
-        call 17
-        local.get 2
         call 17
         local.get 4
         local.set 0
@@ -2467,10 +2427,6 @@
           local.set 5
           local.get 1
           local.set 6
-          local.get 6
-          call 16
-          local.get 1
-          call 17
           local.get 3
           call 17
           local.get 2
@@ -2503,10 +2459,6 @@
             local.set 5
             local.get 1
             local.set 6
-            local.get 6
-            call 16
-            local.get 1
-            call 17
             local.get 3
             call 17
             local.get 2

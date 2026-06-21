@@ -333,8 +333,6 @@ tco.case.arm.8.20:
   store ptr %t26, ptr %t27
   %t25 = getelementptr ptr, ptr %t5, i32 1
   store ptr %t22, ptr %t25
-  call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   store ptr %t5, ptr %t3
@@ -501,6 +499,7 @@ case.arm.3.20:
 case.end.3.21:
   br label %case.join.19
 case.arm.4.31:
+  call void @__free_recursive(ptr %t5)
   call void @__inc_ref(ptr %t6)
   br label %case.end.4.32
 case.end.4.32:

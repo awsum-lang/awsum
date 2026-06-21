@@ -1,0 +1,13 @@
+{- Error: '_val' declares '(a | b)' — a structural sum of two polymorphic
+   alternatives — but its body is the concrete 'Int32' 42, forcing one
+   alternative to 'Int32'. Same root as a bare 'a': a concrete body under a
+   polymorphic signature. (Injecting into such a row also mis-tags the cell by
+   the variable's name; here the definition is rejected before that bites.) -}
+
+import IO.Stdout
+
+_val : a | b
+_val = (42 : Int32)
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

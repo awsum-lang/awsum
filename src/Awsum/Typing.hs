@@ -136,6 +136,14 @@ data TypeError
     PatternArityMismatch SrcSpan Name Int Int
   | -- | Top-level definition without a signature.
     MissingSignature SrcSpan Name
+  | -- | A definition's body is not as polymorphic as its declared
+    --   signature — it fixes (or conflates) a type variable the signature
+    --   leaves free, so the definition would not be valid for every
+    --   instantiation. Without this check a concrete value could be bound to
+    --   a polymorphic type and then used at any type: an unsound coercion,
+    --   divergent across backends. Carries the definition name and its
+    --   declared type.
+    SignatureTooPolymorphic SrcSpan Name Type'
   | DuplicateSignature SrcSpan Name
   | DuplicateDefinition SrcSpan Name
   | -- | A 'TyCon' the checker does not recognize.
@@ -354,6 +362,15 @@ data TypeError
     --   tell what was expected. Mirrors 'NonExhaustiveCase' for nominal
     --   sums.
     NonExhaustiveRow SrcSpan [Type'] Type'
+  | -- | A @case@ matches a structural sum whose label set still carries a
+    --   free type variable (an open row tail). The tail is the caller's to
+    --   instantiate via implicit injection, so no finite set of arms can be
+    --   exhaustive and catch-all is forbidden by design — the match is
+    --   unsound (a value of the tail type would reach a 'CRowCase' with no
+    --   arm for its tag). Carries the scrutinee type so the diagnostic can
+    --   name the open row. Distinct from 'NonExhaustiveRow', which is a
+    --   /closed/ row missing a concrete alternative the user can cover.
+    MatchOnOpenRow SrcSpan Type'
   | -- | A wildcard (@_@) or variable pattern was used at the top of a
     --   @case@ arm whose scrutinee is a structural sum. Catch-all
     --   patterns on rows are forbidden by design — exhaustiveness on
@@ -458,6 +475,7 @@ typeErrorSpan = \case
   ArityMismatch sp _ _ _ -> Just sp
   PatternArityMismatch sp _ _ _ -> Just sp
   MissingSignature sp _ -> Just sp
+  SignatureTooPolymorphic sp _ _ -> Just sp
   DuplicateSignature sp _ -> Just sp
   DuplicateDefinition sp _ -> Just sp
   UnknownTypeCon sp _ -> Just sp
@@ -499,6 +517,7 @@ typeErrorSpan = \case
   StackUnsafeRecursion sp _ -> Just sp
   RowLabelNotInScrut sp _ _ -> Just sp
   NonExhaustiveRow sp _ _ -> Just sp
+  MatchOnOpenRow sp _ -> Just sp
   RowCatchAllPattern sp -> Just sp
   DuplicateRowArm sp _ -> Just sp
   RowLabelNotForConstructor sp _ _ -> Just sp
@@ -555,6 +574,16 @@ prettyPrintTypeError = \case
       <> (if expected == 1 then " field, got " else " fields, got ")
       <> show actual
   MissingSignature _ name -> "Missing type signature for: " <> name
+  SignatureTooPolymorphic _ name ty ->
+    "The binding '"
+      <> name
+      <> "' declares the polymorphic type "
+      <> showType ty
+      <> ", but its body is not that general — it fixes a type variable the "
+      <> "type leaves free to a specific type. A binding must be valid for "
+      <> "every instantiation of its type variables; otherwise the value could "
+      <> "be used at any type, an unsound coercion. Narrow the type to match "
+      <> "the body, or make the body polymorphic."
   DuplicateSignature _ name -> "Duplicate type signature for: " <> name
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
@@ -670,6 +699,13 @@ prettyPrintTypeError = \case
       <> ": missing alternative"
       <> (if length missing > 1 then "s " else " ")
       <> T.intercalate ", " (map showType missing)
+  MatchOnOpenRow _ scrut ->
+    "Cannot match on "
+      <> showType scrut
+      <> ": it has a structural sum with an open tail (a type variable the "
+      <> "caller chooses), so its set of alternatives is not fixed and a "
+      <> "catch-all is not allowed. Close the row to concrete alternatives "
+      <> "before matching on it."
   RowCatchAllPattern _ ->
     "Wildcard / variable patterns are not allowed at the top of a "
       <> "case arm whose scrutinee is a structural sum. Each alternative "
@@ -1354,6 +1390,29 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
     -- error the body's partial elaboration is discarded by 'throwTE'.
     bodyTExpr <- runCheck (checkExpr conEnv typeConsMap crossModuleExempt env expectedBodyTy body)
 
+    -- Polymorphism soundness check. The body just elaborated against the
+    -- /flexible/ signature, where each signature type variable is a
+    -- unification variable — so a concrete body satisfies a polymorphic
+    -- signature ('val : a' accepting 'val = (42 : Int32)'), letting the value
+    -- be used later at any type (an unsound coercion, divergent across
+    -- backends). Re-check the body with every signature variable replaced by a
+    -- fresh rigid skolem ('TyCon "$sk$v"', which 'unify' bonds only to itself):
+    -- a body that fixes a variable to a concrete type, or conflates two
+    -- distinct ones, no longer typechecks. Validation only — 'bodyTExpr' above
+    -- stays the authoritative tree, so an accepted program's elaboration is
+    -- unchanged. Legitimate polymorphism (a body as general as its signature)
+    -- passes, since a skolem matches itself.
+    let sigVars = S.toList (collectTypeVars ty)
+    unless (null sigVars)
+      $ let skoSubst = mconcat [singletonSubst v (TyCon noSpan ("$sk$" <> v)) | v <- sigVars]
+            skoArgTys = map (applySubst skoSubst) argTys
+            skoExpected = applySubst skoSubst expectedBodyTy
+            skoParams = M.fromList [(qLocal (paramName p), t) | (p, t) <- zip args skoArgTys, paramName p /= "_"]
+            skoEnv = M.union skoParams envOuter
+         in case runCheck (checkExpr conEnv typeConsMap crossModuleExempt skoEnv skoExpected body) of
+              Right _ -> Right ()
+              Left _ -> Left (SignatureTooPolymorphic sp n ty)
+
     -- Unused-parameter warnings: report any user-named parameter (not @_@,
     -- not @_foo@) that the body does not reference. Underscore-prefixed
     -- names are an explicit opt-out and never warned on.
@@ -1829,6 +1888,23 @@ checkExpr conEnv tcm crossExempt env expected = \case
               let sFinal =
                     solveRowVars True (collectTypeVars expected) resultOnlyVars (applySubst sBeforeFinal resultTy) expected
                       <> sBeforeFinal
+              -- Boundary guard: the result @TApp@ is stamped with @expected@
+              -- below, so verify the /threaded/ result type actually subsumes
+              -- into it. The early 'unifyOrSubsume' above ran while the
+              -- combinator's result-row variables were still free, when
+              -- @(e1 | e2) ~ Never@ legitimately binds both to @Never@ and
+              -- passes; the operands then pin @e1@ to a concrete label
+              -- (@bindEither op _@ with @op : Either ErrA _@ pins @e1 := ErrA@).
+              -- Without this check the concrete label is silently absorbed —
+              -- @Either (ErrA | e2) Int32@ stamped as @Either Never Int32@ — and
+              -- the consuming @case@ drops the now-"impossible" @Left@ arm,
+              -- misdispatching at runtime. 'rowSubsume' (set-semantic on the
+              -- actual side) accepts a degenerate @(Never | Never)@ and an
+              -- open-tail widening @(EZ | e) <: (EA | EB | EZ)@ while rejecting
+              -- the concrete-label-into-@Never@ hole.
+              let actualFinal = applySubst sFinal resultTy
+              unless (rowSubsume expected actualFinal)
+                $ throwTE (TypeMismatch expected actualFinal e)
               -- Substitute the call head with the fully-threaded
               -- substitution. Without this the head keeps its abstract
               -- instantiated type, so 'monomorphizeRows' sees no row
@@ -2275,6 +2351,20 @@ elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
   (rhsE, te) <- case mAnnot of
     Just t -> do
       eE <- checkExpr conEnv tcm exempt env t e
+      -- Polymorphism soundness check, mirroring the top-level definition
+      -- check: a 'let' annotated with a polymorphic type must have a body at
+      -- least as general. The check above leaves the annotation's type
+      -- variables flexible, so a concrete RHS ('let x : a = (42 : Int32)')
+      -- passes and 'x' is then usable at any type. Re-check the RHS against
+      -- the annotation with every variable replaced by a rigid skolem; a
+      -- body that fixes one no longer typechecks. Validation only — 'eE'
+      -- stays authoritative.
+      let sigVars = S.toList (collectTypeVars t)
+      unless (null sigVars)
+        $ let skoSubst = mconcat [singletonSubst v (TyCon noSpan ("$sk$" <> v)) | v <- sigVars]
+           in case runCheck (checkExpr conEnv tcm exempt env (applySubst skoSubst t) e) of
+                Right _ -> pass
+                Left _ -> throwTE (SignatureTooPolymorphic lsp (patternBinderName pat) t)
       pure (eE, t)
     Nothing -> do
       eE <-
@@ -2633,7 +2723,7 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
             -- 'NonExhaustiveMatch' witness instead.
             liftEither (rejectPartialCatchAll recSet conEnv tcm fieldTys armsFields)
             whenJust (matrixWitness recSet conEnv tcm fieldTys armsFields) $ \w ->
-              throwTE (NonExhaustiveMatch sp scrutTy (PCon noSpan cName w))
+              throwTE (matchWitnessError sp scrutTy cName w)
           _ -> pass
       pure (NominalArms talts)
 
@@ -2720,6 +2810,12 @@ caseArmsRow ::
   (Env -> Expr -> Check TExpr) ->
   Check CaseElab
 caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
+  -- A row whose label set still carries a free type variable (an open
+  -- tail) cannot be matched: the tail is the caller's to instantiate via
+  -- implicit injection, so no finite set of arms is exhaustive and
+  -- catch-all is forbidden. Reject before processing arms — this also
+  -- closes the '(rest : r)' backdoor (an arm ascribing the tail label).
+  when (any isTyVarTy labels) $ throwTE (MatchOnOpenRow sp scrutTy)
   (tralts, ascribed, perLabelConArms) <-
     foldM handleRowArm ([], [], M.empty) (toList alts)
   let missing = filter (`notExhaust` (ascribed, perLabelConArms)) labels
@@ -2736,16 +2832,15 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
     -- (see 'isConInhabited' / 'caseArms').
     recSet = recursiveTypeNames conEnv
 
-    notExhaust label (ascribedSet, perLabelConArms) = case label of
-      TyVar _ _ -> False -- open row tail, no obligation
-      -- An uninhabited alternative carries no runtime value, so it imposes
-      -- no coverage obligation — mirrors the 'isConInhabited' filter on
-      -- nominal constructors.
-      _
-        | not (isTypeInhabited recSet conEnv tcm label) -> False
-        | otherwise ->
-            notElem label ascribedSet
-              && not (label `M.member` perLabelConArms)
+    -- The open-tail guard above rejects any row carrying a free tyvar tail,
+    -- so every label reaching here is concrete. An uninhabited alternative
+    -- carries no runtime value, so it imposes no coverage obligation —
+    -- mirrors the 'isConInhabited' filter on nominal constructors.
+    notExhaust label (ascribedSet, perLabelConArms)
+      | not (isTypeInhabited recSet conEnv tcm label) = False
+      | otherwise =
+          notElem label ascribedSet
+            && not (label `M.member` perLabelConArms)
 
     -- Locate the row label whose head 'TyCon' matches @tyName@.
     findLabel tyName =
@@ -2844,7 +2939,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
           let armsFields = [pats | (pats, _, _) <- armsForCon]
           liftEither (rejectPartialCatchAll recSet conEnv tcm fieldTys0 armsFields)
           whenJust (matrixWitness recSet conEnv tcm fieldTys0 armsFields) $ \w ->
-            throwTE (NonExhaustiveMatch sp scrutTy (PCon noSpan cName w))
+            throwTE (matchWitnessError sp scrutTy cName w)
 
 -- Shared Maranget-specialization primitives used by both 'matrixWitness'
 -- (exhaustiveness) and 'rejectPartialCatchAll' (catch-all legality). The
@@ -2898,13 +2993,34 @@ rowHeadLabel conEnv labels = \case
   PCon _ c _ -> rowLabelForConstructor conEnv labels c
   _ -> Nothing
 
--- | The concrete, /inhabited/ labels of a row — the ones a @case@ must cover.
---   An open tyvar tail imposes no obligation, and (mirroring 'nominalColumn')
---   neither does an uninhabited alternative, since no value of it can occur.
---   Shared by 'matrixWitness' and 'rejectPartialCatchAll'.
+-- | The concrete, /inhabited/ labels of a row — the ones with a runtime tag
+--   to dispatch on. Drops an open tyvar tail (it has no tag; its coverage is
+--   handled separately by 'rowColumn', which treats it as never-coverable)
+--   and (mirroring 'nominalColumn') an uninhabited alternative, since no
+--   value of it can occur. Shared by 'matrixWitness' and 'rejectPartialCatchAll'.
 concreteRowLabels :: S.Set Name -> ConEnv -> TypeConsMap -> [Type'] -> [Type']
 concreteRowLabels recSet conEnv tcm =
   filter (\l -> not (isTyVarTy l) && isTypeInhabited recSet conEnv tcm l)
+
+-- | A 'matrixWitness' counterexample mentions an open row tail when it
+--   ascribes a free type variable at any depth — the '(_ : r)' shape
+--   'rowColumn' emits for a row whose label set still carries a tyvar. Such
+--   a column is not merely missing a concrete alternative; it cannot be
+--   matched at all.
+patMentionsOpenRow :: Pattern -> Bool
+patMentionsOpenRow = \case
+  PAscribe _ inner ty -> isTyVarTy ty || patMentionsOpenRow inner
+  PCon _ _ ps -> any patMentionsOpenRow ps
+  _ -> False
+
+-- | Choose the diagnostic for a non-exhaustive matrix witness: an open-row
+--   tail in the witness is reported as 'MatchOnOpenRow' (the row cannot be
+--   matched), everything else as a plain 'NonExhaustiveMatch'. Shared by the
+--   nominal-scrutinee and row-label matrix-exhaustiveness sites.
+matchWitnessError :: SrcSpan -> Type' -> Name -> [Pattern] -> TypeError
+matchWitnessError sp scrutTy cName w
+  | any patMentionsOpenRow w = MatchOnOpenRow sp scrutTy
+  | otherwise = NonExhaustiveMatch sp scrutTy (PCon noSpan cName w)
 
 -- | Maranget specialization of a NOMINAL column on constructor @c@: keep a
 --   matching @PCon c@ arm with its sub-patterns spliced in, drop a
@@ -3021,7 +3137,17 @@ matrixWitness recSet conEnv tcm = go
     rowColumn labels tys rows =
       let concrete = concreteRowLabels recSet conEnv tcm labels
           usedLabels = [l | (p : _) <- rows, Just l <- [rowHeadLabel conEnv labels p]]
-          missing = filter (`notElem` usedLabels) concrete
+          -- A free tyvar tail is an always-missing label: no concrete arm can
+          -- head it (it has no runtime tag), and a '(rest : r)' arm ascribing
+          -- it does not legitimately cover it — so, unlike a concrete label,
+          -- 'usedLabels' never discharges it. It is covered only by a default
+          -- (wildcard) arm, exactly like a missing label, so feeding it through
+          -- the same 'defaultRows' path below keeps a row-absorbing 'Just _'
+          -- (which never dispatches on the row) exhaustive while a dispatching
+          -- 'Just (n : Int32)' is not. Ordered first so its '(_ : r)' witness —
+          -- recognised at the throw site as 'MatchOnOpenRow' — takes priority
+          -- over any missing concrete label.
+          missing = filter isTyVarTy labels <> filter (`notElem` usedLabels) concrete
        in case missing of
             [] ->
               asum

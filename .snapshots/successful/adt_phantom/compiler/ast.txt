@@ -4,33 +4,34 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 28
-            }
-        ) "Phantom"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 14
-                , spanEndLine = 5
-                , spanEndCol = 18
-                }
-            ) "_tag"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 21
+                , spanStartCol = 1
                 , spanEndLine = 5
                 , spanEndCol = 28
                 }
-            ) "Phantom" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            ) "Phantom"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 14
+                    , spanEndLine = 5
+                    , spanEndCol = 18
+                    }
+                ) "_tag"
+            ]
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 21
+                    , spanEndLine = 5
+                    , spanEndCol = 28
+                    }
+                ) "Phantom" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 7
                 , spanStartCol = 1

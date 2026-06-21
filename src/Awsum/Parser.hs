@@ -322,11 +322,19 @@ pProgram = do
       pure (imp : rest)
     Nothing -> pure []
   skipBlankLinesNoComments
-  ds <- P.some (pTopDeclOrComment <* skipBlankLinesNoComments)
-  let declsNE = case ds of
-        d : rest -> d :| rest
-        [] -> error "impossible: P.some returned []"
-  pure Program {moduleComment = modCom, imports = imps, decls = attachDocs declsNE}
+  -- A file with no top-level declarations (empty, imports-only, or
+  -- module-comment-only) is a valid empty module; the missing-'main'
+  -- check for executables is 'requireMain' (build/run only), not the
+  -- parser. Only genuine end-of-input counts as zero declarations —
+  -- otherwise 'P.some' is required, so a malformed top-level construct
+  -- still yields its specific parse error (e.g. "expecting ++") rather
+  -- than the trailing 'eof's generic "expecting end of input".
+  atEnd <- P.atEnd
+  ds <-
+    if atEnd
+      then pure []
+      else P.some (pTopDeclOrComment <* skipBlankLinesNoComments)
+  pure Program {moduleComment = modCom, imports = imps, decls = attachDocs ds}
 
 -- | Optional single block-comment header at the very top of a file.
 --   Form: exactly one @{- … -}@ block. Whether it is followed by a
@@ -1409,10 +1417,8 @@ pPVar = do
 --
 --   The final joined string is also @T.strip@-ed (in case the chain starts
 --   or ends with whitespace-only lines).
-attachDocs :: NonEmpty Decl -> NonEmpty Decl
-attachDocs declsNE = case go [] (toList declsNE) of
-  [] -> declsNE -- defensive; the algorithm preserves input length
-  x : xs -> x :| xs
+attachDocs :: [Decl] -> [Decl]
+attachDocs = go []
   where
     go :: [Decl] -> [Decl] -> [Decl]
     go pending [] = reverse pending

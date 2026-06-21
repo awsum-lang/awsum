@@ -8,78 +8,79 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 27
-            }
-        ) "apply"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 9
-                , spanStartCol = 9
+                , spanStartCol = 1
                 , spanEndLine = 9
                 , spanEndCol = 27
                 }
-            )
+            ) "apply"
             ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 9
                     , spanStartCol = 9
                     , spanEndLine = 9
-                    , spanEndCol = 18
-                    }
-                )
-                ( TyVar
-                    ( SrcSpan
-                        { spanStartLine = 9
-                        , spanStartCol = 10
-                        , spanEndLine = 9
-                        , spanEndCol = 11
-                        }
-                    ) "a"
-                )
-                ( TyVar
-                    ( SrcSpan
-                        { spanStartLine = 9
-                        , spanStartCol = 15
-                        , spanEndLine = 9
-                        , spanEndCol = 16
-                        }
-                    ) "b"
-                )
-            )
-            ( TyArrow
-                ( SrcSpan
-                    { spanStartLine = 9
-                    , spanStartCol = 21
-                    , spanEndLine = 9
                     , spanEndCol = 27
                     }
                 )
-                ( TyVar
+                ( TyArrow
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 9
+                        , spanEndLine = 9
+                        , spanEndCol = 18
+                        }
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 10
+                            , spanEndLine = 9
+                            , spanEndCol = 11
+                            }
+                        ) "a"
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 15
+                            , spanEndLine = 9
+                            , spanEndCol = 16
+                            }
+                        ) "b"
+                    )
+                )
+                ( TyArrow
                     ( SrcSpan
                         { spanStartLine = 9
                         , spanStartCol = 21
                         , spanEndLine = 9
-                        , spanEndCol = 22
-                        }
-                    ) "a"
-                )
-                ( TyVar
-                    ( SrcSpan
-                        { spanStartLine = 9
-                        , spanStartCol = 26
-                        , spanEndLine = 9
                         , spanEndCol = 27
                         }
-                    ) "b"
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 21
+                            , spanEndLine = 9
+                            , spanEndCol = 22
+                            }
+                        ) "a"
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 26
+                            , spanEndLine = 9
+                            , spanEndCol = 27
+                            }
+                        ) "b"
+                    )
                 )
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1

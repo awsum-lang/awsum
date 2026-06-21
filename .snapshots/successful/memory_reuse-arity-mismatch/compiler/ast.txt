@@ -9,49 +9,50 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 10
-            , spanStartCol = 1
-            , spanEndLine = 10
-            , spanEndCol = 41
-            }
-        ) "Triple" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
-                , spanStartCol = 15
+                , spanStartCol = 1
                 , spanEndLine = 10
-                , spanEndCol = 23
+                , spanEndCol = 41
                 }
-            ) "MkTriple"
-            [ TyCon
+            ) "Triple" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 10
-                    , spanStartCol = 24
+                    , spanStartCol = 15
                     , spanEndLine = 10
-                    , spanEndCol = 29
+                    , spanEndCol = 23
                     }
-                ) "Int32"
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 10
-                    , spanStartCol = 30
-                    , spanEndLine = 10
-                    , spanEndCol = 35
-                    }
-                ) "Int32"
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 10
-                    , spanStartCol = 36
-                    , spanEndLine = 10
-                    , spanEndCol = 41
-                    }
-                ) "Int32"
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ TypeDecl
+                ) "MkTriple"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 24
+                        , spanEndLine = 10
+                        , spanEndCol = 29
+                        }
+                    ) "Int32"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 30
+                        , spanEndLine = 10
+                        , spanEndCol = 35
+                        }
+                    ) "Int32"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 36
+                        , spanEndLine = 10
+                        , spanEndCol = 41
+                        }
+                    ) "Int32"
+                ]
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 12
                 , spanStartCol = 1

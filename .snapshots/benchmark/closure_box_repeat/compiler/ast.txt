@@ -25,24 +25,25 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 26
-            , spanStartCol = 1
-            , spanEndLine = 26
-            , spanEndCol = 13
-            }
-        ) "zero"
-        ( TyCon
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 26
-                , spanStartCol = 8
+                , spanStartCol = 1
                 , spanEndLine = 26
                 , spanEndCol = 13
                 }
-            ) "Int32"
-        ) Nothing Nothing :|
-        [ FunDef
+            ) "zero"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 26
+                    , spanStartCol = 8
+                    , spanEndLine = 26
+                    , spanEndCol = 13
+                    }
+                ) "Int32"
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 27
                 , spanStartCol = 1

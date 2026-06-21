@@ -4,74 +4,75 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 33
-            }
-        ) "Triple"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 14
-                }
-            ) "a"
-        , Param
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 15
-                , spanEndLine = 5
-                , spanEndCol = 16
-                }
-            ) "b"
-        , Param
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 17
-                , spanEndLine = 5
-                , spanEndCol = 18
-                }
-            ) "c"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 21
-                , spanEndLine = 5
-                , spanEndCol = 27
+                , spanEndCol = 33
                 }
             ) "Triple"
-            [ TyVar
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 28
+                    , spanStartCol = 13
                     , spanEndLine = 5
-                    , spanEndCol = 29
+                    , spanEndCol = 14
                     }
                 ) "a"
-            , TyVar
+            , Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 30
+                    , spanStartCol = 15
                     , spanEndLine = 5
-                    , spanEndCol = 31
+                    , spanEndCol = 16
                     }
                 ) "b"
-            , TyVar
+            , Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 32
+                    , spanStartCol = 17
                     , spanEndLine = 5
-                    , spanEndCol = 33
+                    , spanEndCol = 18
                     }
                 ) "c"
             ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 21
+                    , spanEndLine = 5
+                    , spanEndCol = 27
+                    }
+                ) "Triple"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 28
+                        , spanEndLine = 5
+                        , spanEndCol = 29
+                        }
+                    ) "a"
+                , TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 30
+                        , spanEndLine = 5
+                        , spanEndCol = 31
+                        }
+                    ) "b"
+                , TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 32
+                        , spanEndLine = 5
+                        , spanEndCol = 33
+                        }
+                    ) "c"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 7
                 , spanStartCol = 1

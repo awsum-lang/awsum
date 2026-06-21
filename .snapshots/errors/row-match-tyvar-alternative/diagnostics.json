@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":11,"startCol":14,"endLine":13,"endCol":22,"message":"Cannot match on a | b: it has a structural sum with an open tail (a type variable the caller chooses), so its set of alternatives is not fixed and a catch-all is not allowed. Close the row to concrete alternatives before matching on it.","fixes":[]}]

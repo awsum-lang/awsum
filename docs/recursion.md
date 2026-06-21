@@ -4,13 +4,13 @@ How the compiler turns natural recursion (self, non-tail, mutual) into stack-saf
 
 ## Guarantee to the user
 
-A well-typed Awsum program **does not overflow the system stack on any backend**, regardless of recursion shape. Compiler invariant, verified cross-backend at depths up to 1 000 000. The user writes whichever recursion expresses the algorithm most clearly; the compiler picks the shape that will not blow up.
+A well-typed Awsum program **does not overflow the system stack on any backend**, regardless of recursion shape. Compiler invariant, verified cross-backend. The user writes whichever recursion expresses the algorithm most clearly; the compiler picks the shape that will not blow up.
 
 Concretely:
 
-- **Tail self-recursion** becomes a loop. (`countdown-int32-stress-tail` — 100 000 iterations across LLVM, JVM, CLR, WASM, JS.)
-- **Non-tail self-recursion** moves its frames from the system stack into an ADT chain on the heap. (`countdown-int32-stress` — 100 000 iterations; `adt-list-map` — list `map` with the recursive call nested inside a constructor field.)
-- **Mutual recursion** gets fused into a single self-recursive function; after that the same two mechanisms take over. (`even-odd-stress` — 1 000 000 iterations.)
+- **Tail self-recursion** becomes a loop.
+- **Non-tail self-recursion** moves its frames from the system stack into an ADT chain on the heap — even when the recursive call is nested inside a constructor field (list `map`).
+- **Mutual recursion** gets fused into a single self-recursive function; after that the same two mechanisms take over.
 
 None of these require user-facing annotations or special monadic combinators. The work happens in three Core-to-Core passes plugged into the existing compilation pipeline.
 
@@ -74,7 +74,7 @@ Each pass is Core-to-Core. None add new Core IR constructs or need backend-speci
 
 **Post-SCC tree-shake.** SCC rewrites every cross-call from `f_j(...)` to `$scc$...(CCon j [...])`, so the original member's public name (the wrapper) is no longer referenced by any sibling arm. Wrappers for members that were only ever called from /inside/ the SCC end up dead, and the `treeShakeFromMain` pass in `elaborateLowerProgram` prunes them immediately after merge. In the classic `handleA ⇄ handleB` test only `handleA` is reachable from `main`, so only its wrapper survives; `handleB`'s wrapper is dropped. Same for the three-member `stepA → stepB → stepC → stepA` cycle: only `stepA` survives if that is the sole public entry point.
 
-**Sum-typed args.** Each member's arguments pack into a `CCon` with a member-specific tag (field count = that member's arity); the merged function's parameter is a single value destructured by `case`. Members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) works directly. See [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) for the cross-backend 100 000-iteration proof.
+**Sum-typed args.** Each member's arguments pack into a `CCon` with a member-specific tag (field count = that member's arity); the merged function's parameter is a single value destructured by `case`. Members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) works directly.
 
 **Current limitation.** SCCs containing a `CValDef` are passed through unchanged here and then caught as a compile error by [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) (see below). Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error, and the verifier refuses to lower the program.
 
@@ -110,7 +110,7 @@ countDown n = case eqInt32 n zero of
       Right v -> Right v
 ```
 
-the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/compiler/core.txt) — a wrapper `countDown` that kicks off `$cps$countDown n KTop`, a tail-recursive `$cps$countDown` whose `Right m` branch emits a `CContinue` through a freshly-constructed `K_1 $k`, and a tail-recursive `$apply$countDown` that walks the K chain and reconstructs the final `Either` value.
+the pass produces a wrapper `countDown` that kicks off `$cps$countDown n KTop`, a tail-recursive `$cps$countDown` whose `Right m` branch emits a `CContinue` through a freshly-constructed `K_1 $k`, and a tail-recursive `$apply$countDown` that walks the K chain and reconstructs the final `Either` value.
 
 **Why not add `CLet` and do A-normal form first.** A let node would require teaching all five backends to emit "evaluate, bind to local, continue". This design keeps post-call remainders as ordinary Core sub-expressions (walked recursively by `goNonTail` with a continuation-callback) and reuses the existing arm-binding machinery in `case`. Zero backend changes.
 
@@ -153,8 +153,6 @@ bar : String
 bar = foo
 ```
 
-See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww) for the snapshot.
-
 ### 5. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
 
 [Source](../src/Awsum/Tco.hs). Runs last in the Core pipeline. Input invariant: every self-call is in tail position (enforced by the two preceding passes plus whatever the user wrote). Output: the body is wrapped in a `CLoop`, and each self-tail-call is rewritten to `CContinue` carrying the new argument values.
@@ -179,27 +177,7 @@ Each pass has a tightly-defined precondition and postcondition. The precondition
 
 This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle. Re-running SCC after CPS closes the loop: the cycle CPS introduces is just another instance of "multiple functions, which one is active", and the same primitive fuses it the same way.
 
-When recursion passes through a closure stored in a constructor field, [`Awsum.LowerClosures`](../src/Awsum/LowerClosures.hs) routes the call through a synthetic `$applyN` dispatcher (see [pipeline.md](pipeline.md)); the dispatcher is an ordinary top-level fn, so it participates in the call graph and the SCC + CPS + TCO machinery sees it like any other vertex. Stack safety is preserved across the closure-conversion boundary — verified by [`closures_function-in-constructor-field-non-tail-stress`](../test/sources/successful/closures_function-in-constructor-field-non-tail-stress) and [`closures_function-in-constructor-field-mutual-stress`](../test/sources/successful/closures_function-in-constructor-field-mutual-stress) at depth 1 000 000.
-
-## Stack-safety test matrix
-
-| Test                                                                                                      | Shape                                             | Depth     | What it verifies                                                                                                                                                     |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`countdown-int32-stress-tail`](../test/sources/successful/countdown-int32-stress-tail/code/Main.aww)     | tail self                                         | 100 000   | TCO folds `Right m -> countDown m` into a loop on all five targets.                                                                                                   |
-| [`countdown-int32-stress`](../test/sources/successful/countdown-int32-stress/code/Main.aww)               | non-tail self (case scrutinee)                    | 100 000   | CPS moves post-call `Left e -> Left e` / `Right v -> Right v` reconstruction into a K chain.                                                                         |
-| [`countdown-uint8-tail`](../test/sources/successful/countdown-uint8-tail/code/Main.aww)                   | tail self with accumulator                        | 255       | Same as tail stress but exercises accumulator threading through `CContinue`.                                                                                         |
-| [`countdown-uint8`](../test/sources/successful/countdown-uint8/code/Main.aww)                             | non-tail self, post-call captures outer parameter | 255       | `K_1` carries `n` from outer scope for use inside `Right (showUInt8 n ++ "," ++ s)`.                                                                                 |
-| [`adt-list-map`](../test/sources/successful/adt-list-map/code/Main.aww)                                   | non-tail self in `CCon` field                     | 3         | Exercises the general CPS path: self-call in `Cons head (map f tail)`. Depth is small because the test is about the shape, not stack pressure.                       |
-| [`mutual-recursion`](../test/sources/successful/mutual-recursion/code/Main.aww)                           | mutual, mixed tail + non-tail cross-calls         | 4         | SCC-merges `handleA` ⇄ `handleB` into `$scc$handleA_handleB`; the merged function's non-tail cross-calls (`"A" ++ handleB StepB`) go through CPS.                    |
-| [`even-odd-stress`](../test/sources/successful/even-odd-stress/code/Main.aww)                             | mutual, all tail                                  | 1 000 000 | SCC turns `evenInt` ⇄ `oddInt` into self-recursion, TCO folds that into a loop. Classic "mutual tail recursion must not blow up."                                    |
-| [`mutual-different-arity-smoke`](../test/sources/successful/mutual-different-arity-smoke/code/Main.aww)   | mutual, heterogeneous arity (1 arg ⇄ 2 args)      | small     | Shape regression anchor: SCC merges members of different arity via sum-typed args `CCon`.                                                                            |
-| [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) | mutual, heterogeneous arity, all tail             | 100 000   | `pingOne` (1 arg) ⇄ `pongTwo` (2 args) alternating — the sum-typed merge threads the right number of fields per iteration, TCO folds the fused function into a loop. |
-| [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
-| [`recursive-function-call`](../test/sources/successful/recursion_function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
-| [`tree-mirror-stress`](../test/sources/successful/recursion_tree-mirror-stress/code/Main.aww)             | multi-non-tail-call self, two K_i per Node        | 100 000   | `mirror`'s `Node (mirror r) v (mirror l)` allocates K_1 and K_2 per Node and induces a `$cps$mirror` ⇄ `$apply$mirror` cycle that the second SCC pass fuses.         |
-| [`tree-sumTree-stress`](../test/sources/successful/recursion_tree-sumTree-stress/code/Main.aww)           | non-tail call whose result feeds a tail self-call | 100 000   | `sumTree r (sumTree l (acc + v))` — the inner non-tail self-call's K must feed its result back into the outer tail self-call, the same mutual cycle as `mirror`.     |
-
-Every test in the table runs on all five backends with identical stdout via `ProgramSnapshotsSpec`.
+When recursion passes through a closure stored in a constructor field, [`Awsum.LowerClosures`](../src/Awsum/LowerClosures.hs) routes the call through a synthetic `$applyN` dispatcher (see [pipeline.md](pipeline.md)); the dispatcher is an ordinary top-level fn, so it participates in the call graph and the SCC + CPS + TCO machinery sees it like any other vertex. Stack safety is preserved across the closure-conversion boundary.
 
 ## The role of whole-program compilation
 

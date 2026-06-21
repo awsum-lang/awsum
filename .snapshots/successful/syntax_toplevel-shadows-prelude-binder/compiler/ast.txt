@@ -9,78 +9,79 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 10
-            , spanStartCol = 1
-            , spanEndLine = 10
-            , spanEndCol = 41
-            }
-        ) "x"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 10
-                , spanStartCol = 5
+                , spanStartCol = 1
                 , spanEndLine = 10
                 , spanEndCol = 41
                 }
-            )
-            ( TyCon
+            ) "x"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 10
                     , spanStartCol = 5
                     , spanEndLine = 10
-                    , spanEndCol = 10
-                    }
-                ) "Int32"
-            )
-            ( TyApp
-                ( SrcSpan
-                    { spanStartLine = 10
-                    , spanStartCol = 14
-                    , spanEndLine = 10
                     , spanEndCol = 41
                     }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 5
+                        , spanEndLine = 10
+                        , spanEndCol = 10
+                        }
+                    ) "Int32"
                 )
                 ( TyApp
                     ( SrcSpan
                         { spanStartLine = 10
                         , spanStartCol = 14
                         , spanEndLine = 10
-                        , spanEndCol = 35
+                        , spanEndCol = 41
                         }
                     )
-                    ( TyCon
+                    ( TyApp
                         ( SrcSpan
                             { spanStartLine = 10
                             , spanStartCol = 14
                             , spanEndLine = 10
-                            , spanEndCol = 20
+                            , spanEndCol = 35
                             }
-                        ) "Either"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 14
+                                , spanEndLine = 10
+                                , spanEndCol = 20
+                                }
+                            ) "Either"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 21
+                                , spanEndLine = 10
+                                , spanEndCol = 35
+                                }
+                            ) "UnderflowError"
+                        )
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 10
-                            , spanStartCol = 21
+                            , spanStartCol = 36
                             , spanEndLine = 10
-                            , spanEndCol = 35
+                            , spanEndCol = 41
                             }
-                        ) "UnderflowError"
+                        ) "Int32"
                     )
                 )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 10
-                        , spanStartCol = 36
-                        , spanEndLine = 10
-                        , spanEndCol = 41
-                        }
-                    ) "Int32"
-                )
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

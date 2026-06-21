@@ -1,0 +1,12 @@
+{- Error: '_val' declares the polymorphic type 'a' but its body is the
+   concrete 'Int32' 42. Accepting it would let the value be used at any type
+   (bound to a 'String', say), an unsound coercion that diverges across
+   backends. A definition's body must be as polymorphic as its signature. -}
+
+import IO.Stdout
+
+_val : a
+_val = (42 : Int32)
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

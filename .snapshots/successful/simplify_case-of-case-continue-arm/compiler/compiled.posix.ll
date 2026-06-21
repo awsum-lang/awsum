@@ -303,10 +303,8 @@ tco.case.arm.4.32:
   %t33 = getelementptr ptr, ptr %t26, i32 1
   %t34 = load ptr, ptr %t33
   call void @__inc_ref(ptr %t34)
-  call void @__inc_ref(ptr %t34)
   call void @__free_recursive(ptr %t26)
   call void @__free_recursive(ptr %t4)
-  call void @__free_recursive(ptr %t34)
   call void @__free_recursive(ptr %t17)
   store ptr %t34, ptr %t3
   br label %tco.loop.0

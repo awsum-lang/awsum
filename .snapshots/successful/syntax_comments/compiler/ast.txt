@@ -8,16 +8,17 @@ Program
             ( "IO" :| [ "Args" ] )
             ( Just " Args import trailing" )
         ]
-    , decls = CommentDecl
-        ( SrcSpan
-            { spanStartLine = 6
-            , spanStartCol = 1
-            , spanEndLine = 6
-            , spanEndCol = 55
-            }
-        )
-        ( BlockComment " Block comment between import and the first decl. " ) :|
+    , decls =
         [ CommentDecl
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 55
+                }
+            )
+            ( BlockComment " Block comment between import and the first decl. " )
+        , CommentDecl
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

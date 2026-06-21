@@ -6,78 +6,79 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 7
-            , spanStartCol = 1
-            , spanEndLine = 7
-            , spanEndCol = 41
-            }
-        ) "onError"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 7
-                , spanStartCol = 11
+                , spanStartCol = 1
                 , spanEndLine = 7
                 , spanEndCol = 41
                 }
-            )
-            ( TyCon
+            ) "onError"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 7
                     , spanStartCol = 11
                     , spanEndLine = 7
-                    , spanEndCol = 24
-                    }
-                ) "StringTooLong"
-            )
-            ( TyApp
-                ( SrcSpan
-                    { spanStartLine = 7
-                    , spanStartCol = 28
-                    , spanEndLine = 7
                     , spanEndCol = 41
                     }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 11
+                        , spanEndLine = 7
+                        , spanEndCol = 24
+                        }
+                    ) "StringTooLong"
                 )
                 ( TyApp
                     ( SrcSpan
                         { spanStartLine = 7
                         , spanStartCol = 28
                         , spanEndLine = 7
-                        , spanEndCol = 36
+                        , spanEndCol = 41
                         }
                     )
-                    ( TyCon
+                    ( TyApp
                         ( SrcSpan
                             { spanStartLine = 7
                             , spanStartCol = 28
                             , spanEndLine = 7
-                            , spanEndCol = 30
+                            , spanEndCol = 36
                             }
-                        ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 28
+                                , spanEndLine = 7
+                                , spanEndCol = 30
+                                }
+                            ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 31
+                                , spanEndLine = 7
+                                , spanEndCol = 36
+                                }
+                            ) "Never"
+                        )
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 7
-                            , spanStartCol = 31
+                            , spanStartCol = 37
                             , spanEndLine = 7
-                            , spanEndCol = 36
+                            , spanEndCol = 41
                             }
-                        ) "Never"
+                        ) "Unit"
                     )
                 )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 7
-                        , spanStartCol = 37
-                        , spanEndLine = 7
-                        , spanEndCol = 41
-                        }
-                    ) "Unit"
-                )
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

@@ -425,9 +425,7 @@ reuse.copy.end.35:
   br label %reuse.join.33
 reuse.join.33:
   %t41 = phi ptr [ %t5, %reuse.in_place.end.34 ], [ %t36, %reuse.copy.end.35 ]
-  call void @__inc_ref(ptr %t21)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t21)
   store ptr %t21, ptr %t3
   store ptr %t41, ptr %t4
   br label %tco.loop.0
@@ -617,9 +615,7 @@ reuse.copy.end.45:
   br label %reuse.join.43
 reuse.join.43:
   %t51 = phi ptr [ %t5, %reuse.in_place.end.44 ], [ %t46, %reuse.copy.end.45 ]
-  call void @__inc_ref(ptr %t31)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t31)
   store ptr %t31, ptr %t3
   store ptr %t51, ptr %t4
   br label %tco.loop.0
@@ -690,9 +686,7 @@ tco.case.arm.31.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -796,9 +790,7 @@ reuse.copy.end.47:
   br label %reuse.join.45
 reuse.join.45:
   %t53 = phi ptr [ %t5, %reuse.in_place.end.46 ], [ %t48, %reuse.copy.end.47 ]
-  call void @__inc_ref(ptr %t33)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t53, ptr %t4
   br label %tco.loop.0
@@ -869,9 +861,7 @@ tco.case.arm.33.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -997,9 +987,7 @@ reuse.copy.end.61:
   br label %reuse.join.59
 reuse.join.59:
   %t67 = phi ptr [ %t5, %reuse.in_place.end.60 ], [ %t62, %reuse.copy.end.61 ]
-  call void @__inc_ref(ptr %t47)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t47)
   store ptr %t47, ptr %t3
   store ptr %t67, ptr %t4
   br label %tco.loop.0
@@ -1070,9 +1058,7 @@ tco.case.arm.35.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -1121,8 +1107,6 @@ tco.case.arm.20.20:
   store ptr %t26, ptr %t27
   %t25 = getelementptr ptr, ptr %t5, i32 1
   store ptr %t22, ptr %t25
-  call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   store ptr %t5, ptr %t3
@@ -1140,8 +1124,6 @@ tco.case.arm.21.28:
   store ptr %t34, ptr %t35
   %t33 = getelementptr ptr, ptr %t5, i32 1
   store ptr %t30, ptr %t33
-  call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   store ptr %t5, ptr %t3
@@ -1159,8 +1141,6 @@ tco.case.arm.22.36:
   store ptr %t42, ptr %t43
   %t41 = getelementptr ptr, ptr %t5, i32 1
   store ptr %t38, ptr %t41
-  call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   store ptr %t5, ptr %t3

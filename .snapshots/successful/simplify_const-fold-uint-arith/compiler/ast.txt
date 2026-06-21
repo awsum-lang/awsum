@@ -7,24 +7,25 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 8
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 23
-            }
-        ) "mulU8Overflow"
-        ( TyCon
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 8
-                , spanStartCol = 17
+                , spanStartCol = 1
                 , spanEndLine = 8
                 , spanEndCol = 23
                 }
-            ) "String"
-        ) Nothing Nothing :|
-        [ FunDef
+            ) "mulU8Overflow"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 17
+                    , spanEndLine = 8
+                    , spanEndCol = 23
+                    }
+                ) "String"
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 9
                 , spanStartCol = 1

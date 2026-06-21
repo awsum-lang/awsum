@@ -12,102 +12,103 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 13
-            , spanStartCol = 1
-            , spanEndLine = 13
-            , spanEndCol = 46
-            }
-        ) "Tree"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 13
-                , spanStartCol = 11
+                , spanStartCol = 1
                 , spanEndLine = 13
-                , spanEndCol = 12
+                , spanEndCol = 46
                 }
-            ) "a"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 13
-                , spanStartCol = 15
-                , spanEndLine = 13
-                , spanEndCol = 19
-                }
-            ) "Leaf" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 13
-                , spanStartCol = 22
-                , spanEndLine = 13
-                , spanEndCol = 26
-                }
-            ) "Node"
-            [ TyApp
+            ) "Tree"
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 13
-                    , spanStartCol = 27
+                    , spanStartCol = 11
                     , spanEndLine = 13
-                    , spanEndCol = 36
-                    }
-                )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 13
-                        , spanStartCol = 28
-                        , spanEndLine = 13
-                        , spanEndCol = 32
-                        }
-                    ) "Tree"
-                )
-                ( TyVar
-                    ( SrcSpan
-                        { spanStartLine = 13
-                        , spanStartCol = 33
-                        , spanEndLine = 13
-                        , spanEndCol = 34
-                        }
-                    ) "a"
-                )
-            , TyVar
-                ( SrcSpan
-                    { spanStartLine = 13
-                    , spanStartCol = 36
-                    , spanEndLine = 13
-                    , spanEndCol = 37
+                    , spanEndCol = 12
                     }
                 ) "a"
-            , TyApp
+            ]
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 13
-                    , spanStartCol = 38
+                    , spanStartCol = 15
                     , spanEndLine = 13
-                    , spanEndCol = 46
+                    , spanEndCol = 19
                     }
-                )
-                ( TyCon
+                ) "Leaf" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 22
+                    , spanEndLine = 13
+                    , spanEndCol = 26
+                    }
+                ) "Node"
+                [ TyApp
                     ( SrcSpan
                         { spanStartLine = 13
-                        , spanStartCol = 39
+                        , spanStartCol = 27
                         , spanEndLine = 13
-                        , spanEndCol = 43
+                        , spanEndCol = 36
                         }
-                    ) "Tree"
-                )
-                ( TyVar
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 28
+                            , spanEndLine = 13
+                            , spanEndCol = 32
+                            }
+                        ) "Tree"
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 33
+                            , spanEndLine = 13
+                            , spanEndCol = 34
+                            }
+                        ) "a"
+                    )
+                , TyVar
                     ( SrcSpan
                         { spanStartLine = 13
-                        , spanStartCol = 44
+                        , spanStartCol = 36
                         , spanEndLine = 13
-                        , spanEndCol = 45
+                        , spanEndCol = 37
                         }
                     ) "a"
-                )
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+                , TyApp
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 38
+                        , spanEndLine = 13
+                        , spanEndCol = 46
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 39
+                            , spanEndLine = 13
+                            , spanEndCol = 43
+                            }
+                        ) "Tree"
+                    )
+                    ( TyVar
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 44
+                            , spanEndLine = 13
+                            , spanEndCol = 45
+                            }
+                        ) "a"
+                    )
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 15
                 , spanStartCol = 1

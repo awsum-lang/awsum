@@ -1,0 +1,15 @@
+{- Error: the 'let' binding 'x' is annotated with the polymorphic type 'a'
+   but its body is the concrete 'Int32' 42 — the same hole as a top-level
+   binding claiming more polymorphism than its body has. Were it accepted,
+   'x' could be used at any type in the body (here as 'String'), an unsound
+   coercion. A 'let' RHS must be as polymorphic as its annotation. -}
+
+import IO.Stdout
+
+_sneak : String
+_sneak =
+  let x : a = (42 : Int32)
+   in x
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

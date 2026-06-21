@@ -7,42 +7,43 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 8
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 24
-            }
-        ) "computed"
-        ( TyApp
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 8
-                , spanStartCol = 12
+                , spanStartCol = 1
                 , spanEndLine = 8
                 , spanEndCol = 24
                 }
-            )
-            ( TyCon
+            ) "computed"
+            ( TyApp
                 ( SrcSpan
                     { spanStartLine = 8
                     , spanStartCol = 12
                     , spanEndLine = 8
-                    , spanEndCol = 17
-                    }
-                ) "Maybe"
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 8
-                    , spanStartCol = 18
-                    , spanEndLine = 8
                     , spanEndCol = 24
                     }
-                ) "UInt32"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 12
+                        , spanEndLine = 8
+                        , spanEndCol = 17
+                        }
+                    ) "Maybe"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 18
+                        , spanEndLine = 8
+                        , spanEndCol = 24
+                        }
+                    ) "UInt32"
+                )
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 9
                 , spanStartCol = 1

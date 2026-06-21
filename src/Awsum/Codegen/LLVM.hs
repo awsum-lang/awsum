@@ -3107,16 +3107,22 @@ emitTail ctx expr = case ctx.loopCtx of
       CContinue newArgs -> do
         argResults <- traverse (emitExpr ctx') newArgs
         let (argInstrsList, argNames) = unzip argResults
-            -- Inc each ptr-arg whose source is a CVar (borrow →
+            -- A borrowed 'CVar' arg whose binder is in @pending@ and is
+            -- forwarded linearly is /moved/ into the next-iter slot: its
+            -- existing reference is donated, so the forward-inc and the
+            -- paired 'CDrop' free both vanish (the value-tail carve-out,
+            -- applied to a loop back-edge). See 'transferMoves'.
+            moved = transferMoves ctx' pending newArgs
+            -- Inc each non-moved ptr-arg whose source is a CVar (borrow →
             -- the next-iter slot takes its own ref). Fresh sources
             -- carry their @+1@ from @__alloc@.
             incs =
               concat
-                [ emitIncIfCVar ctx' e r
+                [ if isMoveArg ctx' moved e then [] else emitIncIfCVar ctx' e r
                 | (e, r) <- zip newArgs argNames
                 ]
             scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- freshScruts]
-            frees = concatMap (emitFree ctx') pending
+            frees = concatMap (emitFree ctx') (filter (`Set.notMember` moved) pending)
             stores =
               [ IStore Ptr r (VReg slot)
               | (r, (_, slot)) <- zip argNames lctx.lcParamSlots
@@ -3372,6 +3378,45 @@ emitIncIfCVar :: EmitCtx -> CExpr -> LVal -> [LInstr]
 emitIncIfCVar ctx expr ssa = case borrowedSource ctx expr of
   Just _ -> [ICall Nothing Void Nothing "@__inc_ref" [(Ptr, ssa)]]
   Nothing -> []
+
+-- | The binders a tail transfer (a 'CContinue' back-edge or a 'CJump' to a
+-- join) /moves/ into the destination slots instead of copying. A binder
+-- @m@ qualifies when an argument is a bare borrowed @CVar m@, @m@ is in the
+-- @pending@ drop set (so it would otherwise be freed right here), and @m@
+-- occurs exactly once across all the transfer arguments — linear, so its
+-- single owned reference has exactly one destination to be donated to.
+--
+-- For a moved binder the caller skips the forward @__inc_ref@ /and/ the
+-- paired @CDrop@ free: the existing reference (held via the extract-inc for
+-- an arm binder, or the slot for a parameter/let) becomes the destination
+-- slot's reference. The load-bearing extract-inc that protects @m@ from the
+-- dying scrutinee's cascade-free stays — only the redundant inc/free pair
+-- that the old uniform discipline emitted is cut. This is the back-edge
+-- analogue of the value-tail @CVar@ move carve-out ('borrowedSource' in
+-- 'emitTail' / 'emitNonLoopBody'), and the @CDrop@ stays in Core exactly as
+-- the value-tail param does — codegen just realises it as a move.
+--
+-- Linearity is load-bearing: at two occurrences @m@'s one post-scrutinee
+-- reference cannot feed two slots, so those keep the ordinary
+-- inc-per-use + single-drop discipline (already balanced). @pending@
+-- membership is load-bearing too: with no paired drop to cancel, skipping
+-- the inc would leak.
+transferMoves :: EmitCtx -> [Name] -> [CExpr] -> Set Name
+transferMoves ctx pending args =
+  Set.fromList
+    [ m
+    | (i, CVar m) <- zip [0 :: Int ..] args,
+      m `elem` pending,
+      borrowedSource ctx (CVar m) == Just m,
+      and [j == i || m `Set.notMember` freeVars a | (j, a) <- zip [0 :: Int ..] args]
+    ]
+
+-- | Is this transfer argument a borrowed 'CVar' whose binder 'transferMoves'
+-- selected for the move? Such an arg skips its forward @__inc_ref@.
+isMoveArg :: EmitCtx -> Set Name -> CExpr -> Bool
+isMoveArg ctx moved e = case borrowedSource ctx e of
+  Just m -> m `Set.member` moved
+  Nothing -> False
 
 -- | Emit an argument expression in a transfer position
 -- (@CCall@ argument). Equivalent to 'emitExpr' followed by an

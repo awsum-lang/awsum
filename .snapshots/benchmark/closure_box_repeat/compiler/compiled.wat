@@ -677,8 +677,6 @@
           local.set 8
           local.get 6
           call 11
-          local.get 7
-          call 11
           local.get 3
           call 12
           local.get 4
@@ -688,8 +686,6 @@
           local.get 1
           call 12
           local.get 0
-          call 12
-          local.get 5
           call 12
           local.get 6
           local.set 0
@@ -730,10 +726,6 @@
         local.set 4
         local.get 1
         local.set 5
-        local.get 5
-        call 11
-        local.get 1
-        call 12
         local.get 0
         call 12
         local.get 4
@@ -900,10 +892,6 @@
             local.set 7
             local.get 4
             local.set 8
-            local.get 7
-            call 11
-            local.get 8
-            call 11
             local.get 2
             call 12
             local.get 3
@@ -911,10 +899,6 @@
             local.get 5
             call 12
             local.get 1
-            call 12
-            local.get 0
-            call 12
-            local.get 4
             call 12
             local.get 7
             local.set 0

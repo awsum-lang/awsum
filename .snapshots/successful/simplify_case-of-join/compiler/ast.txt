@@ -9,40 +9,41 @@ Program
         , ImportDecl []
             ( "IO" :| [ "Args" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 12
-            , spanEndCol = 9
-            }
-        ) "Col" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
-                { spanStartLine = 10
-                , spanStartCol = 5
-                , spanEndLine = 10
-                , spanEndCol = 8
-                }
-            ) "Red" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 11
-                , spanStartCol = 5
-                , spanEndLine = 11
-                , spanEndCol = 10
-                }
-            ) "Green" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 12
-                , spanStartCol = 5
+                { spanStartLine = 9
+                , spanStartCol = 1
                 , spanEndLine = 12
                 , spanEndCol = 9
                 }
-            ) "Blue" []
-        ] Nothing NotEmpty Nothing :|
-        [ TypeDecl
+            ) "Col" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 5
+                    , spanEndLine = 10
+                    , spanEndCol = 8
+                    }
+                ) "Red" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 5
+                    , spanEndLine = 11
+                    , spanEndCol = 10
+                    }
+                ) "Green" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 5
+                    , spanEndLine = 12
+                    , spanEndCol = 9
+                    }
+                ) "Blue" []
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 14
                 , spanStartCol = 1

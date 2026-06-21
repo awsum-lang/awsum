@@ -1,0 +1,14 @@
+{- Error: the open tail 'r' is nested inside a matched constructor field —
+   'Just (n : Int32)' on 'Maybe (Int32 | r)'. The matrix-exhaustiveness path
+   reaches the inner open row and rejects it for the same reason as the
+   top-level form: the tail has no runtime tag for a 'CRowCase' arm. -}
+
+import IO.Stdout
+
+_g : Maybe (Int32 | r) -> String
+_g x = case x of
+  Nothing -> "nothing"
+  Just (n : Int32) -> showInt32 n
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

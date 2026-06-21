@@ -7,32 +7,33 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 8
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 21
-            }
-        ) "Inner" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 8
-                , spanStartCol = 14
-                , spanEndLine = 8
-                , spanEndCol = 16
-                }
-            ) "IY" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 8
-                , spanStartCol = 19
+                , spanStartCol = 1
                 , spanEndLine = 8
                 , spanEndCol = 21
                 }
-            ) "IN" []
-        ] Nothing NotEmpty Nothing :|
-        [ TypeDecl
+            ) "Inner" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 14
+                    , spanEndLine = 8
+                    , spanEndCol = 16
+                    }
+                ) "IY" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 19
+                    , spanEndLine = 8
+                    , spanEndCol = 21
+                    }
+                ) "IN" []
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1

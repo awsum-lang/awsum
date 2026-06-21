@@ -1,0 +1,12 @@
+{- Error: '_g' declares the result type 'a' (polymorphic) but its body always
+   returns the concrete 'Int32' 42. A caller could use the result at any type
+   — e.g. as a 'String' — an unsound coercion divergent across backends. The
+   body must honour the polymorphic return type. -}
+
+import IO.Stdout
+
+_g : Int32 -> a
+_g _n = (42 : Int32)
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

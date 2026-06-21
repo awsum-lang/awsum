@@ -106,8 +106,10 @@ type Name = Text
 type ModulePath = NonEmpty Name
 
 -- | A single source file: an optional module comment, zero or more imports,
---   and a /non-empty/ list of top-level declarations.
---   Parser guarantees @decls@ is 'NonEmpty' (empty programs are rejected).
+--   and zero or more top-level declarations. A file with no declarations
+--   (empty, imports-only, or module-comment-only) is a valid empty module;
+--   the missing-@main@ check for executables runs separately in @build@/@run@,
+--   not here.
 data Program = Program
   { -- | Optional single @{- … -}@ block at the very top of the file,
     --   separated from the rest by a blank line. Stored without
@@ -116,8 +118,8 @@ data Program = Program
     moduleComment :: Maybe Text,
     -- | @import Foo.Bar@
     imports :: [ImportDecl],
-    -- | at least one declaration
-    decls :: NonEmpty Decl
+    -- | top-level declarations, possibly empty
+    decls :: [Decl]
   }
   deriving stock (Show, Eq)
 

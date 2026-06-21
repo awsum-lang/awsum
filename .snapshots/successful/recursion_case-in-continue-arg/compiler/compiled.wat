@@ -647,8 +647,6 @@
             local.get 7
           end
           local.set 6
-          local.get 5
-          call 11
           local.get 2
           call 12
           local.get 3
@@ -656,8 +654,6 @@
           local.get 1
           call 12
           local.get 0
-          call 12
-          local.get 4
           call 12
           local.get 5
           local.set 0

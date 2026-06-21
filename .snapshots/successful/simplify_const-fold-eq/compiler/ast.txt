@@ -6,24 +6,25 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 7
-            , spanStartCol = 1
-            , spanEndLine = 7
-            , spanEndCol = 19
-            }
-        ) "eqI32True"
-        ( TyCon
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 7
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 7
                 , spanEndCol = 19
                 }
-            ) "String"
-        ) Nothing Nothing :|
-        [ FunDef
+            ) "eqI32True"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 13
+                    , spanEndLine = 7
+                    , spanEndCol = 19
+                    }
+                ) "String"
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

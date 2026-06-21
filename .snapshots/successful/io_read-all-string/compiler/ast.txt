@@ -8,96 +8,97 @@ Program
         , ImportDecl []
             ( "IO" :| [ "Stdin" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 8
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 57
-            }
-        ) "onError"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 8
-                , spanStartCol = 11
+                , spanStartCol = 1
                 , spanEndLine = 8
                 , spanEndCol = 57
                 }
-            )
-            ( TyOr
+            ) "onError"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 8
                     , spanStartCol = 11
                     , spanEndLine = 8
-                    , spanEndCol = 41
-                    }
-                )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 8
-                        , spanStartCol = 12
-                        , spanEndLine = 8
-                        , spanEndCol = 25
-                        }
-                    ) "StringTooLong"
-                )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 8
-                        , spanStartCol = 28
-                        , spanEndLine = 8
-                        , spanEndCol = 39
-                        }
-                    ) "InvalidUtf8"
-                )
-            )
-            ( TyApp
-                ( SrcSpan
-                    { spanStartLine = 8
-                    , spanStartCol = 44
-                    , spanEndLine = 8
                     , spanEndCol = 57
                     }
+                )
+                ( TyOr
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 11
+                        , spanEndLine = 8
+                        , spanEndCol = 41
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 12
+                            , spanEndLine = 8
+                            , spanEndCol = 25
+                            }
+                        ) "StringTooLong"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 28
+                            , spanEndLine = 8
+                            , spanEndCol = 39
+                            }
+                        ) "InvalidUtf8"
+                    )
                 )
                 ( TyApp
                     ( SrcSpan
                         { spanStartLine = 8
                         , spanStartCol = 44
                         , spanEndLine = 8
-                        , spanEndCol = 52
+                        , spanEndCol = 57
                         }
                     )
-                    ( TyCon
+                    ( TyApp
                         ( SrcSpan
                             { spanStartLine = 8
                             , spanStartCol = 44
                             , spanEndLine = 8
-                            , spanEndCol = 46
+                            , spanEndCol = 52
                             }
-                        ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 44
+                                , spanEndLine = 8
+                                , spanEndCol = 46
+                                }
+                            ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 47
+                                , spanEndLine = 8
+                                , spanEndCol = 52
+                                }
+                            ) "Never"
+                        )
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 8
-                            , spanStartCol = 47
+                            , spanStartCol = 53
                             , spanEndLine = 8
-                            , spanEndCol = 52
+                            , spanEndCol = 57
                             }
-                        ) "Never"
+                        ) "Unit"
                     )
                 )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 8
-                        , spanStartCol = 53
-                        , spanEndLine = 8
-                        , spanEndCol = 57
-                        }
-                    ) "Unit"
-                )
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 9
                 , spanStartCol = 1

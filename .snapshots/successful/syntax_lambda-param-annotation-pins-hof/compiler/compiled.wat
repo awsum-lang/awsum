@@ -1011,11 +1011,7 @@
             call 13
           end
           local.set 5
-          local.get 4
-          call 12
           local.get 1
-          call 13
-          local.get 3
           call 13
           local.get 2
           call 13
@@ -1082,13 +1078,9 @@
         call 12
         local.get 0
         local.set 5
-        local.get 4
-        call 12
         local.get 1
         call 13
         local.get 3
-        call 13
-        local.get 2
         call 13
         local.get 4
         local.set 0
@@ -1248,11 +1240,7 @@
             call 13
           end
           local.set 5
-          local.get 4
-          call 12
           local.get 1
-          call 13
-          local.get 3
           call 13
           local.get 2
           call 13
@@ -1319,13 +1307,9 @@
         call 12
         local.get 0
         local.set 5
-        local.get 4
-        call 12
         local.get 1
         call 13
         local.get 3
-        call 13
-        local.get 2
         call 13
         local.get 4
         local.set 0

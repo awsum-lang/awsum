@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":17,"startCol":7,"endLine":17,"endCol":43,"message":"Type mismatch: expected Either Never Int32, got Either (ErrA | e2) Int32","fixes":[]}]

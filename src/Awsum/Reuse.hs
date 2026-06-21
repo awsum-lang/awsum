@@ -266,15 +266,26 @@ rewriteFirstCCon mode n k = go
           | not (any (binderUsedIn n) xs) -> Just (x' : xs)
         _ -> (x :) <$> goList xs
 
-    -- Rewrite arms that have a matching CCon; arms that don't
-    -- match keep their original body. The whole list "succeeds"
-    -- iff at least one arm rewrote.
+    -- Rewrite arms that have a matching CCon; a sibling arm that does
+    -- NOT rewrite re-acquires the scrut 'CDrop' ('fromMaybe (CDrop n b)').
+    -- The caller ('findAndReuseScrutDrop') already stripped the single
+    -- 'CDrop scrut' that wrapped this whole subtree, on the premise that an
+    -- enclosed 'CCon' reuses the cell instead of freeing it — but that
+    -- premise is per-path: a 'case' under the stripped drop splits into
+    -- mutually exclusive arms, and an arm with no matching 'CCon' still has
+    -- to free the scrut. Re-wrapping its body in 'CDrop n' restores exactly
+    -- the drop the strip removed, giving it the same shape an all-non-reuse
+    -- arm already carries; the reusing arm keeps the drop absorbed into its
+    -- 'CReuse'. Omitting this leaks the scrut cell on every non-reuse path
+    -- (e.g. the @Right@ success arm of an 'Either'-returning non-tail
+    -- recursion's '$apply', whose CPS continuation cell is only reused on the
+    -- @Left@ arm). The whole list "succeeds" iff at least one arm rewrote.
     goAlts :: [(Int, [Name], CExpr)] -> Maybe [(Int, [Name], CExpr)]
     goAlts alts =
       let results = [(t, vs, go b, b) | (t, vs, b) <- alts]
           anyChanged = any (\(_, _, mr, _) -> isJust mr) results
        in if anyChanged
-            then Just [(t, vs, fromMaybe b mb) | (t, vs, mb, b) <- results]
+            then Just [(t, vs, fromMaybe (CDrop n b) mb) | (t, vs, mb, b) <- results]
             else Nothing
 
     goRowAlts :: [(Word32, Name, CExpr)] -> Maybe [(Word32, Name, CExpr)]
@@ -282,5 +293,5 @@ rewriteFirstCCon mode n k = go
       let results = [(t, v, go b, b) | (t, v, b) <- alts]
           anyChanged = any (\(_, _, mr, _) -> isJust mr) results
        in if anyChanged
-            then Just [(t, v, fromMaybe b mb) | (t, v, mb, b) <- results]
+            then Just [(t, v, fromMaybe (CDrop n b) mb) | (t, v, mb, b) <- results]
             else Nothing

@@ -4,42 +4,43 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 24
-            }
-        ) "render"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 10
+                , spanStartCol = 1
                 , spanEndLine = 5
                 , spanEndCol = 24
                 }
-            )
-            ( TyCon
+            ) "render"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 5
                     , spanStartCol = 10
                     , spanEndLine = 5
-                    , spanEndCol = 14
-                    }
-                ) "Bool"
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 5
-                    , spanStartCol = 18
-                    , spanEndLine = 5
                     , spanEndCol = 24
                     }
-                ) "String"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 10
+                        , spanEndLine = 5
+                        , spanEndCol = 14
+                        }
+                    ) "Bool"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 18
+                        , spanEndLine = 5
+                        , spanEndCol = 24
+                        }
+                    ) "String"
+                )
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 6
                 , spanStartCol = 1

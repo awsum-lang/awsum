@@ -11,41 +11,42 @@ Program
         , ImportDecl []
             ( "IO" :| [ "Args" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 11
-            , spanStartCol = 1
-            , spanEndLine = 11
-            , spanEndCol = 31
-            }
-        ) "Duo" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 11
-                , spanStartCol = 12
+                , spanStartCol = 1
                 , spanEndLine = 11
-                , spanEndCol = 17
+                , spanEndCol = 31
                 }
-            ) "MkDuo"
-            [ TyCon
+            ) "Duo" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 11
-                    , spanStartCol = 18
+                    , spanStartCol = 12
                     , spanEndLine = 11
-                    , spanEndCol = 24
+                    , spanEndCol = 17
                     }
-                ) "String"
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 11
-                    , spanStartCol = 25
-                    , spanEndLine = 11
-                    , spanEndCol = 31
-                    }
-                ) "String"
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ TypeDecl
+                ) "MkDuo"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 18
+                        , spanEndLine = 11
+                        , spanEndCol = 24
+                        }
+                    ) "String"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 25
+                        , spanEndLine = 11
+                        , spanEndCol = 31
+                        }
+                    ) "String"
+                ]
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 13
                 , spanStartCol = 1

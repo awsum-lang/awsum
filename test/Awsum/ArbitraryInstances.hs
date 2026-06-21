@@ -598,16 +598,16 @@ instance Arbitrary Program where
     -- at least one top-level declaration
     d0 <- arbitrary `suchThat` validFirstDecl imsHead
     ds <- listOf arbitrary
-    pure Program {moduleComment = Nothing, imports = imsHead, decls = d0 :| ds}
+    pure Program {moduleComment = Nothing, imports = imsHead, decls = d0 : ds}
   shrink (Program mc ims ds) =
     [ Program mc ims' ds
     | ims' <- shrinkList shrink ims,
       validHead ims',
-      validFirstDecl ims' (head ds)
+      all (validFirstDecl ims') (viaNonEmpty head ds)
     ]
       <> [ Program mc ims ds'
-         | ds' <- shrinkNonEmpty shrink ds,
-           validFirstDecl ims (head ds')
+         | ds' <- shrinkList shrink ds,
+           all (validFirstDecl ims) (viaNonEmpty head ds')
          ]
     where
       validHead = \case

@@ -364,14 +364,10 @@ tco.case.arm.4.58:
   call void @__inc_ref(ptr %t42)
   %t66 = getelementptr ptr, ptr %t61, i32 2
   store ptr %t42, ptr %t66
-  call void @__inc_ref(ptr %t60)
-  call void @__inc_ref(ptr %t7)
   call void @__free_recursive(ptr %t43)
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
-  call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t60)
   call void @__free_recursive(ptr %t42)
   store ptr %t60, ptr %t3
   store ptr %t61, ptr %t4

@@ -1,0 +1,11 @@
+benchmark: recursion-no-tree
+median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
+
+target   status                      time(s)             peakMem(MiB)
+LLVM     ok              17.08 (16.72–20.01)      154.9 (154.9–155.0)
+JVM      ok                 2.56 (2.46–2.86)   7136.1 (7111.8–8046.8)
+CLR      ok              13.77 (13.74–13.95)   3664.3 (3664.3–3664.5)
+WASM     ok                 7.44 (7.37–7.51)      108.9 (108.8–117.7)
+JS       ok                 2.50 (2.45–2.55)   1342.5 (1319.3–1428.0)
+
+stdout: 5000000
