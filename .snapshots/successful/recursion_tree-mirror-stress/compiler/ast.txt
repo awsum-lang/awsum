@@ -8,57 +8,58 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 40
-            }
-        ) "Tree" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 9
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 17
+                , spanEndCol = 40
                 }
-            ) "Leaf" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 9
-                , spanStartCol = 20
-                , spanEndLine = 9
-                , spanEndCol = 24
-                }
-            ) "Node"
-            [ TyCon
+            ) "Tree" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 25
+                    , spanStartCol = 13
                     , spanEndLine = 9
-                    , spanEndCol = 29
+                    , spanEndCol = 17
                     }
-                ) "Tree"
-            , TyCon
+                ) "Leaf" []
+            , ConDef
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 30
+                    , spanStartCol = 20
                     , spanEndLine = 9
-                    , spanEndCol = 35
+                    , spanEndCol = 24
                     }
-                ) "Int32"
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 9
-                    , spanStartCol = 36
-                    , spanEndLine = 9
-                    , spanEndCol = 40
-                    }
-                ) "Tree"
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ CommentDecl
+                ) "Node"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 25
+                        , spanEndLine = 9
+                        , spanEndCol = 29
+                        }
+                    ) "Tree"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 30
+                        , spanEndLine = 9
+                        , spanEndCol = 35
+                        }
+                    ) "Int32"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 36
+                        , spanEndLine = 9
+                        , spanEndCol = 40
+                        }
+                    ) "Tree"
+                ]
+            ] Nothing NotEmpty Nothing
+        , CommentDecl
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

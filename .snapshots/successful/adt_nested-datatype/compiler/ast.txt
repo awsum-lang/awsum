@@ -6,112 +6,113 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 7
-            , spanStartCol = 1
-            , spanEndLine = 7
-            , spanEndCol = 55
-            }
-        ) "Nest"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 7
-                , spanStartCol = 11
+                , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 12
+                , spanEndCol = 55
                 }
-            ) "a"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 7
-                , spanStartCol = 15
-                , spanEndLine = 7
-                , spanEndCol = 23
-                }
-            ) "NestCons"
-            [ TyVar
+            ) "Nest"
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 7
-                    , spanStartCol = 24
+                    , spanStartCol = 11
                     , spanEndLine = 7
-                    , spanEndCol = 25
+                    , spanEndCol = 12
                     }
                 ) "a"
-            , TyApp
+            ]
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 7
-                    , spanStartCol = 26
+                    , spanStartCol = 15
                     , spanEndLine = 7
-                    , spanEndCol = 46
+                    , spanEndCol = 23
                     }
-                )
-                ( TyCon
+                ) "NestCons"
+                [ TyVar
                     ( SrcSpan
                         { spanStartLine = 7
-                        , spanStartCol = 27
+                        , spanStartCol = 24
                         , spanEndLine = 7
-                        , spanEndCol = 31
+                        , spanEndCol = 25
                         }
-                    ) "Nest"
-                )
-                ( TyApp
+                    ) "a"
+                , TyApp
                     ( SrcSpan
                         { spanStartLine = 7
-                        , spanStartCol = 32
+                        , spanStartCol = 26
                         , spanEndLine = 7
-                        , spanEndCol = 44
+                        , spanEndCol = 46
                         }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 27
+                            , spanEndLine = 7
+                            , spanEndCol = 31
+                            }
+                        ) "Nest"
                     )
                     ( TyApp
                         ( SrcSpan
                             { spanStartLine = 7
-                            , spanStartCol = 33
+                            , spanStartCol = 32
                             , spanEndLine = 7
-                            , spanEndCol = 41
+                            , spanEndCol = 44
                             }
                         )
-                        ( TyCon
+                        ( TyApp
                             ( SrcSpan
                                 { spanStartLine = 7
                                 , spanStartCol = 33
                                 , spanEndLine = 7
-                                , spanEndCol = 39
+                                , spanEndCol = 41
                                 }
-                            ) "Tuple2"
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 7
+                                    , spanStartCol = 33
+                                    , spanEndLine = 7
+                                    , spanEndCol = 39
+                                    }
+                                ) "Tuple2"
+                            )
+                            ( TyVar
+                                ( SrcSpan
+                                    { spanStartLine = 7
+                                    , spanStartCol = 40
+                                    , spanEndLine = 7
+                                    , spanEndCol = 41
+                                    }
+                                ) "a"
+                            )
                         )
                         ( TyVar
                             ( SrcSpan
                                 { spanStartLine = 7
-                                , spanStartCol = 40
+                                , spanStartCol = 42
                                 , spanEndLine = 7
-                                , spanEndCol = 41
+                                , spanEndCol = 43
                                 }
                             ) "a"
                         )
                     )
-                    ( TyVar
-                        ( SrcSpan
-                            { spanStartLine = 7
-                            , spanStartCol = 42
-                            , spanEndLine = 7
-                            , spanEndCol = 43
-                            }
-                        ) "a"
-                    )
-                )
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 7
-                , spanStartCol = 48
-                , spanEndLine = 7
-                , spanEndCol = 55
-                }
-            ) "NestNil" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 48
+                    , spanEndLine = 7
+                    , spanEndCol = 55
+                    }
+                ) "NestNil" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 9
                 , spanStartCol = 1

@@ -18,42 +18,43 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 19
-            , spanStartCol = 1
-            , spanEndLine = 19
-            , spanEndCol = 18
-            }
-        ) "identity"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 19
-                , spanStartCol = 12
+                , spanStartCol = 1
                 , spanEndLine = 19
                 , spanEndCol = 18
                 }
-            )
-            ( TyVar
+            ) "identity"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 19
                     , spanStartCol = 12
                     , spanEndLine = 19
-                    , spanEndCol = 13
-                    }
-                ) "a"
-            )
-            ( TyVar
-                ( SrcSpan
-                    { spanStartLine = 19
-                    , spanStartCol = 17
-                    , spanEndLine = 19
                     , spanEndCol = 18
                     }
-                ) "a"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+                )
+                ( TyVar
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 12
+                        , spanEndLine = 19
+                        , spanEndCol = 13
+                        }
+                    ) "a"
+                )
+                ( TyVar
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 17
+                        , spanEndLine = 19
+                        , spanEndCol = 18
+                        }
+                    ) "a"
+                )
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 20
                 , spanStartCol = 1

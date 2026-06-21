@@ -6,42 +6,43 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 7
-            , spanStartCol = 1
-            , spanEndLine = 7
-            , spanEndCol = 26
-            }
-        ) "double"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 7
-                , spanStartCol = 10
+                , spanStartCol = 1
                 , spanEndLine = 7
                 , spanEndCol = 26
                 }
-            )
-            ( TyCon
+            ) "double"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 7
                     , spanStartCol = 10
                     , spanEndLine = 7
-                    , spanEndCol = 16
-                    }
-                ) "UInt32"
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 7
-                    , spanStartCol = 20
-                    , spanEndLine = 7
                     , spanEndCol = 26
                     }
-                ) "String"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 10
+                        , spanEndLine = 7
+                        , spanEndCol = 16
+                        }
+                    ) "UInt32"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 20
+                        , spanEndLine = 7
+                        , spanEndCol = 26
+                        }
+                    ) "String"
+                )
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

@@ -4,50 +4,51 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 35
-            }
-        ) "Lookup"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 13
-                , spanEndLine = 5
-                , spanEndCol = 14
-                }
-            ) "a"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 17
-                , spanEndLine = 5
-                , spanEndCol = 22
-                }
-            ) "Found"
-            [ TyVar
-                ( SrcSpan
-                    { spanStartLine = 5
-                    , spanStartCol = 23
-                    , spanEndLine = 5
-                    , spanEndCol = 24
-                    }
-                ) "a"
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 27
+                , spanStartCol = 1
                 , spanEndLine = 5
                 , spanEndCol = 35
                 }
-            ) "NotFound" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            ) "Lookup"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 13
+                    , spanEndLine = 5
+                    , spanEndCol = 14
+                    }
+                ) "a"
+            ]
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 17
+                    , spanEndLine = 5
+                    , spanEndCol = 22
+                    }
+                ) "Found"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 23
+                        , spanEndLine = 5
+                        , spanEndCol = 24
+                        }
+                    ) "a"
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 27
+                    , spanEndLine = 5
+                    , spanEndCol = 35
+                    }
+                ) "NotFound" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 7
                 , spanStartCol = 1

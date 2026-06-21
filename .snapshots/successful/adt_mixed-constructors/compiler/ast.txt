@@ -4,66 +4,67 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 8
-            }
-        ) "Token" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
-                { spanStartLine = 6
-                , spanStartCol = 5
-                , spanEndLine = 6
-                , spanEndCol = 9
-                }
-            ) "Word"
-            [ TyCon
-                ( SrcSpan
-                    { spanStartLine = 6
-                    , spanStartCol = 10
-                    , spanEndLine = 6
-                    , spanEndCol = 16
-                    }
-                ) "String"
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 7
-                , spanStartCol = 5
-                , spanEndLine = 7
-                , spanEndCol = 11
-                }
-            ) "Number"
-            [ TyCon
-                ( SrcSpan
-                    { spanStartLine = 7
-                    , spanStartCol = 12
-                    , spanEndLine = 7
-                    , spanEndCol = 18
-                    }
-                ) "String"
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 8
-                , spanStartCol = 5
-                , spanEndLine = 8
-                , spanEndCol = 10
-                }
-            ) "Comma" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 9
-                , spanStartCol = 5
+                { spanStartLine = 5
+                , spanStartCol = 1
                 , spanEndLine = 9
                 , spanEndCol = 8
                 }
-            ) "EOF" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            ) "Token" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 5
+                    , spanEndLine = 6
+                    , spanEndCol = 9
+                    }
+                ) "Word"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 10
+                        , spanEndLine = 6
+                        , spanEndCol = 16
+                        }
+                    ) "String"
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 5
+                    , spanEndLine = 7
+                    , spanEndCol = 11
+                    }
+                ) "Number"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 12
+                        , spanEndLine = 7
+                        , spanEndCol = 18
+                        }
+                    ) "String"
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 5
+                    , spanEndLine = 8
+                    , spanEndCol = 10
+                    }
+                ) "Comma" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 5
+                    , spanEndLine = 9
+                    , spanEndCol = 8
+                    }
+                ) "EOF" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

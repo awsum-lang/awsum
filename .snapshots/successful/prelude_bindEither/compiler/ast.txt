@@ -5,24 +5,25 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 6
-            , spanStartCol = 1
-            , spanEndLine = 6
-            , spanEndCol = 17
-            }
-        ) "ErrA" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 6
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 6
                 , spanEndCol = 17
                 }
             ) "ErrA" []
-        ] Nothing NotEmpty Nothing :|
-        [ TypeDecl
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 13
+                    , spanEndLine = 6
+                    , spanEndCol = 17
+                    }
+                ) "ErrA" []
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

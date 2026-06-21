@@ -14,58 +14,59 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 15
-            , spanStartCol = 1
-            , spanEndLine = 15
-            , spanEndCol = 43
-            }
-        ) "Pair" []
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 15
-                , spanStartCol = 13
-                , spanEndLine = 15
-                , spanEndCol = 16
-                }
-            ) "Two"
-            [ TyCon
-                ( SrcSpan
-                    { spanStartLine = 15
-                    , spanStartCol = 17
-                    , spanEndLine = 15
-                    , spanEndCol = 23
-                    }
-                ) "String"
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 15
-                    , spanStartCol = 24
-                    , spanEndLine = 15
-                    , spanEndCol = 30
-                    }
-                ) "String"
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 15
-                , spanStartCol = 33
-                , spanEndLine = 15
-                , spanEndCol = 36
-                }
-            ) "One"
-            [ TyCon
-                ( SrcSpan
-                    { spanStartLine = 15
-                    , spanStartCol = 37
-                    , spanEndLine = 15
-                    , spanEndCol = 43
-                    }
-                ) "String"
-            ]
-        ] Nothing NotEmpty Nothing :|
+    , decls =
         [ TypeDecl
+            ( SrcSpan
+                { spanStartLine = 15
+                , spanStartCol = 1
+                , spanEndLine = 15
+                , spanEndCol = 43
+                }
+            ) "Pair" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 13
+                    , spanEndLine = 15
+                    , spanEndCol = 16
+                    }
+                ) "Two"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 17
+                        , spanEndLine = 15
+                        , spanEndCol = 23
+                        }
+                    ) "String"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 24
+                        , spanEndLine = 15
+                        , spanEndCol = 30
+                        }
+                    ) "String"
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 33
+                    , spanEndLine = 15
+                    , spanEndCol = 36
+                    }
+                ) "One"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 37
+                        , spanEndLine = 15
+                        , spanEndCol = 43
+                        }
+                    ) "String"
+                ]
+            ] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 17
                 , spanStartCol = 1

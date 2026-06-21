@@ -4,58 +4,59 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 25
-            }
-        ) "Pair"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 11
+                , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 12
-                }
-            ) "a"
-        , Param
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 13
-                , spanEndLine = 5
-                , spanEndCol = 14
-                }
-            ) "b"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 17
-                , spanEndLine = 5
-                , spanEndCol = 21
+                , spanEndCol = 25
                 }
             ) "Pair"
-            [ TyVar
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 22
+                    , spanStartCol = 11
                     , spanEndLine = 5
-                    , spanEndCol = 23
+                    , spanEndCol = 12
                     }
                 ) "a"
-            , TyVar
+            , Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 24
+                    , spanStartCol = 13
                     , spanEndLine = 5
-                    , spanEndCol = 25
+                    , spanEndCol = 14
                     }
                 ) "b"
             ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 17
+                    , spanEndLine = 5
+                    , spanEndCol = 21
+                    }
+                ) "Pair"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 22
+                        , spanEndLine = 5
+                        , spanEndCol = 23
+                        }
+                    ) "a"
+                , TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 24
+                        , spanEndLine = 5
+                        , spanEndCol = 25
+                        }
+                    ) "b"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 7
                 , spanStartCol = 1

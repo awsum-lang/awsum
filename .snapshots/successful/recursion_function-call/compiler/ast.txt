@@ -4,40 +4,41 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 10
-            }
-        ) "Step" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
-                { spanStartLine = 6
-                , spanStartCol = 5
-                , spanEndLine = 6
-                , spanEndCol = 10
-                }
-            ) "Step1" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 7
-                , spanStartCol = 5
-                , spanEndLine = 7
-                , spanEndCol = 10
-                }
-            ) "Step2" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 8
-                , spanStartCol = 5
+                { spanStartLine = 5
+                , spanStartCol = 1
                 , spanEndLine = 8
                 , spanEndCol = 10
                 }
-            ) "Step3" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            ) "Step" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 5
+                    , spanEndLine = 6
+                    , spanEndCol = 10
+                    }
+                ) "Step1" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 5
+                    , spanEndLine = 7
+                    , spanEndCol = 10
+                    }
+                ) "Step2" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 5
+                    , spanEndLine = 8
+                    , spanEndCol = 10
+                    }
+                ) "Step3" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1

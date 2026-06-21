@@ -8,35 +8,19 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 66
-            }
-        ) "check"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 9
-                , spanStartCol = 9
+                , spanStartCol = 1
                 , spanEndLine = 9
                 , spanEndCol = 66
                 }
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 9
-                    , spanStartCol = 9
-                    , spanEndLine = 9
-                    , spanEndCol = 15
-                    }
-                ) "UInt32"
-            )
+            ) "check"
             ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 19
+                    , spanStartCol = 9
                     , spanEndLine = 9
                     , spanEndCol = 66
                     }
@@ -44,16 +28,16 @@ Program
                 ( TyCon
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 19
+                        , spanStartCol = 9
                         , spanEndLine = 9
-                        , spanEndCol = 25
+                        , spanEndCol = 15
                         }
                     ) "UInt32"
                 )
                 ( TyArrow
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 29
+                        , spanStartCol = 19
                         , spanEndLine = 9
                         , spanEndCol = 66
                         }
@@ -61,61 +45,78 @@ Program
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 29
+                            , spanStartCol = 19
                             , spanEndLine = 9
-                            , spanEndCol = 35
+                            , spanEndCol = 25
                             }
-                        ) "String"
+                        ) "UInt32"
                     )
-                    ( TyApp
+                    ( TyArrow
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 39
+                            , spanStartCol = 29
                             , spanEndLine = 9
                             , spanEndCol = 66
                             }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 29
+                                , spanEndLine = 9
+                                , spanEndCol = 35
+                                }
+                            ) "String"
                         )
                         ( TyApp
                             ( SrcSpan
                                 { spanStartLine = 9
                                 , spanStartCol = 39
                                 , spanEndLine = 9
-                                , spanEndCol = 59
+                                , spanEndCol = 66
                                 }
                             )
-                            ( TyCon
+                            ( TyApp
                                 ( SrcSpan
                                     { spanStartLine = 9
                                     , spanStartCol = 39
                                     , spanEndLine = 9
-                                    , spanEndCol = 45
+                                    , spanEndCol = 59
                                     }
-                                ) "Either"
+                                )
+                                ( TyCon
+                                    ( SrcSpan
+                                        { spanStartLine = 9
+                                        , spanStartCol = 39
+                                        , spanEndLine = 9
+                                        , spanEndCol = 45
+                                        }
+                                    ) "Either"
+                                )
+                                ( TyCon
+                                    ( SrcSpan
+                                        { spanStartLine = 9
+                                        , spanStartCol = 46
+                                        , spanEndLine = 9
+                                        , spanEndCol = 59
+                                        }
+                                    ) "StringTooLong"
+                                )
                             )
                             ( TyCon
                                 ( SrcSpan
                                     { spanStartLine = 9
-                                    , spanStartCol = 46
+                                    , spanStartCol = 60
                                     , spanEndLine = 9
-                                    , spanEndCol = 59
+                                    , spanEndCol = 66
                                     }
-                                ) "StringTooLong"
+                                ) "String"
                             )
-                        )
-                        ( TyCon
-                            ( SrcSpan
-                                { spanStartLine = 9
-                                , spanStartCol = 60
-                                , spanEndLine = 9
-                                , spanEndCol = 66
-                                }
-                            ) "String"
                         )
                     )
                 )
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1

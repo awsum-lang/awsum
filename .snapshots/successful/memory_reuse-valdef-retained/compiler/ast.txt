@@ -9,49 +9,50 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 10
-            , spanStartCol = 1
-            , spanEndLine = 10
-            , spanEndCol = 39
-            }
-        ) "Stack" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
-                , spanStartCol = 14
+                , spanStartCol = 1
                 , spanEndLine = 10
-                , spanEndCol = 19
+                , spanEndCol = 39
                 }
-            ) "Empty" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 10
-                , spanStartCol = 22
-                , spanEndLine = 10
-                , spanEndCol = 26
-                }
-            ) "Push"
-            [ TyCon
+            ) "Stack" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 10
-                    , spanStartCol = 27
+                    , spanStartCol = 14
                     , spanEndLine = 10
-                    , spanEndCol = 33
+                    , spanEndCol = 19
                     }
-                ) "String"
-            , TyCon
+                ) "Empty" []
+            , ConDef
                 ( SrcSpan
                     { spanStartLine = 10
-                    , spanStartCol = 34
+                    , spanStartCol = 22
                     , spanEndLine = 10
-                    , spanEndCol = 39
+                    , spanEndCol = 26
                     }
-                ) "Stack"
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+                ) "Push"
+                [ TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 27
+                        , spanEndLine = 10
+                        , spanEndCol = 33
+                        }
+                    ) "String"
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 34
+                        , spanEndLine = 10
+                        , spanEndCol = 39
+                        }
+                    ) "Stack"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 12
                 , spanStartCol = 1

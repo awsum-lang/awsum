@@ -8,75 +8,76 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 51
-            }
-        ) "Tree" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 9
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 17
+                , spanEndCol = 51
                 }
-            ) "Leaf" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 9
-                , spanStartCol = 20
-                , spanEndLine = 9
-                , spanEndCol = 24
-                }
-            ) "Node"
-            [ TyCon
+            ) "Tree" []
+            [ ConDef
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 25
+                    , spanStartCol = 13
                     , spanEndLine = 9
-                    , spanEndCol = 29
+                    , spanEndCol = 17
                     }
-                ) "Tree"
-            , TyOr
+                ) "Leaf" []
+            , ConDef
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 30
+                    , spanStartCol = 20
                     , spanEndLine = 9
-                    , spanEndCol = 47
+                    , spanEndCol = 24
                     }
-                )
-                ( TyCon
+                ) "Node"
+                [ TyCon
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 31
+                        , spanStartCol = 25
                         , spanEndLine = 9
-                        , spanEndCol = 36
+                        , spanEndCol = 29
                         }
-                    ) "Int32"
-                )
-                ( TyCon
+                    ) "Tree"
+                , TyOr
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 39
+                        , spanStartCol = 30
                         , spanEndLine = 9
-                        , spanEndCol = 45
+                        , spanEndCol = 47
                         }
-                    ) "String"
-                )
-            , TyCon
-                ( SrcSpan
-                    { spanStartLine = 9
-                    , spanStartCol = 47
-                    , spanEndLine = 9
-                    , spanEndCol = 51
-                    }
-                ) "Tree"
-            ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 31
+                            , spanEndLine = 9
+                            , spanEndCol = 36
+                            }
+                        ) "Int32"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 39
+                            , spanEndLine = 9
+                            , spanEndCol = 45
+                            }
+                        ) "String"
+                    )
+                , TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 47
+                        , spanEndLine = 9
+                        , spanEndCol = 51
+                        }
+                    ) "Tree"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

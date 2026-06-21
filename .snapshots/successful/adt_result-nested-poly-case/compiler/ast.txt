@@ -4,67 +4,68 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 5
-            , spanEndCol = 31
-            }
-        ) "Result"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 5
-                , spanStartCol = 13
+                , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 14
+                , spanEndCol = 31
                 }
-            ) "a"
-        , Param
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 15
-                , spanEndLine = 5
-                , spanEndCol = 16
-                }
-            ) "e"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 19
-                , spanEndLine = 5
-                , spanEndCol = 21
-                }
-            ) "Ok"
-            [ TyVar
+            ) "Result"
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 22
+                    , spanStartCol = 13
                     , spanEndLine = 5
-                    , spanEndCol = 23
+                    , spanEndCol = 14
                     }
                 ) "a"
-            ]
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 5
-                , spanStartCol = 26
-                , spanEndLine = 5
-                , spanEndCol = 29
-                }
-            ) "Err"
-            [ TyVar
+            , Param
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 30
+                    , spanStartCol = 15
                     , spanEndLine = 5
-                    , spanEndCol = 31
+                    , spanEndCol = 16
                     }
                 ) "e"
             ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 19
+                    , spanEndLine = 5
+                    , spanEndCol = 21
+                    }
+                ) "Ok"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 22
+                        , spanEndLine = 5
+                        , spanEndCol = 23
+                        }
+                    ) "a"
+                ]
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 26
+                    , spanEndLine = 5
+                    , spanEndCol = 29
+                    }
+                ) "Err"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 30
+                        , spanEndLine = 5
+                        , spanEndCol = 31
+                        }
+                    ) "e"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 7
                 , spanStartCol = 1

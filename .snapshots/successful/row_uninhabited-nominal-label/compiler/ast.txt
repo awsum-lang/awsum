@@ -8,42 +8,43 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 9
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 21
-            }
-        ) "Box"
-        [ Param
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 9
-                , spanStartCol = 10
+                , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 11
+                , spanEndCol = 21
                 }
-            ) "a"
-        ]
-        [ ConDef
-            ( SrcSpan
-                { spanStartLine = 9
-                , spanStartCol = 14
-                , spanEndLine = 9
-                , spanEndCol = 19
-                }
-            ) "MkBox"
-            [ TyVar
+            ) "Box"
+            [ Param
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 20
+                    , spanStartCol = 10
                     , spanEndLine = 9
-                    , spanEndCol = 21
+                    , spanEndCol = 11
                     }
                 ) "a"
             ]
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 14
+                    , spanEndLine = 9
+                    , spanEndCol = 19
+                    }
+                ) "MkBox"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 20
+                        , spanEndLine = 9
+                        , spanEndCol = 21
+                        }
+                    ) "a"
+                ]
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

@@ -7,15 +7,16 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 8
-            , spanStartCol = 1
-            , spanEndLine = 8
-            , spanEndCol = 12
-            }
-        ) "Never2" [] [] Nothing NotEmpty Nothing :|
+    , decls =
         [ TypeDecl
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 12
+                }
+            ) "Never2" [] [] Nothing NotEmpty Nothing
+        , TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1

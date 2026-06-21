@@ -1,0 +1,7 @@
+{- Error: a file with imports but no top-level declarations parses as a
+   valid empty module; `awsum build` reports the absent 'main' through
+   requireMain, not as a parse error. -}
+
+import IO.Stdout
+
+

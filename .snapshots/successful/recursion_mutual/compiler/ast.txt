@@ -4,48 +4,49 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 5
-            , spanStartCol = 1
-            , spanEndLine = 9
-            , spanEndCol = 9
-            }
-        ) "Step" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
-                { spanStartLine = 6
-                , spanStartCol = 5
-                , spanEndLine = 6
-                , spanEndCol = 10
-                }
-            ) "StepA" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 7
-                , spanStartCol = 5
-                , spanEndLine = 7
-                , spanEndCol = 10
-                }
-            ) "StepB" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 8
-                , spanStartCol = 5
-                , spanEndLine = 8
-                , spanEndCol = 10
-                }
-            ) "StepC" []
-        , ConDef
-            ( SrcSpan
-                { spanStartLine = 9
-                , spanStartCol = 5
+                { spanStartLine = 5
+                , spanStartCol = 1
                 , spanEndLine = 9
                 , spanEndCol = 9
                 }
-            ) "Done" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            ) "Step" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 5
+                    , spanEndLine = 6
+                    , spanEndCol = 10
+                    }
+                ) "StepA" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 5
+                    , spanEndLine = 7
+                    , spanEndCol = 10
+                    }
+                ) "StepB" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 5
+                    , spanEndLine = 8
+                    , spanEndCol = 10
+                    }
+                ) "StepC" []
+            , ConDef
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 5
+                    , spanEndLine = 9
+                    , spanEndCol = 9
+                    }
+                ) "Done" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

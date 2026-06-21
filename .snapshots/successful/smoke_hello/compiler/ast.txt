@@ -6,24 +6,25 @@ Program
         , ImportDecl []
             ( "IO" :| [ "Args" ] ) Nothing
         ]
-    , decls = TypeDecl
-        ( SrcSpan
-            { spanStartLine = 6
-            , spanStartCol = 1
-            , spanEndLine = 6
-            , spanEndCol = 19
-            }
-        ) "NoArg" []
-        [ ConDef
+    , decls =
+        [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 6
-                , spanStartCol = 14
+                , spanStartCol = 1
                 , spanEndLine = 6
                 , spanEndCol = 19
                 }
             ) "NoArg" []
-        ] Nothing NotEmpty Nothing :|
-        [ Sig
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 14
+                    , spanEndLine = 6
+                    , spanEndCol = 19
+                    }
+                ) "NoArg" []
+            ] Nothing NotEmpty Nothing
+        , Sig
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1

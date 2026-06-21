@@ -9,28 +9,21 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 10
-            , spanStartCol = 1
-            , spanEndLine = 10
-            , spanEndCol = 39
-            }
-        ) "label"
-        ( TyArrow
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 10
-                , spanStartCol = 9
+                , spanStartCol = 1
                 , spanEndLine = 10
                 , spanEndCol = 39
                 }
-            )
-            ( TyApp
+            ) "label"
+            ( TyArrow
                 ( SrcSpan
                     { spanStartLine = 10
                     , spanStartCol = 9
                     , spanEndLine = 10
-                    , spanEndCol = 29
+                    , spanEndCol = 39
                     }
                 )
                 ( TyApp
@@ -38,24 +31,42 @@ Program
                         { spanStartLine = 10
                         , spanStartCol = 9
                         , spanEndLine = 10
-                        , spanEndCol = 22
+                        , spanEndCol = 29
                         }
                     )
-                    ( TyCon
+                    ( TyApp
                         ( SrcSpan
                             { spanStartLine = 10
                             , spanStartCol = 9
                             , spanEndLine = 10
-                            , spanEndCol = 15
+                            , spanEndCol = 22
                             }
-                        ) "Tuple2"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 9
+                                , spanEndLine = 10
+                                , spanEndCol = 15
+                                }
+                            ) "Tuple2"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 16
+                                , spanEndLine = 10
+                                , spanEndCol = 22
+                                }
+                            ) "UInt32"
+                        )
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 10
-                            , spanStartCol = 16
+                            , spanStartCol = 23
                             , spanEndLine = 10
-                            , spanEndCol = 22
+                            , spanEndCol = 29
                             }
                         ) "UInt32"
                     )
@@ -63,24 +74,14 @@ Program
                 ( TyCon
                     ( SrcSpan
                         { spanStartLine = 10
-                        , spanStartCol = 23
+                        , spanStartCol = 33
                         , spanEndLine = 10
-                        , spanEndCol = 29
+                        , spanEndCol = 39
                         }
-                    ) "UInt32"
+                    ) "String"
                 )
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 10
-                    , spanStartCol = 33
-                    , spanEndLine = 10
-                    , spanEndCol = 39
-                    }
-                ) "String"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1

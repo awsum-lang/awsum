@@ -15,60 +15,61 @@ Program
         [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
-    , decls = Sig
-        ( SrcSpan
-            { spanStartLine = 16
-            , spanStartCol = 1
-            , spanEndLine = 16
-            , spanEndCol = 21
-            }
-        ) "main"
-        ( TyApp
+    , decls =
+        [ Sig
             ( SrcSpan
                 { spanStartLine = 16
-                , spanStartCol = 8
+                , spanStartCol = 1
                 , spanEndLine = 16
                 , spanEndCol = 21
                 }
-            )
+            ) "main"
             ( TyApp
                 ( SrcSpan
                     { spanStartLine = 16
                     , spanStartCol = 8
                     , spanEndLine = 16
-                    , spanEndCol = 16
+                    , spanEndCol = 21
                     }
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 16
                         , spanStartCol = 8
                         , spanEndLine = 16
-                        , spanEndCol = 10
+                        , spanEndCol = 16
                         }
-                    ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 8
+                            , spanEndLine = 16
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 11
+                            , spanEndLine = 16
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
                 )
                 ( TyCon
                     ( SrcSpan
                         { spanStartLine = 16
-                        , spanStartCol = 11
+                        , spanStartCol = 17
                         , spanEndLine = 16
-                        , spanEndCol = 16
+                        , spanEndCol = 21
                         }
-                    ) "Never"
+                    ) "Unit"
                 )
-            )
-            ( TyCon
-                ( SrcSpan
-                    { spanStartLine = 16
-                    , spanStartCol = 17
-                    , spanEndLine = 16
-                    , spanEndCol = 21
-                    }
-                ) "Unit"
-            )
-        ) Nothing Nothing :|
-        [ FunDef
+            ) Nothing Nothing
+        , FunDef
             ( SrcSpan
                 { spanStartLine = 17
                 , spanStartCol = 1

@@ -163,18 +163,18 @@ parserSpec = do
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
-                    :| [ FunDef
-                           noSpan
-                           "main"
-                           [Param noSpan "input"]
-                           ( EApp
-                               noSpan
-                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
-                               (EVar noSpan (QName [] "input"))
-                           )
-                           Nothing
-                           Nothing
-                       ]
+                    : [ FunDef
+                          noSpan
+                          "main"
+                          [Param noSpan "input"]
+                          ( EApp
+                              noSpan
+                              (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                              (EVar noSpan (QName [] "input"))
+                          )
+                          Nothing
+                          Nothing
+                      ]
               }
       parseProgram src `shouldBe` Right expected
 
@@ -192,26 +192,26 @@ parserSpec = do
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
-                    :| [ FunDef
-                           noSpan
-                           "main"
-                           [Param noSpan "input"]
-                           ( EApp
-                               noSpan
-                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
-                               ( EParens
-                                   noSpan
-                                   ( EInfix
-                                       noSpan
-                                       OpConcat
-                                       (EVar noSpan (QName [] "input"))
-                                       (EVar noSpan (QName [] "input"))
-                                   )
-                               )
-                           )
-                           Nothing
-                           Nothing
-                       ]
+                    : [ FunDef
+                          noSpan
+                          "main"
+                          [Param noSpan "input"]
+                          ( EApp
+                              noSpan
+                              (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                              ( EParens
+                                  noSpan
+                                  ( EInfix
+                                      noSpan
+                                      OpConcat
+                                      (EVar noSpan (QName [] "input"))
+                                      (EVar noSpan (QName [] "input"))
+                                  )
+                              )
+                          )
+                          Nothing
+                          Nothing
+                      ]
               }
       parseProgram src `shouldBe` Right expected
 
@@ -231,7 +231,7 @@ parserSpec = do
               (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "String"))
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ _ (Sig _ _ ty _ _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ _ : _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
     it "parses: type-ascription pattern '(n : Int32)' inside a case arm" $ do
@@ -317,7 +317,7 @@ parserSpec = do
               (TyCon noSpan "String")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ _ (Sig _ _ ty _ _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ _ : _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
   describe "Render.renderProgram" $ do
@@ -335,18 +335,18 @@ parserSpec = do
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
-                    :| [ FunDef
-                           noSpan
-                           "main"
-                           [Param noSpan "input"]
-                           ( EApp
-                               noSpan
-                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
-                               (EVar noSpan (QName [] "input"))
-                           )
-                           Nothing
-                           Nothing
-                       ]
+                    : [ FunDef
+                          noSpan
+                          "main"
+                          [Param noSpan "input"]
+                          ( EApp
+                              noSpan
+                              (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                              (EVar noSpan (QName [] "input"))
+                          )
+                          Nothing
+                          Nothing
+                      ]
               }
       renderProgram ast `shouldBe` src
 
@@ -364,26 +364,26 @@ parserSpec = do
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
-                    :| [ FunDef
-                           noSpan
-                           "main"
-                           [Param noSpan "input"]
-                           ( EApp
-                               noSpan
-                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
-                               ( EParens
-                                   noSpan
-                                   ( EInfix
-                                       noSpan
-                                       OpConcat
-                                       (EVar noSpan (QName [] "input"))
-                                       (EVar noSpan (QName [] "input"))
-                                   )
-                               )
-                           )
-                           Nothing
-                           Nothing
-                       ]
+                    : [ FunDef
+                          noSpan
+                          "main"
+                          [Param noSpan "input"]
+                          ( EApp
+                              noSpan
+                              (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                              ( EParens
+                                  noSpan
+                                  ( EInfix
+                                      noSpan
+                                      OpConcat
+                                      (EVar noSpan (QName [] "input"))
+                                      (EVar noSpan (QName [] "input"))
+                                  )
+                              )
+                          )
+                          Nothing
+                          Nothing
+                      ]
               }
       renderProgram ast `shouldBe` src
 
@@ -581,6 +581,32 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> requireMain p `shouldBe` Right ()
+
+    -- A file with no top-level declarations parses (the grammar allows
+    -- zero); it is a valid empty module. The absent 'main' surfaces only
+    -- when an executable is requested, via 'requireMain' — not as a parse
+    -- error. This keeps the LSP "file is still being written" flow quiet.
+    it "accepts an empty file as a valid module without 'main'" $ do
+      case parseProgram "" of
+        Left e -> expectationFailure (toString e)
+        Right p -> do
+          decls p `shouldBe` []
+          requireMain p `shouldBe` Left MainMissing
+
+    it "accepts an imports-only file as a valid module without 'main'" $ do
+      case parseProgram (unlines ["import IO.Stdout"]) of
+        Left e -> expectationFailure (toString e)
+        Right p -> do
+          decls p `shouldBe` []
+          requireMain p `shouldBe` Left MainMissing
+
+    it "accepts a module-comment-only file as a valid module without 'main'" $ do
+      case parseProgram (unlines ["{- just a module comment -}", ""]) of
+        Left e -> expectationFailure (toString e)
+        Right p -> do
+          moduleComment p `shouldBe` Just " just a module comment "
+          decls p `shouldBe` []
+          requireMain p `shouldBe` Left MainMissing
 
 elaborateSpec :: Spec
 elaborateSpec = do
