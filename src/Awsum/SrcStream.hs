@@ -41,8 +41,8 @@ instance Stream SrcText where
   type Token SrcText = Char
   type Tokens SrcText = Text
   tokenToChunk Proxy = T.singleton
-  tokensToChunk Proxy = T.pack
-  chunkToTokens Proxy = T.unpack
+  tokensToChunk Proxy = toText
+  chunkToTokens Proxy = toString
   chunkLength Proxy = T.length
   chunkEmpty Proxy = T.null
   take1_ (SrcText s) = second SrcText <$> T.uncons s
@@ -61,7 +61,7 @@ instance TraversableStream SrcText where
     ( Just $ case expandTab pstateTabWidth
         . addPrefix
         . f
-        . T.unpack
+        . toString
         . fst
         $ takeWhile_ (/= '\n') post of
         "" -> "<empty line>"
