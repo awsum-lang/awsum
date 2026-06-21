@@ -38,7 +38,6 @@ where
 
 import Awsum.Pretty (layoutUnbounded, vsepBlank, vsepHard)
 import Awsum.Syntax
-import Awsum.Width (displayWidth, isWideChar)
 import Data.Char qualified as Char
 import Data.Text qualified as T
 import Prettyprinter
@@ -54,24 +53,23 @@ import Prettyprinter
 import Prettyprinter.Internal qualified as PPI
 import Relude
 
--- | Like prettyprinter's 'pretty' for 'Text', but reports each line's
---   /display width/ — a wide East-Asian character counts as two columns
---   ('Awsum.Width.displayWidth') — to the layout engine, instead of the
---   code-point 'Data.Text.length' that 'pretty' caches. The renderer's only
---   column-sensitive combinator is 'align' (in 'renderLetBlock'); feeding it
---   display widths makes the nesting it pins match the columns the Awsum
---   parser tracks on a re-parse (Megaparsec advances two columns per wide
---   character), so @parse ∘ render@ stays the identity even when a wide
---   character precedes a layout anchor. For all-narrow text 'dtext' builds the
---   same nodes 'pretty' would, so output is byte-for-byte unchanged there.
+-- | Like prettyprinter's 'pretty' for 'Text': reports each line's width in
+--   /code points/ ('Data.Text.length') to the layout engine. The renderer's
+--   only column-sensitive combinator is 'align' (in 'renderLetBlock'), and the
+--   Awsum parser tracks layout columns in code points too (see
+--   "Awsum.SrcStream"), so the nesting 'align' pins matches the columns a
+--   re-parse sees — @parse ∘ render@ stays the identity for any Unicode,
+--   including a wide character before a layout anchor. (Equivalent to 'pretty';
+--   kept as a named helper so the per-line split and single-'Char' path stay
+--   explicit.)
 dtext :: Text -> Doc ann
 dtext = vsep . map lineDoc . T.splitOn "\n"
   where
     lineDoc :: Text -> Doc ann
     lineDoc t = case toString t of
       [] -> PPI.Empty
-      [c] -> if isWideChar c then PPI.Text 2 t else PPI.Char c
-      _ -> PPI.Text (displayWidth t) t
+      [c] -> PPI.Char c
+      _ -> PPI.Text (T.length t) t
 
 -- ── Public fragment renderers ───────────────────────────────────────────────
 -- These project the internal 'Doc' builders to text. 'renderProgram' (below)

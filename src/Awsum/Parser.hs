@@ -36,6 +36,7 @@
 --       This makes multi-decl files unambiguous without semicolons.
 module Awsum.Parser (parseProgram, parseProgramDiagnostic) where
 
+import Awsum.SrcStream (SrcText (..))
 import Awsum.Syntax
 import Data.Char qualified as Char
 import Data.Text qualified as T
@@ -45,8 +46,10 @@ import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as C
 import Text.Megaparsec.Char.Lexer qualified as L
 
--- Megaparsec over 'Text'
-type Parser = Parsec Void Text
+-- Megaparsec over 'SrcText' — columns counted in code points, not display
+-- width (see "Awsum.SrcStream"), so layout and 'SrcSpan' columns match the
+-- @tree-sitter-awsum@ scanner and the renderer's code-point layout.
+type Parser = Parsec Void SrcText
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Space consumers & lexeme/symbol helpers
@@ -257,21 +260,21 @@ paramBinderG spaceConsumer = do
 -- | Parse a full program from 'Text'.
 parseProgram :: Text -> Either Text Program
 parseProgram src =
-  case P.parse (pProgram <* eof) "<stdin>" src of
+  case P.parse (pProgram <* eof) "<stdin>" (SrcText src) of
     Left e -> Left (toText (P.errorBundlePretty e))
     Right p -> Right p
 
 -- | Parse with structured error output (line, column, message) for IDE integration.
 parseProgramDiagnostic :: Text -> Either [(SrcSpan, Text)] Program
 parseProgramDiagnostic src =
-  case P.parse (pProgram <* eof) "<stdin>" src of
+  case P.parse (pProgram <* eof) "<stdin>" (SrcText src) of
     Right p -> Right p
     Left bundle ->
       let errs = toList (P.bundleErrors bundle)
           posState = P.bundlePosState bundle
        in Left (extractErrors posState errs)
   where
-    extractErrors :: P.PosState Text -> [P.ParseError Text Void] -> [(SrcSpan, Text)]
+    extractErrors :: P.PosState SrcText -> [P.ParseError SrcText Void] -> [(SrcSpan, Text)]
     extractErrors _ [] = []
     extractErrors ps (e : rest) =
       let (_, ps') = P.reachOffset (P.errorOffset e) ps

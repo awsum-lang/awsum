@@ -87,6 +87,7 @@ library
       Awsum.Reuse
       Awsum.Scc
       Awsum.Simplify
+      Awsum.SrcStream
       Awsum.StackSafety
       Awsum.Symbols
       Awsum.Syntax
