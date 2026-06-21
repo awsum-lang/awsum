@@ -473,9 +473,7 @@ reuse.copy.end.97:
   br label %reuse.join.95
 reuse.join.95:
   %t103 = phi ptr [ %t5, %reuse.in_place.end.96 ], [ %t98, %reuse.copy.end.97 ]
-  call void @__inc_ref(ptr %t83)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t83)
   store ptr %t83, ptr %t3
   store ptr %t103, ptr %t4
   br label %tco.loop.0
@@ -522,9 +520,7 @@ tco.case.arm.28.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -704,9 +700,7 @@ reuse.copy.end.97:
   br label %reuse.join.95
 reuse.join.95:
   %t103 = phi ptr [ %t5, %reuse.in_place.end.96 ], [ %t98, %reuse.copy.end.97 ]
-  call void @__inc_ref(ptr %t83)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t83)
   store ptr %t83, ptr %t3
   store ptr %t103, ptr %t4
   br label %tco.loop.0
@@ -753,9 +747,7 @@ tco.case.arm.30.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -937,9 +929,7 @@ reuse.copy.end.98:
   br label %reuse.join.96
 reuse.join.96:
   %t104 = phi ptr [ %t5, %reuse.in_place.end.97 ], [ %t99, %reuse.copy.end.98 ]
-  call void @__inc_ref(ptr %t84)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t84)
   store ptr %t84, ptr %t3
   store ptr %t104, ptr %t4
   br label %tco.loop.0
@@ -986,9 +976,7 @@ tco.case.arm.32.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0

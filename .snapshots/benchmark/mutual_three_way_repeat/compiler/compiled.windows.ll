@@ -313,12 +313,10 @@ tco.case.arm.3.43:
   store ptr %t46, ptr %t2
   br label %tco.exit.1
 tco.case.arm.4.50:
-  call void @__inc_ref(ptr %t32)
   call void @__free_recursive(ptr %t38)
   call void @__free_recursive(ptr %t18)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t4)
-  call void @__free_recursive(ptr %t32)
   store ptr %t32, ptr %t3
   br label %tco.loop.0
 tco.case.default.42:

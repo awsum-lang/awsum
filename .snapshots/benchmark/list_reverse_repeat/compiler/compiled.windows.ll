@@ -350,14 +350,12 @@ tco.case.arm.4.31:
   call void @__inc_ref(ptr %t7)
   %t38 = getelementptr ptr, ptr %t34, i32 2
   store ptr %t7, ptr %t38
-  call void @__inc_ref(ptr %t33)
   call void @__inc_ref(ptr %t7)
   call void @__free_recursive(ptr %t21)
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t33)
   store ptr %t33, ptr %t3
   store ptr %t7, ptr %t4
   store ptr %t34, ptr %t5
@@ -407,9 +405,7 @@ tco.case.arm.27.12:
   call void @__inc_ref(ptr %t6)
   %t20 = getelementptr ptr, ptr %t5, i32 2
   store ptr %t6, ptr %t20
-  call void @__inc_ref(ptr %t14)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t14)
   store ptr %t14, ptr %t3
   store ptr %t5, ptr %t4
   br label %tco.loop.0
@@ -479,9 +475,7 @@ reuse.copy.end.29:
   br label %reuse.join.27
 reuse.join.27:
   %t35 = phi ptr [ %t6, %reuse.in_place.end.28 ], [ %t30, %reuse.copy.end.29 ]
-  call void @__inc_ref(ptr %t16)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t16)
   store ptr %t35, ptr %t3
   store ptr %t16, ptr %t4
   br label %tco.loop.0
@@ -538,12 +532,10 @@ tco.case.arm.4.21:
   store ptr %t25, ptr %t26
   call void @__inc_ref(ptr %t6)
   %t27 = call ptr @v_revInto(ptr %t24, ptr %t6)
-  call void @__inc_ref(ptr %t23)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t23)
   store ptr %t23, ptr %t3
   store ptr %t27, ptr %t4
   br label %tco.loop.0
@@ -597,11 +589,9 @@ tco.case.arm.4.21:
   %t24 = getelementptr ptr, ptr %t5, i32 2
   %t25 = load ptr, ptr %t24
   call void @__inc_ref(ptr %t25)
-  call void @__inc_ref(ptr %t23)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t23)
   store ptr %t25, ptr %t3
   store ptr %t23, ptr %t4
   br label %tco.loop.0

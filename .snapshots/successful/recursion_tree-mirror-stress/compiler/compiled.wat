@@ -803,8 +803,6 @@
           call 13
           local.get 7
           local.set 6
-          local.get 5
-          call 13
           local.get 2
           call 14
           local.get 3
@@ -812,8 +810,6 @@
           local.get 1
           call 14
           local.get 0
-          call 14
-          local.get 4
           call 14
           local.get 5
           local.set 0
@@ -1094,11 +1090,7 @@
             call 14
           end
           local.set 5
-          local.get 4
-          call 13
           local.get 1
-          call 14
-          local.get 3
           call 14
           local.get 2
           call 14
@@ -1165,13 +1157,9 @@
         call 13
         local.get 0
         local.set 5
-        local.get 4
-        call 13
         local.get 1
         call 14
         local.get 3
-        call 14
-        local.get 2
         call 14
         local.get 4
         local.set 0
@@ -1356,11 +1344,7 @@
             call 14
           end
           local.set 5
-          local.get 4
-          call 13
           local.get 1
-          call 14
-          local.get 3
           call 14
           local.get 2
           call 14
@@ -1427,13 +1411,9 @@
         call 13
         local.get 0
         local.set 5
-        local.get 4
-        call 13
         local.get 1
         call 14
         local.get 3
-        call 14
-        local.get 2
         call 14
         local.get 4
         local.set 0

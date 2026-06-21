@@ -300,12 +300,10 @@ case.default.33:
   unreachable
 case.join.34:
   %t45 = phi ptr [ %t37, %case.end.1.36 ], [ %t42, %case.end.2.41 ]
-  call void @__inc_ref(ptr %t29)
   call void @__free_recursive(ptr %t21)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t29)
   store ptr %t29, ptr %t3
   store ptr %t45, ptr %t4
   br label %tco.loop.0

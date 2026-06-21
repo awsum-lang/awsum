@@ -347,9 +347,7 @@ reuse.copy.end.29:
   br label %reuse.join.27
 reuse.join.27:
   %t35 = phi ptr [ %t5, %reuse.in_place.end.28 ], [ %t30, %reuse.copy.end.29 ]
-  call void @__inc_ref(ptr %t16)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %t16)
   store ptr %t16, ptr %t3
   store ptr %t35, ptr %t4
   br label %tco.loop.0
@@ -412,12 +410,10 @@ tco.case.arm.4.21:
   call void @__inc_ref(ptr %t6)
   %t29 = getelementptr ptr, ptr %t24, i32 2
   store ptr %t6, ptr %t29
-  call void @__inc_ref(ptr %t23)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
-  call void @__free_recursive(ptr %t23)
   store ptr %t23, ptr %t3
   store ptr %t24, ptr %t4
   br label %tco.loop.0

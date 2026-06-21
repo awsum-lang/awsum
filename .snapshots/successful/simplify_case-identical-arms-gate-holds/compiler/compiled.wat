@@ -836,8 +836,6 @@
             i32.store offset=4
             local.get 7
             local.set 6
-            local.get 5
-            call 15
             local.get 2
             call 16
             local.get 3
@@ -845,8 +843,6 @@
             local.get 1
             call 16
             local.get 0
-            call 16
-            local.get 4
             call 16
             local.get 5
             local.set 0
@@ -891,15 +887,11 @@
               call 16
             end
             local.set 7
-            local.get 6
-            call 15
             local.get 2
             call 16
             local.get 3
             call 16
             local.get 0
-            call 16
-            local.get 4
             call 16
             local.get 6
             local.set 0

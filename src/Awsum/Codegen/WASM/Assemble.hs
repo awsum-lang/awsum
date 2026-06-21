@@ -950,6 +950,35 @@ isHeapBorrow ctx = \case
   CLet _ _ body -> isHeapBorrow ctx body
   _ -> False
 
+-- | The binders a tail transfer ('CContinue' back-edge / 'CJump' to a join)
+-- /moves/ into the destination slots instead of copying. A binder @m@
+-- qualifies when an argument is a bare 'CVar m', @m@ is in the @pending@
+-- drop set (so it would otherwise be freed here), and @m@ occurs exactly
+-- once across all transfer arguments — linear, one destination for its one
+-- owned reference. For such a binder the emitter skips the forward
+-- @__inc_ref@ /and/ the paired 'CDrop' free, donating the existing
+-- reference (held via the extract-inc for an arm binder, or the slot for a
+-- parameter/let) to the destination slot. The load-bearing extract-inc that
+-- protects @m@ from the dying scrutinee's cascade-free stays — only the
+-- redundant inc/free pair is cut. The back-edge analogue of the value-tail
+-- 'CVar' move ('sourceCVarBin' in 'emitNonLoopBodyI'); the 'CDrop' stays in
+-- Core and codegen realises it as a move. Mirrors LLVM's 'transferMoves'.
+transferMovesW :: [Text] -> [CExpr] -> Set Text
+transferMovesW pending args =
+  Set.fromList
+    [ m
+    | (i, CVar m) <- zip [0 :: Int ..] args,
+      m `elem` pending,
+      and [j == i || m `Set.notMember` freeVars a | (j, a) <- zip [0 :: Int ..] args]
+    ]
+
+-- | Is this transfer argument a 'CVar' whose binder 'transferMovesW'
+-- selected for the move? Such an arg skips its forward @__inc_ref@.
+isMoveArgW :: Set Text -> CExpr -> Bool
+isMoveArgW moved e = case sourceCVarBin e of
+  Just m -> m `Set.member` moved
+  Nothing -> False
+
 -- | Linear-scrutinee elision helper: extend 'ecArmPatternByScrut' if
 -- the scrut is a 'CVar' (Just name). No-op otherwise.
 recordArmPattern :: ExprCtx -> Maybe Text -> [Text] -> ExprCtx
@@ -1815,20 +1844,27 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
                 <> [LocalSet (fromIntegral (tcoSlotAt i))]
             | (i, a) <- zip [0 :: Int ..] newArgs
             ]
-        -- Inc each ptr-arg whose source is a CVar (borrow
+        -- A borrowed 'CVar' arg whose binder is in @pending@ and forwarded
+        -- linearly is /moved/ into the next-iter slot: its existing
+        -- reference is donated, so the forward-inc and the paired 'CDrop'
+        -- free both vanish (the value-tail carve-out on a loop back-edge).
+        -- See 'transferMovesW'.
+        moved = transferMovesW pending newArgs
+        -- Inc each non-moved ptr-arg whose source is a CVar (borrow
         -- → the next-iter slot takes its own ref). Fresh sources
         -- carry their @+1@ from @$__alloc@.
         incs =
           concat
             [ case sourceCVarBin a of
-                Just _ ->
-                  [LocalGet (fromIntegral (tcoSlotAt i))]
-                    <> [Call "__inc_ref"]
-                Nothing -> []
+                Just _
+                  | not (isMoveArgW moved a) ->
+                      [LocalGet (fromIntegral (tcoSlotAt i))]
+                        <> [Call "__inc_ref"]
+                _ -> []
             | (i, a) <- zip [0 :: Int ..] newArgs
             ]
         scrutDecs = emitFreshScrutDecsI freshScrutSlots
-        frees = concatMap (emitFreeOfI ctx) pending
+        frees = concatMap (emitFreeOfI ctx) (filter (`Set.notMember` moved) pending)
         paramSlots =
           [ fromMaybe (error $ "WASM Assemble: no param slot for " <> show p) (Map.lookup p ctx.ecParams)
           | p <- params

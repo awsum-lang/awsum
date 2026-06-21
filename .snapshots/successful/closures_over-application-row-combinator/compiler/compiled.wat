@@ -777,10 +777,6 @@
           local.set 5
           local.get 1
           local.set 6
-          local.get 6
-          call 11
-          local.get 1
-          call 12
           local.get 3
           call 12
           local.get 2

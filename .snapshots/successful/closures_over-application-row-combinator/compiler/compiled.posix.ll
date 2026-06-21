@@ -333,8 +333,6 @@ tco.case.arm.8.20:
   store ptr %t26, ptr %t27
   %t25 = getelementptr ptr, ptr %t5, i32 1
   store ptr %t22, ptr %t25
-  call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   store ptr %t5, ptr %t3
