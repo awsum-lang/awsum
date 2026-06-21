@@ -1,0 +1,16 @@
+{- A wildcard field pattern absorbs a constructor field whose type is an
+   open-tailed structural sum `(Int32 | r)` without dispatching on the row,
+   so the open tail imposes no match obligation and the case is exhaustive —
+   a dispatching `Just (n : Int32)` would instead be rejected. At runtime the
+   caller's foreign tail value (`True : Bool`, injected via `r := Bool`)
+   flows through `Just _payload` untouched. Prints "j". -}
+
+import IO.Stdout
+
+isJust : Maybe (Int32 | r) -> String
+isJust x = case x of
+  Nothing -> "n"
+  Just _payload -> "j"
+
+main : IO Never Unit
+main = IO.Stdout.print (isJust (Just (True : Bool)))

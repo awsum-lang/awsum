@@ -1,0 +1,78 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CLet "$inl2$__input"
+                    ( CCon 12
+                        [ CCon 1 [] ]
+                    )
+                    ( CDrop "$inl2$__input"
+                        ( CJoin "$join4" [ "$inl5$scrut" ]
+                            ( CCase
+                                ( CVar "$inl5$scrut" )
+                                [
+                                    ( 11
+                                    , []
+                                    , CString "n"
+                                    )
+                                ,
+                                    ( 12
+                                    , [ "$inl3$_payload" ]
+                                    , CString "j"
+                                    )
+                                ]
+                            )
+                            ( CCase
+                                ( CVar "$inl2$__input" )
+                                [
+                                    ( 11
+                                    , []
+                                    , CJump "$join4"
+                                        [ CVar "$inl2$__input" ]
+                                    )
+                                ,
+                                    ( 12
+                                    , [ "$inl1$__f0" ]
+                                    , CString "j"
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

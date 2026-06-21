@@ -1,0 +1,14 @@
+{- Error: a '(rest : r)' arm ascribing the open tail does not close the row.
+   A type variable has no runtime tag, so 'CRowCase' has no arm to dispatch
+   to — "covering" the tail this way is still rejected, not a catch-all
+   escape hatch. The row must be closed to concrete alternatives instead. -}
+
+import IO.Stdout
+
+_f : (Int32 | r) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+  (rest : r) -> rest
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

@@ -1,16 +1,26 @@
 {- Injecting a bare constructor into a structural sum with an open tyvar
    tail `(Maybe T | r)`. The tail is an extension slot, not a competing
    alternative, so `Nothing` (whose type argument is unpinned) routes to
-   the unique concrete head-compatible label `Maybe T` without ambiguity.
-   Prints "mt". -}
+   the unique concrete head-compatible label `Maybe T`, not to the tail.
+   The tail is then closed (`r := X`) before the value is matched —
+   matching while the tail is still open is itself rejected. Prints "mt". -}
 
 import IO.Stdout
 
 type T = A | B
 
-classify : (Maybe T | r) -> String
+type X = X1 | X2
+
+nothingOpen : Maybe T | r
+nothingOpen = Nothing
+
+closed : Maybe T | X
+closed = nothingOpen
+
+classify : (Maybe T | X) -> String
 classify x = case x of
   (_m : Maybe T) -> "mt"
+  (_x : X) -> "x"
 
 main : IO Never Unit
-main = IO.Stdout.print (classify Nothing)
+main = IO.Stdout.print (classify closed)

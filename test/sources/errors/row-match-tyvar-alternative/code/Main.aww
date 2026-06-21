@@ -1,0 +1,16 @@
+{- Error: a structural sum whose alternatives are themselves free type
+   variables — `(a | b)` — is matched by ascription arms `(n : a)` / `(m : b)`.
+   The alternatives are the caller's to instantiate, so they carry no runtime
+   tag to dispatch on; like an open tail, the row cannot be matched and the
+   case is rejected. (Injecting a value into such a row is a separate matter —
+   only matching it is closed here.) -}
+
+import IO.Stdout
+
+_process : (a | b) -> String
+_process x = case x of
+  (n : a) -> "FIRST"
+  (m : b) -> "SECOND"
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"
