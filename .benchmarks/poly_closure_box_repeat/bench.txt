@@ -2,10 +2,10 @@ benchmark: poly_closure_box_repeat
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 0.91 (0.91–1.18)            6.0 (6.0–6.1)
-JVM      ok                 0.16 (0.16–0.16)      471.2 (449.1–471.3)
-CLR      ok                 0.54 (0.53–0.55)      212.8 (212.8–212.9)
-WASM     ok                 0.50 (0.49–0.50)         16.2 (16.0–16.2)
-JS       ok                 0.13 (0.13–0.13)      186.5 (186.4–186.5)
+LLVM     ok                 0.93 (0.90–1.14)            6.0 (6.0–6.1)
+JVM      ok                 0.16 (0.16–0.16)      471.3 (457.4–479.7)
+CLR      ok                 0.53 (0.52–0.54)      212.8 (212.7–212.9)
+WASM     ok                 0.50 (0.50–0.51)         16.1 (16.1–16.1)
+JS       ok                 0.13 (0.13–0.13)      186.4 (186.3–186.6)
 
 stdout: ok

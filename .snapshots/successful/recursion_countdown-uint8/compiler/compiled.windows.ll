@@ -543,6 +543,7 @@ reuse.join.83:
 case.end.3.66:
   br label %case.join.64
 case.arm.4.91:
+  call void @__free_recursive(ptr %t6)
   call void @__inc_ref(ptr %t59)
   br label %case.end.4.92
 case.end.4.92:

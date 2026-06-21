@@ -501,6 +501,7 @@ case.arm.3.20:
 case.end.3.21:
   br label %case.join.19
 case.arm.4.31:
+  call void @__free_recursive(ptr %t5)
   call void @__inc_ref(ptr %t6)
   br label %case.end.4.32
 case.end.4.32:

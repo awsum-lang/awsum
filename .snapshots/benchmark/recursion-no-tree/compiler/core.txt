@@ -1,0 +1,649 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCase
+                ( CVar "runDemo" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CCon 7
+                        [ CRowCase
+                            ( CVar "e" )
+                            [
+                                ( 882564211
+                                , "$inl4$o"
+                                , CString "OverflowError"
+                                )
+                            ,
+                                ( 3768445577
+                                , "$inl5$u"
+                                , CString "UnderflowError"
+                                )
+                            ]
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CCon 7
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CValDef "runDemo"
+            ( CCase
+                ( CCall
+                    ( CVar "countTail" )
+                    [ CIntLit 5000000 TInt32
+                    , CIntLit 0 TInt32
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_1" ]
+                    , CCon 3
+                        [ CVar "$do_e_1" ]
+                    )
+                ,
+                    ( 4
+                    , [ "tailed" ]
+                    , CCase
+                        ( CCall
+                            ( CVar "descendN" )
+                            [ CIntLit 25 TInt32
+                            , CVar "tailed"
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "$do_e_0" ]
+                            , CCon 3
+                                [ CVar "$do_e_0" ]
+                            )
+                        ,
+                            ( 4
+                            , [ "looped" ]
+                            , CCall
+                                ( CVar "$scc$spinA_spinB_spinC" )
+                                [ CCon 8
+                                    [ CVar "looped"
+                                    , CIntLit 0 TInt32
+                                    ]
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "countTail"
+            [ "remaining"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "remaining"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCon 4
+                            [ CVar "acc" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "succInt32" )
+                                [ CVar "acc" ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_3" ]
+                                , CDrop "$do_e_3"
+                                    ( CCon 3
+                                        [ CRow 882564211
+                                            ( CVar "$do_e_3" )
+                                        ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "a" ]
+                                , CDrop "a"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "predInt32" )
+                                            [ CVar "remaining" ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_2" ]
+                                            , CDrop "$do_e_2"
+                                                ( CCon 3
+                                                    [ CRow 3768445577
+                                                        ( CVar "$do_e_2" )
+                                                    ]
+                                                )
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "r" ]
+                                            , CDrop "r"
+                                                ( CDrop "remaining"
+                                                    ( CDrop "acc"
+                                                        ( CContinue
+                                                            [ CVar "r"
+                                                            , CVar "a"
+                                                            ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "descendN"
+            [ "rounds"
+            , "depth"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "rounds"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCon 4
+                            [ CVar "depth" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CVar "$cps$descend" )
+                                [ CVar "depth"
+                                , CCon 11 []
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_5" ]
+                                , CDrop "$do_e_5"
+                                    ( CCon 3
+                                        [ CVar "$do_e_5" ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "d" ]
+                                , CDrop "d"
+                                    ( CCase
+                                        ( CCall
+                                            ( CBuiltIn "predInt32" )
+                                            [ CVar "rounds" ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_4" ]
+                                            , CDrop "$do_e_4"
+                                                ( CCon 3
+                                                    [ CRow 3768445577
+                                                        ( CVar "$do_e_4" )
+                                                    ]
+                                                )
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "r" ]
+                                            , CDrop "r"
+                                                ( CDrop "rounds"
+                                                    ( CDrop "depth"
+                                                        ( CContinue
+                                                            [ CVar "r"
+                                                            , CVar "d"
+                                                            ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$descend"
+            [ "n"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCall
+                            ( CVar "$apply$descend" )
+                            [ CVar "$k"
+                            , CCon 4
+                                [ CIntLit 0 TInt32 ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_7" ]
+                                , CDrop "$do_e_7"
+                                    ( CCall
+                                        ( CVar "$apply$descend" )
+                                        [ CVar "$k"
+                                        , CCon 3
+                                            [ CRow 3768445577
+                                                ( CVar "$do_e_7" )
+                                            ]
+                                        ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "p" ]
+                                , CDrop "p"
+                                    ( CDrop "n"
+                                        ( CDrop "$k"
+                                            ( CContinue
+                                                [ CVar "p"
+                                                , CCon 12
+                                                    [ CVar "$k" ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$descend"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 11
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 12
+                        , [ "$pk_12" ]
+                        , CDrop "$pk_12"
+                            ( CCase
+                                ( CVar "$x" )
+                                [
+                                    ( 3
+                                    , [ "$do_e_6" ]
+                                    , CDrop "$k"
+                                        ( CDrop "$x"
+                                            ( CContinue
+                                                [ CVar "$pk_12"
+                                                , CVar "$x"
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "r" ]
+                                    , CDrop "$x"
+                                        ( CContinue
+                                            [ CVar "$pk_12"
+                                            , CLet "$inl3$__input"
+                                                ( CCall
+                                                    ( CBuiltIn "succInt32" )
+                                                    [ CProj "$x" 1 ]
+                                                )
+                                                ( CDrop "$inl3$__input"
+                                                    ( CCase
+                                                        ( CVar "$inl3$__input" )
+                                                        [
+                                                            ( 3
+                                                            , [ "$inl1$__f0" ]
+                                                            , CReuse ReuseUnique "$k" 3
+                                                                [ CRow 882564211
+                                                                    ( CProj "$inl3$__input" 1 )
+                                                                ]
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "$inl2$__f0" ]
+                                                            , CDrop "$k"
+                                                                ( CVar "$inl3$__input" )
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$scc$spinA_spinB_spinC" [ "$args" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 8
+                        ,
+                            [ "remaining"
+                            , "acc"
+                            ]
+                        , CDrop "remaining"
+                            ( CDrop "acc"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "eqInt32" )
+                                        [ CVar "remaining"
+                                        , CIntLit 0 TInt32
+                                        ]
+                                    )
+                                    [
+                                        ( 1
+                                        , []
+                                        , CCon 4
+                                            [ CVar "acc" ]
+                                        )
+                                    ,
+                                        ( 2
+                                        , []
+                                        , CCase
+                                            ( CCall
+                                                ( CBuiltIn "succInt32" )
+                                                [ CVar "acc" ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$do_e_9" ]
+                                                , CDrop "$do_e_9"
+                                                    ( CCon 3
+                                                        [ CRow 882564211
+                                                            ( CVar "$do_e_9" )
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "a" ]
+                                                , CDrop "a"
+                                                    ( CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "predInt32" )
+                                                            [ CVar "remaining" ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_8" ]
+                                                            , CDrop "$do_e_8"
+                                                                ( CCon 3
+                                                                    [ CRow 3768445577
+                                                                        ( CVar "$do_e_8" )
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "r" ]
+                                                            , CDrop "r"
+                                                                ( CContinue
+                                                                    [ CReuse ReuseUnique "$args" 9
+                                                                        [ CVar "r"
+                                                                        , CVar "a"
+                                                                        ]
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 9
+                        ,
+                            [ "remaining"
+                            , "acc"
+                            ]
+                        , CDrop "remaining"
+                            ( CDrop "acc"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "eqInt32" )
+                                        [ CVar "remaining"
+                                        , CIntLit 0 TInt32
+                                        ]
+                                    )
+                                    [
+                                        ( 1
+                                        , []
+                                        , CCon 4
+                                            [ CVar "acc" ]
+                                        )
+                                    ,
+                                        ( 2
+                                        , []
+                                        , CCase
+                                            ( CCall
+                                                ( CBuiltIn "succInt32" )
+                                                [ CVar "acc" ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$do_e_11" ]
+                                                , CDrop "$do_e_11"
+                                                    ( CCon 3
+                                                        [ CRow 882564211
+                                                            ( CVar "$do_e_11" )
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "a" ]
+                                                , CDrop "a"
+                                                    ( CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "predInt32" )
+                                                            [ CVar "remaining" ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_10" ]
+                                                            , CDrop "$do_e_10"
+                                                                ( CCon 3
+                                                                    [ CRow 3768445577
+                                                                        ( CVar "$do_e_10" )
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "r" ]
+                                                            , CDrop "r"
+                                                                ( CContinue
+                                                                    [ CReuse ReuseUnique "$args" 10
+                                                                        [ CVar "r"
+                                                                        , CVar "a"
+                                                                        ]
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 10
+                        ,
+                            [ "remaining"
+                            , "acc"
+                            ]
+                        , CDrop "remaining"
+                            ( CDrop "acc"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "eqInt32" )
+                                        [ CVar "remaining"
+                                        , CIntLit 0 TInt32
+                                        ]
+                                    )
+                                    [
+                                        ( 1
+                                        , []
+                                        , CCon 4
+                                            [ CVar "acc" ]
+                                        )
+                                    ,
+                                        ( 2
+                                        , []
+                                        , CCase
+                                            ( CCall
+                                                ( CBuiltIn "succInt32" )
+                                                [ CVar "acc" ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$do_e_13" ]
+                                                , CDrop "$do_e_13"
+                                                    ( CCon 3
+                                                        [ CRow 882564211
+                                                            ( CVar "$do_e_13" )
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "a" ]
+                                                , CDrop "a"
+                                                    ( CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "predInt32" )
+                                                            [ CVar "remaining" ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_12" ]
+                                                            , CDrop "$do_e_12"
+                                                                ( CCon 3
+                                                                    [ CRow 3768445577
+                                                                        ( CVar "$do_e_12" )
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "r" ]
+                                                            , CDrop "r"
+                                                                ( CContinue
+                                                                    [ CReuse ReuseUnique "$args" 8
+                                                                        [ CVar "r"
+                                                                        , CVar "a"
+                                                                        ]
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

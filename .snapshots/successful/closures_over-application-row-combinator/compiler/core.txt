@@ -208,7 +208,8 @@ CoreProgram
                                     ,
                                         ( 4
                                         , [ "$inl2$__f0" ]
-                                        , CVar "$x"
+                                        , CDrop "$k"
+                                            ( CVar "$x" )
                                         )
                                     ]
                                 ]

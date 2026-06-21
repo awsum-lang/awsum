@@ -1,0 +1,78 @@
+{- All three recursion shapes over numeric counters — no data structure in
+   memory, so peak memory is one O(depth) CPS continuation chain rather than a
+   heap of nodes:
+
+     countTail  — deep self tail-recursion
+     descend    — deep self non-tail recursion, repeated 25 times by descendN
+     spinA/B/C  — deep 3-node mutual tail recursion
+
+   Every shape is stack-safe on every target, including JVM and JS where native
+   cross-method TCO doesn't exist. The non-tail continuation chain is reclaimed
+   each round, so peak memory stays flat regardless of the repeat count —
+   bounded by depth, never by the stack. Prints 5000000. -}
+
+import IO.Stdout
+
+main : IO Never Unit
+main = case runDemo of
+  Left e -> showRunError e |> IO.Stdout.print
+  Right n -> showInt32 n |> IO.Stdout.print
+
+showRunError : (UnderflowError | OverflowError) -> String
+showRunError e = case e of
+  (u : UnderflowError) -> showUnderflowError u
+  (o : OverflowError) -> showOverflowError o
+
+runDemo : Either (UnderflowError | OverflowError) Int32
+runDemo = do
+  tailed <- countTail 5_000_000 0
+  looped <- descendN 25 tailed
+  spinA looped 0
+
+countTail : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+countTail remaining acc = case eqInt32 remaining 0 of
+  True -> Right acc
+  False -> do
+    a <- succInt32 acc
+    r <- predInt32 remaining
+    countTail r a -- self tail recursion
+
+descendN : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+descendN rounds depth = case eqInt32 rounds 0 of
+  True -> Right depth
+  False -> do
+    d <- descend depth
+    r <- predInt32 rounds
+    descendN r d -- self tail recursion (repeats the non-tail descend)
+
+descend : Int32 -> Either (UnderflowError | OverflowError) Int32
+descend n = case eqInt32 n 0 of
+  True -> Right 0
+  False -> do
+    p <- predInt32 n
+    r <- descend p
+    succInt32 r -- self non-tail recursion (work after the recursive call)
+
+spinA : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+spinA remaining acc = case eqInt32 remaining 0 of
+  True -> Right acc
+  False -> do
+    a <- succInt32 acc
+    r <- predInt32 remaining
+    spinB r a -- 3-node mutual tail recursion
+
+spinB : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+spinB remaining acc = case eqInt32 remaining 0 of
+  True -> Right acc
+  False -> do
+    a <- succInt32 acc
+    r <- predInt32 remaining
+    spinC r a -- 3-node mutual tail recursion
+
+spinC : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+spinC remaining acc = case eqInt32 remaining 0 of
+  True -> Right acc
+  False -> do
+    a <- succInt32 acc
+    r <- predInt32 remaining
+    spinA r a -- 3-node mutual tail recursion

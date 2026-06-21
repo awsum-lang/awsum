@@ -2,10 +2,10 @@ benchmark: unused_case_binder_repeat
 median (min–max) over 5 runs per backend (wall time, peak RSS); timeout 60s; macOS
 
 target   status                      time(s)             peakMem(MiB)
-LLVM     ok                 1.29 (1.28–1.57)            2.1 (2.1–2.1)
-JVM      ok                 0.17 (0.17–0.18)      502.5 (502.2–502.6)
-CLR      ok                 0.43 (0.43–0.43)      204.3 (204.2–204.5)
-WASM     ok                 0.64 (0.64–0.65)         14.0 (13.9–21.9)
-JS       ok                 0.12 (0.12–0.12)      115.0 (114.7–115.0)
+LLVM     ok                 1.31 (1.29–1.66)            2.1 (2.1–2.2)
+JVM      ok                 0.17 (0.17–0.17)      502.4 (502.2–502.6)
+CLR      ok                 0.42 (0.42–0.43)      204.4 (204.3–204.5)
+WASM     ok                 0.64 (0.64–0.64)         14.0 (13.9–14.0)
+JS       ok                 0.12 (0.12–0.13)      115.0 (114.7–115.0)
 
 stdout: 10000000

@@ -1178,7 +1178,13 @@
                   call 15
                 end
               else
-                local.get 9
+                block (result i32)
+                  local.get 9
+                  local.set 11
+                  local.get 1
+                  call 15
+                  local.get 11
+                end
                 local.tee 11
                 call 14
                 local.get 11
