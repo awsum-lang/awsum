@@ -51,7 +51,7 @@ module Awsum.Typing
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
-import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, nullSubst, rowRetagNeeded, rowSubsume, singletonSubst, stripSyntheticTyvarSuffix, unify)
+import Awsum.HM (Subst, applySubst, bareRowLabel, collectTypeVars, flattenRow, freshenType, nullSubst, rowRetagNeeded, rowSubsume, singletonSubst, stripSyntheticTyvarSuffix, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), substTExpr, tAltBody, tRowAltBody, texprType)
@@ -2302,6 +2302,17 @@ containsRow = \case
 --   tyvar-laden one (@(e1 | e2) ~ e1@) succeeds by collapsing the
 --   variables, which would mask the very injection we must record.
 needsRowCoerce :: Type' -> Type' -> Bool
+needsRowCoerce expected actual
+  -- A single-inhabited row is bare, identical to its sole label, so
+  -- whether a coercion is needed is decided on that label. @(Never | T)@
+  -- on the expected side ⟹ no wrap when @actual@ already is @T@ (the bare
+  -- value flows straight in); on the actual side ⟹ a bare value that the
+  -- (still ≥2-label) expected row must tag. Mirrors 'synthCoerce' /
+  -- 'coercionIsIdentity' in 'Awsum.ElaborateLower' so the typechecker
+  -- never records a coercion the lowering would make the identity, and
+  -- never omits one a tagged target needs.
+  | Just e1 <- bareRowLabel expected = needsRowCoerce e1 actual
+  | Just a1 <- bareRowLabel actual = needsRowCoerce expected a1
 needsRowCoerce expected actual = case (expected, actual) of
   (TyOr {}, TyOr {}) -> rowRetagNeeded actual expected
   (TyOr {}, _) -> True

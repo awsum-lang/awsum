@@ -1,0 +1,46 @@
+{- A structural sum whose only non-empty alternative is `T` — `(Never | T)`,
+   with `Never` the row identity — is represented identically to `T` (bare, no
+   row tag), so a `case` on it binds the value directly. The value reaches the
+   `(Never | T)` position by subsumption from a plain `T` (no ascription
+   wrapper) and the bound name is used. Covers `Int32`, `String`, a nominal
+   label `Wrap`, an identity passthrough `(Never | T) -> (Never | T)`, and
+   widening a bare `(Never | Int32)` into a tagged `(Int32 | String)`. Prints
+   "42hey789". -}
+
+import IO.Stdout
+
+type Wrap = Wrap Int32
+
+useInt : (Never | Int32) -> String
+useInt val = case val of
+  (n : Int32) -> showInt32 n
+
+useStr : (Never | String) -> String
+useStr val = case val of
+  (s : String) -> s
+
+useWrap : (Never | Wrap) -> String
+useWrap val = case val of
+  (w : Wrap) -> case w of
+    Wrap n -> showInt32 n
+
+idr : (Never | Int32) -> (Never | Int32)
+idr x = x
+
+useWiden : (Int32 | String) -> String
+useWiden v = case v of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+
+narrowToWide : (Never | Int32) -> String
+narrowToWide x = useWiden x
+
+mkWrap : Int32 -> Wrap
+mkWrap n = Wrap n
+
+main : IO Never Unit
+main = IO.Stdout.print (useInt (42 : Int32))
+  |> andThenIO (\_a -> IO.Stdout.print (useStr ("hey" : String)))
+  |> andThenIO (\_b -> IO.Stdout.print (useWrap (mkWrap 7)))
+  |> andThenIO (\_c -> IO.Stdout.print (useInt (idr (8 : Int32))))
+  |> andThenIO (\_d -> IO.Stdout.print (narrowToWide (9 : Int32)))
