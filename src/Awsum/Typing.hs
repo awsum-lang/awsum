@@ -319,10 +319,12 @@ data TypeError
     UnnamedConstructor SrcSpan
   | -- | A pattern matches on an @_C@-named constructor. Same convention
     --   as 'ReferencingIgnored', but specialised for case patterns: we
-    --   carry the pattern's own span (where the user wrote @_C@) /and/
-    --   the span of the constructor's name in its 'TypeDecl', so the
-    --   quick-fix can rename both sites in one edit.
-    ReferencingIgnoredConstructor SrcSpan SrcSpan Name
+    --   carry the pattern's own span (where the user wrote @_C@) and, when
+    --   the constructor is actually declared, the span of its name in the
+    --   'TypeDecl' so the quick-fix can rename both sites in one edit.
+    --   'Nothing' means no such constructor exists (an undeclared @_C@):
+    --   nothing to lift, so the diagnostic offers no quick-fix.
+    ReferencingIgnoredConstructor SrcSpan (Maybe SrcSpan) Name
   | -- | A @BuiltIn.foo@ reference whose name is not in the compiler's
     --   built-in table ('Awsum.BuiltIn.builtIns'). The span is on the
     --   reference itself so editors can underline just @BuiltIn.foo@.
@@ -3280,14 +3282,15 @@ rejectPartialCatchAll recSet conEnv tcm = go
       _ -> False
 
 -- | Reject any @_X@-named constructor anywhere in a pattern. The error
---   carries both the pattern's own span and the span of the constructor
---   in its 'TypeDecl' so a quick-fix can rename both sites at once.
+--   carries the pattern's own span and, when the constructor is declared,
+--   the span of its name in the 'TypeDecl' so a quick-fix can rename both
+--   sites at once. An undeclared @_X@ yields 'Nothing' — no declaration to
+--   lift, so the diagnostic offers no quick-fix.
 rejectIgnoredConstructor :: ConEnv -> Pattern -> Either TypeError ()
 rejectIgnoredConstructor conEnv = \case
   PCon patSp cName inner
     | "_" `T.isPrefixOf` cName ->
-        let declSp = maybe patSp ciDeclSpan (M.lookup cName conEnv)
-         in Left (ReferencingIgnoredConstructor patSp declSp cName)
+        Left (ReferencingIgnoredConstructor patSp (ciDeclSpan <$> M.lookup cName conEnv) cName)
     | otherwise -> mapM_ (rejectIgnoredConstructor conEnv) inner
   PVar _ _ -> Right ()
   PWild _ -> Right ()

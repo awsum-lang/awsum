@@ -136,22 +136,26 @@ parseErrorToDiagnostic (sp, msg) = Diagnostic SevError sp msg []
 --   ignored constructor); the rest produce no fixes.
 typeErrorToDiagnostic :: TypeError -> Diagnostic
 typeErrorToDiagnostic = \case
-  -- Special-case: matching '_C' in a pattern. The error carries both the
-  -- pattern site (where '_C' was written) and the type-decl site (where
-  -- '_C' was declared). The fix renames both to 'C' atomically so the
-  -- file remains type-correct after the edit.
-  ReferencingIgnoredConstructor patSp declSp n ->
+  -- Special-case: matching '_C' in a pattern. When '_C' is declared, the
+  -- error carries both the pattern site (where '_C' was written) and the
+  -- type-decl site; the fix renames both to 'C' atomically so the file
+  -- remains type-correct after the edit. An undeclared '_C' carries no
+  -- decl span: renaming alone would only trade this error for an
+  -- unknown-constructor one, so no fix is offered.
+  ReferencingIgnoredConstructor patSp mDeclSp n ->
     let stripped = T.drop 1 n
      in Diagnostic
           { diagSeverity = SevError,
             diagSpan = patSp,
             diagMessage = "Cannot match constructor '" <> n <> "': identifiers starting with '_' are marked as intentionally unused",
-            diagFixes =
-              [ Fix
-                  { fixTitle = "Rename '" <> n <> "' to '" <> stripped <> "' (lift the intentional-unused mark)",
-                    fixEdits = [Edit declSp stripped, Edit patSp stripped]
-                  }
-              ]
+            diagFixes = case mDeclSp of
+              Just declSp ->
+                [ Fix
+                    { fixTitle = "Rename '" <> n <> "' to '" <> stripped <> "' (lift the intentional-unused mark)",
+                      fixEdits = [Edit declSp stripped, Edit patSp stripped]
+                    }
+                ]
+              Nothing -> []
           }
   err ->
     let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan err)

@@ -1,0 +1,14 @@
+{- Error: '_NonExistent' is an undeclared constructor written as an
+   intentionally-unused ('_'-prefixed) name. With no declaration to lift,
+   'check --json' offers no quick-fix — renaming it would only trade this
+   error for an unknown-constructor one. -}
+
+import IO.Stdout
+
+describe : Maybe Int32 -> String
+describe x = case x of
+  Nothing -> "none"
+  _NonExistent -> "never"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe Nothing)
