@@ -136,6 +136,14 @@ data TypeError
     PatternArityMismatch SrcSpan Name Int Int
   | -- | Top-level definition without a signature.
     MissingSignature SrcSpan Name
+  | -- | A definition's body is not as polymorphic as its declared
+    --   signature — it fixes (or conflates) a type variable the signature
+    --   leaves free, so the definition would not be valid for every
+    --   instantiation. Without this check a concrete value could be bound to
+    --   a polymorphic type and then used at any type: an unsound coercion,
+    --   divergent across backends. Carries the definition name and its
+    --   declared type.
+    SignatureTooPolymorphic SrcSpan Name Type'
   | DuplicateSignature SrcSpan Name
   | DuplicateDefinition SrcSpan Name
   | -- | A 'TyCon' the checker does not recognize.
@@ -467,6 +475,7 @@ typeErrorSpan = \case
   ArityMismatch sp _ _ _ -> Just sp
   PatternArityMismatch sp _ _ _ -> Just sp
   MissingSignature sp _ -> Just sp
+  SignatureTooPolymorphic sp _ _ -> Just sp
   DuplicateSignature sp _ -> Just sp
   DuplicateDefinition sp _ -> Just sp
   UnknownTypeCon sp _ -> Just sp
@@ -565,6 +574,16 @@ prettyPrintTypeError = \case
       <> (if expected == 1 then " field, got " else " fields, got ")
       <> show actual
   MissingSignature _ name -> "Missing type signature for: " <> name
+  SignatureTooPolymorphic _ name ty ->
+    "The binding '"
+      <> name
+      <> "' declares the polymorphic type "
+      <> showType ty
+      <> ", but its body is not that general — it fixes a type variable the "
+      <> "type leaves free to a specific type. A binding must be valid for "
+      <> "every instantiation of its type variables; otherwise the value could "
+      <> "be used at any type, an unsound coercion. Narrow the type to match "
+      <> "the body, or make the body polymorphic."
   DuplicateSignature _ name -> "Duplicate type signature for: " <> name
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
@@ -1370,6 +1389,29 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
     -- consumed by monomorphisation, lowering, and LSP hover). On type
     -- error the body's partial elaboration is discarded by 'throwTE'.
     bodyTExpr <- runCheck (checkExpr conEnv typeConsMap crossModuleExempt env expectedBodyTy body)
+
+    -- Polymorphism soundness check. The body just elaborated against the
+    -- /flexible/ signature, where each signature type variable is a
+    -- unification variable — so a concrete body satisfies a polymorphic
+    -- signature ('val : a' accepting 'val = (42 : Int32)'), letting the value
+    -- be used later at any type (an unsound coercion, divergent across
+    -- backends). Re-check the body with every signature variable replaced by a
+    -- fresh rigid skolem ('TyCon "$sk$v"', which 'unify' bonds only to itself):
+    -- a body that fixes a variable to a concrete type, or conflates two
+    -- distinct ones, no longer typechecks. Validation only — 'bodyTExpr' above
+    -- stays the authoritative tree, so an accepted program's elaboration is
+    -- unchanged. Legitimate polymorphism (a body as general as its signature)
+    -- passes, since a skolem matches itself.
+    let sigVars = S.toList (collectTypeVars ty)
+    unless (null sigVars)
+      $ let skoSubst = mconcat [singletonSubst v (TyCon noSpan ("$sk$" <> v)) | v <- sigVars]
+            skoArgTys = map (applySubst skoSubst) argTys
+            skoExpected = applySubst skoSubst expectedBodyTy
+            skoParams = M.fromList [(qLocal (paramName p), t) | (p, t) <- zip args skoArgTys, paramName p /= "_"]
+            skoEnv = M.union skoParams envOuter
+         in case runCheck (checkExpr conEnv typeConsMap crossModuleExempt skoEnv skoExpected body) of
+              Right _ -> Right ()
+              Left _ -> Left (SignatureTooPolymorphic sp n ty)
 
     -- Unused-parameter warnings: report any user-named parameter (not @_@,
     -- not @_foo@) that the body does not reference. Underscore-prefixed
@@ -2292,6 +2334,20 @@ elabLet conEnv tcm exempt env lsp pat mAnnot e checkBody = do
   (rhsE, te) <- case mAnnot of
     Just t -> do
       eE <- checkExpr conEnv tcm exempt env t e
+      -- Polymorphism soundness check, mirroring the top-level definition
+      -- check: a 'let' annotated with a polymorphic type must have a body at
+      -- least as general. The check above leaves the annotation's type
+      -- variables flexible, so a concrete RHS ('let x : a = (42 : Int32)')
+      -- passes and 'x' is then usable at any type. Re-check the RHS against
+      -- the annotation with every variable replaced by a rigid skolem; a
+      -- body that fixes one no longer typechecks. Validation only — 'eE'
+      -- stays authoritative.
+      let sigVars = S.toList (collectTypeVars t)
+      unless (null sigVars)
+        $ let skoSubst = mconcat [singletonSubst v (TyCon noSpan ("$sk$" <> v)) | v <- sigVars]
+           in case runCheck (checkExpr conEnv tcm exempt env (applySubst skoSubst t) e) of
+                Right _ -> pass
+                Left _ -> throwTE (SignatureTooPolymorphic lsp (patternBinderName pat) t)
       pure (eE, t)
     Nothing -> do
       eE <-
