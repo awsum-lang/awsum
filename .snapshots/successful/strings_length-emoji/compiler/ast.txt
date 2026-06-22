@@ -600,7 +600,7 @@ Program
                         { spanStartLine = 21
                         , spanStartCol = 3
                         , spanEndLine = 21
-                        , spanEndCol = 58
+                        , spanEndCol = 57
                         }
                     )
                     ( PVar
@@ -617,7 +617,7 @@ Program
                             { spanStartLine = 21
                             , spanStartCol = 8
                             , spanEndLine = 21
-                            , spanEndCol = 58
+                            , spanEndCol = 57
                             }
                         )
                         ( EApp
@@ -625,7 +625,7 @@ Program
                                 { spanStartLine = 21
                                 , spanStartCol = 8
                                 , spanEndLine = 21
-                                , spanEndCol = 40
+                                , spanEndCol = 39
                                 }
                             )
                             ( EApp
@@ -662,7 +662,7 @@ Program
                                     { spanStartLine = 21
                                     , spanStartCol = 16
                                     , spanEndLine = 21
-                                    , spanEndCol = 40
+                                    , spanEndCol = 39
                                     }
                                 )
                                 ( EApp
@@ -670,7 +670,7 @@ Program
                                         { spanStartLine = 21
                                         , spanStartCol = 17
                                         , spanEndLine = 21
-                                        , spanEndCol = 38
+                                        , spanEndCol = 37
                                         }
                                     )
                                     ( EVar
@@ -688,7 +688,7 @@ Program
                                             { spanStartLine = 21
                                             , spanStartCol = 34
                                             , spanEndLine = 21
-                                            , spanEndCol = 38
+                                            , spanEndCol = 37
                                             }
                                         )
                                         ( LString "🔥" )
@@ -699,9 +699,9 @@ Program
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 21
-                                , spanStartCol = 40
+                                , spanStartCol = 39
                                 , spanEndLine = 21
-                                , spanEndCol = 58
+                                , spanEndCol = 57
                                 }
                             )
                             ( LString "lengthCodePoints" )
@@ -712,7 +712,7 @@ Program
                         { spanStartLine = 22
                         , spanStartCol = 3
                         , spanEndLine = 22
-                        , spanEndCol = 66
+                        , spanEndCol = 65
                         }
                     )
                     ( PVar
@@ -729,7 +729,7 @@ Program
                             { spanStartLine = 22
                             , spanStartCol = 8
                             , spanEndLine = 22
-                            , spanEndCol = 66
+                            , spanEndCol = 65
                             }
                         )
                         ( EApp
@@ -737,7 +737,7 @@ Program
                                 { spanStartLine = 22
                                 , spanStartCol = 8
                                 , spanEndLine = 22
-                                , spanEndCol = 44
+                                , spanEndCol = 43
                                 }
                             )
                             ( EApp
@@ -774,7 +774,7 @@ Program
                                     { spanStartLine = 22
                                     , spanStartCol = 16
                                     , spanEndLine = 22
-                                    , spanEndCol = 44
+                                    , spanEndCol = 43
                                     }
                                 )
                                 ( EApp
@@ -782,7 +782,7 @@ Program
                                         { spanStartLine = 22
                                         , spanStartCol = 17
                                         , spanEndLine = 22
-                                        , spanEndCol = 42
+                                        , spanEndCol = 41
                                         }
                                     )
                                     ( EVar
@@ -800,7 +800,7 @@ Program
                                             { spanStartLine = 22
                                             , spanStartCol = 38
                                             , spanEndLine = 22
-                                            , spanEndCol = 42
+                                            , spanEndCol = 41
                                             }
                                         )
                                         ( LString "🔥" )
@@ -811,9 +811,9 @@ Program
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 22
-                                , spanStartCol = 44
+                                , spanStartCol = 43
                                 , spanEndLine = 22
-                                , spanEndCol = 66
+                                , spanEndCol = 65
                                 }
                             )
                             ( LString "lengthUtf16CodeUnits" )
@@ -824,7 +824,7 @@ Program
                         { spanStartLine = 23
                         , spanStartCol = 3
                         , spanEndLine = 23
-                        , spanEndCol = 56
+                        , spanEndCol = 55
                         }
                     )
                     ( PVar
@@ -841,7 +841,7 @@ Program
                             { spanStartLine = 23
                             , spanStartCol = 8
                             , spanEndLine = 23
-                            , spanEndCol = 56
+                            , spanEndCol = 55
                             }
                         )
                         ( EApp
@@ -849,7 +849,7 @@ Program
                                 { spanStartLine = 23
                                 , spanStartCol = 8
                                 , spanEndLine = 23
-                                , spanEndCol = 39
+                                , spanEndCol = 38
                                 }
                             )
                             ( EApp
@@ -886,7 +886,7 @@ Program
                                     { spanStartLine = 23
                                     , spanStartCol = 16
                                     , spanEndLine = 23
-                                    , spanEndCol = 39
+                                    , spanEndCol = 38
                                     }
                                 )
                                 ( EApp
@@ -894,7 +894,7 @@ Program
                                         { spanStartLine = 23
                                         , spanStartCol = 17
                                         , spanEndLine = 23
-                                        , spanEndCol = 37
+                                        , spanEndCol = 36
                                         }
                                     )
                                     ( EVar
@@ -912,7 +912,7 @@ Program
                                             { spanStartLine = 23
                                             , spanStartCol = 33
                                             , spanEndLine = 23
-                                            , spanEndCol = 37
+                                            , spanEndCol = 36
                                             }
                                         )
                                         ( LString "🔥" )
@@ -923,9 +923,9 @@ Program
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 23
-                                , spanStartCol = 39
+                                , spanStartCol = 38
                                 , spanEndLine = 23
-                                , spanEndCol = 56
+                                , spanEndCol = 55
                                 }
                             )
                             ( LString "lengthUtf8Bytes" )

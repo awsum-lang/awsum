@@ -19,6 +19,8 @@ module Awsum.HM
     UnifyError (..),
     unify,
     flattenRow,
+    nonEmptyRowLabels,
+    bareRowLabel,
     rowSubsume,
     rowTag,
     canonicalLabel,
@@ -218,6 +220,32 @@ flattenRow = ordNub . go
     go = \case
       TyOr _ a b -> go a <> go b
       t -> [t]
+
+-- | The non-empty-type labels of a row: 'flattenRow' minus every
+--   'TyEmpty' ('Never', the row identity). The count drives the
+--   /bare-vs-tagged/ runtime representation decision: 'unify' treats
+--   @(Never | T) ~ T@ (it drops empty labels in 'absorbAndMatch'), so a
+--   value flows between the two positions with no coercion — which forces
+--   them to share a representation. A row whose non-empty labels number
+--   ≤1 is therefore represented /bare/, identical to that sole label; ≥2
+--   carry a runtime row tag ('CRow') to discriminate. The cut is exactly
+--   'TyEmpty', not inhabitedness: a @type Void@ (zero-constructor 'TyCon')
+--   or @Box Never@ is uninhabited but is /not/ dropped by 'unify', so it
+--   stays a genuine extra label and the row stays tagged.
+nonEmptyRowLabels :: Type' -> [Type']
+nonEmptyRowLabels = filter (not . isEmptyLabel) . flattenRow
+
+-- | The sole non-empty label of a /bare/ row: @Just l@ when @t@ is a
+--   'TyOr' whose 'nonEmptyRowLabels' are exactly @[l]@ (so @t@ represents
+--   its single inhabited alternative @l@ untagged), @Nothing@ otherwise.
+--   The 'TyOr' guard is load-bearing: a non-row type is already its own
+--   representation and must not be "normalised" to itself (that would loop
+--   the coercion synthesiser).
+bareRowLabel :: Type' -> Maybe Type'
+bareRowLabel t@(TyOr {}) = case nonEmptyRowLabels t of
+  [l] -> Just l
+  _ -> Nothing
+bareRowLabel _ = Nothing
 
 -- | True when coercing a value from row @src@ into row @tgt@ must
 --   re-tag some label: a concrete label of @src@ has no

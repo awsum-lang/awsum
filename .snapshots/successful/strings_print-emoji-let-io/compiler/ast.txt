@@ -64,7 +64,7 @@ Program
                 { spanStartLine = 7
                 , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 27
+                , spanEndCol = 26
                 }
             ) "main" []
             ( ELet
@@ -72,7 +72,7 @@ Program
                     { spanStartLine = 8
                     , spanStartCol = 7
                     , spanEndLine = 8
-                    , spanEndCol = 34
+                    , spanEndCol = 33
                     }
                 )
                 ( PVar
@@ -89,7 +89,7 @@ Program
                         { spanStartLine = 8
                         , spanStartCol = 14
                         , spanEndLine = 8
-                        , spanEndCol = 34
+                        , spanEndCol = 33
                         }
                     )
                     ( EVar
@@ -111,7 +111,7 @@ Program
                             { spanStartLine = 8
                             , spanStartCol = 30
                             , spanEndLine = 8
-                            , spanEndCol = 34
+                            , spanEndCol = 33
                             }
                         )
                         ( LString "💩" )
@@ -122,7 +122,7 @@ Program
                         { spanStartLine = 9
                         , spanStartCol = 7
                         , spanEndLine = 9
-                        , spanEndCol = 27
+                        , spanEndCol = 26
                         }
                     )
                     ( EVar
@@ -144,7 +144,7 @@ Program
                             { spanStartLine = 9
                             , spanStartCol = 23
                             , spanEndLine = 9
-                            , spanEndCol = 27
+                            , spanEndCol = 26
                             }
                         )
                         ( LString "🔥" )

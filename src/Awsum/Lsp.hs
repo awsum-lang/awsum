@@ -171,12 +171,12 @@ type SrcLines = [Text]
 docLines :: Text -> SrcLines
 docLines = lines
 
--- | Awsum spans are 1-based @(line, col)@ with columns in /display width/
---   (Megaparsec advances two columns per wide character — see "Awsum.Width");
---   LSP 'Range's are 0-based @(line, character)@ with @character@ in /UTF-16
---   code units/. Lines just shift by one; columns convert through the source
---   line, because display width and UTF-16 width can't be turned into one
---   another without it (display width 2 is one wide char or two narrow ones).
+-- | Awsum spans are 1-based @(line, col)@ with columns in /code points/ (one
+--   column per character — see "Awsum.SrcStream"); LSP 'Range's are 0-based
+--   @(line, character)@ with @character@ in /UTF-16 code units/. Lines just
+--   shift by one; columns convert through the source line, because a code-point
+--   column and a UTF-16 offset can't be turned into one another without it (a
+--   supplementary character is one code-point column but two UTF-16 units).
 spanToRange :: SrcLines -> ASyn.SrcSpan -> Range
 spanToRange ls (ASyn.SrcSpan sl sc el ec) =
   Range
@@ -186,7 +186,7 @@ spanToRange ls (ASyn.SrcSpan sl sc el ec) =
     line :: Int -> UInt
     line n = fromIntegral (max 0 (n - 1))
     character :: Int -> Int -> UInt
-    character ln col = fromIntegral (Width.displayColToUtf16 (lineAt ln) col)
+    character ln col = fromIntegral (Width.codePointColToUtf16 (lineAt ln) col)
     lineAt :: Int -> Text
     lineAt n = fromMaybe "" (ls !!? (n - 1))
 
@@ -384,7 +384,7 @@ hoverForPosition :: SrcLines -> Maybe TypedProgram -> ASyn.Program -> Position -
 hoverForPosition ls mtp prog (Position l c) =
   let line = fromIntegral l + 1
       lineText = fromMaybe "" (ls !!? (line - 1))
-      col = Width.utf16ColToDisplay lineText (fromIntegral c)
+      col = Width.utf16ColToCodePoint lineText (fromIntegral c)
       userDecls = toList (ASyn.decls prog)
       -- User decls are listed first so that, when both the user
       -- program and the prelude define a name (e.g. the user

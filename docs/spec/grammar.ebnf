@@ -1,5 +1,5 @@
 (* Awsum surface grammar — EBNF.
-   Applies-to: Awsum 0.0.6
+   Applies-to: Awsum 0.0.7
 *)
 
 Program             = [ ModuleComment , BlankLine ] ,

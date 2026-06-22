@@ -32,7 +32,7 @@ Program
                 { spanStartLine = 11
                 , spanStartCol = 1
                 , spanEndLine = 11
-                , spanEndCol = 267
+                , spanEndCol = 139
                 }
             ) "block" []
             ( ELit
@@ -40,7 +40,7 @@ Program
                     { spanStartLine = 11
                     , spanStartCol = 9
                     , spanEndLine = 11
-                    , spanEndCol = 267
+                    , spanEndCol = 139
                     }
                 )
                 ( LString "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界" )

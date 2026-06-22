@@ -1,0 +1,48 @@
+{- A single-inhabited row `(Never | T)` nested inside a nominal head
+   (`Maybe`, `Either`, `List`) is bare too: widening an already-built
+   `Maybe T` / `Either E T` / `List T` to the `(Never | T)` payload leaves the
+   inner value untagged, and a nested pattern reads it directly — by ascription
+   (`Just (n : Int32)`) and by descending into a constructor (`Just (Wrap n)`).
+   Prints "5ok36". -}
+
+import IO.Stdout
+
+type Wrap = Wrap Int32
+
+useMaybeAsc : Maybe (Never | Int32) -> String
+useMaybeAsc m = case m of
+  Just (n : Int32) -> showInt32 n
+  Nothing -> "none"
+
+useEither : Either Int32 (Never | String) -> String
+useEither e = case e of
+  Left n -> showInt32 n
+  Right (s : String) -> s
+
+useList : List (Never | Int32) -> String
+useList xs = case headList xs of
+  Just (n : Int32) -> showInt32 n
+  Nothing -> "empty"
+
+useMaybeCon : Maybe (Never | Wrap) -> String
+useMaybeCon m = case m of
+  Just (Wrap n) -> showInt32 n
+  Nothing -> "none"
+
+mkMaybe : Int32 -> Maybe Int32
+mkMaybe n = Just n
+
+mkEither : String -> Either Int32 String
+mkEither s = Right s
+
+mkList : Int32 -> List Int32
+mkList n = Cons n Nil
+
+mkMaybeWrap : Int32 -> Maybe Wrap
+mkMaybeWrap n = Just (Wrap n)
+
+main : IO Never Unit
+main = IO.Stdout.print (useMaybeAsc (mkMaybe 5))
+  |> andThenIO (\_a -> IO.Stdout.print (useEither (mkEither "ok")))
+  |> andThenIO (\_b -> IO.Stdout.print (useList (mkList 3)))
+  |> andThenIO (\_c -> IO.Stdout.print (useMaybeCon (mkMaybeWrap 6)))

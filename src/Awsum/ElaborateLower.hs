@@ -25,7 +25,7 @@ import Awsum.Cps (cpsProgram)
 import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
-import Awsum.HM (applySubst, canonicalLabel, flattenRow, rowRetagNeeded, rowTag, singletonSubst, unify)
+import Awsum.HM (applySubst, bareRowLabel, canonicalLabel, flattenRow, rowRetagNeeded, rowTag, singletonSubst, unify)
 import Awsum.Lifetime (insertDrops)
 import Awsum.LowerClosures (lowerClosuresProgram)
 import Awsum.MonomorphizeRows (monomorphizeRows)
@@ -1435,7 +1435,24 @@ lowerTExpr env locals = \case
   TRowCase _ _ scrut alts -> do
     scrut' <- lowerTExpr env locals scrut
     rowAlts <- buildRowAltsT env locals alts
-    pure (CRowCase scrut' rowAlts)
+    case (bareRowLabel (texprType scrut), rowAlts) of
+      -- Single-inhabited scrutinee row: the value is bare (untagged), so
+      -- there is no row tag to dispatch on. Bind the scrutinee straight to
+      -- the sole arm's binder — @case (v : (Never | T)) of (n : T) -> b@ is
+      -- @b[n := v]@ — instead of a 'CRowCase' that would read a non-existent
+      -- tag. (@bareRowLabel@ ⟹ one non-empty label ⟹ exactly one arm group;
+      -- the pair-match makes that explicit.) A bare 'CVar' scrutinee renames
+      -- in place; a compound one is lifted into a let-helper (the same shape
+      -- 'lowerLetT' uses) so it is evaluated once and the pre-'Simplify'
+      -- passes ('Tco' / 'Cps') see a 'CCall', never a 'Simplify'-era 'CLet'.
+      (Just _, [(_, var, body)]) -> case scrut' of
+        CVar s -> pure (renameVar var s body)
+        _ -> do
+          let captures = Set.toAscList (freeVars body `Set.intersection` locals)
+          helperName <- freshLetName
+          emitHelper (CFunDef helperName (freshenWildcardArgs (captures <> [var])) body)
+          pure (CCall (CVar helperName) (map CVar captures <> [scrut']))
+      _ -> pure (CRowCase scrut' rowAlts)
   -- Row injection / widening: the typechecker recorded the source and
   -- target types, both concrete (monomorphisation made any combinator
   -- copy concrete), so the deep coercion builder injects with real tags.
@@ -1693,6 +1710,16 @@ synthCoerce :: ConInfoEnv -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
 -- defunctionalised continuation wrappers — for what is the identity.
 synthCoerce conInfo src tgt
   | coercionIsIdentity conInfo src tgt = pure pure
+-- Single-inhabited rows are represented /bare/ — identical to their sole
+-- non-empty label (the row identity makes @(Never | T) ~ T@). Normalise
+-- such a row to that label on either side before the tag-minting clauses
+-- below, so a bare value is never wrapped in (nor read through) a 'CRow'.
+-- After this, every remaining 'TyOr' has ≥2 non-empty labels and is
+-- genuinely tagged. (@s1@/@t1@ are non-'TyOr', so neither recursive call
+-- re-enters this guard.)
+synthCoerce conInfo src tgt
+  | Just s1 <- bareRowLabel src = synthCoerce conInfo s1 tgt
+  | Just t1 <- bareRowLabel tgt = synthCoerce conInfo src t1
 -- Reached only when at least one concrete label's FNV tag moved (a
 -- nominal head with a grown inner row, e.g. Maybe Bool -> Maybe (Bool |
 -- Unit)): dispatch on the value's current label and re-coerce each into
@@ -1856,6 +1883,13 @@ coercionIsIdentity conInfo = go Set.empty
   where
     go :: Set.Set (Text, Text) -> Type' -> Type' -> Bool
     go seen src tgt
+      -- A single-inhabited row is bare, identical to its sole label, so
+      -- the coercion to/from it is the identity of coercing that label
+      -- (e.g. @Int32 → (Never | Int32)@ is the identity; @Maybe Bool →
+      -- (Never | Maybe (Bool | Unit))@ is not, the inner row grew). Mirror
+      -- the normalisation 'synthCoerce' does, so the two never disagree.
+      | Just s1 <- bareRowLabel src = go seen s1 tgt
+      | Just t1 <- bareRowLabel tgt = go seen src t1
       | typeEq src tgt = True
       | TyVar {} <- tgt = True
       | TyVar {} <- src = True
@@ -2114,10 +2148,16 @@ desugarPatsM conInfo prefix idx ((p, mFieldTy) : ps) body = do
             desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
           pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
     PAscribe _ inner ascrTy -> do
-      let topVar = prefix <> "pa" <> show idx
-      tag <- recordRowTag ascrTy
       (innerName, innerBody) <- ascribeInner conInfo prefix idx inner restBody
-      pure (topVar : restVars, CRowCase (CVar topVar) [(tag, innerName, innerBody)])
+      case mFieldTy >>= bareRowLabel of
+        -- Bare single-inhabited row field: the value is untagged, so bind
+        -- the field straight to the inner pattern's binder — no 'CRowCase'
+        -- tag read. Mirrors the 'TRowCase' bare path and 'rowLabelForCon'.
+        Just _ -> pure (innerName : restVars, innerBody)
+        Nothing -> do
+          let topVar = prefix <> "pa" <> show idx
+          tag <- recordRowTag ascrTy
+          pure (topVar : restVars, CRowCase (CVar topVar) [(tag, innerName, innerBody)])
 
 -- | Lower the inner pattern of a 'PAscribe'. For the common shapes
 --   ('PVar', 'PWild') this is just a name; for nested patterns
@@ -2143,6 +2183,10 @@ ascribeInner conInfo prefix idx other body = do
 rowLabelForCon :: ConInfoEnv -> Name -> Maybe Type' -> Maybe Type'
 rowLabelForCon conInfo innerCon (Just fieldTy)
   | TyOr {} <- fieldTy,
+    -- A bare single-inhabited row field is untagged: 'Nothing' here routes
+    -- the descent through a plain nominal 'CCase' on the constructor, not a
+    -- 'CRowCase' on a row tag that the bare value does not carry.
+    Nothing <- bareRowLabel fieldTy,
     Just ci <- M.lookup innerCon conInfo =
       find (\l -> extractTyCon l == Just (ciTypeName ci)) (flattenRow fieldTy)
 rowLabelForCon _ _ _ = Nothing

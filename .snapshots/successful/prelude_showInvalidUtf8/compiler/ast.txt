@@ -1,0 +1,131 @@
+Program
+    { moduleComment = Just " Direct test of `showInvalidUtf8`: renders the sentinel returned by
+         `IO.Stdin.readAllString` on input that is not well-formed UTF-8. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls =
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 8
+                        , spanEndLine = 6
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 8
+                            , spanEndLine = 6
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 11
+                            , spanEndLine = 6
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 17
+                        , spanEndLine = 6
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 53
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 8
+                    , spanEndLine = 7
+                    , spanEndCol = 53
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 8
+                        , spanEndLine = 7
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 24
+                        , spanEndLine = 7
+                        , spanEndCol = 53
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 25
+                            , spanEndLine = 7
+                            , spanEndCol = 52
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 25
+                                , spanEndLine = 7
+                                , spanEndCol = 41
+                                }
+                            )
+                            ( QName [] "showInvalidUtf8" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 41
+                                , spanEndLine = 7
+                                , spanEndCol = 52
+                                }
+                            ) "InvalidUtf8"
+                        )
+                    )
+                )
+            ) Nothing Nothing
+        ]
+    }

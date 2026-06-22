@@ -1,0 +1,392 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$andThenIO$0" )
+                [ CCall
+                    ( CVar "$cps$$df$andThenIO$4" )
+                    [ CCall
+                        ( CVar "$cps$$df$andThenIO$8" )
+                        [ CCall
+                            ( CVar "$cps$$df$andThenIO$12" )
+                            [ CCon 7
+                                [ CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CIntLit 42 TInt32 ]
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            , CCon 31 []
+                            ]
+                        , CCon 29 []
+                        ]
+                    , CCon 27 []
+                    ]
+                , CCon 25 []
+                ]
+            )
+        , CFunDef "$cps$$df$andThenIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$0" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CLet "$inl5$v"
+                                    ( CRow 2711245919
+                                        ( CIntLit 9 TInt32 )
+                                    )
+                                    ( CDrop "$inl5$v"
+                                        ( CCall
+                                            ( CBuiltIn "showInt32" )
+                                            [ CProj "$inl5$v" 1 ]
+                                        )
+                                    )
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 26
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 25
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 26
+                        ,
+                            [ "$pk_26"
+                            , "s"
+                            ]
+                        , CDrop "$pk_26"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_26"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$4"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$4" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CIntLit 8 TInt32 ]
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 28
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$4"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 27
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 28
+                        ,
+                            [ "$pk_28"
+                            , "s"
+                            ]
+                        , CDrop "$pk_28"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_28"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$8"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$8" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CLet "$inl4$val"
+                                    ( CCon 24
+                                        [ CIntLit 7 TInt32 ]
+                                    )
+                                    ( CDrop "$inl4$val"
+                                        ( CCall
+                                            ( CBuiltIn "showInt32" )
+                                            [ CProj "$inl4$val" 1 ]
+                                        )
+                                    )
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 30
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$8"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 29
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 30
+                        ,
+                            [ "$pk_30"
+                            , "s"
+                            ]
+                        , CDrop "$pk_30"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_30"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$andThenIO$12"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$12" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CString "hey"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 32
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$andThenIO$12"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 31
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 32
+                        ,
+                            [ "$pk_32"
+                            , "s"
+                            ]
+                        , CDrop "$pk_32"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_32"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

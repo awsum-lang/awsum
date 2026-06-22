@@ -181,7 +181,7 @@ Program
                 { spanStartLine = 16
                 , spanStartCol = 1
                 , spanEndLine = 20
-                , spanEndCol = 36
+                , spanEndCol = 34
                 }
             ) "res" []
             ( EDo
@@ -189,7 +189,7 @@ Program
                     { spanStartLine = 16
                     , spanStartCol = 7
                     , spanEndLine = 20
-                    , spanEndCol = 36
+                    , spanEndCol = 34
                     }
                 )
                 [ DoBind
@@ -599,7 +599,7 @@ Program
                         { spanStartLine = 20
                         , spanStartCol = 3
                         , spanEndLine = 20
-                        , spanEndCol = 36
+                        , spanEndCol = 34
                         }
                     )
                     ( EInfix
@@ -607,7 +607,7 @@ Program
                             { spanStartLine = 20
                             , spanStartCol = 3
                             , spanEndLine = 20
-                            , spanEndCol = 36
+                            , spanEndCol = 34
                             }
                         ) OpConcat
                         ( EVar
@@ -625,7 +625,7 @@ Program
                                 { spanStartLine = 20
                                 , spanStartCol = 9
                                 , spanEndLine = 20
-                                , spanEndCol = 36
+                                , spanEndCol = 34
                                 }
                             )
                             ( EVar
@@ -643,7 +643,7 @@ Program
                                     { spanStartLine = 20
                                     , spanStartCol = 16
                                     , spanEndLine = 20
-                                    , spanEndCol = 36
+                                    , spanEndCol = 34
                                     }
                                 )
                                 ( EApp
@@ -651,7 +651,7 @@ Program
                                         { spanStartLine = 20
                                         , spanStartCol = 17
                                         , spanEndLine = 20
-                                        , spanEndCol = 35
+                                        , spanEndCol = 33
                                         }
                                     )
                                     ( EApp
@@ -659,7 +659,7 @@ Program
                                             { spanStartLine = 20
                                             , spanStartCol = 17
                                             , spanEndLine = 20
-                                            , spanEndCol = 31
+                                            , spanEndCol = 30
                                             }
                                         )
                                         ( EVar
@@ -677,7 +677,7 @@ Program
                                                 { spanStartLine = 20
                                                 , spanStartCol = 26
                                                 , spanEndLine = 20
-                                                , spanEndCol = 31
+                                                , spanEndCol = 30
                                                 }
                                             )
                                             ( LString "🔥" )
@@ -686,9 +686,9 @@ Program
                                     ( ELit
                                         ( SrcSpan
                                             { spanStartLine = 20
-                                            , spanStartCol = 31
+                                            , spanStartCol = 30
                                             , spanEndLine = 20
-                                            , spanEndCol = 35
+                                            , spanEndCol = 33
                                             }
                                         )
                                         ( LString "🔥" )

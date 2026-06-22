@@ -72,7 +72,7 @@ Program
                 { spanStartLine = 15
                 , spanStartCol = 1
                 , spanEndLine = 15
-                , spanEndCol = 28
+                , spanEndCol = 27
                 }
             ) "main" []
             ( EApp
@@ -80,7 +80,7 @@ Program
                     { spanStartLine = 15
                     , spanStartCol = 8
                     , spanEndLine = 15
-                    , spanEndCol = 28
+                    , spanEndCol = 27
                     }
                 )
                 ( EVar
@@ -102,7 +102,7 @@ Program
                         { spanStartLine = 15
                         , spanStartCol = 24
                         , spanEndLine = 15
-                        , spanEndCol = 28
+                        , spanEndCol = 27
                         }
                     )
                     ( LString "🔥" )
