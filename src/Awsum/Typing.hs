@@ -3530,7 +3530,7 @@ anyConInfo tyName conEnv =
 
 -- | Type constructors that can reach themselves through their constructors'
 --   field types — self-recursive (@List@, @Nest@, @IO@) or mutually recursive.
---   Inhabitedness short-circuits coinductively only on these (see
+--   Inhabitedness cuts to uninhabited (least fixpoint) only on these (see
 --   'isTypeInhabited'). A non-recursive constructor such as @Box@ in
 --   @Box (Box (Box Never))@ is absent here, so the walk descends it fully and
 --   still reaches the uninhabited @Never@ at the leaf.
@@ -3573,9 +3573,13 @@ isConInhabited recSet conEnv tcm = conInhabited recSet conEnv tcm S.empty
 --   constructors all require an uninhabited field (recursively).
 --   @type Never@ → uninhabited (0 constructors).
 --   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
---   Recursive types (@List a = Cons a (List a) | Nil@) are assumed inhabited
---   via coinductive interpretation: re-entering a recursive type constructor
---   (one in 'recursiveTypeNames') at /any/ instantiation returns True. The
+--   Recursion is a /least/ fixpoint (a strict language has no infinite
+--   values): re-entering a recursive type constructor (one in
+--   'recursiveTypeNames') yields no inhabitant on its own, so a type is
+--   inhabited only through a non-recursive base — @List a = Cons a (List a) |
+--   Nil@ via @Nil@; @Loop = MkLoop Loop@, baseless, is uninhabited (the
+--   greatest fixpoint wrongly called it inhabited, over-requiring coverage of
+--   an unreachable constructor). The
 --   guard keys on the head /name/, not the full 'Type'', because non-regular
 --   (nested) recursion grows the type argument each level
 --   (@Rec a = MkRec (Rec (Maybe a))@) so a structural key never repeats and
@@ -3605,7 +3609,7 @@ typeInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> S.Set Name -> Type' -> B
 typeInhabited recSet conEnv tcm visited ty =
   case extractTyCon ty of
     Just n
-      | n `S.member` visited -> True -- recursive type re-entered (any instantiation)
+      | n `S.member` visited -> False -- least fixpoint: a recursive self-reference yields no inhabitant on its own; a non-recursive base must bottom out
       | otherwise -> case M.lookup n tcm of
           Nothing -> True -- built-in, inhabited
           Just [] -> False -- 0 constructors
