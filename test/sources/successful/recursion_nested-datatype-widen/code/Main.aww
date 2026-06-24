@@ -1,0 +1,42 @@
+{- Implicit row-widening through a non-regular (nested) datatype: a value
+   of `Nest Bool` flows into a position wanting `Nest (Bool | Unit)` with no
+   explicit conversion — the compiler maps the row injection through every
+   level of `Nest a = Deeper (Nest (Maybe a)) | Base a`. The input shape
+   comes from argv, so the coercion runs at runtime. Prints
+   `deeper-base-just-bool`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Nest a = Deeper (Nest (Maybe a)) | Base a
+
+build : List String -> Nest Bool
+build args = case headList args of
+  Nothing -> Base True
+  Just _s -> Deeper (Base (Just True))
+
+describe : Nest (Bool | Unit) -> String
+describe n = case n of
+  Base bu -> case bu of
+    (_x : Bool) -> "base-bool"
+    (_u : Unit) -> "base-unit"
+  Deeper inner -> case inner of
+    Base mbu -> case mbu of
+      Nothing -> "deeper-base-nothing"
+      Just bu -> case bu of
+        (_x : Bool) -> "deeper-base-just-bool"
+        (_u : Unit) -> "deeper-base-just-unit"
+    Deeper _d -> "deeper-deeper"
+
+run2 : List String -> IO Never Unit
+run2 args = IO.Stdout.print (describe (build args))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

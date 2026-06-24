@@ -1,0 +1,39 @@
+{- Implicit row-widening through a non-regular datatype that is both nested
+   and multi-parameter (`Tw a b`, tail `Tw (Tuple2 a b) b`): only the first
+   parameter widens (`Bool` into `(Bool | Unit)`), the second is carried
+   unchanged, and the injection threads through the `Tuple2` spine. The
+   input shape comes from argv, so the coercion runs at runtime. Prints
+   `more-done-tuple-bool`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Tw a b = MoreTw (Tw (Tuple2 a b) b) | DoneTw a b
+
+build : List String -> Tw Bool Bool
+build args = case headList args of
+  Nothing -> DoneTw True False
+  Just _s -> MoreTw (DoneTw (Tuple2 True False) False)
+
+describe : Tw (Bool | Unit) Bool -> String
+describe t = case t of
+  DoneTw _a _b -> "done"
+  MoreTw inner -> case inner of
+    DoneTw pair _b -> case pair of
+      Tuple2 a2 _b2 -> case a2 of
+        (_x : Bool) -> "more-done-tuple-bool"
+        (_u : Unit) -> "more-done-tuple-unit"
+    MoreTw _d -> "more-more"
+
+run2 : List String -> IO Never Unit
+run2 args = IO.Stdout.print (describe (build args))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

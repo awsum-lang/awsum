@@ -1,0 +1,77 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl13$eff                      count=0
+  case-pattern    cont                            count=0
+  let             $inl14$$arg0                    count=0
+
+$cps$$df$handleErrorIO$2:
+  param           io                              count=4
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  row-case        $inl2$_u                        count=0
+  row-case        $inl3$_l                        count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$handleErrorIO$2:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_40                          count=0
+  case-pattern    s                               count=0
+
+$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Nest$0_$df$$map$Nest$1_$df$$rowmono$0$andThenIO$6_$map$Maybe_run2_$cps$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Nest$0_$df$$map$Nest$1_$df$$rowmono$0$andThenIO$6_$map$Maybe_run2:
+  param           $args$1                         count=24
+  case-pattern    $k                              count=0
+  case-pattern    $x                              count=0
+  case-pattern    $pk_42                          count=0
+  case-pattern    $pk_43                          count=0
+  case-pattern    $pk_44                          count=0
+  case-pattern    $pk_45                          count=0
+  case-pattern    $pk_46                          count=0
+  case-pattern    $pk_47                          count=0
+  case-pattern    s                               count=0
+  case-pattern    $pk_48                          count=0
+  case-pattern    $pk_49                          count=0
+  case-pattern    $inl4$inner                     count=0
+  case-pattern    $inl5$_d                        count=0
+  case-pattern    $inl6$mbu                       count=0
+  case-pattern    $inl7$bu                        count=0
+  case-pattern    $inl8$bu                        count=0
+  case-pattern    $args                           count=17
+  case-pattern    $k                              count=0
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    $cap26_0                        count=0
+  case-pattern    $cap27_0                        count=0
+  case-pattern    $inl9$e                         count=0
+  case-pattern    $inl10$s                        count=0
+  case-pattern    $cap30_0                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    $mapin                          count=3
+  case-pattern    $mx$0                           count=0
+  case-pattern    $mx$0                           count=0
+  case-pattern    $mapin                          count=3
+  case-pattern    $df$$map$Nest$1$cap0$0          count=0
+  case-pattern    $mx$0                           count=0
+  case-pattern    $mx$0                           count=0
+  case-pattern    io                              count=0
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+  case-pattern    $mf$0                           count=0
+  case-pattern    $mapin                          count=0
+  case-pattern    $mx$0                           count=0
+  case-pattern    args                            count=2
+  case-pattern    $inl11$h                        count=0
+  case-pattern    $inl12$_t                       count=0
+

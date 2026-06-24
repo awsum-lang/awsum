@@ -188,7 +188,16 @@ data LowerState = LowerState
   { lsFresh :: !Int,
     lsHelpers :: ![CDecl],
     lsRowTags :: !(M.Map Word32 (M.Map Text Type')),
-    lsLifters :: !(M.Map (Text, Text) Name)
+    lsLifters :: !(M.Map (Text, Text) Name),
+    -- | Derived parametric maps @$map$T@, memoised by type /name/ (not by
+    --   the instantiated @(src, tgt)@ pair 'lsLifters' uses). This keying
+    --   is what lets a non-regular nested type get one self-recursive map
+    --   instead of the unbounded per-pair expansion 'synthNominalHeadCoerce'
+    --   would produce.
+    lsDerivedMaps :: !(M.Map Name Name),
+    -- | The shared polymorphic identity helper @$mapId x = x@, emitted on
+    --   first use to fill no-parameter argument positions of a derived map.
+    lsMapId :: !(Maybe Name)
   }
 
 -- | Lowering monad — lambda-lift state on top of the existing
@@ -503,7 +512,7 @@ genBuiltInEtaWrappers arityOf names =
 --   to the user-decl list in the program pipeline).
 runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
 runLowerM m = do
-  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
+  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty M.empty Nothing)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
 -- | Whether the pipeline runs 'Awsum.Simplify'. 'SimplifyOff' is a
@@ -1756,7 +1765,14 @@ synthCoerce conInfo src tgt
   | Just headName <- extractTyCon src,
     Just headName' <- extractTyCon tgt,
     headName == headName' =
-      synthNominalHeadCoerce conInfo headName src tgt
+      -- A regular recursive type recurses into the same @(src, tgt)@ pair,
+      -- so the per-pair deep-copy memoises and terminates. A non-regular
+      -- (nested) type re-applies itself to a structurally larger argument,
+      -- so that pair grows without bound — route it to a parametric map
+      -- derived once per type name (terminating; see 'deriveMapCoerce').
+      if isNonRegularType conInfo headName
+        then deriveMapCoerce conInfo headName src tgt
+        else synthNominalHeadCoerce conInfo headName src tgt
 -- Function-typed coercion: pointwise rebuild via a top-level helper
 -- @$liftFn$N f = \a -> coerceB (f (coerceA a))@ where the per-side
 -- coercions come from recursive 'synthCoerce'. Used when IO-row
@@ -1817,6 +1833,165 @@ synthNominalHeadCoerce conInfo tyName src tgt = do
       let body = CCase (CVar "__input") arms
       emitHelper (CFunDef helper ["__input"] body)
       pure (\v -> pure (CCall (CVar helper) [v]))
+
+-- | Source-order type arguments of a (possibly multi-arg) application:
+--   @tyAppArgs (Either A B) = [A, B]@, @tyAppArgs (TyCon T) = []@.
+tyAppArgs :: Type' -> [Type']
+tyAppArgs = reverse . go
+  where
+    go (TyApp _ f x) = x : go f
+    go _ = []
+
+-- | Does any of the named type parameters occur in the type?
+mentionsParam :: [Name] -> Type' -> Bool
+mentionsParam params = go
+  where
+    go (TyVar _ n) = n `elem` params
+    go (TyCon _ _) = False
+    go (TyEmpty _ _) = False
+    go (TyApp _ f x) = go f || go x
+    go (TyArrow _ a b) = go a || go b
+    go (TyOr _ a b) = go a || go b
+
+-- | A nominal type is /non-regular/ (a nested datatype) when some
+--   constructor field re-applies the type to arguments other than its own
+--   parameters in order — @Nest (Maybe a)@ in @type Nest a = Deeper (Nest
+--   (Maybe a)) | Base a@. The per-(src,tgt) deep-copy coercion diverges on
+--   these (the argument pair grows each level); they route to a name-keyed
+--   derived map instead. A regular type ('List', 'Either', 'IO', …) keeps
+--   the existing per-pair path unchanged.
+isNonRegularType :: ConInfoEnv -> Name -> Bool
+isNonRegularType conInfo tyName =
+  case constructorsOfType conInfo tyName of
+    [] -> False
+    cons@((_, ci0) : _) ->
+      let params = ciTypeParams ci0
+       in any (any (irregular params) . ciFieldTypes . snd) cons
+  where
+    irregular params = goTy
+      where
+        goTy ty
+          | extractTyCon ty == Just tyName,
+            let args = tyAppArgs ty,
+            not (null args) =
+              not (argsAreParams args) || any goTy args
+        goTy (TyApp _ f x) = goTy f || goTy x
+        goTy (TyArrow _ a b) = goTy a || goTy b
+        goTy (TyOr _ a b) = goTy a || goTy b
+        goTy _ = False
+        argsAreParams args =
+          length args == length params && and (zipWith isParam args params)
+        isParam (TyVar _ n) p = n == p
+        isParam _ _ = False
+
+-- | A shared @$mapId x = x@, emitted once, for no-parameter argument
+--   positions of a derived map (e.g. the @Int32@ slot of @Either a Int32@).
+ensureMapId :: LowerM Name
+ensureMapId = do
+  st <- get
+  case lsMapId st of
+    Just n -> pure n
+    Nothing -> do
+      let n = "$mapId" :: Name
+      modify (\s -> s {lsMapId = Just n})
+      emitHelper (CFunDef n ["$mapId_x"] (CVar "$mapId_x"))
+      pure n
+
+-- | Derive (or reuse) a parametric functorial map
+--   @$map$T : (p1 -> q1) -> … -> T p1 … -> T q1 …@, memoised by type name.
+--   The name is registered before the body is built, so a recursive
+--   occurrence (including the non-regular @T (F a)@ tail) reaches a
+--   self-call — polymorphic recursion the later passes lower to a finite
+--   loop. Spine functors of a non-regular type (e.g. @Maybe@, @Tuple2@) are
+--   derived the same way on demand.
+ensureDerivedMap :: ConInfoEnv -> Name -> LowerM Name
+ensureDerivedMap conInfo tyName = do
+  st <- get
+  case M.lookup tyName (lsDerivedMaps st) of
+    Just n -> pure n
+    Nothing -> do
+      let mapName = "$map$" <> tyName
+      modify (\s -> s {lsDerivedMaps = M.insert tyName mapName (lsDerivedMaps s)})
+      let cons = constructorsOfType conInfo tyName
+          params = case cons of ((_, ci) : _) -> ciTypeParams ci; [] -> []
+          fnParams = ["$mf$" <> show i | i <- [0 .. length params - 1]]
+          paramFns = zip params fnParams
+          inputName = "$mapin" :: Name
+      arms <-
+        forM cons $ \(_, ci) -> do
+          let binders = ["$mx$" <> show i | i <- [0 .. ciArity ci - 1]]
+          mapped <-
+            forM (zip (ciFieldTypes ci) binders) $ \(fty, b) ->
+              mapFieldValue conInfo paramFns fty (CVar b)
+          pure (ciTag ci, binders, CCon (ciTag ci) mapped)
+      let body = if null cons then CVar inputName else CCase (CVar inputName) arms
+      emitHelper (CFunDef mapName (fnParams <> [inputName]) body)
+      pure mapName
+
+-- | Map a constructor field of type @fty@ held in @x@ to the target
+--   instance (saturated — the value is in hand).
+mapFieldValue :: ConInfoEnv -> [(Name, Name)] -> Type' -> CExpr -> LowerM CExpr
+mapFieldValue conInfo paramFns fty x
+  | not (mentionsParam (map fst paramFns) fty) = pure x
+  | TyVar _ p <- fty, Just (_, fn) <- find ((== p) . fst) paramFns = pure (CCall (CVar fn) [x])
+  | Just headName <- extractTyCon fty,
+    not (null (tyAppArgs fty)) = do
+      mapG <- ensureDerivedMap conInfo headName
+      argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
+      pure (CCall (CVar mapG) (argFns <> [x]))
+  | otherwise = rejectFieldShape fty
+
+-- | A function value @fty[p] -> fty[q]@ to pass as an argument-function to
+--   an enclosing derived map. Closes over the parameter functions it uses
+--   (a partial application of an inner map, defunctionalised downstream).
+fieldFnValue :: ConInfoEnv -> [(Name, Name)] -> Type' -> LowerM CExpr
+fieldFnValue conInfo paramFns fty
+  | not (mentionsParam (map fst paramFns) fty) = CVar <$> ensureMapId
+  | TyVar _ p <- fty, Just (_, fn) <- find ((== p) . fst) paramFns = pure (CVar fn)
+  | Just headName <- extractTyCon fty,
+    not (null (tyAppArgs fty)) = do
+      mapG <- ensureDerivedMap conInfo headName
+      argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
+      pure (CCall (CVar mapG) argFns)
+  | otherwise = rejectFieldShape fty
+
+-- | Honest compile-time refusal for a non-regular field shape the derived
+--   map can't cover: a function-typed or structural-sum field that mentions
+--   the type parameter (a contravariant occurrence has no finite map at
+--   all; the covariant function case is simply not handled yet — IO, which
+--   carries continuation fields, is regular and never reaches here).
+rejectFieldShape :: Type' -> LowerM a
+rejectFieldShape fty =
+  liftEither
+    $ Left
+      ( TELowering
+          ( "row widening through a non-regular recursive type is unsupported for a field of shape "
+              <> canonicalLabel fty
+          )
+      )
+
+-- | Coerce @T A.. → T B..@ for a non-regular head by applying the derived
+--   map to the per-parameter element coercions (identity slots reuse
+--   @$mapId@). Terminating where 'synthNominalHeadCoerce' diverges: the map
+--   is name-memoised and each element coercion @Aᵢ → Bᵢ@ is smaller.
+deriveMapCoerce :: ConInfoEnv -> Name -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
+deriveMapCoerce conInfo tyName src tgt = do
+  mapName <- ensureDerivedMap conInfo tyName
+  elemFns <-
+    forM (zip (tyAppArgs src) (tyAppArgs tgt)) $ \(a, b) ->
+      if coercionIsIdentity conInfo a b
+        then CVar <$> ensureMapId
+        else synthCoerce conInfo a b >>= reifyCoerceFn
+  pure (\v -> pure (CCall (CVar mapName) (elemFns <> [v])))
+
+-- | Reify a coercion wrapper as a first-order @$lift$N x = <coerce x>@ so
+--   it can be passed as a derived map's argument-function.
+reifyCoerceFn :: (CExpr -> LowerM CExpr) -> LowerM CExpr
+reifyCoerceFn w = do
+  h <- freshLiftName
+  body <- w (CVar "$cf_x")
+  emitHelper (CFunDef h ["$cf_x"] body)
+  pure (CVar h)
 
 -- | Per-constructor field-coercion types for a coercion @src → tgt@
 --   between two type-applications that share a nominal head. For each
@@ -1903,11 +2078,20 @@ coercionIsIdentity conInfo = go Set.empty
       | Just h1 <- extractTyCon src,
         Just h2 <- extractTyCon tgt,
         h1 == h2 =
-          let key = (canonicalLabel src, canonicalLabel tgt)
-           in Set.member key seen
-                || all
-                  (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
-                  (nominalConFieldTypes conInfo h1 src tgt)
+          -- A derived map preserves the spine and applies the element
+          -- coercions at the parameter leaves, so @T A.. → T B..@ is the
+          -- identity exactly when every @Aᵢ → Bᵢ@ is. Recursing on the
+          -- type arguments (which shrink) terminates where recursing on
+          -- the constructor fields would not for a non-regular type — the
+          -- same divergence the field-keyed memo below has.
+          if isNonRegularType conInfo h1
+            then and (zipWith (go seen) (tyAppArgs src) (tyAppArgs tgt))
+            else
+              let key = (canonicalLabel src, canonicalLabel tgt)
+               in Set.member key seen
+                    || all
+                      (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
+                      (nominalConFieldTypes conInfo h1 src tgt)
       | otherwise = False
 
 -- | All constructors of a given user-defined type, sorted by tag.
