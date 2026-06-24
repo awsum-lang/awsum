@@ -3,9 +3,11 @@
 --   fields cannot represent an arbitrarily large program: a method's @Code@ is
 --   capped at 65535 bytes (@code_length@, §4.7.3), and the u2 fields cap their
 --   value at 65535 — @constant_pool_count@ (§4.1), a method's @max_stack@ /
---   @max_locals@ (§4.7.3), and each @CONSTANT_Utf8_info@ length (§4.4.7). Past
---   the limit the field wraps and silently corrupts the @.class@, which the JVM
---   rejects at load; 'assembleJVM' refuses the program at compile time instead.
+--   @max_locals@ (§4.7.3), and each @CONSTANT_Utf8_info@ length (§4.4.7); a
+--   method descriptor also encodes at most 255 parameters (§4.3.3). Past a limit
+--   the field wraps (or the descriptor is rejected) and silently corrupts the
+--   @.class@, which the JVM rejects at load; 'assembleJVM' refuses the program at
+--   compile time instead.
 --
 --   These are per-target compile-time limits — see docs/targets.md. The other
 --   four backends impose no such caps, so the refusal lives solely in
@@ -13,6 +15,7 @@
 module Awsum.JvmClassFileLimitSpec (spec) where
 
 import Awsum.Codegen.JVM.Assemble (JvmLimitExceeded (..), assembleJVM, methodLimitViolations, renderJvmLimitExceeded, selectLimit)
+import Awsum.Core (CDecl (..), CExpr (..), CoreProgram (..))
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
@@ -69,12 +72,9 @@ mkConstantPoolProgram n =
       ]
 
 -- | One recursive function of @p@ parameters; @main@ applies it to @p@ zeros.
---   The method descriptor is @(Ljava\/lang\/Object;…)Ljava\/lang\/Object;@ —
---   one @CONSTANT_Utf8_info@ of @18·p + 21@ bytes — so a large @p@ overflows a
---   single Utf8 entry. Recursive so Simplify can't fold the all-literal call and
---   tree-shake the method whose descriptor is the over-long string. Identifiers
---   (≤ 1024 chars) and string literals (≤ 21845 code units ⇒ ≤ 65535 bytes) are
---   capped below the u2 limit, so an extreme arity is the only way to reach it.
+--   The method @v_f@ carries @p@ @Object@ parameters, so @p > 255@ trips the
+--   §4.3.3 descriptor-arity limit ('JvmTooManyParameters'). Recursive so Simplify
+--   can't fold the all-literal call and tree-shake the many-parameter method.
 mkManyParamProgram :: Int -> Text
 mkManyParamProgram p =
   let params = ["p" <> show i | i <- [0 .. p - 1]]
@@ -106,6 +106,27 @@ assembleProgram src =
       Left err -> error ("elaborate failed: " <> show err)
       Right (_warns, ptags, core) -> assembleJVM ptags core
 
+-- | Assemble a trivial program with an extra top-level constant holding an
+--   @n@-byte ASCII string, injected into its Core after elaboration. This is the
+--   one way to exercise the over-long-string-constant cause of
+--   'JvmConstantTooLong', which is distinct from descriptor arity: a source
+--   literal is capped so a single one fits ('maxStringLitUtf16CodeUnits' = 21845
+--   ⇒ ≤ 65535 bytes), and 'Awsum.Simplify' deliberately does not fold @++@ for
+--   exactly this reason — so no source program produces one, but a folded
+--   concatenation would, and this guard is the safety net that decision relies
+--   on. 'doAssemble' assembles every declaration, so the constant's
+--   @CONSTANT_Utf8_info@ reaches the pool.
+assembleWithStringConstant :: Int -> Either JvmLimitExceeded ByteString
+assembleWithStringConstant n =
+  case parseProgram trivial of
+    Left e -> error ("parse failed: " <> e)
+    Right prog -> case elaborateLowerProgram ProgramCli (withPrelude prog) of
+      Left err -> error ("elaborate failed: " <> show err)
+      Right (_warns, ptags, CoreProgram decls) ->
+        assembleJVM ptags (CoreProgram (decls <> [CValDef "bigConstant" (CString (T.replicate n "a"))]))
+  where
+    trivial = unlines ["import IO.Stdout", "", "main : IO Never Unit", "main = IO.Stdout.print \"hi\""]
+
 spec :: Spec
 spec = describe "JVM class-file limits" $ do
   describe "per-method bytecode size (code_length, §4.7.3)" $ do
@@ -135,29 +156,64 @@ spec = describe "JVM class-file limits" $ do
       Left other -> expectationFailure ("expected JvmConstantPoolOverflow, got: " <> toString (renderJvmLimitExceeded other))
       Right _bytes -> expectationFailure "expected a JVM refusal, got a class file"
 
-  -- 4000 parameters ⇒ a ~72k-byte descriptor (threshold ~3640); one over-long
-  -- Utf8 entry, no other limit crossed (max_locals = 4000).
+  describe "method parameter count (descriptor arity, §4.3.3)" $ do
+    it "assembles a function at the 255-parameter limit"
+      $ case assembleProgram (mkManyParamProgram 255) of
+        Right _bytes -> pass
+        Left e -> expectationFailure ("unexpected JVM refusal: " <> toString (renderJvmLimitExceeded e))
+
+    it "refuses a function with more than 255 parameters"
+      $ case assembleProgram (mkManyParamProgram 256) of
+        Left (JvmTooManyParameters name nparams) -> do
+          name `shouldBe` "v_f"
+          nparams `shouldBe` 256
+        Left other -> expectationFailure ("expected JvmTooManyParameters, got: " <> toString (renderJvmLimitExceeded other))
+        Right _bytes -> expectationFailure "expected a JVM refusal, got a class file"
+
+  -- A cause independent of arity: a small program with one over-long string
+  -- constant. Not producible from source today (see 'assembleWithStringConstant'),
+  -- so the constant is injected into the Core after elaboration.
   describe "single Utf8 entry length (CONSTANT_Utf8_info length, §4.4.7)"
-    $ it "refuses a function whose method descriptor exceeds 65535 bytes"
-    $ case assembleProgram (mkManyParamProgram 4000) of
+    $ it "refuses an over-long string constant (the cause a folded `++` would create)"
+    $ case assembleWithStringConstant 70000 of
       Left (JvmConstantTooLong _preview nbytes) -> nbytes `shouldSatisfy` (> 65535)
       Left other -> expectationFailure ("expected JvmConstantTooLong, got: " <> toString (renderJvmLimitExceeded other))
       Right _bytes -> expectationFailure "expected a JVM refusal, got a class file"
 
-  -- max_stack / max_locals cannot be isolated through a real program: an
-  -- over-65535 value is always reached alongside a code-length or descriptor
-  -- overflow (both bound it), which 'selectLimit' surfaces first. So the
-  -- per-method check and the priority that orders co-occurring limits are tested
-  -- directly on their pure functions.
-  describe "max_stack / max_locals (§4.7.3) and reported-limit priority" $ do
-    it "flags max_stack and max_locals over 65535 per method" $ do
-      methodLimitViolations "m" 10 70000 10 `shouldBe` [JvmMaxStackTooLarge "m" 70000]
-      methodLimitViolations "m" 10 10 70000 `shouldBe` [JvmMaxLocalsTooLarge "m" 70000]
-      methodLimitViolations "m" 65535 65535 65535 `shouldBe` []
+  -- max_stack / max_locals over 65535 cannot be isolated through a real program:
+  -- they are reached only alongside a code-length or descriptor overflow that
+  -- bounds them. So these caps and the priority that orders co-occurring limits
+  -- are tested directly on their pure functions.
+  describe "per-method limit detection and reported-limit priority" $ do
+    it "flags an over-255 parameter count, max_stack, and max_locals per method" $ do
+      methodLimitViolations "m" 256 10 10 10 `shouldBe` [JvmTooManyParameters "m" 256]
+      methodLimitViolations "m" 10 10 70000 10 `shouldBe` [JvmMaxStackTooLarge "m" 70000]
+      methodLimitViolations "m" 10 10 10 70000 `shouldBe` [JvmMaxLocalsTooLarge "m" 70000]
+      methodLimitViolations "m" 255 65535 65535 65535 `shouldBe` []
 
-    it "reports the actionable cause ahead of a co-occurring max_stack / max_locals" $ do
+    it "reports the actionable cause ahead of a co-occurring symptom" $ do
+      -- A high-arity method trips its parameter count and (past ~3640) its
+      -- descriptor's Utf8 length; the parameter count is the actionable cause.
+      selectLimit [JvmConstantTooLong "(L…)" 72000, JvmTooManyParameters "f" 4000]
+        `shouldBe` Just (JvmTooManyParameters "f" 4000)
       selectLimit [JvmMaxLocalsTooLarge "f" 70000, JvmConstantTooLong "(L…)" 72000]
         `shouldBe` Just (JvmConstantTooLong "(L…)" 72000)
       selectLimit [JvmMaxStackTooLarge "f" 70000, JvmMethodTooLarge "f" 70000]
         `shouldBe` Just (JvmMethodTooLarge "f" 70000)
       selectLimit [] `shouldBe` Nothing
+
+  -- The diagnostic distinguishes a user function from a compiler-synthesised
+  -- method by the mangled `v_$…` name. Regression: the synthetic check must match
+  -- the mangled name, not the raw `$scc$` Core prefix (which never matches a
+  -- `v_`-prefixed method name, so the provenance hint was previously dead).
+  describe "diagnostic phrasing" $ do
+    it "names a user function plainly"
+      $ renderJvmLimitExceeded (JvmTooManyParameters "v_f" 256)
+      `shouldSatisfy` T.isInfixOf "function `v_f`"
+
+    it "marks a synthesised method and explains its origin" $ do
+      let scc = renderJvmLimitExceeded (JvmMethodTooLarge "v_$scc$f" 70000)
+      scc `shouldSatisfy` T.isInfixOf "synthetic method"
+      scc `shouldSatisfy` T.isInfixOf "mutual-recursion"
+      renderJvmLimitExceeded (JvmTooManyParameters "v_$apply2" 300)
+        `shouldSatisfy` T.isInfixOf "synthetic method"
