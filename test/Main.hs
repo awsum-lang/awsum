@@ -8,8 +8,8 @@ import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
+import Awsum.JvmClassFileLimitSpec qualified
 import Awsum.JvmFarBranchSpec qualified
-import Awsum.JvmMethodLimitSpec qualified
 import Awsum.LspSpec qualified
 import Awsum.NameLimitsSpec qualified
 import Awsum.NoSimplifySpec qualified
@@ -53,7 +53,7 @@ main = do
     Awsum.NoSimplifySpec.spec
     Awsum.StringLiteralCapSpec.spec
     Awsum.NameLimitsSpec.spec
-    Awsum.JvmMethodLimitSpec.spec
+    Awsum.JvmClassFileLimitSpec.spec
     Awsum.JvmFarBranchSpec.spec
     Awsum.LspSpec.spec
     jsSyntaxSpec
