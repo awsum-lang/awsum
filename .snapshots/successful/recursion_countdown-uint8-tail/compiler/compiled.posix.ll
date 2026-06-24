@@ -312,6 +312,7 @@ tco.loop.0:
   %t11 = ptrtoint ptr %t10 to i64
   switch i64 %t11, label %tco.case.default.12 [ i64 1, label %tco.case.arm.1.13 i64 2, label %tco.case.arm.2.32 ]
 tco.case.arm.1.13:
+  call void @__free_recursive(ptr %t8)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
   %t14 = call ptr @__showUInt8(ptr %t5)
@@ -336,14 +337,12 @@ tco.case.arm.3.20:
   store ptr %t28, ptr %t29
   %t30 = getelementptr ptr, ptr %t21, i32 1
   store ptr %t24, ptr %t30
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t21, ptr %t2
   br label %tco.exit.1
 tco.case.arm.4.31:
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t15, ptr %t2
@@ -351,6 +350,7 @@ tco.case.arm.4.31:
 tco.case.default.19:
   unreachable
 tco.case.arm.2.32:
+  call void @__free_recursive(ptr %t8)
   call void @__inc_ref(ptr %t5)
   %t33 = call ptr @__predUInt8(ptr %t5)
   %t34 = getelementptr ptr, ptr %t33, i32 0
@@ -361,6 +361,7 @@ tco.case.arm.3.38:
   %t39 = getelementptr ptr, ptr %t33, i32 1
   %t40 = load ptr, ptr %t39
   call void @__inc_ref(ptr %t40)
+  call void @__free_recursive(ptr %t33)
   %t41 = call ptr @__alloc(i64 16, i32 1)
   %t42 = inttoptr i64 3 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
@@ -374,8 +375,6 @@ tco.case.arm.3.38:
   store ptr %t40, ptr %t47
   %t48 = getelementptr ptr, ptr %t41, i32 1
   store ptr %t44, ptr %t48
-  call void @__free_recursive(ptr %t33)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t40)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -385,6 +384,7 @@ tco.case.arm.4.49:
   %t50 = getelementptr ptr, ptr %t33, i32 1
   %t51 = load ptr, ptr %t50
   call void @__inc_ref(ptr %t51)
+  call void @__free_recursive(ptr %t33)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
   %t52 = call ptr @__showUInt8(ptr %t5)
@@ -397,6 +397,7 @@ tco.case.arm.3.58:
   %t59 = getelementptr ptr, ptr %t53, i32 1
   %t60 = load ptr, ptr %t59
   call void @__inc_ref(ptr %t60)
+  call void @__free_recursive(ptr %t53)
   %t61 = call ptr @__alloc(i64 16, i32 1)
   %t62 = inttoptr i64 3 to ptr
   %t63 = getelementptr ptr, ptr %t61, i32 0
@@ -410,9 +411,6 @@ tco.case.arm.3.58:
   store ptr %t60, ptr %t67
   %t68 = getelementptr ptr, ptr %t61, i32 1
   store ptr %t64, ptr %t68
-  call void @__free_recursive(ptr %t53)
-  call void @__free_recursive(ptr %t33)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t60)
   call void @__free_recursive(ptr %t51)
   call void @__free_recursive(ptr %t5)
@@ -423,6 +421,7 @@ tco.case.arm.4.69:
   %t70 = getelementptr ptr, ptr %t53, i32 1
   %t71 = load ptr, ptr %t70
   call void @__inc_ref(ptr %t71)
+  call void @__free_recursive(ptr %t53)
   call void @__inc_ref(ptr %t71)
   %t72 = call ptr @__concat(ptr %t71, ptr getelementptr inbounds (i8, ptr @.str.0, i64 12))
   %t73 = getelementptr ptr, ptr %t72, i32 0
@@ -433,6 +432,7 @@ tco.case.arm.3.77:
   %t78 = getelementptr ptr, ptr %t72, i32 1
   %t79 = load ptr, ptr %t78
   call void @__inc_ref(ptr %t79)
+  call void @__free_recursive(ptr %t72)
   %t80 = call ptr @__alloc(i64 16, i32 1)
   %t81 = inttoptr i64 3 to ptr
   %t82 = getelementptr ptr, ptr %t80, i32 0
@@ -446,10 +446,6 @@ tco.case.arm.3.77:
   store ptr %t79, ptr %t86
   %t87 = getelementptr ptr, ptr %t80, i32 1
   store ptr %t83, ptr %t87
-  call void @__free_recursive(ptr %t72)
-  call void @__free_recursive(ptr %t53)
-  call void @__free_recursive(ptr %t33)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t79)
   call void @__free_recursive(ptr %t71)
   call void @__free_recursive(ptr %t51)
@@ -462,9 +458,6 @@ tco.case.arm.4.88:
   %t90 = load ptr, ptr %t89
   call void @__inc_ref(ptr %t90)
   call void @__free_recursive(ptr %t72)
-  call void @__free_recursive(ptr %t53)
-  call void @__free_recursive(ptr %t33)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t71)
@@ -580,21 +573,21 @@ case.join.5:
   %t24 = inttoptr i64 22 to ptr
   %t25 = getelementptr ptr, ptr %t23, i32 0
   store ptr %t24, ptr %t25
-  %t26 = call ptr @v__cps__df_andThenIO_4(ptr %t22, ptr %t23)
+  %t26 = call ptr @v_$cps$$df$andThenIO$4(ptr %t22, ptr %t23)
   %t27 = call ptr @__alloc(i64 8, i32 0)
   %t28 = inttoptr i64 20 to ptr
   %t29 = getelementptr ptr, ptr %t27, i32 0
   store ptr %t28, ptr %t29
-  %t30 = call ptr @v__cps__df_handleErrorIO_0(ptr %t26, ptr %t27)
+  %t30 = call ptr @v_$cps$$df$handleErrorIO$0(ptr %t26, ptr %t27)
   ret ptr %t30
 }
 
-define internal ptr @v__cps__df_handleErrorIO_0(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$0(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -607,7 +600,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_0(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$0(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -632,7 +625,7 @@ tco.case.arm.6.13:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t14, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_handleErrorIO_0(ptr %t6, ptr %t14)
+  %t26 = call ptr @v_$apply$$df$handleErrorIO$0(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -690,12 +683,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_handleErrorIO_0(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$0(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -737,12 +730,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_4(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$4(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -775,7 +768,7 @@ tco.case.arm.5.11:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_andThenIO_4(ptr %t6, ptr %t12)
+  %t26 = call ptr @v_$apply$$df$andThenIO$4(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -783,7 +776,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.27:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t28 = call ptr @v__apply__df_andThenIO_4(ptr %t6, ptr %t5)
+  %t28 = call ptr @v_$apply$$df$andThenIO$4(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t28, ptr %t2
@@ -841,12 +834,12 @@ tco.exit.1:
   ret ptr %t54
 }
 
-define internal ptr @v__apply__df_andThenIO_4(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$4(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

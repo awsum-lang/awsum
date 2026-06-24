@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -23,14 +23,14 @@
 
   const v_r = [3, [332136403, [24]]];
 
-  const v__inl13_x = v_r;
+  const v_$inl13$x = v_r;
   const main = [
     7,
     (s => {
       switch (s[0]) {
         case 3: {
           {
-            const __s = v__inl13_x[1];
+            const __s = v_$inl13$x[1];
             switch (__s[0]) {
               case 332136403: {
                 return "A";
@@ -39,10 +39,10 @@
           }
         }
         case 4: {
-          return String(v__inl13_x[1]);
+          return String(v_$inl13$x[1]);
         }
       }
-    })(v__inl13_x),
+    })(v_$inl13$x),
     [5, [0]]
   ];
 

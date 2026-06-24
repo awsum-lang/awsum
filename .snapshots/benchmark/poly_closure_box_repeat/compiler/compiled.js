@@ -19,7 +19,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -27,27 +27,27 @@
     }
   };
 
-  const v__apply_countWithBox = (v__k, v__x) => {
+  const v_$apply$countWithBox = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 26: {
-          return v__x;
+          return v_$x;
         }
         case 27: {
-          v__k = v__k[1];
+          v_$k = v_$k[1];
           continue;
         }
       }
     }
   };
 
-  const v__cps_countWithBox = (v_b, v_n, v__k) => {
+  const v_$cps$countWithBox = (v_b, v_n, v_$k) => {
     while (true) {
       {
         const __s = __eqInt32(v_n, v_zero);
         switch (__s[0]) {
           case 1: {
-            return v__apply_countWithBox(v__k, [4, v_zero]);
+            return v_$apply$countWithBox(v_$k, [4, v_zero]);
           }
           case 2: {
             {
@@ -55,12 +55,12 @@
               switch (__s[0]) {
                 case 3: {
                   const v_e = __s[1];
-                  return v__apply_countWithBox(v__k, [3, v_e]);
+                  return v_$apply$countWithBox(v_$k, [3, v_e]);
                 }
                 case 4: {
                   const v_m = __s[1];
                   v_n = v_m;
-                  v__k = [27, v__k, v_b];
+                  v_$k = [27, v_$k, v_b];
                   continue;
                 }
               }
@@ -90,7 +90,7 @@
                 case 4: {
                   const v_m = __s[1];
                   {
-                    const __s = v__cps_countWithBox(v_b, 100000 | 0, [26]);
+                    const __s = v_$cps$countWithBox(v_b, 100000 | 0, [26]);
                     switch (__s[0]) {
                       case 3: {
                         const v_e = __s[1];

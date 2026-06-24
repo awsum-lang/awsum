@@ -15,19 +15,21 @@ module Awsum.Codegen.CLR.Assemble
     CilModule (..),
     cilModule,
     cilModuleMethods,
+    -- ECMA-335 metadata index widths, exposed for the boundary unit test.
+    MetaWidths (..),
+    clrMetaWidths,
   )
 where
 
 import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxLocalsOf, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllBytesSpec, stdinReadAllSpec, strRef, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
-import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Relude
 
@@ -69,23 +71,26 @@ data Pool = Pool
     pBlob :: [Word8],
     pBlobOff :: Word32,
     pBlobC :: Map [Word8] Word32,
-    -- TypeRef table rows: (resScopeCoded, nameStrIdx, nsStrIdx)
-    pTR :: [(Word16, Word16, Word16)],
+    -- TypeRef table rows: (resScopeCoded, nameStrIdx, nsStrIdx). Heap and
+    -- coded indices are kept at full 'Word32' width; 'buildTables' narrows
+    -- each to 2 or 4 bytes per the ECMA-335 HeapSizes / rowcount rules.
+    pTR :: [(Word32, Word32, Word32)],
     pTRn :: Word32,
-    pTRc :: Map (Word16, Text, Text) Word32,
+    pTRc :: Map (Word32, Text, Text) Word32,
     -- TypeSpec table rows: blobIdx
-    pTS :: [Word16],
+    pTS :: [Word32],
     pTSn :: Word32,
     pTSc :: Map [Word8] Word32,
     -- MemberRef table rows: (parentCoded, nameStrIdx, sigBlobIdx)
-    pMR :: [(Word16, Word16, Word16)],
+    pMR :: [(Word32, Word32, Word32)],
     pMRn :: Word32,
-    pMRc :: Map (Word16, Text, [Word8]) Word32,
-    -- Param table rows: (flags, sequence, nameStrIdx)
-    pPM :: [(Word16, Word16, Word16)],
+    pMRc :: Map (Word32, Text, [Word8]) Word32,
+    -- Param table rows: (flags, sequence, nameStrIdx). flags/sequence are
+    -- true 2-byte columns; only the name is a (heap-width) #Strings index.
+    pPM :: [(Word16, Word16, Word32)],
     pPMn :: Word32,
     -- StandAloneSig table rows: blobIdx (for LocalVarSig)
-    pSAS :: [Word16],
+    pSAS :: [Word32],
     pSASn :: Word32,
     -- Globally unique constructor tags for prelude types, threaded
     -- in through 'assembleCLR' so the runtime helpers built here
@@ -191,7 +196,7 @@ compressU n
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Add TypeRef row. Returns 1-based row number.
-addTypeRef :: Word16 -> Text -> Text -> AsmM Word32
+addTypeRef :: Word32 -> Text -> Text -> AsmM Word32
 addTypeRef resScope name ns = do
   st <- get
   let key = (resScope, name, ns)
@@ -202,7 +207,7 @@ addTypeRef resScope name ns = do
       nsi <- addStr ns
       st' <- get
       let row = st'.pTRn + 1
-      put st' {pTR = st'.pTR <> [(resScope, w16 ni, w16 nsi)], pTRn = row, pTRc = Map.insert key row st'.pTRc}
+      put st' {pTR = st'.pTR <> [(resScope, ni, nsi)], pTRn = row, pTRc = Map.insert key row st'.pTRc}
       pure row
 
 -- | Add TypeSpec row. Returns 1-based row number.
@@ -215,11 +220,11 @@ addTypeSpec sig = do
       bi <- addBlob sig
       st' <- get
       let row = st'.pTSn + 1
-      put st' {pTS = st'.pTS <> [w16 bi], pTSn = row, pTSc = Map.insert sig row st'.pTSc}
+      put st' {pTS = st'.pTS <> [bi], pTSn = row, pTSc = Map.insert sig row st'.pTSc}
       pure row
 
 -- | Add MemberRef row. Returns 1-based row number.
-addMemberRef :: Word16 -> Text -> [Word8] -> AsmM Word32
+addMemberRef :: Word32 -> Text -> [Word8] -> AsmM Word32
 addMemberRef parent name sig = do
   st <- get
   let key = (parent, name, sig)
@@ -230,7 +235,7 @@ addMemberRef parent name sig = do
       si <- addBlob sig
       st' <- get
       let row = st'.pMRn + 1
-      put st' {pMR = st'.pMR <> [(parent, w16 ni, w16 si)], pMRn = row, pMRc = Map.insert key row st'.pMRc}
+      put st' {pMR = st'.pMR <> [(parent, ni, si)], pMRn = row, pMRc = Map.insert key row st'.pMRc}
       pure row
 
 -- | Add N param entries. Returns the starting row (1-based).
@@ -250,24 +255,27 @@ addLocalSigBytes blob = do
   bi <- addBlob blob
   st <- get
   let row = st.pSASn + 1
-  put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
+  put st {pSAS = st.pSAS <> [bi], pSASn = row}
   pure (0x11000000 .|. row)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Coded index helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- Coded indices keep full 'Word32' width; buildTables narrows each to 2 or 4
+-- bytes per the ECMA-335 rule for its tag width and the rowcounts it codes over.
+
 -- ResolutionScope: 2-bit tag. 10 = AssemblyRef.
-resScopeAR :: Word32 -> Word16
-resScopeAR row = fromIntegral ((row `shiftL` 2) .|. 0x02)
+resScopeAR :: Word32 -> Word32
+resScopeAR row = (row `shiftL` 2) .|. 0x02
 
 -- TypeDefOrRef: 2-bit tag. 01 = TypeRef.
-tdorTR :: Word32 -> Word16
-tdorTR row = fromIntegral ((row `shiftL` 2) .|. 0x01)
+tdorTR :: Word32 -> Word32
+tdorTR row = (row `shiftL` 2) .|. 0x01
 
 -- MemberRefParent: 3-bit tag. 001 = TypeRef, 100 = TypeSpec.
-mrpTR :: Word32 -> Word16
-mrpTR row = fromIntegral ((row `shiftL` 3) .|. 0x01)
+mrpTR :: Word32 -> Word32
+mrpTR row = (row `shiftL` 3) .|. 0x01
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Signature construction
@@ -419,9 +427,6 @@ cilNewarr tok = 0x8D : w32le tok
 -- Byte helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
-w16 :: Word32 -> Word16
-w16 = fromIntegral
-
 w16le :: Word16 -> [Word8]
 w16le w = [fromIntegral (w .&. 0xFF), fromIntegral (w `shiftR` 8)]
 
@@ -452,8 +457,8 @@ alignToN a n = ((n + a - 1) `div` a) * a
 data MInfo = MInfo
   { mImplFlags :: Word16,
     mFlags :: Word16,
-    mName :: Word16, -- #Strings index
-    mSig :: Word16, -- #Blob index
+    mName :: Word32, -- #Strings index (narrowed per HeapSizes in buildTables)
+    mSig :: Word32, -- #Blob index (narrowed per HeapSizes in buildTables)
     mParamList :: Word32, -- first Param row (1-based)
     mCode :: [Word8], -- CIL bytecode
     mLocalSigTok :: Word32, -- StandAloneSig token for locals (0 = no locals)
@@ -598,8 +603,8 @@ doAssemble (CoreProgram decls) = do
 
 mkInit :: AsmM MInfo
 mkInit = do
-  ni <- w16 <$> addStr ".ctor"
-  si <- w16 <$> addBlob (sigInstance etVoid [])
+  ni <- addStr ".ctor"
+  si <- addBlob (sigInstance etVoid [])
   ps <- addParams 0
   let code = cilLdarg 0 <> cilCall (tokMR 1) <> cilRet -- MemberRef 1 = Object::.ctor
   pure MInfo {mImplFlags = 0, mFlags = 0x1881, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
@@ -610,10 +615,10 @@ mkInit = do
 --   comes from the spec (derived by 'maxStackOf').
 assembleCilMethod :: CilMethod -> AsmM MInfo
 assembleCilMethod m = do
-  ni <- w16 <$> addStr (cmName m)
+  ni <- addStr (cmName m)
   retBytes <- sigElemBytes (cmRet m)
   paramBytes <- concat <$> traverse sigElemBytes (cmParams m)
-  si <- w16 <$> addBlob ([0x00, fromIntegral (length (cmParams m))] <> retBytes <> paramBytes)
+  si <- addBlob ([0x00, fromIntegral (length (cmParams m))] <> retBytes <> paramBytes)
   ps <- addParams (length (cmParams m))
   localTok <-
     if null (cmLocals m)
@@ -653,7 +658,7 @@ assembleCilMethod m = do
       where
         tdorBytes prefix (CilTypeRef asm ns name) = do
           r <- addTypeRef (resScopeAR (fromIntegral asm)) name ns
-          pure (prefix : compressU (fromIntegral (tdorTR r)))
+          pure (prefix : compressU (tdorTR r))
     trTok :: CilTypeRef -> AsmM Word32
     trTok (CilTypeRef asm ns name) = tokTR <$> addTypeRef (resScopeAR (fromIntegral asm)) name ns
     mrTok :: CilMemberRef -> AsmM Word32
@@ -1560,6 +1565,54 @@ buildMetadata st methods methodRVAs =
 -- #~ stream (metadata tables)
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | ECMA-335 §II.24.2.6 metadata index widths, in bytes (2 or 4). A heap index
+--   widens once that heap exceeds 0xFFFF bytes (and the bit is recorded in
+--   'mwHeapSizes', the @#~@ HeapSizes byte); a simple table index widens once
+--   the target table reaches 2^16 rows; a coded index of @k@ tag bits widens
+--   once the largest table it can reference reaches 2^(16−k) rows. The widths
+--   are otherwise hard-coded to 2 bytes, which silently corrupts a @.dll@ whose
+--   #Strings heap (or a table) outgrows 16-bit indices.
+data MetaWidths = MetaWidths
+  { mwStr :: Int, -- #Strings heap index
+    mwGuid :: Int, -- #GUID heap index
+    mwBlob :: Int, -- #Blob heap index
+    mwHeapSizes :: Word8, -- the #~ HeapSizes byte (bit0 #Strings, bit1 #GUID, bit2 #Blob)
+    mwField :: Int, -- simple index into Field
+    mwMethodDef :: Int, -- simple index into MethodDef
+    mwParam :: Int, -- simple index into Param
+    mwResScope :: Int, -- coded ResolutionScope (2 tag bits)
+    mwTdor :: Int, -- coded TypeDefOrRef (2 tag bits)
+    mwMrp :: Int -- coded MemberRefParent (3 tag bits)
+  }
+  deriving stock (Eq, Show)
+
+-- | Derive the index widths from the final heap sizes (in bytes, as written in
+--   the stream headers) and table row counts. Pure and total so the boundary
+--   values can be pinned by a unit test.
+clrMetaWidths :: Int -> Int -> Int -> Word32 -> Word32 -> Word32 -> Word32 -> MetaWidths
+clrMetaWidths strBytes guidBytes blobBytes nTR nMD nPM nTS =
+  let heapW n = if n > 0xFFFF then 4 else 2
+      simpleW rows = if rows >= (0x10000 :: Word32) then 4 else 2
+      codedW tagBits rows = if foldr max 0 rows >= ((0x10000 :: Word32) `shiftR` tagBits) then 4 else 2
+      strW = heapW strBytes
+      guidW = heapW guidBytes
+      blobW = heapW blobBytes
+   in MetaWidths
+        { mwStr = strW,
+          mwGuid = guidW,
+          mwBlob = blobW,
+          mwHeapSizes =
+            (if strW == 4 then 0x01 else 0)
+              .|. (if guidW == 4 then 0x02 else 0)
+              .|. (if blobW == 4 then 0x04 else 0),
+          mwField = simpleW 0, -- the Field table is empty
+          mwMethodDef = simpleW nMD,
+          mwParam = simpleW nPM,
+          mwResScope = codedW 2 [1, 0, 2, nTR], -- Module, ModuleRef, AssemblyRef, TypeRef
+          mwTdor = codedW 2 [2, nTR, nTS], -- TypeDef, TypeRef, TypeSpec
+          mwMrp = codedW 3 [2, nTR, 0, nMD, nTS] -- TypeDef, TypeRef, ModuleRef, MethodDef, TypeSpec
+        }
+
 buildTables :: Pool -> [MInfo] -> [Word32] -> [Word8]
 buildTables st methods methodRVAs =
   let nTR = st.pTRn
@@ -1570,6 +1623,23 @@ buildTables st methods methodRVAs =
       nSAS = st.pSASn
       hasTS = nTS > 0
       hasSAS = nSAS > 0
+
+      -- Index widths from the final heaps + row counts. Heap sizes are the
+      -- padded stream sizes ('align4' of the heap byte length, which equals the
+      -- offset cursor), i.e. exactly the Size values written in the stream
+      -- headers — so the width a reader derives from those Sizes matches ours.
+      ws = clrMetaWidths (align4 (fromIntegral st.pStrOff)) 16 (align4 (fromIntegral st.pBlobOff)) nTR nMD nPM nTS
+      strW = ws.mwStr
+      guidW = ws.mwGuid
+      blobW = ws.mwBlob
+      tdorW = ws.mwTdor
+      rsW = ws.mwResScope
+      mrpW = ws.mwMrp
+      fieldW = ws.mwField
+      methodW = ws.mwMethodDef
+      paramW = ws.mwParam
+      -- Emit a heap / table / coded index at its computed byte width.
+      ix width v = if width == 4 then w32le v else w16le (fromIntegral v)
 
       valid :: Word64
       valid =
@@ -1597,55 +1667,62 @@ buildTables st methods methodRVAs =
       hdr =
         w32le 0 -- Reserved
           <> [2, 0] -- MajorVersion, MinorVersion
-          <> [0] -- HeapSizes (all 2-byte)
+          <> [ws.mwHeapSizes] -- HeapSizes: per-heap index width (0x01 #Strings, 0x02 #GUID, 0x04 #Blob)
           <> [1] -- Reserved
           <> w64le valid
           <> w64le 0 -- Sorted
 
-      -- Module row (10 bytes)
+      -- Module row
       moduleRow =
         w16le 0 -- Generation
-          <> w16le (w16 $ lkStr st "AwsumMain.dll")
-          <> w16le 1 -- Mvid (GUID index)
-          <> w16le 0 -- EncId
-          <> w16le 0 -- EncBaseId
+          <> ix strW (lkStr st "AwsumMain.dll") -- Name
+          <> ix guidW 1 -- Mvid (GUID index)
+          <> ix guidW 0 -- EncId
+          <> ix guidW 0 -- EncBaseId
 
-      -- TypeDef rows (14 bytes each)
+      -- TypeDef rows
       typeDefRows =
         -- <Module>
-        w32le 0
-          <> w16le (w16 $ lkStr st "<Module>")
-          <> w16le 0
-          <> w16le 0
-          <> w16le 1
-          <> w16le 1
+        w32le 0 -- Flags
+          <> ix strW (lkStr st "<Module>") -- Name
+          <> ix strW 0 -- Namespace
+          <> ix tdorW 0 -- Extends (null)
+          <> ix fieldW 1 -- FieldList
+          <> ix methodW 1 -- MethodList
           -- AwsumMain
-          <> w32le 0x00100001
-          <> w16le (w16 $ lkStr st "AwsumMain")
-          <> w16le 0
-          <> w16le (tdorTR 1) -- extends System.Object (TypeRef row 1)
-          <> w16le 1 -- FieldList
-          <> w16le 1 -- MethodList
+          <> w32le 0x00100001 -- Flags
+          <> ix strW (lkStr st "AwsumMain") -- Name
+          <> ix strW 0 -- Namespace
+          <> ix tdorW (tdorTR 1) -- Extends System.Object (TypeRef row 1)
+          <> ix fieldW 1 -- FieldList
+          <> ix methodW 1 -- MethodList
 
-      -- MethodDef rows (14 bytes each)
+      -- MethodDef rows
+      mkMDRow rva m =
+        w32le rva -- RVA
+          <> w16le m.mImplFlags
+          <> w16le m.mFlags
+          <> ix strW m.mName -- Name
+          <> ix blobW m.mSig -- Signature
+          <> ix paramW m.mParamList -- ParamList
       methodDefRows = concat [mkMDRow rva m | (rva, m) <- zip methodRVAs methods]
 
-      -- Param rows (6 bytes each)
-      paramRows = concatMap (\(f, s, n) -> w16le f <> w16le s <> w16le n) st.pPM
+      -- Param rows: flags / sequence (fixed 2-byte) + Name (#Strings)
+      paramRows = concatMap (\(f, s, n) -> w16le f <> w16le s <> ix strW n) st.pPM
 
-      -- TypeRef rows (6 bytes each)
-      typeRefRows = concatMap (\(rs, n, ns) -> w16le rs <> w16le n <> w16le ns) st.pTR
+      -- TypeRef rows: ResolutionScope (coded) + Name + Namespace
+      typeRefRows = concatMap (\(rs, n, ns) -> ix rsW rs <> ix strW n <> ix strW ns) st.pTR
 
-      -- MemberRef rows (6 bytes each)
-      memberRefRows = concatMap (\(c, n, s) -> w16le c <> w16le n <> w16le s) st.pMR
+      -- MemberRef rows: Class (coded) + Name + Signature (#Blob)
+      memberRefRows = concatMap (\(c, n, s) -> ix mrpW c <> ix strW n <> ix blobW s) st.pMR
 
-      -- StandAloneSig rows (2 bytes each, table 0x11)
-      standAloneSigRows = if hasSAS then concatMap w16le st.pSAS else []
+      -- StandAloneSig rows (table 0x11): Signature (#Blob)
+      standAloneSigRows = if hasSAS then concatMap (ix blobW) st.pSAS else []
 
-      -- TypeSpec rows (2 bytes each)
-      typeSpecRows = if hasTS then concatMap w16le st.pTS else []
+      -- TypeSpec rows: Signature (#Blob)
+      typeSpecRows = if hasTS then concatMap (ix blobW) st.pTS else []
 
-      -- Assembly row (22 bytes)
+      -- Assembly row
       assemblyRow =
         w32le 0x8004 -- HashAlgId: SHA1
           <> w16le 0
@@ -1653,11 +1730,11 @@ buildTables st methods methodRVAs =
           <> w16le 0
           <> w16le 0 -- Version 0.0.0.0
           <> w32le 0 -- Flags
-          <> w16le 0 -- PublicKey
-          <> w16le (w16 $ lkStr st "AwsumMain")
-          <> w16le 0 -- Culture
+          <> ix blobW 0 -- PublicKey (#Blob)
+          <> ix strW (lkStr st "AwsumMain") -- Name
+          <> ix strW 0 -- Culture
 
-      -- AssemblyRef rows (20 bytes each)
+      -- AssemblyRef rows
       pkt = lkBlob st [0xB0, 0x3F, 0x5F, 0x7F, 0x11, 0xD5, 0x0A, 0x3A]
       mkAR name =
         w16le 9
@@ -1665,10 +1742,10 @@ buildTables st methods methodRVAs =
           <> w16le 0
           <> w16le 0 -- Version 9.0.0.0
           <> w32le 0 -- Flags
-          <> w16le (w16 pkt) -- PublicKeyOrToken
-          <> w16le (w16 $ lkStr st name)
-          <> w16le 0 -- Culture
-          <> w16le 0 -- HashValue
+          <> ix blobW pkt -- PublicKeyOrToken (#Blob)
+          <> ix strW (lkStr st name) -- Name
+          <> ix strW 0 -- Culture
+          <> ix blobW 0 -- HashValue (#Blob)
       assemblyRefRows = mkAR "System.Runtime" <> mkAR "System.Console"
    in hdr
         <> rowCounts
@@ -1683,15 +1760,6 @@ buildTables st methods methodRVAs =
         <> assemblyRow
         <> assemblyRefRows
 
-mkMDRow :: Word32 -> MInfo -> [Word8]
-mkMDRow rva m =
-  w32le rva
-    <> w16le m.mImplFlags
-    <> w16le m.mFlags
-    <> w16le m.mName
-    <> w16le m.mSig
-    <> w16le (w16 m.mParamList)
-
 -- ════════════════════════════════════════════════════════════════════════════
 -- Lookup helpers for serialization
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1701,13 +1769,3 @@ lkStr st t = fromMaybe 0 (Map.lookup t st.pStrC)
 
 lkBlob :: Pool -> [Word8] -> Word32
 lkBlob st sig = fromMaybe 0 (Map.lookup sig st.pBlobC)
-
--- ════════════════════════════════════════════════════════════════════════════
--- Name mangling
--- ════════════════════════════════════════════════════════════════════════════
-
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body

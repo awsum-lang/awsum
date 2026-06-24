@@ -18,6 +18,7 @@ module Awsum.Codegen.JS.Syntax
     BinOp (..),
     UpOp (..),
     renderProgram,
+    renderProgramCompact,
   )
 where
 
@@ -26,6 +27,9 @@ import Data.Text qualified as T
 import Numeric (showHex)
 import Prettyprinter
   ( Doc,
+    LayoutOptions (..),
+    PageWidth (..),
+    SimpleDocStream (..),
     brackets,
     colon,
     concatWith,
@@ -168,10 +172,38 @@ data BinOp
 --   blank line nested inside the IIFE under 'nest') comes out genuinely empty —
 --   so the text needs no post-pass.
 renderProgram :: [JsStmt] -> Text
-renderProgram ss = renderStrict (layoutPretty defaultLayoutOptions doc)
+renderProgram ss = renderStrict (layoutPretty defaultLayoutOptions (programDoc ss))
+
+-- | The whole module as one 'Doc' — shared by the pretty and compact
+--   renderers so they emit the same tokens, differing only in layout.
+programDoc :: [JsStmt] -> Doc ()
+programDoc ss = vsepHard (map stmt ss) <> hardline
+
+-- | Render a module to a single line: the same tokens as 'renderProgram',
+--   but every layout newline (and its indentation) dropped. This is the
+--   artifact @awsum build@ \/ @run@ ship — the runtime never needs it
+--   indented, and a right-nested @case@ chain or long nested data literal
+--   would otherwise carry O(depth) leading spaces per line (the readable
+--   form stays available via @awsum asm -t js@). Laying out at 'Unbounded'
+--   width keeps every @group@ flat (so soft breaks collapse to a space or
+--   nothing), leaving only the forced 'hardline's between statements; those
+--   are dropped here. Safe because every statement is @;@- or @}@-terminated
+--   and no @\/\/@ comments are emitted, so removing a newline never fuses two
+--   tokens.
+renderProgramCompact :: [JsStmt] -> Text
+renderProgramCompact ss =
+  renderStrict (dropLines (layoutPretty unbounded (programDoc ss)))
   where
-    doc :: Doc ()
-    doc = vsepHard (map stmt ss) <> hardline
+    unbounded = defaultLayoutOptions {layoutPageWidth = Unbounded}
+    dropLines :: SimpleDocStream ann -> SimpleDocStream ann
+    dropLines = \case
+      SLine _ rest -> dropLines rest
+      SChar c rest -> SChar c (dropLines rest)
+      SText l t rest -> SText l t (dropLines rest)
+      SAnnPush a rest -> SAnnPush a (dropLines rest)
+      SAnnPop rest -> SAnnPop (dropLines rest)
+      SEmpty -> SEmpty
+      SFail -> SFail
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Statements

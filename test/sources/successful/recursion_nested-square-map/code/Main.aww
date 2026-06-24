@@ -1,0 +1,59 @@
+{- Polymorphic recursion over a non-regular (nested) datatype whose tail
+   grows through `Tuple2` (`Perfect (Tuple2 a a)`): `mapPerfect` recurses
+   at the larger instance, lifting the element function through `Tuple2`
+   each level. The input shape comes from argv, so the map runs at
+   runtime. Prints `more-one-bool-bool`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Perfect a = PMore (Perfect (Tuple2 a a)) | POne a
+
+inject : Bool -> (Bool | Unit)
+inject b = b
+
+bimapTuple2 : (a -> c) -> (b -> d) -> Tuple2 a b -> Tuple2 c d
+bimapTuple2 f g t = case t of
+  Tuple2 a b -> Tuple2 (f a) (g b)
+
+mapPerfect : (a -> b) -> Perfect a -> Perfect b
+mapPerfect f p = case p of
+  POne a -> POne (f a)
+  PMore inner -> PMore (mapPerfect (bimapTuple2 f f) inner)
+
+build : List String -> Perfect Bool
+build args = case headList args of
+  Nothing -> POne True
+  Just _s -> PMore (POne (Tuple2 True False))
+
+tupleStr : (Bool | Unit) -> (Bool | Unit) -> String
+tupleStr l r = case l of
+  (_xl : Bool) -> case r of
+    (_xr : Bool) -> "more-one-bool-bool"
+    (_ur : Unit) -> "more-one-bool-unit"
+  (_ul : Unit) -> case r of
+    (_xr : Bool) -> "more-one-unit-bool"
+    (_ur : Unit) -> "more-one-unit-unit"
+
+describe : Perfect (Bool | Unit) -> String
+describe p = case p of
+  POne bu -> case bu of
+    (_x : Bool) -> "one-bool"
+    (_u : Unit) -> "one-unit"
+  PMore inner -> case inner of
+    POne t -> case t of
+      Tuple2 l r -> tupleStr l r
+    PMore _deeper -> "more-more"
+
+run2 : List String -> IO Never Unit
+run2 args = IO.Stdout.print (describe (mapPerfect inject (build args)))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

@@ -308,7 +308,7 @@ define internal ptr @v_runTest() {
   %t5 = call ptr @v_block()
   %t6 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t5, ptr %t6
-  %t7 = call ptr @v__scc__df_andThenEither_0__lam_13_build(ptr %t0)
+  %t7 = call ptr @v_$scc$$df$andThenEither$0__$lam$13__build(ptr %t0)
   %t8 = getelementptr ptr, ptr %t7, i32 0
   %t9 = load ptr, ptr %t8
   %t10 = ptrtoint ptr %t9 to i64
@@ -395,10 +395,10 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__scc__df_andThenEither_0__lam_13_build(ptr %v__args) {
+define internal ptr @v_$scc$$df$andThenEither$0__$lam$13__build(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -464,6 +464,7 @@ tco.case.arm.10.35:
   %t43 = ptrtoint ptr %t42 to i64
   switch i64 %t43, label %tco.case.default.44 [ i64 3, label %tco.case.arm.3.45 i64 4, label %tco.case.arm.4.50 ]
 tco.case.arm.3.45:
+  call void @__free_recursive(ptr %t40)
   %t46 = call ptr @__alloc(i64 16, i32 1)
   %t47 = inttoptr i64 4 to ptr
   %t48 = getelementptr ptr, ptr %t46, i32 0
@@ -471,7 +472,6 @@ tco.case.arm.3.45:
   call void @__inc_ref(ptr %t39)
   %t49 = getelementptr ptr, ptr %t46, i32 1
   store ptr %t39, ptr %t49
-  call void @__free_recursive(ptr %t40)
   call void @__free_recursive(ptr %t39)
   call void @__free_recursive(ptr %t37)
   call void @__free_recursive(ptr %t4)
@@ -481,6 +481,7 @@ tco.case.arm.4.50:
   %t51 = getelementptr ptr, ptr %t40, i32 1
   %t52 = load ptr, ptr %t51
   call void @__inc_ref(ptr %t52)
+  call void @__free_recursive(ptr %t40)
   call void @__inc_ref(ptr %t39)
   call void @__inc_ref(ptr %t39)
   %t53 = call ptr @__concat(ptr %t39, ptr %t39)
@@ -498,7 +499,6 @@ tco.case.arm.4.50:
   call void @__inc_ref(ptr %t52)
   %t59 = getelementptr ptr, ptr %t4, i32 2
   store ptr %t52, ptr %t59
-  call void @__free_recursive(ptr %t40)
   call void @__free_recursive(ptr %t52)
   call void @__free_recursive(ptr %t39)
   call void @__free_recursive(ptr %t37)

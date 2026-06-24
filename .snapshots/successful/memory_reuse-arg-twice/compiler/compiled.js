@@ -20,7 +20,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -74,7 +74,7 @@
     }
   };
 
-  const v__inl37_xs = v_mk(3 | 0, [24]);
+  const v_$inl37$xs = v_mk(3 | 0, [24]);
   const main = [
     7,
     (s => {
@@ -83,8 +83,8 @@
           return "L";
         }
         case 4: {
-          const v__inl36_z = s[1];
-          return v__inl36_z;
+          const v_$inl36$z = s[1];
+          return v_$inl36$z;
         }
       }
     })(
@@ -95,36 +95,36 @@
               return "E";
             }
             case 25: {
-              const v__inl28_r = s[2];
-              switch (v__inl28_r[0]) {
+              const v_$inl28$r = s[2];
+              switch (v_$inl28$r[0]) {
                 case 24: {
                   return "e";
                 }
                 case 25: {
-                  return v__inl28_r[1];
+                  return v_$inl28$r[1];
                 }
               }
             }
           }
-        })(v_revInto2(v__inl37_xs, [24])),
+        })(v_revInto2(v_$inl37$xs, [24])),
         (s => {
           switch (s[0]) {
             case 24: {
               return "E";
             }
             case 25: {
-              const v__inl32_r = s[2];
-              switch (v__inl32_r[0]) {
+              const v_$inl32$r = s[2];
+              switch (v_$inl32$r[0]) {
                 case 24: {
                   return "e";
                 }
                 case 25: {
-                  return v__inl32_r[1];
+                  return v_$inl32$r[1];
                 }
               }
             }
           }
-        })(v__inl37_xs)
+        })(v_$inl37$xs)
       )
     ),
     [5, [0]]

@@ -227,7 +227,7 @@ define internal ptr @v_result() {
   %t14 = inttoptr i64 12 to ptr
   %t15 = getelementptr ptr, ptr %t13, i32 0
   store ptr %t14, ptr %t15
-  %t16 = call ptr @v__cps__scc__apply1__rowmono_0_bindEither(ptr %t0, ptr %t13)
+  %t16 = call ptr @v_$cps$$scc$$apply1__$rowmono$0$bindEither(ptr %t0, ptr %t13)
   ret ptr %t16
 }
 
@@ -295,12 +295,12 @@ case.join.8:
   ret ptr %t0
 }
 
-define internal ptr @v__cps__scc__apply1__rowmono_0_bindEither(ptr %v__args, ptr %v__k) {
+define internal ptr @v_$cps$$scc$$apply1__$rowmono$0$bindEither(ptr %v_$args, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -347,7 +347,7 @@ tco.case.arm.9.28:
   call void @__inc_ref(ptr %t15)
   %t32 = getelementptr ptr, ptr %t29, i32 1
   store ptr %t15, ptr %t32
-  %t33 = call ptr @v__apply__scc__apply1__rowmono_0_bindEither(ptr %t6, ptr %t29)
+  %t33 = call ptr @v_$apply$$scc$$apply1__$rowmono$0$bindEither(ptr %t6, ptr %t29)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
@@ -384,7 +384,7 @@ tco.case.arm.3.43:
   store ptr %t45, ptr %t52
   %t53 = getelementptr ptr, ptr %t46, i32 1
   store ptr %t49, ptr %t53
-  %t54 = call ptr @v__apply__scc__apply1__rowmono_0_bindEither(ptr %t6, ptr %t46)
+  %t54 = call ptr @v_$apply$$scc$$apply1__$rowmono$0$bindEither(ptr %t6, ptr %t46)
   call void @__free_recursive(ptr %t45)
   call void @__free_recursive(ptr %t36)
   call void @__free_recursive(ptr %t5)
@@ -451,12 +451,12 @@ tco.exit.1:
   ret ptr %t82
 }
 
-define internal ptr @v__apply__scc__apply1__rowmono_0_bindEither(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$scc$$apply1__$rowmono$0$bindEither(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

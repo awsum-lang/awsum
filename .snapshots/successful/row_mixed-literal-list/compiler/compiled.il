@@ -172,7 +172,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_sumRow(object,object) cil managed
+  .method private hidebysig static object v_$cps$sumRow(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -189,7 +189,7 @@
     ldarg.1
     ldc.i4.0
     box [System.Runtime]System.Int32
-    call object AwsumMain::v__apply_sumRow(object, object)
+    call object AwsumMain::v_$apply$sumRow(object, object)
     ret
   IL_c0:
     pop
@@ -246,7 +246,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_sumRow(object,object) cil managed
+  .method private hidebysig static object v_$apply$sumRow(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -488,7 +488,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__cps_sumRow(object, object)
+    call object AwsumMain::v_$cps$sumRow(object, object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0

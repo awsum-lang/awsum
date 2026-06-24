@@ -122,8 +122,18 @@ planMerge baseTag declMap members = do
       names = [n | (n, _, _) <- sorted]
       memberSet = Set.fromList names
       mergedName = "$scc$" <> T.intercalate "_" names
+      -- The pack parameter must avoid every member's parameter name:
+      -- those become the arm binders verbatim (see below). On the
+      -- pipeline's second Scc pass a member produced by the first pass
+      -- already carries the pack name, so a fixed literal would shadow
+      -- it inside the merged 'case' and break the no-shadowing invariant
+      -- codegen relies on.
       argsParam :: Name
-      argsParam = "$args"
+      argsParam =
+        freshArgsParam
+          ( Set.fromList (concat [ps | (_, ps, _) <- sorted])
+              <> foldMap (\(_, _, b) -> freeVars b) sorted
+          )
       tagOf :: Int -> Int
       tagOf i = baseTag + i
       alts =
@@ -148,6 +158,18 @@ planMerge baseTag declMap members = do
     asFun = \case
       CFunDef n ps b -> Just (n, ps, b)
       CValDef {} -> Nothing
+
+-- | First of @$args@, @$args$1@, @$args$2@, … not already used in the
+-- members being merged. A source identifier cannot contain @$@, so no
+-- candidate clashes with a user name; the bump only fires when a member
+-- already carries the pack name — i.e. on the pipeline's second Scc pass
+-- over the first pass's output.
+freshArgsParam :: Set Name -> Name
+freshArgsParam used = go (0 :: Int)
+  where
+    go n =
+      let candidate = if n == 0 then "$args" else "$args$" <> show n
+       in if candidate `Set.member` used then go (n + 1) else candidate
 
 -- | Redirect every direct call to a fellow SCC member into a tail call
 -- on the merged function with args packed into a tagged 'CCon'.

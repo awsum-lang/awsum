@@ -93,7 +93,7 @@ L_tarm1:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__scc_parseBinary_parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$parseBinary__parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   aastore
@@ -121,7 +121,7 @@ L_tarm1:
 .end method
 
 
-.method static v__scc_parseBinary_parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$parseBinary__parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 6
 L_tco2:

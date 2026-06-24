@@ -18,7 +18,7 @@
   (data (i32.const 168) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 203) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00,")
   (table 9 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__df_map_0 $v__apply__df_map_0 $v__cps__df_handleErrorIO_1 $v__apply__df_handleErrorIO_1 $v__cps__df_andThenIO_5 $v__apply__df_andThenIO_5 $v__cps__scc_show_showCons $v__apply__scc_show_showCons)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$map$0 $v_$apply$$df$map$0 $v_$cps$$df$handleErrorIO$1 $v_$apply$$df$handleErrorIO$1 $v_$cps$$df$andThenIO$5 $v_$apply$$df$andThenIO$5 $v_$cps$$scc$show__showCons $v_$apply$$scc$show__showCons)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -730,7 +730,7 @@
     local.get 0
     call 18)
 
-  (func $v__cps__df_map_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$map$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -838,7 +838,7 @@
       end
     end)
 
-  (func $v__apply__df_map_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$map$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -907,7 +907,7 @@
       end
     end)
 
-  (func $v__cps__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1066,7 +1066,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1132,7 +1132,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1295,7 +1295,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1361,7 +1361,7 @@
       end
     end)
 
-  (func $v__cps__scc_show_showCons (param i32 i32) (result i32)
+  (func $v_$cps$$scc$show__showCons (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1563,7 +1563,7 @@
       end
     end)
 
-  (func $v__apply__scc_show_showCons (param i32 i32) (result i32)
+  (func $v_$apply$$scc$show__showCons (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1631,6 +1631,8 @@
             local.set 6
             local.get 6
             call 10
+            local.get 5
+            call 11
             local.get 2
             local.set 7
             local.get 1
@@ -1672,8 +1674,6 @@
               call 11
             end
             local.set 8
-            local.get 5
-            call 11
             local.get 0
             call 11
             local.get 6
@@ -1691,6 +1691,8 @@
             local.set 6
             local.get 6
             call 10
+            local.get 5
+            call 11
             local.get 2
             local.set 7
             local.get 6
@@ -1703,8 +1705,6 @@
             local.get 9
             call 7
             local.set 8
-            local.get 5
-            call 11
             local.get 1
             call 11
             local.get 0

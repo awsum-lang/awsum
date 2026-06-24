@@ -1,0 +1,37 @@
+{- A row-widening function over a free type variable (`widen : a -> (a | Unit)`)
+   passed as a value to a higher-order function, then applied to a value read
+   from argv at runtime. The widened `Bool` flows into the `(Bool | Unit)` row
+   and matches back its `Bool` alternative. With no arguments it prints `T`. -}
+
+import IO.Stdout
+import IO.Args
+
+widen : a -> (a | Unit)
+widen x = x
+
+applyWiden : (a -> (a | Unit)) -> a -> (a | Unit)
+applyWiden f x = f x
+
+describe : (Bool | Unit) -> String
+describe r = case r of
+  (b : Bool) -> case b of
+    True -> "T"
+    False -> "F"
+  (_u : Unit) -> "U"
+
+run2 : List String -> IO Never Unit
+run2 args =
+  let b = case headList args of
+        Nothing -> True
+        Just _s -> False
+   in IO.Stdout.print (describe (applyWiden widen b))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

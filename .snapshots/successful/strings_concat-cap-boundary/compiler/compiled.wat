@@ -18,7 +18,7 @@
   (data (i32.const 587) "\00\00\00\00\00\00\00\00\00\00\00\00\1c\00\00\00\1c\00\00\00FAIL: cap + 1 returned Right")
   (data (i32.const 635) "\00\00\00\00\00\00\00\00\00\00\00\00\27\00\00\00\27\00\00\00FAIL: built string length is not at cap")
   (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v__scc__df_andThenEither_0__lam_13_build)
+  (elem (i32.const 0) $v_runIO $v_$scc$$df$andThenEither$0__$lam$13__build)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -801,7 +801,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__scc__df_andThenEither_0__lam_13_build (param i32) (result i32)
+  (func $v_$scc$$df$andThenEither$0__$lam$13__build (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -921,9 +921,9 @@
           i32.const 3
           i32.eq
           if (result i32)
+            local.get 3
+            call 15
             block (result i32)
-              local.get 3
-              call 15
               i32.const 8
               i32.const 1
               call 13
@@ -953,6 +953,8 @@
             local.set 4
             local.get 4
             call 14
+            local.get 3
+            call 15
             local.get 0
             i32.load offset=4
             call 15
@@ -981,8 +983,6 @@
             call 14
             local.get 0
             local.set 5
-            local.get 3
-            call 15
             local.get 4
             call 15
             local.get 2

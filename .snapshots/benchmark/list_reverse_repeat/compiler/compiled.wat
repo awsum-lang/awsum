@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_repeat $v__apply_repeat $v_revInto $v_revN $v_sumList)
+  (elem (i32.const 0) $v_runIO $v_$cps$repeat $v_$apply$repeat $v_revInto $v_revN $v_sumList)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -768,7 +768,7 @@
     i32.const 0
     call 8)
 
-  (func $v__cps_repeat (param i32 i32 i32) (result i32)
+  (func $v_$cps$repeat (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -789,9 +789,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 3
+        call 15
         block (result i32)
-          local.get 3
-          call 15
           local.get 2
           local.tee 4
           call 14
@@ -815,6 +815,8 @@
           local.get 4
         end
       else
+        local.get 3
+        call 15
         local.get 0
         local.tee 4
         call 14
@@ -826,11 +828,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 4
+          call 15
           block (result i32)
-            local.get 3
-            call 15
-            local.get 4
-            call 15
             local.get 2
             local.tee 6
             call 14
@@ -859,6 +859,8 @@
           local.set 5
           local.get 5
           call 14
+          local.get 4
+          call 15
           local.get 5
           local.set 6
           local.get 1
@@ -886,10 +888,6 @@
           local.set 8
           local.get 7
           call 14
-          local.get 3
-          call 15
-          local.get 4
-          call 15
           local.get 2
           call 15
           local.get 1
@@ -907,7 +905,7 @@
       end
     end)
 
-  (func $v__apply_repeat (param i32 i32) (result i32)
+  (func $v_$apply$repeat (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1082,9 +1080,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 15
         block (result i32)
-          local.get 2
-          call 15
           local.get 1
           local.set 3
           local.get 0
@@ -1092,6 +1090,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 15
         local.get 0
         local.tee 3
         call 14
@@ -1103,11 +1103,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 3
+          call 15
           block (result i32)
-            local.get 2
-            call 15
-            local.get 3
-            call 15
             local.get 1
             local.set 5
             local.get 0
@@ -1120,6 +1118,8 @@
           local.set 4
           local.get 4
           call 14
+          local.get 3
+          call 15
           local.get 4
           local.set 5
           i32.const 4
@@ -1136,10 +1136,6 @@
           local.get 7
           call 21
           local.set 6
-          local.get 2
-          call 15
-          local.get 3
-          call 15
           local.get 1
           call 15
           local.get 0
@@ -1191,9 +1187,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 4
+          call 15
           block (result i32)
-            local.get 4
-            call 15
             local.get 1
             local.set 6
             local.get 0
@@ -1206,6 +1202,8 @@
           local.set 5
           local.get 5
           call 14
+          local.get 4
+          call 15
           local.get 0
           i32.load offset=8
           local.tee 8
@@ -1214,8 +1212,6 @@
           local.set 6
           local.get 5
           local.set 7
-          local.get 4
-          call 15
           local.get 1
           call 15
           local.get 0

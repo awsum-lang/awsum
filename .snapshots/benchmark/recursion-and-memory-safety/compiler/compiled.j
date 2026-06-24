@@ -432,7 +432,7 @@ L_arm12:
   iconst_2
   aload 6
   aastore
-  invokestatic AwsumMain/v__scc_deepestLeftA_deepestLeftB_deepestLeftC(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$deepestLeftA__deepestLeftB__deepestLeftC(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
 L_join11:
 L_join9:
@@ -735,7 +735,7 @@ L_tarm21:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__scc__apply_mirror__cps_mirror(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply$mirror__$cps$mirror(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 6
   astore_1
@@ -744,7 +744,7 @@ L_tarm21:
 .end method
 
 
-.method static v__scc_deepestLeftA_deepestLeftB_deepestLeftC(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$deepestLeftA__deepestLeftB__deepestLeftC(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 5
 L_tco22:
@@ -937,7 +937,7 @@ L_tarm27:
 .end method
 
 
-.method static v__scc__apply_mirror__cps_mirror(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$apply$mirror__$cps$mirror(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 8
 L_tco28:

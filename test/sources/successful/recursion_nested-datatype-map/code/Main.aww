@@ -1,0 +1,55 @@
+{- Polymorphic recursion over a non-regular (nested) datatype: `mapNest`
+   recurses at a structurally larger instance (`Nest (Maybe a)`), lifting
+   the element function through `Maybe` each level. The input shape comes
+   from argv, so the map runs at runtime rather than being folded away.
+   Prints `deeper-base-just-bool`: a `Bool` leaf, mapped and row-injected
+   into `(Bool | Unit)`, reached through one `Deeper` level. -}
+
+import IO.Stdout
+import IO.Args
+
+type Nest a = Deeper (Nest (Maybe a)) | Base a
+
+mapMaybe2 : (a -> b) -> Maybe a -> Maybe b
+mapMaybe2 f m = case m of
+  Nothing -> Nothing
+  Just a -> Just (f a)
+
+inject : Bool -> (Bool | Unit)
+inject b = b
+
+mapNest : (a -> b) -> Nest a -> Nest b
+mapNest f n = case n of
+  Base a -> Base (f a)
+  Deeper inner -> Deeper (mapNest (mapMaybe2 f) inner)
+
+build : List String -> Nest Bool
+build args = case headList args of
+  Nothing -> Base True
+  Just _s -> Deeper (Base (Just True))
+
+describe : Nest (Bool | Unit) -> String
+describe n = case n of
+  Base bu -> case bu of
+    (_x : Bool) -> "base-bool"
+    (_u : Unit) -> "base-unit"
+  Deeper inner -> case inner of
+    Base mbu -> case mbu of
+      Nothing -> "deeper-base-nothing"
+      Just bu -> case bu of
+        (_x : Bool) -> "deeper-base-just-bool"
+        (_u : Unit) -> "deeper-base-just-unit"
+    Deeper _d -> "deeper-deeper"
+
+run2 : List String -> IO Never Unit
+run2 args = IO.Stdout.print (describe (mapNest inject (build args)))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

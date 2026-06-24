@@ -1,0 +1,17 @@
+{- An uninhabited recursive type (`Loop = MkLoop Loop` has no non-recursive
+   base, so no finite value can be built) used as a constructor field excuses
+   that constructor from `case` coverage, exactly as a `Never` field does. The
+   `case` need not handle `Wrap`, and the program prints `other`. -}
+
+import IO.Stdout
+
+type Loop = MkLoop Loop
+
+type Container = Wrap Loop | Other
+
+describe : Container -> String
+describe x = case x of
+  Other -> "other"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe Other)

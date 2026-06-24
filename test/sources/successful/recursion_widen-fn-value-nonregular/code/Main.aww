@@ -1,0 +1,26 @@
+{- A row-widening function over a non-regular recursive type (`wNest : Nest a ->
+   Nest (a | Unit)`, where `Nest a = Deeper (Nest (Maybe a)) | Base a`) passed as
+   a value to a higher-order function. The widened `Base True` matches back its
+   `Bool` alternative, printing `T`. -}
+
+import IO.Stdout
+
+type Nest a = Deeper (Nest (Maybe a)) | Base a
+
+wNest : Nest a -> Nest (a | Unit)
+wNest x = x
+
+applyWN : (Nest a -> Nest (a | Unit)) -> Nest a -> Nest (a | Unit)
+applyWN f x = f x
+
+describe : Nest (Bool | Unit) -> String
+describe n = case n of
+  Deeper _d -> "deeper"
+  Base h -> case h of
+    (b : Bool) -> case b of
+      True -> "T"
+      False -> "F"
+    (_u : Unit) -> "U"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (applyWN wNest (Base (True : Bool))))

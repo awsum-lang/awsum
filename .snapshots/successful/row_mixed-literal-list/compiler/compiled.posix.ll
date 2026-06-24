@@ -234,12 +234,12 @@ tco.exit.1:
   ret ptr %t18
 }
 
-define internal ptr @v__cps_sumRow(ptr %v_xs, ptr %v__k) {
+define internal ptr @v_$cps$sumRow(ptr %v_xs, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_xs, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -253,7 +253,7 @@ tco.case.arm.13.11:
   call void @__inc_ref(ptr %t6)
   %t12 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t12
-  %t13 = call ptr @v__apply_sumRow(ptr %t6, ptr %t12)
+  %t13 = call ptr @v_$apply$sumRow(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t13, ptr %t2
@@ -331,12 +331,12 @@ tco.exit.1:
   ret ptr %t49
 }
 
-define internal ptr @v__apply_sumRow(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$sumRow(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -364,9 +364,9 @@ tco.case.arm.16.12:
   %t20 = ptrtoint ptr %t19 to i64
   switch i64 %t20, label %tco.case.default.21 [ i64 3, label %tco.case.arm.3.22 i64 4, label %tco.case.arm.4.24 ]
 tco.case.arm.3.22:
+  call void @__free_recursive(ptr %t17)
   %t23 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t23
-  call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
   store ptr %t14, ptr %t3
@@ -485,7 +485,7 @@ define internal ptr @v_main() {
   %t5 = inttoptr i64 15 to ptr
   %t6 = getelementptr ptr, ptr %t4, i32 0
   store ptr %t5, ptr %t6
-  %t7 = call ptr @v__cps_sumRow(ptr %t3, ptr %t4)
+  %t7 = call ptr @v_$cps$sumRow(ptr %t3, ptr %t4)
   %t8 = call ptr @__showInt32(ptr %t7)
   %t9 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t8, ptr %t9

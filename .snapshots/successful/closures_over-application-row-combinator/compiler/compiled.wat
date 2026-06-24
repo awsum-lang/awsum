@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_A")
   (data (i32.const 109) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00ERR_B")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__scc__apply1__rowmono_0_bindEither $v__apply__scc__apply1__rowmono_0_bindEither)
+  (elem (i32.const 0) $v_runIO $v_$cps$$scc$$apply1__$rowmono$0$bindEither $v_$apply$$scc$$apply1__$rowmono$0$bindEither)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -732,7 +732,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__cps__scc__apply1__rowmono_0_bindEither (param i32 i32) (result i32)
+  (func $v_$cps$$scc$$apply1__$rowmono$0$bindEither (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -966,7 +966,7 @@
       end
     end)
 
-  (func $v__apply__scc__apply1__rowmono_0_bindEither (param i32 i32) (result i32)
+  (func $v_$apply$$scc$$apply1__$rowmono$0$bindEither (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

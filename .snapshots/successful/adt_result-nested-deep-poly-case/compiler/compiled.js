@@ -16,7 +16,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -24,36 +24,36 @@
     }
   };
 
-  const v__inl3_r = [24, [24, [24, "1"]]];
+  const v_$inl3$r = [24, [24, [24, "1"]]];
   const v_res = (s => {
     switch (s[0]) {
       case 3: {
-        const v__do_e_12 = s[1];
-        return [3, v__do_e_12];
+        const v_$do__e__12 = s[1];
+        return [3, v_$do__e__12];
       }
       case 4: {
         const v_s0 = s[1];
         {
-          const v__inl6_r = [24, [24, [25, "2"]]];
+          const v_$inl6$r = [24, [24, [25, "2"]]];
           const __s = __concat(
             v_s0,
             (s => {
               switch (s[0]) {
                 case 24: {
-                  const v__inl4_inner2 = s[1];
-                  return v__inl4_inner2[1];
+                  const v_$inl4$inner2 = s[1];
+                  return v_$inl4$inner2[1];
                 }
                 case 25: {
-                  const v__inl5_inner2 = s[1];
-                  return v__inl5_inner2[1];
+                  const v_$inl5$inner2 = s[1];
+                  return v_$inl5$inner2[1];
                 }
               }
-            })(v__inl6_r[1])
+            })(v_$inl6$r[1])
           );
           switch (__s[0]) {
             case 3: {
-              const v__do_e_11 = __s[1];
-              return [3, v__do_e_11];
+              const v_$do__e__11 = __s[1];
+              return [3, v_$do__e__11];
             }
             case 4: {
               const v_s1 = __s[1];
@@ -61,32 +61,32 @@
                 const __s = __concat(v_s1, ",");
                 switch (__s[0]) {
                   case 3: {
-                    const v__do_e_10 = __s[1];
-                    return [3, v__do_e_10];
+                    const v_$do__e__10 = __s[1];
+                    return [3, v_$do__e__10];
                   }
                   case 4: {
                     const v_s2 = __s[1];
                     {
-                      const v__inl9_r = [24, [25, [24, "3"]]];
+                      const v_$inl9$r = [24, [25, [24, "3"]]];
                       const __s = __concat(
                         v_s2,
                         (s => {
                           switch (s[0]) {
                             case 24: {
-                              const v__inl7_inner2 = s[1];
-                              return v__inl7_inner2[1];
+                              const v_$inl7$inner2 = s[1];
+                              return v_$inl7$inner2[1];
                             }
                             case 25: {
-                              const v__inl8_inner2 = s[1];
-                              return v__inl8_inner2[1];
+                              const v_$inl8$inner2 = s[1];
+                              return v_$inl8$inner2[1];
                             }
                           }
-                        })(v__inl9_r[1])
+                        })(v_$inl9$r[1])
                       );
                       switch (__s[0]) {
                         case 3: {
-                          const v__do_e_9 = __s[1];
-                          return [3, v__do_e_9];
+                          const v_$do__e__9 = __s[1];
+                          return [3, v_$do__e__9];
                         }
                         case 4: {
                           const v_s3 = __s[1];
@@ -94,32 +94,32 @@
                             const __s = __concat(v_s3, ",");
                             switch (__s[0]) {
                               case 3: {
-                                const v__do_e_8 = __s[1];
-                                return [3, v__do_e_8];
+                                const v_$do__e__8 = __s[1];
+                                return [3, v_$do__e__8];
                               }
                               case 4: {
                                 const v_s4 = __s[1];
                                 {
-                                  const v__inl12_r = [24, [25, [25, "4"]]];
+                                  const v_$inl12$r = [24, [25, [25, "4"]]];
                                   const __s = __concat(
                                     v_s4,
                                     (s => {
                                       switch (s[0]) {
                                         case 24: {
-                                          const v__inl10_inner2 = s[1];
-                                          return v__inl10_inner2[1];
+                                          const v_$inl10$inner2 = s[1];
+                                          return v_$inl10$inner2[1];
                                         }
                                         case 25: {
-                                          const v__inl11_inner2 = s[1];
-                                          return v__inl11_inner2[1];
+                                          const v_$inl11$inner2 = s[1];
+                                          return v_$inl11$inner2[1];
                                         }
                                       }
-                                    })(v__inl12_r[1])
+                                    })(v_$inl12$r[1])
                                   );
                                   switch (__s[0]) {
                                     case 3: {
-                                      const v__do_e_7 = __s[1];
-                                      return [3, v__do_e_7];
+                                      const v_$do__e__7 = __s[1];
+                                      return [3, v_$do__e__7];
                                     }
                                     case 4: {
                                       const v_s5 = __s[1];
@@ -127,13 +127,13 @@
                                         const __s = __concat(v_s5, ",");
                                         switch (__s[0]) {
                                           case 3: {
-                                            const v__do_e_6 = __s[1];
-                                            return [3, v__do_e_6];
+                                            const v_$do__e__6 = __s[1];
+                                            return [3, v_$do__e__6];
                                           }
                                           case 4: {
                                             const v_s6 = __s[1];
                                             {
-                                              const v__inl15_r = [
+                                              const v_$inl15$r = [
                                                 25,
                                                 [24, [24, "5"]]
                                               ];
@@ -142,20 +142,20 @@
                                                 (s => {
                                                   switch (s[0]) {
                                                     case 24: {
-                                                      const v__inl13_inner2 = s[1];
-                                                      return v__inl13_inner2[1];
+                                                      const v_$inl13$inner2 = s[1];
+                                                      return v_$inl13$inner2[1];
                                                     }
                                                     case 25: {
-                                                      const v__inl14_inner2 = s[1];
-                                                      return v__inl14_inner2[1];
+                                                      const v_$inl14$inner2 = s[1];
+                                                      return v_$inl14$inner2[1];
                                                     }
                                                   }
-                                                })(v__inl15_r[1])
+                                                })(v_$inl15$r[1])
                                               );
                                               switch (__s[0]) {
                                                 case 3: {
-                                                  const v__do_e_5 = __s[1];
-                                                  return [3, v__do_e_5];
+                                                  const v_$do__e__5 = __s[1];
+                                                  return [3, v_$do__e__5];
                                                 }
                                                 case 4: {
                                                   const v_s7 = __s[1];
@@ -166,13 +166,13 @@
                                                     );
                                                     switch (__s[0]) {
                                                       case 3: {
-                                                        const v__do_e_4 = __s[1];
-                                                        return [3, v__do_e_4];
+                                                        const v_$do__e__4 = __s[1];
+                                                        return [3, v_$do__e__4];
                                                       }
                                                       case 4: {
                                                         const v_s8 = __s[1];
                                                         {
-                                                          const v__inl18_r = [
+                                                          const v_$inl18$r = [
                                                             25,
                                                             [24, [25, "6"]]
                                                           ];
@@ -181,22 +181,22 @@
                                                             (s => {
                                                               switch (s[0]) {
                                                                 case 24: {
-                                                                  const v__inl16_inner2 = s[1];
-                                                                  return v__inl16_inner2[1];
+                                                                  const v_$inl16$inner2 = s[1];
+                                                                  return v_$inl16$inner2[1];
                                                                 }
                                                                 case 25: {
-                                                                  const v__inl17_inner2 = s[1];
-                                                                  return v__inl17_inner2[1];
+                                                                  const v_$inl17$inner2 = s[1];
+                                                                  return v_$inl17$inner2[1];
                                                                 }
                                                               }
-                                                            })(v__inl18_r[1])
+                                                            })(v_$inl18$r[1])
                                                           );
                                                           switch (__s[0]) {
                                                             case 3: {
-                                                              const v__do_e_3 = __s[1];
+                                                              const v_$do__e__3 = __s[1];
                                                               return [
                                                                 3,
-                                                                v__do_e_3
+                                                                v_$do__e__3
                                                               ];
                                                             }
                                                             case 4: {
@@ -208,16 +208,16 @@
                                                                 );
                                                                 switch (__s[0]) {
                                                                   case 3: {
-                                                                    const v__do_e_2 = __s[1];
+                                                                    const v_$do__e__2 = __s[1];
                                                                     return [
                                                                       3,
-                                                                      v__do_e_2
+                                                                      v_$do__e__2
                                                                     ];
                                                                   }
                                                                   case 4: {
                                                                     const v_s10 = __s[1];
                                                                     {
-                                                                      const v__inl21_r = [
+                                                                      const v_$inl21$r = [
                                                                         25,
                                                                         [
                                                                           25,
@@ -232,24 +232,24 @@
                                                                         (s => {
                                                                           switch (s[0]) {
                                                                             case 24: {
-                                                                              const v__inl19_inner2 = s[1];
-                                                                              return v__inl19_inner2[1];
+                                                                              const v_$inl19$inner2 = s[1];
+                                                                              return v_$inl19$inner2[1];
                                                                             }
                                                                             case 25: {
-                                                                              const v__inl20_inner2 = s[1];
-                                                                              return v__inl20_inner2[1];
+                                                                              const v_$inl20$inner2 = s[1];
+                                                                              return v_$inl20$inner2[1];
                                                                             }
                                                                           }
                                                                         })(
-                                                                          v__inl21_r[1]
+                                                                          v_$inl21$r[1]
                                                                         )
                                                                       );
                                                                       switch (__s[0]) {
                                                                         case 3: {
-                                                                          const v__do_e_1 = __s[1];
+                                                                          const v_$do__e__1 = __s[1];
                                                                           return [
                                                                             3,
-                                                                            v__do_e_1
+                                                                            v_$do__e__1
                                                                           ];
                                                                         }
                                                                         case 4: {
@@ -261,15 +261,15 @@
                                                                             );
                                                                             switch (__s[0]) {
                                                                               case 3: {
-                                                                                const v__do_e_0 = __s[1];
+                                                                                const v_$do__e__0 = __s[1];
                                                                                 return [
                                                                                   3,
-                                                                                  v__do_e_0
+                                                                                  v_$do__e__0
                                                                                 ];
                                                                               }
                                                                               case 4: {
                                                                                 const v_s12 = __s[1];
-                                                                                const v__inl24_r = [
+                                                                                const v_$inl24$r = [
                                                                                   25,
                                                                                   [
                                                                                     25,
@@ -284,16 +284,16 @@
                                                                                   (s => {
                                                                                     switch (s[0]) {
                                                                                       case 24: {
-                                                                                        const v__inl22_inner2 = s[1];
-                                                                                        return v__inl22_inner2[1];
+                                                                                        const v_$inl22$inner2 = s[1];
+                                                                                        return v_$inl22$inner2[1];
                                                                                       }
                                                                                       case 25: {
-                                                                                        const v__inl23_inner2 = s[1];
-                                                                                        return v__inl23_inner2[1];
+                                                                                        const v_$inl23$inner2 = s[1];
+                                                                                        return v_$inl23$inner2[1];
                                                                                       }
                                                                                     }
                                                                                   })(
-                                                                                    v__inl24_r[1]
+                                                                                    v_$inl24$r[1]
                                                                                   )
                                                                                 );
                                                                               }
@@ -339,51 +339,51 @@
       (s => {
         switch (s[0]) {
           case 24: {
-            const v__inl1_inner2 = s[1];
-            return v__inl1_inner2[1];
+            const v_$inl1$inner2 = s[1];
+            return v_$inl1$inner2[1];
           }
           case 25: {
-            const v__inl2_inner2 = s[1];
-            return v__inl2_inner2[1];
+            const v_$inl2$inner2 = s[1];
+            return v_$inl2$inner2[1];
           }
         }
-      })(v__inl3_r[1]),
+      })(v_$inl3$r[1]),
       ","
     )
   );
 
-  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+  const v_$apply$$df$handleErrorIO$0 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 26: {
-          return v__x;
+          return v_$x;
         }
         case 27: {
-          const v__pk_27 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_27;
+          const v_$pk__27 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__27;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+  const v_$cps$$df$handleErrorIO$0 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df_handleErrorIO_0(v__k, v_io);
+          return v_$apply$$df$handleErrorIO$0(v_$k, v_io);
         }
         case 6: {
-          return v__apply__df_handleErrorIO_0(
-            v__k,
+          return v_$apply$$df$handleErrorIO$0(
+            v_$k,
             [7, "STRING_TOO_LONG", [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [27, v__k, v_s];
+          v_$k = [27, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -391,35 +391,35 @@
     }
   };
 
-  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$4 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 28: {
-          return v__x;
+          return v_$x;
         }
         case 29: {
-          const v__pk_29 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_29;
+          const v_$pk__29 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__29;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$4 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df_andThenIO_4(v__k, [7, v_io[1], [5, [0]]]);
+          return v_$apply$$df$andThenIO$4(v_$k, [7, v_io[1], [5, [0]]]);
         }
         case 6: {
-          return v__apply__df_andThenIO_4(v__k, v_io);
+          return v_$apply$$df$andThenIO$4(v_$k, v_io);
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [29, v__k, v_s];
+          v_$k = [29, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -427,19 +427,19 @@
     }
   };
 
-  const v__inl27_x = v_res;
-  const main = v__cps__df_handleErrorIO_0(
-    v__cps__df_andThenIO_4(
+  const v_$inl27$x = v_res;
+  const main = v_$cps$$df$handleErrorIO$0(
+    v_$cps$$df$andThenIO$4(
       (s => {
         switch (s[0]) {
           case 3: {
-            return [6, v__inl27_x[1]];
+            return [6, v_$inl27$x[1]];
           }
           case 4: {
-            return [5, v__inl27_x[1]];
+            return [5, v_$inl27$x[1]];
           }
         }
-      })(v__inl27_x),
+      })(v_$inl27$x),
       [28]
     ),
     [26]

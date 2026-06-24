@@ -17,7 +17,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -25,24 +25,24 @@
     }
   };
 
-  const v__inl5_s = "abc";
+  const v_$inl5$s = "abc";
   const main = [
     7,
     (() => {
-      let v__inl4_scrut;
+      let v_$inl4$scrut;
       $join3: {
-        const __s = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 0 >>> 0);
+        const __s = __eqUInt32(__lengthUtf8Bytes(v_$inl5$s), 0 >>> 0);
         switch (__s[0]) {
           case 1: {
             return "other";
           }
           case 2: {
-            v__inl4_scrut = __eqUInt32(__lengthUtf8Bytes(v__inl5_s), 3 >>> 0);
+            v_$inl4$scrut = __eqUInt32(__lengthUtf8Bytes(v_$inl5$s), 3 >>> 0);
             break $join3;
           }
         }
       }
-      switch (v__inl4_scrut[0]) {
+      switch (v_$inl4$scrut[0]) {
         case 1: {
           return "len3";
         }

@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (data (i32.const 113) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00ok")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_outerLoop $v__scc_stepA_stepB_stepC)
+  (elem (i32.const 0) $v_runIO $v_outerLoop $v_$scc$stepA__stepB__stepC)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -563,9 +563,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 1
+        call 12
         block (result i32)
-          local.get 1
-          call 12
           i32.const 8
           i32.const 1
           call 10
@@ -583,6 +583,8 @@
           local.get 2
         end
       else
+        local.get 1
+        call 12
         local.get 0
         local.tee 2
         call 11
@@ -599,11 +601,9 @@
           local.set 3
           local.get 3
           call 11
+          local.get 2
+          call 12
           block (result i32)
-            local.get 1
-            call 12
-            local.get 2
-            call 12
             i32.const 8
             i32.const 1
             call 10
@@ -631,6 +631,8 @@
           local.set 3
           local.get 3
           call 11
+          local.get 2
+          call 12
           i32.const 8
           i32.const 1
           call 10
@@ -655,13 +657,9 @@
             local.set 5
             local.get 5
             call 11
+            local.get 4
+            call 12
             block (result i32)
-              local.get 1
-              call 12
-              local.get 2
-              call 12
-              local.get 4
-              call 12
               i32.const 8
               i32.const 1
               call 10
@@ -686,14 +684,10 @@
               local.get 6
             end
           else
-            local.get 3
-            local.set 6
-            local.get 1
-            call 12
-            local.get 2
-            call 12
             local.get 4
             call 12
+            local.get 3
+            local.set 6
             local.get 0
             call 12
             local.get 6
@@ -788,7 +782,7 @@
       local.get 2
     end)
 
-  (func $v__scc_stepA_stepB_stepC (param i32) (result i32)
+  (func $v_$scc$stepA__stepB__stepC (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -817,9 +811,9 @@
         i32.const 1
         i32.eq
         if (result i32)
+          local.get 2
+          call 12
           block (result i32)
-            local.get 2
-            call 12
             i32.const 8
             i32.const 1
             call 10
@@ -839,6 +833,8 @@
             local.get 3
           end
         else
+          local.get 2
+          call 12
           local.get 1
           local.tee 3
           call 11
@@ -855,11 +851,9 @@
             local.set 4
             local.get 4
             call 11
+            local.get 3
+            call 12
             block (result i32)
-              local.get 2
-              call 12
-              local.get 3
-              call 12
               i32.const 8
               i32.const 1
               call 10
@@ -889,6 +883,8 @@
             local.set 4
             local.get 4
             call 11
+            local.get 3
+            call 12
             local.get 0
             i32.load offset=4
             call 12
@@ -903,10 +899,6 @@
             call 11
             local.get 0
             local.set 5
-            local.get 2
-            call 12
-            local.get 3
-            call 12
             local.get 4
             call 12
             local.get 1
@@ -939,9 +931,9 @@
           i32.const 1
           i32.eq
           if (result i32)
+            local.get 2
+            call 12
             block (result i32)
-              local.get 2
-              call 12
               i32.const 8
               i32.const 1
               call 10
@@ -961,6 +953,8 @@
               local.get 3
             end
           else
+            local.get 2
+            call 12
             local.get 1
             local.tee 3
             call 11
@@ -977,11 +971,9 @@
               local.set 4
               local.get 4
               call 11
+              local.get 3
+              call 12
               block (result i32)
-                local.get 2
-                call 12
-                local.get 3
-                call 12
                 i32.const 8
                 i32.const 1
                 call 10
@@ -1011,6 +1003,8 @@
               local.set 4
               local.get 4
               call 11
+              local.get 3
+              call 12
               local.get 0
               i32.load offset=4
               call 12
@@ -1025,10 +1019,6 @@
               call 11
               local.get 0
               local.set 5
-              local.get 2
-              call 12
-              local.get 3
-              call 12
               local.get 4
               call 12
               local.get 1
@@ -1056,9 +1046,9 @@
           i32.const 1
           i32.eq
           if (result i32)
+            local.get 2
+            call 12
             block (result i32)
-              local.get 2
-              call 12
               i32.const 8
               i32.const 1
               call 10
@@ -1078,6 +1068,8 @@
               local.get 3
             end
           else
+            local.get 2
+            call 12
             local.get 1
             local.tee 3
             call 11
@@ -1094,11 +1086,9 @@
               local.set 4
               local.get 4
               call 11
+              local.get 3
+              call 12
               block (result i32)
-                local.get 2
-                call 12
-                local.get 3
-                call 12
                 i32.const 8
                 i32.const 1
                 call 10
@@ -1128,6 +1118,8 @@
               local.set 4
               local.get 4
               call 11
+              local.get 3
+              call 12
               local.get 0
               i32.load offset=4
               call 12
@@ -1142,10 +1134,6 @@
               call 11
               local.get 0
               local.set 5
-              local.get 2
-              call 12
-              local.get 3
-              call 12
               local.get 4
               call 12
               local.get 1

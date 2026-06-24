@@ -244,7 +244,7 @@ L_tarm1:
   iconst_2
   invokestatic AwsumMain/v_block()Ljava/lang/Object;
   aastore
-  invokestatic AwsumMain/v__scc__df_andThenEither_0__lam_13_build(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$df$andThenEither$0__$lam$13__build(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore_0
   aload_0
@@ -346,7 +346,7 @@ L_join2:
 .end method
 
 
-.method static v__scc__df_andThenEither_0__lam_13_build(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$df$andThenEither$0__$lam$13__build(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 7
 L_tco8:

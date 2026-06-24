@@ -22,7 +22,7 @@
   (data (i32.const 324) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00, ")
   (data (i32.const 346) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_check $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4)
+  (elem (i32.const 0) $v_runIO $v_check $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -806,9 +806,9 @@
     i32.const 1
     i32.eq
     if (result i32)
+      local.get 3
+      call 17
       block (result i32)
-        local.get 3
-        call 17
         local.get 2
         local.tee 4
         call 16
@@ -825,6 +825,8 @@
         local.get 4
       end
     else
+      local.get 3
+      call 17
       local.get 2
       local.tee 4
       call 16
@@ -842,11 +844,9 @@
         local.set 5
         local.get 5
         call 16
+        local.get 4
+        call 17
         block (result i32)
-          local.get 3
-          call 17
-          local.get 4
-          call 17
           i32.const 8
           i32.const 1
           call 15
@@ -878,6 +878,8 @@
         local.set 5
         local.get 5
         call 16
+        local.get 4
+        call 17
         local.get 5
         local.tee 6
         call 16
@@ -899,13 +901,9 @@
           local.set 7
           local.get 7
           call 16
+          local.get 6
+          call 17
           block (result i32)
-            local.get 3
-            call 17
-            local.get 4
-            call 17
-            local.get 6
-            call 17
             i32.const 8
             i32.const 1
             call 15
@@ -939,6 +937,8 @@
           local.set 7
           local.get 7
           call 16
+          local.get 6
+          call 17
           local.get 7
           local.tee 8
           call 16
@@ -956,15 +956,9 @@
             local.set 9
             local.get 9
             call 16
+            local.get 8
+            call 17
             block (result i32)
-              local.get 3
-              call 17
-              local.get 4
-              call 17
-              local.get 6
-              call 17
-              local.get 8
-              call 17
               i32.const 8
               i32.const 1
               call 15
@@ -1000,6 +994,8 @@
             local.set 9
             local.get 9
             call 16
+            local.get 8
+            call 17
             local.get 9
             local.tee 10
             call 16
@@ -1021,17 +1017,9 @@
               local.set 11
               local.get 11
               call 16
+              local.get 10
+              call 17
               block (result i32)
-                local.get 3
-                call 17
-                local.get 4
-                call 17
-                local.get 6
-                call 17
-                local.get 8
-                call 17
-                local.get 10
-                call 17
                 i32.const 8
                 i32.const 1
                 call 15
@@ -1069,17 +1057,9 @@
               local.set 11
               local.get 11
               call 16
+              local.get 10
+              call 17
               block (result i32)
-                local.get 3
-                call 17
-                local.get 4
-                call 17
-                local.get 6
-                call 17
-                local.get 8
-                call 17
-                local.get 10
-                call 17
                 local.get 11
                 local.tee 12
                 call 16
@@ -1457,7 +1437,7 @@
     local.get 0
     call 23)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1616,7 +1596,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1682,7 +1662,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1845,7 +1825,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

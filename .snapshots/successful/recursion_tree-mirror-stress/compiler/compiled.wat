@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildRight $v_spineLast $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4 $v__scc__apply_mirror__cps_mirror)
+  (elem (i32.const 0) $v_runIO $v_buildRight $v_spineLast $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4 $v_$scc$$apply$mirror__$cps$mirror)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -695,9 +695,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -720,6 +720,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 14
         local.get 0
         local.tee 3
         call 13
@@ -736,11 +738,9 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           block (result i32)
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -770,6 +770,8 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           local.get 4
           local.set 5
           i32.const 16
@@ -803,10 +805,6 @@
           call 13
           local.get 7
           local.set 6
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 1
           call 14
           local.get 0
@@ -944,7 +942,7 @@
     local.get 0
     call 20)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1103,7 +1101,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1169,7 +1167,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1357,7 +1355,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1423,7 +1421,7 @@
       end
     end)
 
-  (func $v__scc__apply_mirror__cps_mirror (param i32) (result i32)
+  (func $v_$scc$$apply$mirror__$cps$mirror (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

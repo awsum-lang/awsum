@@ -404,7 +404,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 4
-    call object AwsumMain::v__scc_spinA_spinB_spinC(object)
+    call object AwsumMain::v_$scc$spinA__spinB__spinC(object)
   IL_c2:
   IL_c0:
     ret
@@ -591,7 +591,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__cps_descend(object, object)
+    call object AwsumMain::v_$cps$descend(object, object)
     stloc.1
     ldloc.1
     ldc.i4.0
@@ -680,7 +680,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_descend(object,object) cil managed
+  .method private hidebysig static object v_$cps$descend(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -713,7 +713,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__apply_descend(object, object)
+    call object AwsumMain::v_$apply$descend(object, object)
     ret
   IL_c0:
     pop
@@ -758,7 +758,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply_descend(object, object)
+    call object AwsumMain::v_$apply$descend(object, object)
     ret
   IL_c1:
     pop
@@ -786,7 +786,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_descend(object,object) cil managed
+  .method private hidebysig static object v_$apply$descend(object,object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -880,7 +880,7 @@
   }
 
 
-  .method private hidebysig static object v__scc_spinA_spinB_spinC(object) cil managed
+  .method private hidebysig static object v_$scc$spinA__spinB__spinC(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8)

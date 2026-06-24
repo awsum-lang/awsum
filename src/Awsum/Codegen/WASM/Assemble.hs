@@ -19,6 +19,7 @@ module Awsum.Codegen.WASM.Assemble
   )
 where
 
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.WASM.Instr (BlockType (..), MemArg (..), ValType (..), WasmFunc (..), WasmInstr (..), addI32Spec, addU32Spec, addU8Spec, allocShapedSpec, allocSpec, boxI32Spec, byteToHexSpec, concatSpec, entryArgEitherSpec, eqI32Spec, eqStringSpec, freeRecursiveSpec, freeSpec, freeWorklistPushSpec, getArgsSpec, incRefSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, maxLocalsOf, memcmpSpec, memcpySpec, mulI32Spec, mulU32Spec, mulU8Spec, negI32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predI32Spec, predU32Spec, predU8Spec, printSpec, readStdinSpec, showI32Spec, showU32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subI32Spec, subU32Spec, subU8Spec, succI32Spec, succU32Spec, succU8Spec, utf16OfRangeSpec)
 import Awsum.Core
 import Data.Bits (shiftR, (.&.), (.|.))
@@ -889,8 +890,7 @@ data ExprCtx = ExprCtx
 data WJoinTarget = WJoinTarget
   { wjLevel :: Word32,
     wjParams :: [Text],
-    wjPendingBase :: Int,
-    wjScrutBase :: Int
+    wjPendingBase :: Int
   }
 
 -- | Draw the next free local slot, advancing the counter so the slot stays
@@ -950,8 +950,8 @@ isHeapBorrow ctx = \case
   CLet _ _ body -> isHeapBorrow ctx body
   _ -> False
 
--- | The binders a tail transfer ('CContinue' back-edge / 'CJump' to a join)
--- /moves/ into the destination slots instead of copying. A binder @m@
+-- | The binders the 'CContinue' back-edge /moves/ into the destination
+-- slots instead of copying. A binder @m@
 -- qualifies when an argument is a bare 'CVar m', @m@ is in the @pending@
 -- drop set (so it would otherwise be freed here), and @m@ occurs exactly
 -- once across all transfer arguments — linear, one destination for its one
@@ -1665,7 +1665,7 @@ bindArmVarsI ctx srcSlot vars body =
 
 emitTailI :: [Text] -> Word32 -> ExprCtx -> CExpr -> [WasmInstr]
 emitTailI params depth ctx =
-  emitTailPendingI params depth ctx [] []
+  emitTailPendingI params depth ctx []
 
 -- | The dedicated local of a join parameter.
 joinParamSlot :: ExprCtx -> Text -> Word32
@@ -1686,53 +1686,47 @@ joinValueFinishI ctx depth = case ctx.ecTailJoin of
 tailChainBt :: ExprCtx -> BlockType
 tailChainBt ctx = maybe BtI32 (const BtVoid) ctx.ecTailJoin
 
--- | Emit `(call $__free_recursive (local.get s))` for every fresh case
--- scrutinee currently stashed in scope. Each fresh tail-scrutinee's dispatch
--- slot doubles as its stash (counter-allocated, so an inner case never
--- overwrites it), and the slots accumulate into the threaded list as cases
--- nest; every terminator drains them.
-emitFreshScrutDecsI :: [Word32] -> [WasmInstr]
-emitFreshScrutDecsI = concatMap (\s -> [LocalGet (fromIntegral s)] <> [Call "__free_recursive"])
-
 -- | Emit a non-'CLoop' 'CFunDef' body with value-tail
 -- param decs. Walks the tail-form and emits dec at each terminal,
 -- with per-arm
 -- precision for 'CCase'/'CRowCase' bodies so an arm returning a
 -- 'CVar' param is "moved" out instead of being freed.
 emitNonLoopBodyI :: ExprCtx -> [Text] -> CExpr -> [WasmInstr]
-emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
+emitNonLoopBodyI ctx0 params = go ctx0 0 []
   where
-    go :: ExprCtx -> Word32 -> [Text] -> [Word32] -> CExpr -> [WasmInstr]
-    go ctx depth pending freshScrutSlots = \case
+    go :: ExprCtx -> Word32 -> [Text] -> CExpr -> [WasmInstr]
+    go ctx depth pending = \case
       CCase scrut alts ->
         let sorted = sortWith (\(t, _, _) -> t) alts
             scrutFresh = isNothing (sourceCVarBin scrut)
             scrutName = sourceCVarBin scrut
-            -- A fresh tail scrutinee evaluates into its own counter slot, which
-            -- doubles as the stash (inner cases draw beyond it, so it is never
-            -- overwritten) and is freed at each terminator.
-            (scrutCode, dispatchSlot, ctx', freshScrutSlots') =
+            -- A fresh tail scrutinee evaluates into its own counter slot
+            -- (inner cases draw beyond it, so binder extraction never sees
+            -- it overwritten) and is freed per-arm by 'goCaseChain' right
+            -- after its binders are extracted — not carried to every
+            -- terminal, where a deep tail-position case would re-free all
+            -- enclosing scruts (O(N^2)). Mirrors 'emitArmChainI', the
+            -- operand path.
+            (scrutCode, dispatchSlot, ctx') =
               if scrutFresh
                 then
                   let (s, c') = freshLocal ctx
-                   in (emitExprI ctx scrut <> [LocalSet (fromIntegral s)], s, c', freshScrutSlots <> [s])
-                else
-                  let (sc, ds, c') = scrutDispatchI ctx scrut
-                   in (sc, ds, c', freshScrutSlots)
-         in scrutCode <> goCaseChain ctx' depth dispatchSlot scrutName pending freshScrutSlots' sorted
+                   in (emitExprI ctx scrut <> [LocalSet (fromIntegral s)], s, c')
+                else scrutDispatchI ctx scrut
+         in scrutCode <> goCaseChain ctx' depth dispatchSlot scrutName scrutFresh pending sorted
       CRowCase scrut alts ->
-        go ctx depth pending freshScrutSlots (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-      CDrop n body -> go ctx depth (n : pending) freshScrutSlots body
+        go ctx depth pending (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+      CDrop n body -> go ctx depth (n : pending) body
       CLet x rhs body ->
         let (bindCode, ctx') = bindLetI ctx x rhs
-         in bindCode <> go ctx' depth pending freshScrutSlots body
+         in bindCode <> go ctx' depth pending body
       -- Native join point: see 'emitTailPendingI' — the same construct,
       -- without the loop bookkeeping.
       CJoin j ps body inner ->
         let (resSlot, ctxR) = freshLocal ctx
             (paramSlots, ctxN0) = freshLocals (length ps) ctxR
             psMap = Map.fromList (zip ps paramSlots)
-            wj = WJoinTarget (depth + 2) ps (length pending) (length freshScrutSlots)
+            wj = WJoinTarget (depth + 2) ps (length pending)
             jmode = Just (resSlot, depth + 1)
             ctxJ =
               ctxN0
@@ -1741,8 +1735,8 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
                   ecTailJoin = jmode
                 }
             ctxB = ctxJ {ecLocals = Map.union psMap ctxJ.ecLocals}
-            innerCode = go ctxJ (depth + 2) pending freshScrutSlots inner
-            bodyCode = go ctxB (depth + 1) (ps <> pending) freshScrutSlots body
+            innerCode = go ctxJ (depth + 2) pending inner
+            bodyCode = go ctxB (depth + 1) (ps <> pending) body
          in [Block BtVoid, Block BtVoid]
               <> innerCode
               <> [End]
@@ -1752,7 +1746,7 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
               <> joinValueFinishI ctx depth
       CJump j args
         | Just wj <- Map.lookup j ctx.ecJoinTargets ->
-            emitJumpI ctx depth pending freshScrutSlots wj args
+            emitJumpI ctx depth pending wj args
       CJump j _ -> error ("WASM Assemble: CJump to unknown join " <> j <> " (pipeline bug)")
       other ->
         let resultName = sourceCVarBin other
@@ -1765,8 +1759,7 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
                 p `notElem` pending
               ]
             toDec = pendingToDec <> paramsToDec
-            scrutDecs = emitFreshScrutDecsI freshScrutSlots
-         in drainPendingI ctx toDec (scrutDecs <> emitExprI ctx other)
+         in drainPendingI ctx toDec (emitExprI ctx other)
               <> joinValueFinishI ctx depth
 
     -- Per-arm dec: each arm body emits its own (potentially
@@ -1775,15 +1768,15 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
     -- i32) ...' chain unifies them through WASM's structured
     -- control flow; inside a join every path leaves by 'Br', so the
     -- chain is void).
-    goCaseChain :: ExprCtx -> Word32 -> Word32 -> Maybe Text -> [Text] -> [Word32] -> [(Int, [Text], CExpr)] -> [WasmInstr]
+    goCaseChain :: ExprCtx -> Word32 -> Word32 -> Maybe Text -> Bool -> [Text] -> [(Int, [Text], CExpr)] -> [WasmInstr]
     goCaseChain ctx _ _ _ _ _ [] = case ctx.ecTailJoin of
       Just _ -> [Unreachable]
       Nothing -> [I32Const 0] -- unreachable
-    goCaseChain ctx depth dispatchSlot scrutName pending freshScrutSlots [(_, vars, body)] =
+    goCaseChain ctx depth dispatchSlot scrutName scrutFresh pending [(_, vars, body)] =
       let (bindCode, ctx') = bindArmVarsI ctx dispatchSlot vars body
           ctx'' = recordArmPattern ctx' scrutName vars
-       in bindCode <> go ctx'' depth pending freshScrutSlots body
-    goCaseChain ctx depth dispatchSlot scrutName pending freshScrutSlots ((tag, vars, body) : rest) =
+       in bindCode <> scrutDecAfterBindI dispatchSlot scrutFresh <> go ctx'' depth pending body
+    goCaseChain ctx depth dispatchSlot scrutName scrutFresh pending ((tag, vars, body) : rest) =
       [LocalGet (fromIntegral dispatchSlot)]
         <> [I32Load (MemArg 2 0)]
         <> [I32Const tag]
@@ -1791,20 +1784,19 @@ emitNonLoopBodyI ctx0 params = go ctx0 0 [] []
         <> [If (tailChainBt ctx)]
         <> ( let (bindCode, ctx') = bindArmVarsI ctx dispatchSlot vars body
                  ctx'' = recordArmPattern ctx' scrutName vars
-              in bindCode <> go ctx'' (depth + 1) pending freshScrutSlots body
+              in bindCode <> scrutDecAfterBindI dispatchSlot scrutFresh <> go ctx'' (depth + 1) pending body
            )
         <> [Else]
-        <> goCaseChain ctx (depth + 1) dispatchSlot scrutName pending freshScrutSlots rest
+        <> goCaseChain ctx (depth + 1) dispatchSlot scrutName scrutFresh pending rest
         <> [End]
 
 -- | The jump itself, shared by both tail walks: evaluate each argument
 -- straight into its parameter slot (the slots are fresh names no argument
 -- can read — no parallel-assignment hazard), inc the borrowed ones (the
 -- parameter takes its own reference; fresh sources carry their @+1@),
--- release the fresh scrutinees and pending binders accumulated since the
--- join node, branch.
-emitJumpI :: ExprCtx -> Word32 -> [Text] -> [Word32] -> WJoinTarget -> [CExpr] -> [WasmInstr]
-emitJumpI ctx depth pending freshScrutSlots wj args =
+-- release the pending binders accumulated since the join node, branch.
+emitJumpI :: ExprCtx -> Word32 -> [Text] -> WJoinTarget -> [CExpr] -> [WasmInstr]
+emitJumpI ctx depth pending wj args =
   let evalStores =
         concat
           [ emitExprI ctx a <> [LocalSet (fromIntegral (joinParamSlot ctx p))]
@@ -1816,19 +1808,16 @@ emitJumpI ctx depth pending freshScrutSlots wj args =
           | (a, p) <- zip args wj.wjParams,
             isHeapBorrow ctx a
           ]
-      -- Release the fresh scrutinees stashed since the join node ('wjScrutBase'
-      -- records how many were live at the node; the rest accumulated inside).
-      scrutDecs = emitFreshScrutDecsI (drop wj.wjScrutBase freshScrutSlots)
       frees = concatMap (emitFreeOfI ctx) (take (length pending - wj.wjPendingBase) pending)
-   in evalStores <> incs <> scrutDecs <> frees <> [Br (fromIntegral (depth - wj.wjLevel))]
+   in evalStores <> incs <> frees <> [Br (fromIntegral (depth - wj.wjLevel))]
 
 -- | Walk a tail-position expression, accumulating 'CDrop' binders into
 -- a 'pending' stack drained at every terminator (CContinue / value).
 -- 'CCase' arms inherit the same 'pending' through 'emitTailArmChainI'.
--- @freshScrutSlots@ are the slots holding fresh case-scrutinees currently
--- stashed in scope; each terminator dec's them.
-emitTailPendingI :: [Text] -> Word32 -> ExprCtx -> [Text] -> [Word32] -> CExpr -> [WasmInstr]
-emitTailPendingI params depth ctx pending freshScrutSlots = \case
+-- A fresh case scrutinee is freed per-arm in 'emitTailArmChainI' (right
+-- after its binders are extracted), so it never reaches a terminator.
+emitTailPendingI :: [Text] -> Word32 -> ExprCtx -> [Text] -> CExpr -> [WasmInstr]
+emitTailPendingI params depth ctx pending = \case
   CContinue newArgs ->
     let -- Buffer each new arg into a fresh scratch slot (so a new value that
         -- reads an old param sees the pre-update value), above every live
@@ -1863,7 +1852,6 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
                 _ -> []
             | (i, a) <- zip [0 :: Int ..] newArgs
             ]
-        scrutDecs = emitFreshScrutDecsI freshScrutSlots
         frees = concatMap (emitFreeOfI ctx) (filter (`Set.notMember` moved) pending)
         paramSlots =
           [ fromMaybe (error $ "WASM Assemble: no param slot for " <> show p) (Map.lookup p ctx.ecParams)
@@ -1875,35 +1863,35 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
                 <> [LocalSet (fromIntegral ps)]
             | (i, ps) <- zip [0 :: Int ..] paramSlots
             ]
-     in evals <> incs <> scrutDecs <> frees <> copies <> [Br (fromIntegral depth)]
+     in evals <> incs <> frees <> copies <> [Br (fromIntegral depth)]
   CCase scrut alts ->
     let sorted = sortWith (\(t, _, _) -> t) alts
         scrutFresh = isNothing (sourceCVarBin scrut)
         scrutName = sourceCVarBin scrut
-        -- A fresh tail scrutinee evaluates into its own counter slot, which
-        -- doubles as the stash (inner cases draw beyond it, so it is never
-        -- overwritten) and is freed at each terminator.
-        (scrutCode, dispatchSlot, ctx', freshScrutSlots') =
+        -- A fresh tail scrutinee evaluates into its own counter slot (inner
+        -- cases draw beyond it, so binder extraction never sees it
+        -- overwritten) and is freed per-arm by 'emitTailArmChainI' right
+        -- after its binders are extracted — not carried to every terminal.
+        -- See 'emitNonLoopBodyI'.
+        (scrutCode, dispatchSlot, ctx') =
           if scrutFresh
             then
               let (s, c') = freshLocal ctx
-               in (emitExprI ctx scrut <> [LocalSet (fromIntegral s)], s, c', freshScrutSlots <> [s])
-            else
-              let (sc, ds, c') = scrutDispatchI ctx scrut
-               in (sc, ds, c', freshScrutSlots)
-     in scrutCode <> emitTailArmChainI params depth ctx' dispatchSlot scrutName pending freshScrutSlots' sorted
+               in (emitExprI ctx scrut <> [LocalSet (fromIntegral s)], s, c')
+            else scrutDispatchI ctx scrut
+     in scrutCode <> emitTailArmChainI params depth ctx' dispatchSlot scrutName scrutFresh pending sorted
   -- Row dispatch: same wire layout as a one-field 'CCase', so delegate. This
   -- keeps a 'CContinue' in a row-case arm in tail position; without it the arm
   -- falls to the value 'other' path, whose emitter rejects 'CContinue'.
   CRowCase scrut alts ->
-    emitTailPendingI params depth ctx pending freshScrutSlots (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+    emitTailPendingI params depth ctx pending (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   -- Push the drop onto the pending stack; drain at terminator.
-  CDrop n body -> emitTailPendingI params depth ctx (n : pending) freshScrutSlots body
+  CDrop n body -> emitTailPendingI params depth ctx (n : pending) body
   -- Bind, then the body continues in tail position (its 'CDrop' for the
   -- binder lands on the pending stack like any other).
   CLet x rhs body ->
     let (bindCode, ctx') = bindLetI ctx x rhs
-     in bindCode <> emitTailPendingI params depth ctx' pending freshScrutSlots body
+     in bindCode <> emitTailPendingI params depth ctx' pending body
   -- Native join point: inner runs inside two void blocks (jumps 'Br' to
   -- the body block's end, bypass values 'Br' one further to the after
   -- block via 'ecTailJoin'); the body runs between the two 'End's with
@@ -1916,7 +1904,7 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
     let (resSlot, ctxR) = freshLocal ctx
         (paramSlots, ctxN0) = freshLocals (length ps) ctxR
         psMap = Map.fromList (zip ps paramSlots)
-        wj = WJoinTarget (depth + 2) ps (length pending) (length freshScrutSlots)
+        wj = WJoinTarget (depth + 2) ps (length pending)
         jmode = Just (resSlot, depth + 1)
         ctxJ =
           ctxN0
@@ -1925,8 +1913,8 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
               ecTailJoin = jmode
             }
         ctxB = ctxJ {ecLocals = Map.union psMap ctxJ.ecLocals}
-        innerCode = emitTailPendingI params (depth + 2) ctxJ pending freshScrutSlots inner
-        bodyCode = emitTailPendingI params (depth + 1) ctxB (ps <> pending) freshScrutSlots body
+        innerCode = emitTailPendingI params (depth + 2) ctxJ pending inner
+        bodyCode = emitTailPendingI params (depth + 1) ctxB (ps <> pending) body
      in [Block BtVoid, Block BtVoid]
           <> innerCode
           <> [End]
@@ -1936,7 +1924,7 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
           <> joinValueFinishI ctx depth
   CJump j args
     | Just wj <- Map.lookup j ctx.ecJoinTargets ->
-        emitJumpI ctx depth pending freshScrutSlots wj args
+        emitJumpI ctx depth pending wj args
   CJump j _ -> error ("WASM Assemble: CJump to unknown join " <> j <> " (pipeline bug)")
   other ->
     let -- Value-tail decs with move-semantics carve-out.
@@ -1952,8 +1940,7 @@ emitTailPendingI params depth ctx pending freshScrutSlots = \case
             p `notElem` pending
           ]
         toDec = pendingToDec <> paramsToDec
-        scrutDecs = emitFreshScrutDecsI freshScrutSlots
-     in drainPendingI ctx toDec (scrutDecs <> emitExprI ctx other)
+     in drainPendingI ctx toDec (emitExprI ctx other)
           <> joinValueFinishI ctx depth
 
 -- | Drain pending drops at a value-producing tail. Wraps the value
@@ -1986,15 +1973,15 @@ emitFreeOfI ctx n =
 -- it either produces an @i32@ result or terminates with a @br@ back to
 -- the loop. Nesting into an @opIf@ increases 'depth' by one for both the
 -- then-body and the else-continuation.
-emitTailArmChainI :: [Text] -> Word32 -> ExprCtx -> Word32 -> Maybe Text -> [Text] -> [Word32] -> [(Int, [Text], CExpr)] -> [WasmInstr]
+emitTailArmChainI :: [Text] -> Word32 -> ExprCtx -> Word32 -> Maybe Text -> Bool -> [Text] -> [(Int, [Text], CExpr)] -> [WasmInstr]
 emitTailArmChainI _ _ ctx _ _ _ _ [] = case ctx.ecTailJoin of
   Just _ -> [Unreachable]
   Nothing -> [I32Const 0]
-emitTailArmChainI params depth ctx dispatchSlot scrutName pending freshScrutSlots [(_, vars, body)] =
+emitTailArmChainI params depth ctx dispatchSlot scrutName scrutFresh pending [(_, vars, body)] =
   let (bindCode, ctx') = bindArmVarsI ctx dispatchSlot vars body
       ctx'' = recordArmPattern ctx' scrutName vars
-   in bindCode <> emitTailPendingI params depth ctx'' pending freshScrutSlots body
-emitTailArmChainI params depth ctx dispatchSlot scrutName pending freshScrutSlots ((tag, vars, body) : rest) =
+   in bindCode <> scrutDecAfterBindI dispatchSlot scrutFresh <> emitTailPendingI params depth ctx'' pending body
+emitTailArmChainI params depth ctx dispatchSlot scrutName scrutFresh pending ((tag, vars, body) : rest) =
   let loadTag =
         [LocalGet (fromIntegral dispatchSlot)]
           <> [I32Load (MemArg 2 0)]
@@ -2007,16 +1994,16 @@ emitTailArmChainI params depth ctx dispatchSlot scrutName pending freshScrutSlot
         <> cmpCode
         <> [If (tailChainBt ctx)]
         <> bindCode
-        <> emitTailPendingI params (depth + 1) ctx'' pending freshScrutSlots body
+        <> scrutDecAfterBindI dispatchSlot scrutFresh
+        <> emitTailPendingI params (depth + 1) ctx'' pending body
         <> [Else]
-        <> emitTailArmChainI params (depth + 1) ctx dispatchSlot scrutName pending freshScrutSlots rest
+        <> emitTailArmChainI params (depth + 1) ctx dispatchSlot scrutName scrutFresh pending rest
         <> [End]
 
--- | The WAT label for a user declaration — mirrors the text codegen's @mangle@
---   (@v_@ prefix, non-identifier chars to @_@). Only the text projection
+-- | The WAT label for a user declaration. Only the text projection
 --   ('renderWat') consumes @wfName@; the binary ignores it.
 userFuncLabel :: Text -> Text
-userFuncLabel n = "v_" <> T.map (\c -> if Char.isAlphaNum c || c == '_' || c == '\'' then c else '_') n
+userFuncLabel = mangle
 
 -- | Builds a user declaration's 'WasmFunc' so both the binary and text
 --   projections derive from it. The body uses the '*I'

@@ -204,7 +204,7 @@ define internal ptr @v_main() {
   store ptr %t7, ptr %t8
   %t9 = getelementptr ptr, ptr %t3, i32 1
   store ptr %t6, ptr %t9
-  %t10 = call ptr @v__scc_parseBinary_parseExpr(ptr %t3)
+  %t10 = call ptr @v_$scc$parseBinary__parseExpr(ptr %t3)
   %t11 = call ptr @__showInt32(ptr %t10)
   %t12 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t11, ptr %t12
@@ -223,10 +223,10 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__scc_parseBinary_parseExpr(ptr %v__args) {
+define internal ptr @v_$scc$parseBinary__parseExpr(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -244,13 +244,14 @@ tco.case.arm.26.9:
   %t14 = ptrtoint ptr %t13 to i64
   switch i64 %t14, label %tco.case.default.15 [ i64 24, label %tco.case.arm.24.16 i64 25, label %tco.case.arm.25.18 ]
 tco.case.arm.24.16:
+  call void @__free_recursive(ptr %t11)
   %t17 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t17
-  call void @__free_recursive(ptr %t11)
   call void @__free_recursive(ptr %t4)
   store ptr %t17, ptr %t2
   br label %tco.exit.1
 tco.case.arm.25.18:
+  call void @__free_recursive(ptr %t11)
   %t19 = call ptr @__alloc(i64 16, i32 1)
   %t20 = inttoptr i64 27 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -261,7 +262,6 @@ tco.case.arm.25.18:
   store ptr %t23, ptr %t24
   %t25 = getelementptr ptr, ptr %t19, i32 1
   store ptr %t22, ptr %t25
-  call void @__free_recursive(ptr %t11)
   call void @__free_recursive(ptr %t4)
   store ptr %t19, ptr %t3
   br label %tco.loop.0

@@ -81,11 +81,11 @@ Any new functionality lands together with the tests that exercise it — snapsho
 Commands that go through the typechecker require `--program-type cli` (currently the only supported program type; see [prelude.md](prelude.md)). Purely syntactic commands (`ast`, `format`, `symbols`) don't take it.
 
 ```bash
-awsum build --program-type cli -t llvm|jvm|clr|wasm|js [-o OUT] FILE     # Compile to file/stdout (binary for jvm/clr/wasm)
+awsum build --program-type cli -t llvm|jvm|clr|wasm|js [-o OUT] FILE     # Compile to file/stdout (binary for jvm/clr/wasm; compact single-line js — `asm -t js` for the readable form)
 awsum run   --program-type cli -t llvm|jvm|clr|wasm|js FILE [-- ARG …]   # Compile and execute (argv after --, read via IO.Args.getArgs as List String; stdin inherits — pipe or < file to feed IO.Stdin.readAllString/readAllBytes)
 awsum check --program-type cli [--json] [--strict] FILE                  # Typecheck only
 awsum core  --program-type cli FILE                                      # Print Core IR
-awsum asm   --program-type cli -t jvm|clr|wasm FILE                      # Print target assembly text
+awsum asm   --program-type cli -t llvm|jvm|clr|wasm|js FILE              # Print human-readable generated code (LLVM IR; jvm/clr/wasm assembly text; indented js)
 awsum format [-i] FILE                                                   # Format source
 awsum ast FILE                                                           # Print AST
 awsum symbols [--json] FILE                                              # Top-level declarations (consumed by awsum-vscode)
@@ -102,7 +102,7 @@ stack exec awsum -- run   --program-type cli -t jvm path/to/Main.aww -- "world" 
 printf '1:1' | stack exec awsum -- run --program-type cli -t jvm    path/to/Main.aww    # stdin path: byte-exact input via pipe reaches IO.Stdin.readAllString/readAllBytes
 stack exec awsum -- check --program-type cli --json                 path/to/Main.aww    # diagnostics in the JSON shape awsum-vscode consumes
 stack exec awsum -- core  --program-type cli                        path/to/Main.aww    # Core IR after typecheck + every Core-to-Core pass
-stack exec awsum -- asm   --program-type cli -t jvm                 path/to/Main.aww    # text-form generated assembly (Jasmin-like for jvm, CIL for clr, WAT for wasm)
+stack exec awsum -- asm   --program-type cli -t jvm                 path/to/Main.aww    # human-readable generated code (LLVM IR; Jasmin-like jvm, CIL clr, WAT wasm; indented js — the readable form of build's compact js)
 ```
 
 The `--` after `awsum` separates `stack`'s flags from the compiler's. The source path is arbitrary — `path/to/Main.aww` can be a file under [test/sources/](../test/sources/) or a scratch file outside the test tree for a minimal repro. For a tighter loop, run `just build-watch` in one terminal so the binary rebuilds on every save, and re-issue `stack exec` invocations in another to re-check.

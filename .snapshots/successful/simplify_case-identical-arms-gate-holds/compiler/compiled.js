@@ -22,7 +22,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -83,16 +83,16 @@
       (s => {
         switch (s[0]) {
           case 15: {
-            const v__inl1_a = s[1];
+            const v_$inl1$a = s[1];
             {
-              const __s = __concat(v__inl1_a, v__inl1_a);
+              const __s = __concat(v_$inl1$a, v_$inl1$a);
               switch (__s[0]) {
                 case 3: {
                   return "TOO_LONG";
                 }
                 case 4: {
-                  const v__inl4_r = __s[1];
-                  return v__inl4_r;
+                  const v_$inl4$r = __s[1];
+                  return v_$inl4$r;
                 }
               }
             }
@@ -100,7 +100,7 @@
         }
       })([15, "ab", "cd"]),
       (() => {
-        const v__inl6_m = v_rebuild(
+        const v_$inl6$m = v_rebuild(
           1 >>> 0,
           (s => {
             switch (s[0]) {
@@ -119,10 +119,10 @@
               return "none";
             }
             case 12: {
-              return String(v__inl6_m[1]);
+              return String(v_$inl6$m[1]);
             }
           }
-        })(v__inl6_m);
+        })(v_$inl6$m);
       })()
     )
   );

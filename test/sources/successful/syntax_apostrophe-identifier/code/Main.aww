@@ -1,0 +1,19 @@
+{- An identifier may carry an apostrophe — primed names like `f'` and `c'` are a
+   basic functional-programming idiom. A primed recursive function and a primed
+   top-level value (kept live by two references) both become emitted symbols, so
+   every backend must mangle the apostrophe identically. Prints `done`. -}
+
+import IO.Stdout
+
+c' : String
+c' = "done"
+
+f' : Int32 -> String
+f' n = case eqInt32 n 0 of
+  True -> c'
+  False -> case predInt32 n of
+    Left _e -> c'
+    Right m -> f' m
+
+main : IO Never Unit
+main = IO.Stdout.print (f' 3)

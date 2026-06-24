@@ -149,7 +149,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_countWithBox(object,object,object) cil managed
+  .method private hidebysig static object v_$cps$countWithBox(object,object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -180,7 +180,7 @@
     call object AwsumMain::v_zero()
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__apply_countWithBox(object, object)
+    call object AwsumMain::v_$apply$countWithBox(object, object)
     ret
   IL_c0:
     pop
@@ -213,7 +213,7 @@
     ldloc.2
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply_countWithBox(object, object)
+    call object AwsumMain::v_$apply$countWithBox(object, object)
     ret
   IL_c1:
     pop
@@ -247,7 +247,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_countWithBox(object,object) cil managed
+  .method private hidebysig static object v_$apply$countWithBox(object,object) cil managed
   {
     .maxstack 3
   IL_tco_loop:
@@ -355,7 +355,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__cps_countWithBox(object, object, object)
+    call object AwsumMain::v_$cps$countWithBox(object, object, object)
     stloc.3
     ldloc.3
     ldc.i4.0

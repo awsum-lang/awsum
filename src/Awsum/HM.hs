@@ -23,6 +23,7 @@ module Awsum.HM
     bareRowLabel,
     rowSubsume,
     rowTag,
+    fnv1a32,
     canonicalLabel,
     rowRetagNeeded,
 
@@ -221,6 +222,17 @@ flattenRow = ordNub . go
       TyOr _ a b -> go a <> go b
       t -> [t]
 
+-- | Row labels without the set-semantic dedup 'flattenRow' applies. Safe
+--   only where duplicate labels cannot change the result: 'rowSubsume' feeds
+--   them into a 'Set' (which dedups) and into 'all' / 'any' (insensitive to
+--   duplicates). Skips the @ordNub@ whose 'Ord Type'' comparisons dominate
+--   row-heavy typechecks — a 'flattenRow' call per @case@ arm over a wide
+--   declared error row, each rebuilt from scratch.
+flattenRowRaw :: Type' -> [Type']
+flattenRowRaw = \case
+  TyOr _ a b -> flattenRowRaw a <> flattenRowRaw b
+  t -> [t]
+
 -- | The non-empty-type labels of a row: 'flattenRow' minus every
 --   'TyEmpty' ('Never', the row identity). The count drives the
 --   /bare-vs-tagged/ runtime representation decision: 'unify' treats
@@ -315,11 +327,11 @@ rowSubsume expected actual = case (expected, actual) of
     -- O(N) scan still runs for genuinely-subsumed-but-not-equal labels
     -- (an inner row that grew — @Maybe Bool@ fitting an expected
     -- @Maybe (Bool | Unit)@), keeping those cases exact.
-    let exLabels = flattenRow expected
+    let exLabels = flattenRowRaw expected
         exSet = S.fromList (map canonicalLabel exLabels)
      in all
           (\al -> S.member (canonicalLabel al) exSet || any (`rowSubsume` al) exLabels)
-          (flattenRow actual)
+          (flattenRowRaw actual)
   -- Row on actual but not expected. A value of @actual@ could be any of
   -- its alternatives, so /every/ one must subsume into the single
   -- @expected@ label. Not a blanket reject: rows are set-semantic, so a

@@ -431,7 +431,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_sumRow(object,object) cil managed
+  .method private hidebysig static object v_$cps$sumRow(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -448,7 +448,7 @@
     ldarg.1
     ldc.i4.0
     box [System.Runtime]System.Int32
-    call object AwsumMain::v__apply_sumRow(object, object)
+    call object AwsumMain::v_$apply$sumRow(object, object)
     ret
   IL_c0:
     pop
@@ -505,7 +505,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_sumRow(object,object) cil managed
+  .method private hidebysig static object v_$apply$sumRow(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -563,7 +563,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_countRow(object,object) cil managed
+  .method private hidebysig static object v_$cps$countRow(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -595,7 +595,7 @@
     ldarg.0
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__apply_countRow(object, object)
+    call object AwsumMain::v_$apply$countRow(object, object)
     ret
   IL_c0:
     pop
@@ -624,7 +624,7 @@
     ldarg.0
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply_countRow(object, object)
+    call object AwsumMain::v_$apply$countRow(object, object)
     ret
   IL_c1:
     pop
@@ -652,7 +652,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_countRow(object,object) cil managed
+  .method private hidebysig static object v_$apply$countRow(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1)
@@ -746,7 +746,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__cps_sumRow(object, object)
+    call object AwsumMain::v_$cps$sumRow(object, object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -783,7 +783,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_12(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$12(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -793,7 +793,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_8(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$8(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -803,7 +803,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_4(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$4(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -813,12 +813,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_0(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$0(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_0(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$0(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -854,7 +854,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__cps_countRow(object, object)
+    call object AwsumMain::v_$cps$countRow(object, object)
     stloc.3
     ldloc.3
     castclass object[]
@@ -902,7 +902,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_0(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$0(object, object)
     ret
   IL_c2:
     pop
@@ -940,7 +940,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_0(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$0(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -989,7 +989,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_4(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$4(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1041,7 +1041,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_4(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$4(object, object)
     ret
   IL_c0:
     pop
@@ -1079,7 +1079,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_4(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$4(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1128,7 +1128,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_8(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$8(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1174,7 +1174,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__cps_sumRow(object, object)
+    call object AwsumMain::v_$cps$sumRow(object, object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.2
@@ -1202,7 +1202,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_8(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$8(object, object)
     ret
   IL_c0:
     pop
@@ -1240,7 +1240,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_8(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$8(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1289,7 +1289,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_12(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$12(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -1341,7 +1341,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_12(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$12(object, object)
     ret
   IL_c0:
     pop
@@ -1379,7 +1379,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_12(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$12(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)

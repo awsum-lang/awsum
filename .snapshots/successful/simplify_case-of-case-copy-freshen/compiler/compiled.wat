@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_g $v_mk2 $v_run $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0)
+  (elem (i32.const 0) $v_runIO $v_g $v_mk2 $v_run $v_$cps$$df$andThenIO$0 $v_$apply$$df$andThenIO$0)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -823,9 +823,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 1
+        call 15
         block (result i32)
-          local.get 1
-          call 15
           i32.const 7
           call 8
           local.set 2
@@ -834,6 +834,8 @@
           local.get 2
         end
       else
+        local.get 1
+        call 15
         local.get 0
         local.tee 2
         call 14
@@ -847,11 +849,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 2
+          call 15
           block (result i32)
-            local.get 1
-            call 15
-            local.get 2
-            call 15
             i32.const 7
             call 8
             local.set 4
@@ -865,12 +865,10 @@
           local.set 3
           local.get 3
           call 14
-          local.get 3
-          local.set 4
-          local.get 1
-          call 15
           local.get 2
           call 15
+          local.get 3
+          local.set 4
           local.get 0
           call 15
           local.get 4
@@ -899,9 +897,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 1
+        call 15
         block (result i32)
-          local.get 1
-          call 15
           i32.const 4
           i32.const 0
           call 13
@@ -916,6 +914,8 @@
           local.get 2
         end
       else
+        local.get 1
+        call 15
         local.get 0
         local.tee 2
         call 14
@@ -929,11 +929,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 2
+          call 15
           block (result i32)
-            local.get 1
-            call 15
-            local.get 2
-            call 15
             i32.const 4
             i32.const 0
             call 13
@@ -953,12 +951,10 @@
           local.set 3
           local.get 3
           call 14
-          local.get 3
-          local.set 4
-          local.get 1
-          call 15
           local.get 2
           call 15
+          local.get 3
+          local.set 4
           local.get 0
           call 15
           local.get 4
@@ -1209,7 +1205,7 @@
     local.get 0
     call 22)
 
-  (func $v__cps__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1402,7 +1398,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

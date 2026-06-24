@@ -19,6 +19,7 @@
 --     that survives 'Awsum.Defunctionalize'.
 module Awsum.Codegen.WASM (codegenWASM) where
 
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.WASM.Assemble (buildInfo, buildTypeSection, funcIdxMap, startFunc, userDeclFunc, wiGatedHelpers)
 import Awsum.Codegen.WASM.Instr (renderWat)
 import Awsum.Core
@@ -321,15 +322,3 @@ typeDecls arities =
         <> " (func"
         <> (if arity > 0 then " (param" <> pretty (T.concat (replicate arity " i32")) <> ")" else "")
         <> " (result i32)))"
-
--- ════════════════════════════════════════════════════════════════════════════
--- Name mangling
--- ════════════════════════════════════════════════════════════════════════════
-
--- | All names get @v_@ prefix (including @main@ → @v_main@),
---   because @_start@ is the WASI entry point.
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body

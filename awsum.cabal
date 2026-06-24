@@ -59,6 +59,7 @@ library
       Awsum.Codegen.JVM.Instr
       Awsum.Codegen.LLVM
       Awsum.Codegen.LLVM.Syntax
+      Awsum.Codegen.Mangle
       Awsum.Codegen.ReuseSchedule
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
@@ -86,6 +87,7 @@ library
       Awsum.RestrictPreludeRefs
       Awsum.Reuse
       Awsum.Scc
+      Awsum.ShortenNames
       Awsum.Simplify
       Awsum.SrcStream
       Awsum.StackSafety
@@ -210,15 +212,17 @@ test-suite awsum-test
   main-is: Main.hs
   other-modules:
       Awsum.ArbitraryInstances
+      Awsum.ClrMetadataWidthSpec
       Awsum.CoreSpec
       Awsum.ErrorSnapshotsSpec
       Awsum.FormattingSnapshotsSpec
       Awsum.HMSpec
       Awsum.HoverSpec
+      Awsum.JvmClassFileLimitSpec
       Awsum.JvmFarBranchSpec
-      Awsum.JvmMethodLimitSpec
       Awsum.LspSpec
       Awsum.LspSpec.EndToEnd
+      Awsum.NameLimitsSpec
       Awsum.NoSimplifySpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec

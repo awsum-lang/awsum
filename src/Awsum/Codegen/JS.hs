@@ -35,10 +35,11 @@
 -- which also lets the runtime helpers be plain @const@ arrows like everything
 -- else (the only inter-helper edge, @__getArgs@ → @__entryArgEither@, resolves
 -- at call time, after every helper @const@ is initialized).
-module Awsum.Codegen.JS (codegenJS) where
+module Awsum.Codegen.JS (codegenJS, codegenJsPretty) where
 
 import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Codegen.JS.Syntax
+import Awsum.Codegen.Mangle qualified as Mangle
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -51,10 +52,21 @@ import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
--- | Produce a complete JS file. The wrapping strategy is selected by the
---   program type; the inner name-emission rules are shared.
+-- | Produce a complete JS file — the compact, single-line artifact that
+--   @awsum build@ \/ @run@ ship (the runtime never needs it indented). The
+--   readable, indented form of the same program is 'codegenJsPretty', behind
+--   @awsum asm -t js@ — mirroring @build -t jvm@ (binary) vs @asm -t jvm@
+--   (text). The wrapping strategy is selected by the program type; the inner
+--   name-emission rules are shared.
 codegenJS :: ProgramType -> PreludeTags -> CoreProgram -> Text
 codegenJS = \case
+  ProgramCli -> \ptags prog -> renderProgramCompact (cliModule ptags prog)
+
+-- | The human-readable (indented) projection of 'codegenJS' — same program,
+--   pretty-printed. Drives @awsum asm -t js@ and the JS snapshot golden,
+--   leaving the shipped artifact compact.
+codegenJsPretty :: ProgramType -> PreludeTags -> CoreProgram -> Text
+codegenJsPretty = \case
   ProgramCli -> \ptags prog -> renderProgram (cliModule ptags prog)
 
 -- | CLI script: @"use strict";@ directive followed by an IIFE whose body is
@@ -925,11 +937,9 @@ buildBuiltin name es = case name of
       [a, b] -> ECall (EVar fn) [a, b]
       _ -> error (fn <> ": arity mismatch")
 
--- | Name mangling: keep @main@ unchanged (needed by the runner); otherwise
---   prefix with @v_@ and replace any non @[A-Za-z0-9_']@ character with @_@.
+-- | Name mangling: keep @main@ unchanged (the runner calls it by name); every
+--   other identifier goes through the shared 'Mangle.mangle'.
 mangle :: Name -> Text
 mangle t
   | t == "main" = "main"
-  | otherwise = "v_" <> T.map (\c -> if ok c then c else '_') t
-  where
-    ok c = Char.isAlphaNum c || c == '_' || c == '\''
+  | otherwise = Mangle.mangle t

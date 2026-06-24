@@ -16,7 +16,7 @@
   (data (i32.const 144) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00right: ")
   (data (i32.const 171) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_countDown $v__apply_countDown $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4)
+  (elem (i32.const 0) $v_runIO $v_$cps$countDown $v_$apply$countDown $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -773,7 +773,7 @@
       end
     end)
 
-  (func $v__cps_countDown (param i32 i32) (result i32)
+  (func $v_$cps$countDown (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -794,9 +794,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 15
         block (result i32)
-          local.get 2
-          call 15
           local.get 1
           local.tee 3
           call 14
@@ -822,6 +822,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 15
         local.get 0
         local.tee 3
         call 14
@@ -838,11 +840,9 @@
           local.set 4
           local.get 4
           call 14
+          local.get 3
+          call 15
           block (result i32)
-            local.get 2
-            call 15
-            local.get 3
-            call 15
             local.get 1
             local.tee 5
             call 14
@@ -877,6 +877,8 @@
           local.set 4
           local.get 4
           call 14
+          local.get 3
+          call 15
           local.get 4
           local.set 5
           i32.const 8
@@ -894,10 +896,6 @@
           call 14
           local.get 7
           local.set 6
-          local.get 2
-          call 15
-          local.get 3
-          call 15
           local.get 1
           call 15
           local.get 0
@@ -911,7 +909,7 @@
       end
     end)
 
-  (func $v__apply_countDown (param i32 i32) (result i32)
+  (func $v_$apply$countDown (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1058,7 +1056,7 @@
     local.get 0
     call 22)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1217,7 +1215,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1283,7 +1281,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1446,7 +1444,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

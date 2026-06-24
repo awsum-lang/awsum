@@ -120,7 +120,7 @@ L_tarm2:
   bipush 31
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   astore_0
   goto L_tco0
 .end method
@@ -153,7 +153,7 @@ L_tarm2:
   bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   iconst_1
   anewarray java/lang/Object
   dup
@@ -161,12 +161,12 @@ L_tarm2:
   bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 10
 L_tco3:
@@ -186,7 +186,7 @@ L_tco3:
   astore 4
   aload_1
   aload_0
-  invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm4:
   iload_2
@@ -281,7 +281,7 @@ L_join7:
   astore 6
   aload 5
   aload 6
-  invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm5:
   iload_2
@@ -350,14 +350,14 @@ L_tarm6:
   aload_3
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore_3
   areturn
 .end method
 
 
-.method static v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 5
 L_tco9:
@@ -413,7 +413,7 @@ L_tarm10:
 .end method
 
 
-.method static v__cps__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 13
 L_tco11:
@@ -556,7 +556,7 @@ L_join19:
   astore 7
   aload 6
   aload 7
-  invokestatic AwsumMain/v__apply__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm12:
   iload_3
@@ -568,7 +568,7 @@ L_tarm12:
   astore 5
   aload_1
   aload_0
-  invokestatic AwsumMain/v__apply__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm13:
   iload_3
@@ -637,14 +637,14 @@ L_tarm14:
   aload 4
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   areturn
 .end method
 
 
-.method static v__apply__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 5
 L_tco21:
@@ -700,7 +700,7 @@ L_tarm22:
 .end method
 
 
-.method static v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 11
 L_tco23:
@@ -833,7 +833,7 @@ L_join28:
   astore 8
   aload 7
   aload 8
-  invokestatic AwsumMain/v__apply__scc__apply1__df__lam_14_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   aconst_null
@@ -907,7 +907,7 @@ L_tarm25:
 .end method
 
 
-.method static v__apply__scc__apply1__df__lam_14_5__df__lam_9_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 3
 L_tco30:
@@ -939,7 +939,7 @@ L_tarm31:
   bipush 29
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__df__rowmono_0_andThenIO_4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$df$$rowmono$0$andThenIO$4(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   astore_1
   astore_0
   goto L_tco30
@@ -956,7 +956,7 @@ L_tarm32:
   bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$df$handleErrorIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   astore_1
   astore_0
   goto L_tco30

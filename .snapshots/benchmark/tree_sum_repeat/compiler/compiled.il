@@ -432,7 +432,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__scc__apply_sumTree__cps_sumTree(object)
+    call object AwsumMain::v_$scc$$apply$sumTree__$cps$sumTree(object)
     starg.s 2
     starg.s 1
     starg.s 0
@@ -556,7 +556,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply_sumTree__cps_sumTree(object) cil managed
+  .method private hidebysig static object v_$scc$$apply$sumTree__$cps$sumTree(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8)

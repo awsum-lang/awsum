@@ -393,7 +393,7 @@ L_arm9:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__scc_spinA_spinB_spinC(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$spinA__spinB__spinC(Ljava/lang/Object;)Ljava/lang/Object;
 L_join8:
 L_join6:
   areturn
@@ -578,7 +578,7 @@ L_tarm15:
   bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps_descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 4
   aload 4
@@ -673,7 +673,7 @@ L_tarm17:
 .end method
 
 
-.method static v__cps_descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 8
   .limit locals 7
 L_tco18:
@@ -705,7 +705,7 @@ L_tco18:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__apply_descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm19:
   aload_0
@@ -747,7 +747,7 @@ L_tarm19:
   aload 6
   aastore
   aastore
-  invokestatic AwsumMain/v__apply_descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 6
   areturn
@@ -776,7 +776,7 @@ L_tarm20:
 .end method
 
 
-.method static v__apply_descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$descend(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 11
 L_tco21:
@@ -877,7 +877,7 @@ L_join24:
 .end method
 
 
-.method static v__scc_spinA_spinB_spinC(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$spinA__spinB__spinC(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 12
 L_tco26:

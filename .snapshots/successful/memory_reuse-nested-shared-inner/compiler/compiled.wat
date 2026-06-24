@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00E")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00e")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_rev $v_mk $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0)
+  (elem (i32.const 0) $v_runIO $v_rev $v_mk $v_$cps$$df$andThenIO$0 $v_$apply$$df$andThenIO$0)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -886,9 +886,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           local.get 1
           local.set 3
           local.get 0
@@ -896,6 +896,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 14
         local.get 0
         local.tee 3
         call 13
@@ -907,11 +909,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 3
+          call 14
           block (result i32)
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             local.get 1
             local.set 5
             local.get 0
@@ -924,6 +924,8 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           local.get 4
           local.set 5
           i32.const 12
@@ -948,10 +950,6 @@
           call 13
           local.get 7
           local.set 6
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 1
           call 14
           local.get 0
@@ -1092,7 +1090,7 @@
       local.get 1
     end)
 
-  (func $v__cps__df_andThenIO_0 (param i32 i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$0 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1266,7 +1264,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

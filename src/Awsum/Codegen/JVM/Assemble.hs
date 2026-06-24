@@ -6,9 +6,10 @@
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
-module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
+module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, jvmU2Max, methodLimitViolations, selectLimit, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, methodMaxLocals, methodMaxStack, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -34,53 +35,203 @@ import Relude
 jvmMaxMethodCodeBytes :: Int
 jvmMaxMethodCodeBytes = 65535
 
--- | A method whose assembled bytecode crosses 'jvmMaxMethodCodeBytes', with
---   its name and actual byte size for the diagnostic.
-data JvmLimitExceeded = JvmMethodTooLarge
-  { jleMethod :: Text,
-    jleBytes :: Int
-  }
+-- | Several class-file fields are u2 (16-bit) and so cap their value at 65535:
+--   @constant_pool_count@ (§4.1), a method's @max_stack@ / @max_locals@
+--   (§4.7.3), and each @CONSTANT_Utf8_info@ @length@ (§4.4.7). A value past this
+--   wraps on write and silently corrupts the @.class@, which the JVM then
+--   rejects at load with @ClassFormatError@; we refuse the program at compile
+--   time instead — the same discipline as 'jvmMaxMethodCodeBytes'. The other
+--   four backends have no comparable limit and are deliberately not restricted.
+jvmU2Max :: Int
+jvmU2Max = 65535
+
+-- | A method descriptor encodes at most 255 parameter units (JVM Spec §4.3.3,
+--   §4.11). Every method here is @ACC_STATIC@ with all-@Object@ parameters, so a
+--   unit is a parameter and there is no @this@ to count — the cap is 255
+--   parameters. A 256th yields a descriptor the JVM rejects at load with
+--   @ClassFormatError: Too many arguments in method signature@; we refuse it at
+--   compile time instead, the same discipline as 'jvmU2Max'. Reachable through
+--   code generation — defunctionalization prepends a closure's captures to a
+--   function's parameter list and the per-arity @$applyN@ dispatchers carry the
+--   arity — so the check below covers synthesised methods too. A 256-parameter
+--   descriptor is only ~4.6 KB, well under the u2 'jvmU2Max', so this is a
+--   distinct limit none of the other five catch. The other four backends impose
+--   no comparable cap.
+jvmMaxMethodParams :: Int
+jvmMaxMethodParams = 255
+
+-- | A JVM class-file limit a program would overflow. Each variant maps to a
+--   field that cannot represent the program — a u2 field, or for
+--   'JvmMethodTooLarge' the spec-bounded @code_length@. 'assembleJVM' reports
+--   the highest-priority one ('selectLimit') rather than emitting a @.class@ the
+--   JVM would reject at load; 'renderJvmLimitExceeded' explains it.
+data JvmLimitExceeded
+  = -- | A method's assembled @Code@ exceeds 'jvmMaxMethodCodeBytes' (§4.7.3):
+    --   method name, actual byte size.
+    JvmMethodTooLarge Text Int
+  | -- | More constant-pool entries than @constant_pool_count@ (u2) can address
+    --   (§4.1): the required count.
+    JvmConstantPoolOverflow Int
+  | -- | A single @CONSTANT_Utf8_info@ longer than its u2 @length@ field (§4.4.7):
+    --   a short preview, the byte length. Two producers — a method descriptor and
+    --   a string constant. The descriptor case is subsumed by
+    --   'JvmTooManyParameters' (a descriptor only crosses 65535 bytes past ~3640
+    --   parameters, refused at 256 first); the string-constant case is the live
+    --   purpose. A source string literal is capped so a single one fits
+    --   ('Awsum.Typing.maxStringLitUtf16CodeUnits' = 21845 ⇒ ≤ 65535 bytes), but a
+    --   folded concatenation would not — which is why 'Awsum.Simplify' does not
+    --   fold string @++@; this guard is the safety net that decision relies on.
+    JvmConstantTooLong Text Int
+  | -- | A method with more than 'jvmMaxMethodParams' parameters (§4.3.3, §4.11),
+    --   whose descriptor the JVM rejects at load: method name, parameter count.
+    JvmTooManyParameters Text Int
+  | -- | A method needing more than 'jvmU2Max' @max_stack@ slots (§4.7.3):
+    --   method name, the value.
+    JvmMaxStackTooLarge Text Int
+  | -- | A method needing more than 'jvmU2Max' @max_locals@ slots (§4.7.3):
+    --   method name, the value.
+    JvmMaxLocalsTooLarge Text Int
   deriving stock (Eq, Show)
 
--- | Render a 'JvmLimitExceeded' as the build-time error the user sees: the
---   method, its size against the 65535-byte ceiling, and — only for the
---   compiler-synthesised @$scc$@ \/ @$cps$@ functions no user wrote — one line
---   on where the method came from. Long synthesised names are abbreviated.
+-- | Lower number = reported first when a program crosses several limits at once
+--   (a high-arity function trips its parameter count, its descriptor's Utf8
+--   length, and @max_locals@ together; we surface the parameter count, the
+--   actionable cause). Code length and parameter count are concrete per-method
+--   causes; Utf8 length ranks just below them — as a method descriptor it is the
+--   symptom of an arity already reported, though on its own it also catches an
+--   over-long string constant; the pool count is whole-program; @max_stack@ /
+--   @max_locals@ are bounded by code / descriptor length and so are only ever
+--   reached alongside one of the above — they rank last.
+limitPriority :: JvmLimitExceeded -> Int
+limitPriority = \case
+  JvmMethodTooLarge {} -> 0
+  JvmTooManyParameters {} -> 1
+  JvmConstantTooLong {} -> 2
+  JvmConstantPoolOverflow {} -> 3
+  JvmMaxStackTooLarge {} -> 4
+  JvmMaxLocalsTooLarge {} -> 5
+
+-- | The limit to report from those a program exceeds: the highest-priority
+--   ('limitPriority'), ties broken by encounter order ('sortOn' is stable).
+--   'Nothing' means no limit was crossed.
+selectLimit :: [JvmLimitExceeded] -> Maybe JvmLimitExceeded
+selectLimit = viaNonEmpty head . sortOn limitPriority
+
+-- | Every per-method class-file limit a single method's computed figures cross
+--   — the one source of truth shared by 'assembleJVM' and its test. @code_length@
+--   uses 'jvmMaxMethodCodeBytes' (a u4 field the spec still caps at 65535);
+--   the parameter count uses 'jvmMaxMethodParams' (§4.3.3); @max_stack@ /
+--   @max_locals@ use 'jvmU2Max'.
+methodLimitViolations :: Text -> Int -> Int -> Int -> Int -> [JvmLimitExceeded]
+methodLimitViolations name arity codeLen maxStack maxLocals =
+  [JvmMethodTooLarge name codeLen | codeLen > jvmMaxMethodCodeBytes]
+    <> [JvmTooManyParameters name arity | arity > jvmMaxMethodParams]
+    <> [JvmMaxStackTooLarge name maxStack | maxStack > jvmU2Max]
+    <> [JvmMaxLocalsTooLarge name maxLocals | maxLocals > jvmU2Max]
+
+-- | Render a 'JvmLimitExceeded' as the build-time error the user sees. For an
+--   over-large method, name the method (and, for a compiler-synthesised @$scc$@
+--   \/ @$cps$@ function no user wrote, one line on where it came from); for the
+--   whole-class limits, state the limit and the figure that crossed it. Long
+--   synthesised names and string previews are abbreviated.
 renderJvmLimitExceeded :: JvmLimitExceeded -> Text
-renderJvmLimitExceeded (JvmMethodTooLarge name n) =
-  "JVM target — "
-    <> subject
-    <> " compiles to "
-    <> show n
-    <> " bytes, over the JVM's hard limit of 65535 bytes per method."
-    <> provenance
-    <> " This program can't be built for the JVM target."
+renderJvmLimitExceeded = \case
+  JvmMethodTooLarge name n ->
+    "JVM target — "
+      <> methodSubject name
+      <> " compiles to "
+      <> show n
+      <> " bytes, over the JVM's hard limit of 65535 bytes per method."
+      <> methodProvenance name
+      <> cantBuild
+  JvmTooManyParameters name n ->
+    "JVM target — "
+      <> methodSubject name
+      <> " has "
+      <> show n
+      <> " parameters, over the JVM's hard limit of 255 (a method descriptor encodes at most 255 parameter units, JVM Spec §4.3.3, §4.11)."
+      <> methodProvenance name
+      <> cantBuild
+  JvmConstantPoolOverflow count ->
+    "JVM target — this program needs "
+      <> show count
+      <> " constant-pool entries, over the JVM's hard limit of 65535 (constant_pool_count is a 16-bit field, JVM Spec §4.1)."
+      <> cantBuild
+  JvmConstantTooLong preview n ->
+    "JVM target — a constant-pool string entry is "
+      <> show n
+      <> " bytes, over the JVM's hard limit of 65535 bytes per entry (CONSTANT_Utf8_info length is a 16-bit field, JVM Spec §4.4.7): `"
+      <> abbreviate preview
+      <> "`. This is almost always a function with an extreme number of parameters."
+      <> cantBuild
+  JvmMaxStackTooLarge name n ->
+    "JVM target — method `"
+      <> abbreviate name
+      <> "` needs "
+      <> show n
+      <> " operand-stack slots, over the JVM's hard limit of 65535 (max_stack is a 16-bit field, JVM Spec §4.7.3)."
+      <> cantBuild
+  JvmMaxLocalsTooLarge name n ->
+    "JVM target — method `"
+      <> abbreviate name
+      <> "` needs "
+      <> show n
+      <> " local-variable slots, over the JVM's hard limit of 65535 (max_locals is a 16-bit field, JVM Spec §4.7.3)."
+      <> cantBuild
   where
-    synthetic = any (`T.isPrefixOf` name) ["$scc$", "$cps$", "$apply$"]
-    subject
-      | synthetic = "synthetic method `" <> abbreviate name <> "`"
-      | otherwise = "function `" <> abbreviate name <> "`"
-    provenance
-      | "$scc$" `T.isPrefixOf` name =
-          " (`$scc$…` is one function the compiler fuses from a mutual-recursion group to keep it stack-safe.)"
-      | "$cps$" `T.isPrefixOf` name || "$apply$" `T.isPrefixOf` name =
-          " (`$cps$…` is the continuation-passing form the compiler synthesises to make non-tail recursion stack-safe.)"
-      | otherwise = ""
+    cantBuild :: Text
+    cantBuild = " This program can't be built for the JVM target."
     abbreviate t
       | T.length t <= 48 = t
       | otherwise = T.take 47 t <> "…"
+    -- A compiler-synthesised method is named from a @$@-prefixed Core name, which
+    -- 'Awsum.Codegen.Mangle.mangle' turns into a @v_$@… JVM method name (a user
+    -- name becomes @v_@ + a letter). Match the mangled form — testing the raw
+    -- @$scc$@ prefix against the @v_@-prefixed name never matches.
+    methodSubject name
+      | "v_$" `T.isPrefixOf` name = "synthetic method `" <> abbreviate name <> "`"
+      | otherwise = "function `" <> abbreviate name <> "`"
+    methodProvenance name
+      | "v_$scc$" `T.isPrefixOf` name =
+          " (`$scc$…` is one function the compiler fuses from a mutual-recursion group to keep it stack-safe.)"
+      | "v_$cps$" `T.isPrefixOf` name || "v_$apply$" `T.isPrefixOf` name =
+          " (`$cps$…` is the continuation-passing form the compiler synthesises to make non-tail recursion stack-safe.)"
+      | otherwise = ""
 
--- | Produce a complete .class file as a strict ByteString, unless some method
---   crosses the JVM's per-method bytecode ceiling ('jvmMaxMethodCodeBytes') —
---   in which case the program is refused for this target ('JvmLimitExceeded').
+-- | Produce a complete .class file as a strict ByteString, unless the program
+--   crosses one of the JVM's class-file limits ('JvmLimitExceeded') — a method
+--   over the bytecode ceiling, or a u2 field (constant-pool count, a method's
+--   @max_stack@ / @max_locals@, a single Utf8 entry's length) that cannot
+--   represent it — in which case the program is refused for this target.
 assembleJVM :: PreludeTags -> CoreProgram -> Either JvmLimitExceeded BS.ByteString
 assembleJVM ptags prog =
   let (methods, finalSt) = runState (doAssemble prog) (emptyPool ptags)
       argvFieldNameIdx = fromMaybe (error "assembleJVM: missing __argv name") (Map.lookup (KUtf8 "__argv") finalSt.cache)
       argvFieldDescIdx = fromMaybe (error "assembleJVM: missing __argv descriptor") (Map.lookup (KUtf8 "[Ljava/lang/String;") finalSt.cache)
-   in case finalSt.oversizedMethods of
-        ((nm, n) : _) -> Left (JvmMethodTooLarge nm n)
-        [] -> Right (toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods)))
+      -- Per-method limits, read from the assembled methods (outside the State —
+      -- see 'assembleMethod'): code_length, max_stack, max_locals.
+      methodViolations =
+        concatMap (\mi -> methodLimitViolations mi.miName mi.mArity (length mi.mCode) mi.mMaxStack mi.mMaxLocals) methods
+      -- Whole-class u2 limits, read from the final pool — faithful even though
+      -- 'nextIdx' wraps, because the entry-list length never does:
+      -- 'constant_pool_count' is the entry count + 1, and each
+      -- 'CONSTANT_Utf8_info' length must fit its own u2 field.
+      poolCount = length finalSt.entries + 1
+      poolViolation = [JvmConstantPoolOverflow poolCount | poolCount > jvmU2Max]
+      utf8Violations =
+        [ JvmConstantTooLong (utf8Preview bs) (BS.length bs)
+        | CPUtf8 bs <- finalSt.entries,
+          BS.length bs > jvmU2Max
+        ]
+   in case selectLimit (methodViolations <> poolViolation <> utf8Violations) of
+        Just v -> Left v
+        Nothing -> Right (toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods)))
+
+-- | A short, printable preview of a (modified-UTF-8) constant-pool string for a
+--   diagnostic. The over-long entries are method descriptors / names, which are
+--   ASCII, so decoding the leading bytes leniently reproduces them.
+utf8Preview :: ByteString -> Text
+utf8Preview = decodeUtf8 . BS.take 48
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Constant pool types
@@ -121,18 +272,11 @@ data Pool = Pool
     -- unified user-code emitter ('emitExprI'). Labels only need to be
     -- unique within one 'JvmMethod' body, but a global counter trivially
     -- guarantees that.
-    labelCtr :: Int,
-    -- | Methods whose assembled @Code@ crossed 'jvmMaxMethodCodeBytes',
-    -- in encounter order, as @(name, byteSize)@. Recorded by
-    -- 'assembleMethod' at the one point the final bytes and the method
-    -- name are both in hand; 'assembleJVM' turns a non-empty list into a
-    -- 'JvmLimitExceeded' rather than emitting a class the JVM would reject
-    -- at load.
-    oversizedMethods :: [(Text, Int)]
+    labelCtr :: Int
   }
 
 emptyPool :: PreludeTags -> Pool
-emptyPool ptags = Pool {entries = [], nextIdx = 1, cache = Map.empty, poolTags = ptags, labelCtr = 0, oversizedMethods = []}
+emptyPool ptags = Pool {entries = [], nextIdx = 1, cache = Map.empty, poolTags = ptags, labelCtr = 0}
 
 -- | A fresh, unique 'LabelId' with the given prefix (e.g. @"L_case"@).
 freshLabel :: Text -> AsmM LabelId
@@ -366,6 +510,10 @@ bcLoadInt32 n
 
 data MInfo = MInfo
   { mFlags :: Word16,
+    -- | The method's human name (e.g. @"v_main"@, @"$cps$f"@), carried so the
+    -- per-method limit checks in 'assembleJVM' can name the offender; 'mName' is
+    -- its constant-pool index, which a diagnostic can't render.
+    miName :: Text,
     mName :: Word16,
     mDesc :: Word16,
     mCode :: [Word8],
@@ -373,15 +521,24 @@ data MInfo = MInfo
     mCodeAttrs :: [Word8],
     -- | Maximum operand-stack depth this method ever reaches
     -- (JVM Spec §4.7.3 max_stack). Verifier rejects methods whose
-    -- actual depth exceeds the declared value.
-    mMaxStack :: Word16,
+    -- actual depth exceeds the declared value. Kept as the honest 'Int':
+    -- 'assembleJVM' refuses a program where it crosses 'jvmU2Max', and
+    -- 'encodeMethod' truncates to the u2 field only once that is ruled out.
+    mMaxStack :: Int,
     -- | Number of local variable slots this method requires
     -- (JVM Spec §4.7.3 max_locals), counting params + every additive
     -- nested 'CCase' / 'CCon' slot. The verifier rejects any
     -- StackMapTable frame whose number_of_locals exceeds this value
     -- with @bad type array size@ — that's what hardcoding it to 256
     -- was producing for deeply nested 'case' programs (depth ≥ ~250).
-    mMaxLocals :: Word16
+    -- 'Int' for the same reason as 'mMaxStack'.
+    mMaxLocals :: Int,
+    -- | Number of method parameters (JVM Spec §4.3.3 caps a descriptor at 255).
+    -- Counted as the @Object@ parameters of the descriptor — every parameter of
+    -- any method that could approach the cap is @Object@ (see
+    -- 'entryLocalsFromDesc') — and checked against 'jvmMaxMethodParams' in
+    -- 'assembleJVM', the same place as the u2 figures.
+    mArity :: Int
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -469,29 +626,31 @@ assemblePushInt n
   | n >= -32768 && n <= 32767 = pure (let w = fromIntegral n :: Word16 in [0x11, hi8 w, lo8 w])
   | otherwise = bcLdc <$> addInt (fromIntegral n)
 
--- | Assemble a 'JvmMethod' to its 'MInfo'. @max_stack@ / @max_locals@ come
---   from the shared spec — the honest verifier limits, the same values the
---   text declares.
+-- | Assemble a 'JvmMethod' to its 'MInfo'. @max_stack@ / @max_locals@ come from
+--   the shared spec — the honest verifier limits, the same values the text
+--   declares. The class-file limits a method can cross
+--   ('methodLimitViolations') are checked in 'assembleJVM' from the assembled
+--   'MInfo' list, deliberately *not* here: forcing the figures per method inside
+--   the pool-building State retains each intermediate body and turns assembly
+--   quadratic, so the checks run once, after 'runState'.
 assembleMethod :: JvmMethod -> AsmM MInfo
 assembleMethod m = do
   ni <- addUtf8 (jmName m)
   di <- addUtf8 (jmDesc m)
-  (code, attrCount, attrs) <- assembleBody (entryLocalsFromDesc (jmDesc m)) (jmBody m)
-  -- The one point where this method's final bytes and its name coexist:
-  -- record an over-limit body for 'assembleJVM' to refuse (JVM Spec §4.7.3
-  -- caps 'code_length' at 65535).
-  when (length code > jvmMaxMethodCodeBytes)
-    $ modify' (\st -> st {oversizedMethods = st.oversizedMethods <> [(jmName m, length code)]})
+  let entryLocals = entryLocalsFromDesc (jmDesc m)
+  (code, attrCount, attrs) <- assembleBody entryLocals (jmBody m)
   pure
     MInfo
       { mFlags = if jmPublic m then 0x0009 else 0x0008,
+        miName = jmName m,
         mName = ni,
         mDesc = di,
         mCode = code,
         mCodeAttrCount = attrCount,
         mCodeAttrs = attrs,
-        mMaxStack = fromIntegral (methodMaxStack m),
-        mMaxLocals = fromIntegral (methodMaxLocals m)
+        mMaxStack = methodMaxStack m,
+        mMaxLocals = methodMaxLocals m,
+        mArity = length entryLocals
       }
 
 -- | The verifier locals at method entry, derived from the descriptor — the
@@ -858,6 +1017,7 @@ mkInit = do
   pure
     MInfo
       { mFlags = 0x0000,
+        miName = "<init>",
         mName = ni,
         mDesc = di,
         mCode =
@@ -867,7 +1027,8 @@ mkInit = do
         mCodeAttrCount = 0,
         mCodeAttrs = [],
         mMaxStack = 256,
-        mMaxLocals = 256
+        mMaxLocals = 256,
+        mArity = 0 -- ()V
       }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1861,12 +2022,6 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
           chainCode = concatMap buildArm (zip armChunks (zip preLabels nextTargets))
       pure $ headI <> chainCode
 
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body
-
 -- | @(Ljava/lang/Object;...)Ljava/lang/Object;@ for N args.
 objMethodDesc :: Int -> Text
 objMethodDesc n =
@@ -1945,8 +2100,8 @@ encodeMethod codeNameIdx mi =
         <> B.word16BE 1 -- 1 attribute (Code)
         <> B.word16BE codeNameIdx
         <> B.word32BE attrLen
-        <> B.word16BE mi.mMaxStack
-        <> B.word16BE mi.mMaxLocals
+        <> B.word16BE (fromIntegral mi.mMaxStack)
+        <> B.word16BE (fromIntegral mi.mMaxLocals)
         <> B.word32BE codeLen
         <> B.byteString codeBS
         <> B.word16BE 0 -- exception table

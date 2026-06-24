@@ -34,14 +34,14 @@
 --
 -- NOTE: We treat a /declaration terminator/ as either an explicit newline or EOF.
 --       This makes multi-decl files unambiguous without semicolons.
-module Awsum.Parser (parseProgram, parseProgramDiagnostic) where
+module Awsum.Parser (parseProgram, parseProgramDiagnostic, maxIdentifierChars) where
 
 import Awsum.SrcStream (SrcText (..))
 import Awsum.Syntax
 import Data.Char qualified as Char
 import Data.Text qualified as T
 import Relude
-import Text.Megaparsec (Parsec, eof, try)
+import Text.Megaparsec (Parsec, eof, try, (<?>))
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as C
 import Text.Megaparsec.Char.Lexer qualified as L
@@ -96,19 +96,68 @@ skipBlankLinesNoComments = void $ P.many (try (hspaceNoComments *> C.eol))
 -- Identifiers & reserved words
 -- ────────────────────────────────────────────────────────────────────────────
 
--- | Tail characters allowed in identifiers.
+-- | Tail characters allowed in identifiers: ASCII alphanumerics, @_@, and the
+--   apostrophe (primed names like @xs'@). ASCII-only on purpose — see 'identTail'.
 identChar :: Parser Char
-identChar = C.alphaNumChar <|> C.char '_' <|> C.char '\''
+identChar = P.satisfy isIdentTail
 
--- | Predicate for identifier tails (used by 'takeWhileP').
+-- | Predicate for identifier tails (used by 'takeWhileP' and keyword-boundary
+--   checks). ASCII letters/digits, @_@, @'@ — the intersection of what all five
+--   backends accept in an emitted identifier.
 isIdentTail :: Char -> Bool
-isIdentTail c = Char.isAlphaNum c || c == '_' || c == '\''
+isIdentTail c =
+  Char.isAsciiUpper c || Char.isAsciiLower c || Char.isDigit c || c == '_' || c == '\''
+
+-- | Read an identifier tail, then reject a non-ASCII letter or digit glued
+--   directly onto it (e.g. @fooλ@) with a targeted diagnostic. The parser once
+--   admitted such names and codegen passed them straight into the emitted
+--   identifier — valid on JVM/CLR/WASM (raw UTF-8 bytes) but a broken artifact
+--   on LLVM (IR identifier grammar is ASCII) and JS (no apostrophe), with
+--   @build@ still exiting 0. ASCII-only keeps every identifier inside the
+--   intersection of all five targets' grammars.
+-- | Maximum length (ASCII characters) of a source identifier. A generous
+--   sanity cap — far beyond any hand-written or generated name — that keeps
+--   a single mangled identifier well inside every backend's symbol-length
+--   limit, most sharply the JVM's @CONSTANT_Utf8@ u2 (65535 bytes). Past it
+--   the identifier is rejected at parse time, rather than risking a silently
+--   broken artifact on a target with a tighter limit. (Fused /synthesised/
+--   names — @$scc$…@ etc. — are bounded separately by 'Awsum.ShortenNames'.)
+maxIdentifierChars :: Int
+maxIdentifierChars = 1024
+
+identTail :: Parser Text
+identTail = do
+  xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  when (T.length xs > maxIdentifierChars)
+    . fail
+    . toString
+    $ ("identifier too long; the maximum is " <> show maxIdentifierChars <> " characters" :: Text)
+  rejectNonAsciiInIdent
+  pure xs
+
+-- | When an ASCII identifier is immediately followed by a non-ASCII letter or
+--   digit, fail with a clear message instead of a silent broken artifact or a
+--   confusing downstream parse error. 'lookAhead' keeps the error span on the
+--   offending character. Only reachable for non-ASCII input, since 'isIdentTail'
+--   has already consumed every ASCII alphanumeric.
+rejectNonAsciiInIdent :: Parser ()
+rejectNonAsciiInIdent = do
+  mc <- P.lookAhead (optional P.anySingle)
+  case mc of
+    Just c
+      | Char.isAlphaNum c ->
+          fail
+            . toString
+            $ "identifier may contain only ASCII letters, digits, '_', or apostrophe; '"
+            <> T.singleton c
+            <> "' is not an ASCII character (Awsum identifiers are ASCII; transliterate non-ASCII names)"
+    _ -> pass
 
 -- | First character allowed in a /binder/ (function parameter or pattern
---   variable): a regular lowercase letter OR an underscore. The underscore
+--   variable): an ASCII lowercase letter OR an underscore. The underscore
 --   forms (@_@ alone or @_foo@) signal an intentionally unused binding.
 isBinderStart :: Char -> Bool
-isBinderStart c = Char.isLower c || c == '_'
+isBinderStart c = Char.isAsciiLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
@@ -135,7 +184,7 @@ rwordNoLine w = (lexemeNoLine . try) (P.chunk w *> P.notFollowedBy identChar)
 lident :: Parser Name
 lident = (lexeme . try) $ do
   x <- P.satisfy isBinderStart
-  xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  xs <- identTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
@@ -170,15 +219,14 @@ uidentBody = do
   underscore <- P.option "" (T.singleton <$> C.char '_')
   if T.null underscore
     then do
-      x <- C.upperChar
-      xs <- P.takeWhileP (Just "ident tail") isIdentTail
-      pure (T.cons x xs)
+      x <- P.satisfy Char.isAsciiUpper <?> "uppercase letter"
+      T.cons x <$> identTail
     else
       P.choice
         [ -- "_X..." — the typical "intentionally unused" shape.
           do
-            x <- C.upperChar
-            xs <- P.takeWhileP (Just "ident tail") isIdentTail
+            x <- P.satisfy Char.isAsciiUpper <?> "uppercase letter"
+            xs <- identTail
             pure (underscore <> T.cons x xs),
           -- Bare "_" — only when the next char isn't part of a name,
           -- so "_foo" doesn't sneak in as "_" + leftover.
@@ -189,7 +237,7 @@ uidentBody = do
 lidentNoLine :: Parser Name
 lidentNoLine = (lexemeNoLine . try) $ do
   x <- P.satisfy isBinderStart
-  xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  xs <- identTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
@@ -203,7 +251,7 @@ uidentNoLine = (lexemeNoLine . try) uidentBody
 binderName :: Parser Name
 binderName = try $ do
   x <- P.satisfy isBinderStart
-  xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  xs <- identTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
@@ -738,7 +786,7 @@ pTypeAtomNoLineComments =
       start <- P.getSourcePos
       n <- try $ do
         x <- P.satisfy isBinderStart
-        xs <- P.takeWhileP (Just "ident tail") isIdentTail
+        xs <- identTail
         let w = T.cons x xs
         guard (w `notElem` reserved)
         pure w

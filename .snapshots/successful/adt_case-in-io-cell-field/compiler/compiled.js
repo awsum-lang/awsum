@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,7 +21,7 @@
     }
   };
 
-  const v__inl2_x = [12, 1 | 0];
+  const v_$inl2$x = [12, 1 | 0];
   const main = [
     7,
     (s => {
@@ -30,10 +30,10 @@
           return "n";
         }
         case 12: {
-          return String(v__inl2_x[1]);
+          return String(v_$inl2$x[1]);
         }
       }
-    })(v__inl2_x),
+    })(v_$inl2$x),
     [5, [0]]
   ];
 

@@ -16,7 +16,7 @@
   (data (i32.const 140) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00OVERFLOW")
   (data (i32.const 168) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_callBox $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df__rowmono_0_andThenIO_4 $v__apply__df__rowmono_0_andThenIO_4)
+  (elem (i32.const 0) $v_runIO $v_callBox $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$$rowmono$0$andThenIO$4 $v_$apply$$df$$rowmono$0$andThenIO$4)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -804,9 +804,9 @@
     i32.const 25
     i32.eq
     if (result i32)
+      local.get 2
+      call 14
       block (result i32)
-        local.get 2
-        call 14
         local.get 1
         local.tee 3
         call 13
@@ -824,6 +824,8 @@
         local.get 3
       end
     else
+      local.get 2
+      call 14
       local.get 1
       local.tee 3
       call 13
@@ -844,11 +846,9 @@
         local.set 4
         local.get 4
         call 13
+        local.get 3
+        call 14
         block (result i32)
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -878,11 +878,9 @@
         local.set 4
         local.get 4
         call 13
+        local.get 3
+        call 14
         block (result i32)
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 4
           local.tee 5
           call 13
@@ -1206,7 +1204,7 @@
     local.get 0
     call 20)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1454,7 +1452,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1520,7 +1518,7 @@
       end
     end)
 
-  (func $v__cps__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1683,7 +1681,7 @@
       end
     end)
 
-  (func $v__apply__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

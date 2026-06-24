@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0e\00\00\00\0e\00\00\00UnderflowError")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildLeft $v_buildRight $v_mirrorN $v__scc_deepestLeftA_deepestLeftB_deepestLeftC $v__scc__apply_mirror__cps_mirror)
+  (elem (i32.const 0) $v_runIO $v_buildLeft $v_buildRight $v_mirrorN $v_$scc$deepestLeftA__deepestLeftB__deepestLeftC $v_$scc$$apply$mirror__$cps$mirror)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1042,9 +1042,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -1067,6 +1067,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 14
         local.get 0
         local.tee 3
         call 13
@@ -1083,11 +1085,9 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           block (result i32)
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -1117,6 +1117,8 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           local.get 4
           local.set 5
           i32.const 16
@@ -1150,10 +1152,6 @@
           i32.store offset=12
           local.get 7
           local.set 6
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 1
           call 14
           local.get 0
@@ -1189,9 +1187,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -1214,6 +1212,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 14
         local.get 0
         local.tee 3
         call 13
@@ -1230,11 +1230,9 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           block (result i32)
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -1264,6 +1262,8 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           local.get 4
           local.set 5
           i32.const 16
@@ -1297,10 +1297,6 @@
           call 13
           local.get 7
           local.set 6
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 1
           call 14
           local.get 0
@@ -1336,9 +1332,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -1361,6 +1357,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 14
         local.get 0
         local.tee 3
         call 13
@@ -1377,11 +1375,9 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           block (result i32)
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -1411,6 +1407,8 @@
           local.set 4
           local.get 4
           call 13
+          local.get 3
+          call 14
           local.get 4
           local.set 5
           i32.const 12
@@ -1439,10 +1437,6 @@
           local.get 7
           call 23
           local.set 6
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 1
           call 14
           local.get 0
@@ -1456,7 +1450,7 @@
       end
     end)
 
-  (func $v__scc_deepestLeftA_deepestLeftB_deepestLeftC (param i32) (result i32)
+  (func $v_$scc$deepestLeftA__deepestLeftB__deepestLeftC (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1655,7 +1649,7 @@
       end
     end)
 
-  (func $v__scc__apply_mirror__cps_mirror (param i32) (result i32)
+  (func $v_$scc$$apply$mirror__$cps$mirror (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

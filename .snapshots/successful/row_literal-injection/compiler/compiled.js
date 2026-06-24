@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,36 +21,36 @@
     }
   };
 
-  const v__apply__df_andThenIO_8 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$8 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 12: {
-          return v__x;
+          return v_$x;
         }
         case 13: {
-          const v__pk_13 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_13;
+          const v_$pk__13 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__13;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_8 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$8 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          const v__inl6_x = [2711245919, 9 | 0];
-          return v__apply__df_andThenIO_8(
-            v__k,
-            [7, String(v__inl6_x[1]), [5, [0]]]
+          const v_$inl6$x = [2711245919, 9 | 0];
+          return v_$apply$$df$andThenIO$8(
+            v_$k,
+            [7, String(v_$inl6$x[1]), [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [13, v__k, v_s];
+          v_$k = [13, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -58,36 +58,36 @@
     }
   };
 
-  const v__apply__df_andThenIO_4 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$4 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 10: {
-          return v__x;
+          return v_$x;
         }
         case 11: {
-          const v__pk_11 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_11;
+          const v_$pk__11 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__11;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_4 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$4 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          const v__inl7_x = [3538687084, 11 >>> 0];
-          return v__apply__df_andThenIO_4(
-            v__k,
-            [7, String(v__inl7_x[1]), [5, [0]]]
+          const v_$inl7$x = [3538687084, 11 >>> 0];
+          return v_$apply$$df$andThenIO$4(
+            v_$k,
+            [7, String(v_$inl7$x[1]), [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [11, v__k, v_s];
+          v_$k = [11, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -95,36 +95,36 @@
     }
   };
 
-  const v__apply__df_andThenIO_16 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$16 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 16: {
-          return v__x;
+          return v_$x;
         }
         case 17: {
-          const v__pk_17 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_17;
+          const v_$pk__17 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__17;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_16 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$16 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          const v__inl8_x = [2711245919, 9 | 0];
-          return v__apply__df_andThenIO_16(
-            v__k,
-            [7, String(v__inl8_x[1]), [5, [0]]]
+          const v_$inl8$x = [2711245919, 9 | 0];
+          return v_$apply$$df$andThenIO$16(
+            v_$k,
+            [7, String(v_$inl8$x[1]), [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [17, v__k, v_s];
+          v_$k = [17, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -132,36 +132,36 @@
     }
   };
 
-  const v__apply__df_andThenIO_12 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$12 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 14: {
-          return v__x;
+          return v_$x;
         }
         case 15: {
-          const v__pk_15 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_15;
+          const v_$pk__15 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__15;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_12 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$12 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          const v__inl9_x = [2711245919, 7 | 0];
-          return v__apply__df_andThenIO_12(
-            v__k,
-            [7, String(v__inl9_x[1]), [5, [0]]]
+          const v_$inl9$x = [2711245919, 7 | 0];
+          return v_$apply$$df$andThenIO$12(
+            v_$k,
+            [7, String(v_$inl9$x[1]), [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [15, v__k, v_s];
+          v_$k = [15, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -169,36 +169,36 @@
     }
   };
 
-  const v__apply__df_andThenIO_0 = (v__k, v__x) => {
+  const v_$apply$$df$andThenIO$0 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 8: {
-          return v__x;
+          return v_$x;
         }
         case 9: {
-          const v__pk_9 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_9;
+          const v_$pk__9 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__9;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_andThenIO_0 = (v_io, v__k) => {
+  const v_$cps$$df$andThenIO$0 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          const v__inl10_x = [3538687084, 13 >>> 0];
-          return v__apply__df_andThenIO_0(
-            v__k,
-            [7, String(v__inl10_x[1]), [5, [0]]]
+          const v_$inl10$x = [3538687084, 13 >>> 0];
+          return v_$apply$$df$andThenIO$0(
+            v_$k,
+            [7, String(v_$inl10$x[1]), [5, [0]]]
           );
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [9, v__k, v_s];
+          v_$k = [9, v_$k, v_s];
           v_io = v_next;
           continue;
         }
@@ -206,12 +206,12 @@
     }
   };
 
-  const v__inl11_x = [2711245919, 7 | 0];
-  const main = v__cps__df_andThenIO_0(
-    v__cps__df_andThenIO_4(
-      v__cps__df_andThenIO_8(
-        v__cps__df_andThenIO_12(
-          v__cps__df_andThenIO_16([7, String(v__inl11_x[1]), [5, [0]]], [16]),
+  const v_$inl11$x = [2711245919, 7 | 0];
+  const main = v_$cps$$df$andThenIO$0(
+    v_$cps$$df$andThenIO$4(
+      v_$cps$$df$andThenIO$8(
+        v_$cps$$df$andThenIO$12(
+          v_$cps$$df$andThenIO$16([7, String(v_$inl11$x[1]), [5, [0]]], [16]),
           [14]
         ),
         [12]

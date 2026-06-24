@@ -186,16 +186,16 @@ define internal ptr @v_main() {
   %t5 = inttoptr i64 8 to ptr
   %t6 = getelementptr ptr, ptr %t4, i32 0
   store ptr %t5, ptr %t6
-  %t7 = call ptr @v__cps__df_bindIO_0(ptr %t0, ptr %t4)
+  %t7 = call ptr @v_$cps$$df$bindIO$0(ptr %t0, ptr %t4)
   ret ptr %t7
 }
 
-define internal ptr @v__cps__df_bindIO_0(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$bindIO$0(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -228,7 +228,7 @@ tco.case.arm.5.11:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_bindIO_0(ptr %t6, ptr %t12)
+  %t26 = call ptr @v_$apply$$df$bindIO$0(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -286,12 +286,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_bindIO_0(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$bindIO$0(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

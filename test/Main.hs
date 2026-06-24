@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Awsum.ArbitraryInstances ()
+import Awsum.ClrMetadataWidthSpec qualified
 import Awsum.Codegen.JS.Syntax qualified as JS
 import Awsum.CoreSpec qualified
 import Awsum.ElaborateLower (elaborateLowerProgram)
@@ -8,9 +9,10 @@ import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
+import Awsum.JvmClassFileLimitSpec qualified
 import Awsum.JvmFarBranchSpec qualified
-import Awsum.JvmMethodLimitSpec qualified
 import Awsum.LspSpec qualified
+import Awsum.NameLimitsSpec qualified
 import Awsum.NoSimplifySpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
@@ -51,7 +53,9 @@ main = do
     Awsum.PropertySpec.spec
     Awsum.NoSimplifySpec.spec
     Awsum.StringLiteralCapSpec.spec
-    Awsum.JvmMethodLimitSpec.spec
+    Awsum.NameLimitsSpec.spec
+    Awsum.JvmClassFileLimitSpec.spec
+    Awsum.ClrMetadataWidthSpec.spec
     Awsum.JvmFarBranchSpec.spec
     Awsum.LspSpec.spec
     jsSyntaxSpec
@@ -103,6 +107,19 @@ jsSyntaxSpec = describe "Awsum.Codegen.JS.Syntax renderer" $ do
   it "parenthesises the right operand of a left-associative '-'"
     $ render (JS.EBin JS.BSub (JS.EVar "a") (JS.EBin JS.BSub (JS.EVar "b") (JS.EVar "c")))
     `shouldBe` "a - (b - c);\n"
+  -- The compact (artifact) renderer behind `awsum build` / `run`: the same
+  -- tokens as 'renderProgram', dropped onto one line. Safe because every
+  -- statement is ';'- or '}'-terminated, so removing newlines never fuses
+  -- two tokens.
+  it "renderProgramCompact joins statements on one line via their terminators"
+    $ JS.renderProgramCompact [JS.SConst "a" (JS.ENum 1), JS.SReturn (JS.EVar "a")]
+    `shouldBe` "const a = 1;return a;"
+  it "renderProgramCompact collapses a block onto one line"
+    $ JS.renderProgramCompact [JS.SIf (JS.EVar "c") [JS.SReturn (JS.ENum 1)] []]
+    `shouldBe` "if (c) {return 1;}"
+  it "renderProgramCompact emits no newline, even across nested blocks"
+    $ ('\n' `elem` toString (JS.renderProgramCompact [JS.SIf (JS.EVar "c") [JS.SIf (JS.EVar "d") [JS.SReturn (JS.ENum 0)] []] []]))
+    `shouldBe` False
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do

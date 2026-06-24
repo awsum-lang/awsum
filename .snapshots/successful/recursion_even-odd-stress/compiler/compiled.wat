@@ -18,7 +18,7 @@
   (data (i32.const 195) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00False")
   (data (i32.const 220) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4 $v__scc_evenInt_oddInt)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4 $v_$scc$evenInt__oddInt)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -791,7 +791,7 @@
     local.get 0
     call 19)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -950,7 +950,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1016,7 +1016,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1179,7 +1179,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1245,7 +1245,7 @@
       end
     end)
 
-  (func $v__scc_evenInt_oddInt (param i32) (result i32)
+  (func $v_$scc$evenInt__oddInt (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1275,9 +1275,9 @@
         i32.const 1
         i32.eq
         if (result i32)
+          local.get 2
+          call 14
           block (result i32)
-            local.get 2
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -1304,6 +1304,8 @@
             local.get 3
           end
         else
+          local.get 2
+          call 14
           local.get 1
           local.tee 3
           call 13
@@ -1320,11 +1322,9 @@
             local.set 4
             local.get 4
             call 13
+            local.get 3
+            call 14
             block (result i32)
-              local.get 2
-              call 14
-              local.get 3
-              call 14
               i32.const 8
               i32.const 1
               call 12
@@ -1354,6 +1354,8 @@
             local.set 4
             local.get 4
             call 13
+            local.get 3
+            call 14
             local.get 0
             i32.load offset=4
             call 14
@@ -1368,10 +1370,6 @@
             call 13
             local.get 0
             local.set 5
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             local.get 4
             call 14
             local.get 1
@@ -1400,9 +1398,9 @@
         i32.const 1
         i32.eq
         if (result i32)
+          local.get 2
+          call 14
           block (result i32)
-            local.get 2
-            call 14
             i32.const 8
             i32.const 1
             call 12
@@ -1429,6 +1427,8 @@
             local.get 3
           end
         else
+          local.get 2
+          call 14
           local.get 1
           local.tee 3
           call 13
@@ -1445,11 +1445,9 @@
             local.set 4
             local.get 4
             call 13
+            local.get 3
+            call 14
             block (result i32)
-              local.get 2
-              call 14
-              local.get 3
-              call 14
               i32.const 8
               i32.const 1
               call 12
@@ -1479,6 +1477,8 @@
             local.set 4
             local.get 4
             call 13
+            local.get 3
+            call 14
             local.get 0
             i32.load offset=4
             call 14
@@ -1493,10 +1493,6 @@
             call 13
             local.get 0
             local.set 5
-            local.get 2
-            call 14
-            local.get 3
-            call 14
             local.get 4
             call 14
             local.get 1

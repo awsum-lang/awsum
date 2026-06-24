@@ -1,0 +1,21 @@
+{- Row-widening through a non-regular type whose tail carries the parameter
+   in a contravariant (function-argument) position has no finite map, so the
+   implicit coercion `Bad Bool -> Bad (Bool | Unit)` is rejected at compile
+   time rather than diverging. -}
+
+import IO.Stdout
+
+type Bad a = More (Bad (a -> Bool)) | Done a
+
+doneBool : Bad Bool
+doneBool = Done True
+
+describe : Bad (Bool | Unit) -> String
+describe b = case b of
+  More _m -> "more"
+  Done bu -> case bu of
+    (_x : Bool) -> "done-bool"
+    (_u : Unit) -> "done-unit"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe doneBool)

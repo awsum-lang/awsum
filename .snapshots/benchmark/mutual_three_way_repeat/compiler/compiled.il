@@ -231,7 +231,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__scc_stepA_stepB_stepC(object)
+    call object AwsumMain::v_$scc$stepA__stepB__stepC(object)
     stloc.3
     ldloc.3
     ldc.i4.0
@@ -365,7 +365,7 @@
   }
 
 
-  .method private hidebysig static object v__scc_stepA_stepB_stepC(object) cil managed
+  .method private hidebysig static object v_$scc$stepA__stepB__stepC(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

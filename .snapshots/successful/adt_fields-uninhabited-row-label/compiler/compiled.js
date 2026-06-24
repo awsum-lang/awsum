@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -26,8 +26,8 @@
     (s => {
       switch (s[0]) {
         case 24: {
-          const v__inl1___pa0 = s[1];
-          return String(v__inl1___pa0[1]);
+          const v_$inl1$____pa0 = s[1];
+          return String(v_$inl1$____pa0[1]);
         }
       }
     })([24, [2711245919, 5 | 0]]),

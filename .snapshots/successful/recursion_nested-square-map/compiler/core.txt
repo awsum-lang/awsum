@@ -1,0 +1,752 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl12$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl12$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop "io"
+                            ( CContinue
+                                [ CLet "$inl13$$arg0"
+                                    ( CCall
+                                        ( CBuiltIn "internalGetArgs" ) []
+                                    )
+                                    ( CDrop "$inl13$$arg0"
+                                        ( CCall
+                                            ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$13$7_$df$$lam$$x$2769931407" )
+                                            [ CCon 52
+                                                [ CCon 31
+                                                    [ CProj "io" 1
+                                                    , CVar "$inl13$$arg0"
+                                                    ]
+                                                , CCon 41 []
+                                                ]
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$2" )
+                [ CCall
+                    ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$13$7_$df$$lam$$x$2769931407" )
+                    [ CCon 52
+                        [ CCon 34
+                            [ CCon 8
+                                [ CCon 28 [] ]
+                            ]
+                        , CCon 41 []
+                        ]
+                    ]
+                , CCon 39 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$2"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$2" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$2" )
+                            [ CVar "$k"
+                            , CRowCase
+                                ( CProj "io" 1 )
+                                [
+                                    ( 502975519
+                                    , "$inl2$_u"
+                                    , CCon 7
+                                        [ CString "UNPAIRED_UTF16_SURROGATE"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ,
+                                    ( 589989748
+                                    , "$inl3$_l"
+                                    , CCon 7
+                                        [ CString "STRING_TOO_LONG"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 40
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$2" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 27
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$2"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 39
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 40
+                        ,
+                            [ "$pk_40"
+                            , "s"
+                            ]
+                        , CDrop "$pk_40"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_40"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$scc$$apply$$scc$$apply1_$df$$lam$13$7_$df$$lam$$x$2769931407" [ "$args$1" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args$1" )
+                    [
+                        ( 51
+                        ,
+                            [ "$k"
+                            , "$x"
+                            ]
+                        , CDrop "$k"
+                            ( CDrop "$x"
+                                ( CCase
+                                    ( CVar "$k" )
+                                    [
+                                        ( 41
+                                        , []
+                                        , CVar "$x"
+                                        )
+                                    ,
+                                        ( 42
+                                        , [ "$pk_42" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args$1" 52
+                                                [ CCon 34
+                                                    [ CVar "$x" ]
+                                                , CProj "$k" 1
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 43
+                                        , [ "$pk_43" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args$1" 51
+                                                [ CProj "$k" 1
+                                                , CCall
+                                                    ( CVar "$cps$$df$handleErrorIO$2" )
+                                                    [ CVar "$x"
+                                                    , CCon 39 []
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 44
+                                        ,
+                                            [ "$pk_44"
+                                            , "s"
+                                            ]
+                                        , CContinue
+                                            [ CCon 51
+                                                [ CProj "$k" 1
+                                                , CReuse ReuseUnique "$args$1" 7
+                                                    [ CProj "$k" 2
+                                                    , CVar "$x"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 45
+                                        , [ "$pk_45" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args$1" 51
+                                                [ CProj "$k" 1
+                                                , CCon 24
+                                                    [ CVar "$x" ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 46
+                                        , [ "$pk_46" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args$1" 51
+                                                [ CProj "$k" 1
+                                                , CCon 25
+                                                    [ CVar "$x" ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 47
+                                        , [ "$pk_47" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args$1" 51
+                                                [ CProj "$k" 1
+                                                , CCon 24
+                                                    [ CVar "$x" ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 49
+                                        ,
+                                            [ "$pk_49"
+                                            , "$rcv_6"
+                                            ]
+                                        , CContinue
+                                            [ CCon 51
+                                                [ CProj "$k" 1
+                                                , CReuse ReuseUnique "$args$1" 15
+                                                    [ CProj "$k" 2
+                                                    , CVar "$x"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 48
+                                        ,
+                                            [ "$pk_48"
+                                            , "b"
+                                            , "g"
+                                            ]
+                                        , CContinue
+                                            [ CCon 52
+                                                [ CReuse ReuseUnique "$args$1" 31
+                                                    [ CProj "$k" 3
+                                                    , CProj "$k" 2
+                                                    ]
+                                                , CCon 49
+                                                    [ CProj "$k" 1
+                                                    , CVar "$x"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 50
+                                        , [ "$pk_50" ]
+                                        , CContinue
+                                            [ CCon 51
+                                                [ CProj "$k" 1
+                                                , CReuse ReuseUnique "$args$1" 7
+                                                    [ CCase
+                                                        ( CVar "$x" )
+                                                        [
+                                                            ( 24
+                                                            , [ "$inl4$inner" ]
+                                                            , CCase
+                                                                ( CProj "$x" 1 )
+                                                                [
+                                                                    ( 24
+                                                                    , [ "$inl5$_deeper" ]
+                                                                    , CString "more-more"
+                                                                    )
+                                                                ,
+                                                                    ( 25
+                                                                    , [ "$inl6$t" ]
+                                                                    , CString "more-one-bool-bool"
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ,
+                                                            ( 25
+                                                            , [ "$inl7$bu" ]
+                                                            , CString "one-bool"
+                                                            )
+                                                        ]
+                                                    , CCon 5
+                                                        [ CCon 0 [] ]
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 52
+                        ,
+                            [ "$args"
+                            , "$k"
+                            ]
+                        , CDrop "$k"
+                            ( CCase
+                                ( CVar "$args" )
+                                [
+                                    ( 31
+                                    ,
+                                        [ "$cl"
+                                        , "$arg0"
+                                        ]
+                                    , CDrop "$cl"
+                                        ( CDrop "$arg0"
+                                            ( CCase
+                                                ( CVar "$cl" )
+                                                [
+                                                    ( 26
+                                                    , [ "$cap26_0" ]
+                                                    , CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 52
+                                                            [ CReuse ReuseUnique "$args" 32
+                                                                [ CProj "$cl" 1
+                                                                , CVar "$arg0"
+                                                                ]
+                                                            , CVar "$k"
+                                                            ]
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 27
+                                                    , [ "$cap27_0" ]
+                                                    , CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 52
+                                                            [ CReuse ReuseUnique "$args" 33
+                                                                [ CProj "$cl" 1
+                                                                , CVar "$arg0"
+                                                                ]
+                                                            , CVar "$k"
+                                                            ]
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 28
+                                                    , []
+                                                    , CDrop "$args$1"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$args" 51
+                                                                [ CVar "$k"
+                                                                , CCase
+                                                                    ( CVar "$arg0" )
+                                                                    [
+                                                                        ( 3
+                                                                        , [ "$inl8$e" ]
+                                                                        , CCon 6
+                                                                            [ CProj "$arg0" 1 ]
+                                                                        )
+                                                                    ,
+                                                                        ( 4
+                                                                        , [ "$inl9$s" ]
+                                                                        , CCon 5
+                                                                            [ CProj "$arg0" 1 ]
+                                                                        )
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ,
+                                                    ( 29
+                                                    ,
+                                                        [ "$cap29_0"
+                                                        , "$cap29_1"
+                                                        ]
+                                                    , CDrop "$args$1"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$args" 52
+                                                                [ CCon 37
+                                                                    [ CProj "$cl" 1
+                                                                    , CProj "$cl" 2
+                                                                    , CVar "$arg0"
+                                                                    ]
+                                                                , CVar "$k"
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ,
+                                                    ( 30
+                                                    , []
+                                                    , CDrop "$args$1"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$args" 51
+                                                                [ CVar "$k"
+                                                                , CRow 796142685
+                                                                    ( CVar "$arg0" )
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 32
+                                    ,
+                                        [ "cont"
+                                        , "result"
+                                        ]
+                                    , CDrop "cont"
+                                        ( CDrop "result"
+                                            ( CContinue
+                                                [ CReuse ReuseUnique "$args$1" 52
+                                                    [ CReuse ReuseUnique "$args" 31
+                                                        [ CVar "cont"
+                                                        , CVar "result"
+                                                        ]
+                                                    , CCon 42
+                                                        [ CVar "$k" ]
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 33
+                                    ,
+                                        [ "cont"
+                                        , "result"
+                                        ]
+                                    , CDrop "cont"
+                                        ( CDrop "result"
+                                            ( CContinue
+                                                [ CReuse ReuseUnique "$args$1" 52
+                                                    [ CReuse ReuseUnique "$args" 31
+                                                        [ CVar "cont"
+                                                        , CVar "result"
+                                                        ]
+                                                    , CCon 43
+                                                        [ CVar "$k" ]
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 34
+                                    , [ "io" ]
+                                    , CDrop "io"
+                                        ( CCase
+                                            ( CVar "io" )
+                                            [
+                                                ( 5
+                                                , [ "a" ]
+                                                , CContinue
+                                                    [ CReuse ReuseUnique "$args$1" 52
+                                                        [ CReuse ReuseUnique "$args" 38
+                                                            [ CProj "io" 1 ]
+                                                        , CVar "$k"
+                                                        ]
+                                                    ]
+                                                )
+                                            ,
+                                                ( 6
+                                                , [ "e" ]
+                                                , CDrop "$args"
+                                                    ( CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 51
+                                                            [ CVar "$k"
+                                                            , CVar "io"
+                                                            ]
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 7
+                                                ,
+                                                    [ "s"
+                                                    , "next"
+                                                    ]
+                                                , CContinue
+                                                    [ CCon 52
+                                                        [ CReuse ReuseUnique "$args" 34
+                                                            [ CProj "io" 2 ]
+                                                        , CReuse ReuseUnique "$args$1" 44
+                                                            [ CVar "$k"
+                                                            , CProj "io" 1
+                                                            ]
+                                                        ]
+                                                    ]
+                                                )
+                                            ,
+                                                ( 8
+                                                , [ "cont" ]
+                                                , CContinue
+                                                    [ CReuse ReuseUnique "$args$1" 51
+                                                        [ CVar "$k"
+                                                        , CCon 8
+                                                            [ CReuse ReuseUnique "$args" 26
+                                                                [ CProj "io" 1 ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ,
+                                    ( 35
+                                    ,
+                                        [ "p"
+                                        , "$df$mapPerfect$0$cap0$0"
+                                        , "$df$mapPerfect$0$cap0$1"
+                                        ]
+                                    , CDrop "$df$mapPerfect$0$cap0$0"
+                                        ( CDrop "$df$mapPerfect$0$cap0$1"
+                                            ( CCase
+                                                ( CVar "p" )
+                                                [
+                                                    ( 24
+                                                    , [ "inner" ]
+                                                    , CDrop "inner"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$args$1" 52
+                                                                [ CReuse ReuseUnique "$args" 35
+                                                                    [ CVar "inner"
+                                                                    , CCon 29
+                                                                        [ CVar "$df$mapPerfect$0$cap0$0"
+                                                                        , CVar "$df$mapPerfect$0$cap0$1"
+                                                                        ]
+                                                                    , CCon 29
+                                                                        [ CVar "$df$mapPerfect$0$cap0$0"
+                                                                        , CVar "$df$mapPerfect$0$cap0$1"
+                                                                        ]
+                                                                    ]
+                                                                , CReuse ReuseGuarded "p" 45
+                                                                    [ CVar "$k" ]
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ,
+                                                    ( 25
+                                                    , [ "a" ]
+                                                    , CDrop "a"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$args$1" 52
+                                                                [ CReuse ReuseUnique "$args" 37
+                                                                    [ CVar "$df$mapPerfect$0$cap0$0"
+                                                                    , CVar "$df$mapPerfect$0$cap0$1"
+                                                                    , CVar "a"
+                                                                    ]
+                                                                , CReuse ReuseGuarded "p" 46
+                                                                    [ CVar "$k" ]
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 36
+                                    , [ "p" ]
+                                    , CDrop "$args"
+                                        ( CCase
+                                            ( CVar "p" )
+                                            [
+                                                ( 24
+                                                , [ "inner" ]
+                                                , CDrop "inner"
+                                                    ( CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 52
+                                                            [ CCon 35
+                                                                [ CVar "inner"
+                                                                , CCon 30 []
+                                                                , CCon 30 []
+                                                                ]
+                                                            , CReuse ReuseGuarded "p" 47
+                                                                [ CVar "$k" ]
+                                                            ]
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 25
+                                                , [ "a" ]
+                                                , CDrop "a"
+                                                    ( CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 51
+                                                            [ CVar "$k"
+                                                            , CReuse ReuseGuarded "p" 25
+                                                                [ CRow 796142685
+                                                                    ( CVar "a" )
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ,
+                                    ( 37
+                                    ,
+                                        [ "f"
+                                        , "g"
+                                        , "t"
+                                        ]
+                                    , CDrop "f"
+                                        ( CDrop "g"
+                                            ( CCase
+                                                ( CVar "t" )
+                                                [
+                                                    ( 15
+                                                    ,
+                                                        [ "a"
+                                                        , "b"
+                                                        ]
+                                                    , CDrop "a"
+                                                        ( CDrop "b"
+                                                            ( CContinue
+                                                                [ CReuse ReuseUnique "$args$1" 52
+                                                                    [ CReuse ReuseGuarded "t" 31
+                                                                        [ CVar "f"
+                                                                        , CVar "a"
+                                                                        ]
+                                                                    , CReuse ReuseUnique "$args" 48
+                                                                        [ CVar "$k"
+                                                                        , CVar "b"
+                                                                        , CVar "g"
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 38
+                                    , [ "args" ]
+                                    , CContinue
+                                        [ CReuse ReuseUnique "$args$1" 52
+                                            [ CCon 36
+                                                [ CCase
+                                                    ( CVar "args" )
+                                                    [
+                                                        ( 13
+                                                        , []
+                                                        , CReuse ReuseUnique "$args" 25
+                                                            [ CReuse ReuseGuarded "args" 1 [] ]
+                                                        )
+                                                    ,
+                                                        ( 14
+                                                        ,
+                                                            [ "$inl10$h"
+                                                            , "$inl11$_t"
+                                                            ]
+                                                        , CCon 24
+                                                            [ CReuse ReuseUnique "$args" 25
+                                                                [ CReuse ReuseGuarded "args" 15
+                                                                    [ CCon 1 []
+                                                                    , CCon 2 []
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        )
+                                                    ]
+                                                ]
+                                            , CCon 50
+                                                [ CVar "$k" ]
+                                            ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

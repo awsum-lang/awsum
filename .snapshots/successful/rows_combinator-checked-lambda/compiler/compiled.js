@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -23,7 +23,7 @@
 
   const v_cBare = [3, [332136403, [24]]];
 
-  const v__inl5_r = v_cBare;
+  const v_$inl5$r = v_cBare;
   const main = [
     7,
     (s => {
@@ -32,10 +32,10 @@
           return "A";
         }
         case 4: {
-          return String(v__inl5_r[1]);
+          return String(v_$inl5$r[1]);
         }
       }
-    })(v__inl5_r),
+    })(v_$inl5$r),
     [5, [0]]
   ];
 

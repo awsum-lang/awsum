@@ -20,7 +20,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -28,7 +28,7 @@
     }
   };
 
-  const v__inl3_n = __lengthUtf8Bytes(String(-123456 | 0));
+  const v_$inl3$n = __lengthUtf8Bytes(String(-123456 | 0));
   const main = [
     7,
     (s => {
@@ -37,11 +37,11 @@
           return "OVERFLOW";
         }
         case 4: {
-          const v__inl2_d = s[1];
-          return String(v__inl2_d);
+          const v_$inl2$d = s[1];
+          return String(v_$inl2$d);
         }
       }
-    })(__addUInt32(v__inl3_n, v__inl3_n)),
+    })(__addUInt32(v_$inl3$n, v_$inl3$n)),
     [5, [0]]
   ];
 

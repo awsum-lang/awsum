@@ -163,8 +163,11 @@ data TypeError
     MainWrongType Type'
   | -- | Qualified name used without importing its module path.
     NotImported SrcSpan QName
-  | -- | Lowering error
-    TELowering Text
+  | -- | Lowering error. Carries an optional span: user-reachable lowering
+    --   failures (an unsupported row-widening coercion, …) point at the
+    --   offending type; internal-invariant assertions that the user cannot
+    --   provoke carry 'Nothing' and render at file-start.
+    TELowering (Maybe SrcSpan) Text
   | -- | Duplicate type name in @type@ declarations.
     DuplicateTypeDef SrcSpan Name
   | -- | Constructor name used in multiple @type@ declarations.
@@ -485,7 +488,7 @@ typeErrorSpan = \case
   MainMissing -> Nothing
   MainWrongType _ -> Nothing
   NotImported sp _ -> Just sp
-  TELowering _ -> Nothing
+  TELowering msp _ -> msp
   DuplicateTypeDef sp _ -> Just sp
   DuplicateConstructor sp _ -> Just sp
   UnknownConstructor sp _ -> Just sp
@@ -599,7 +602,7 @@ prettyPrintTypeError = \case
   MainMissing -> "Missing 'main' function"
   MainWrongType ty -> "Wrong type for 'main': expected IO Never Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
-  TELowering msg -> msg
+  TELowering _ msg -> msg
   DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
   DuplicateConstructor _ name -> "Duplicate constructor: " <> name
   UnknownConstructor _ name -> "Unknown constructor: " <> name
@@ -1605,7 +1608,7 @@ classifyLamParam = \case
   -- 'Awsum.Desugar' before typecheck, so any other shape reaching here
   -- is an internal pipeline error.
   ParamPat sp _ ->
-    Left (TELowering ("internal: un-desugared parameter pattern at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+    Left (TELowering (Just sp) "internal: un-desugared parameter pattern")
 
 lamParamName :: LamParam -> Name
 lamParamName (LamPlain _ n) = n
@@ -1695,7 +1698,7 @@ checkExpr conEnv tcm crossExempt env expected = \case
   -- clause stays for exhaustiveness; reaching it is an internal
   -- pipeline error.
   EDo sp _stmts ->
-    throwTE (TELowering ("internal: do-block survived desugaring at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+    throwTE (TELowering (Just sp) "internal: do-block survived desugaring")
   -- 'let pat = e in body' (or 'let pat : T = e in body'): if the
   -- user supplied an annotation we check @e@ against it; otherwise
   -- we synthesise @e@'s type and wrap any synth failure in
@@ -2546,7 +2549,7 @@ typeOfExpr conEnv tcm env = \case
           NominalArms talts -> map (texprType . tAltBody) talts
           RowArms tralts -> map (texprType . tRowAltBody) tralts
     resultTy <- case armBodyTypes of
-      [] -> throwTE (TELowering "case expression with no arms (unreachable: NonEmpty CaseAlt)")
+      [] -> throwTE (TELowering Nothing "case expression with no arms (unreachable: NonEmpty CaseAlt)")
       (firstTy : restTys) ->
         foldM
           ( \acc ty -> case unify acc ty of
@@ -3530,7 +3533,7 @@ anyConInfo tyName conEnv =
 
 -- | Type constructors that can reach themselves through their constructors'
 --   field types — self-recursive (@List@, @Nest@, @IO@) or mutually recursive.
---   Inhabitedness short-circuits coinductively only on these (see
+--   Inhabitedness cuts to uninhabited (least fixpoint) only on these (see
 --   'isTypeInhabited'). A non-recursive constructor such as @Box@ in
 --   @Box (Box (Box Never))@ is absent here, so the walk descends it fully and
 --   still reaches the uninhabited @Never@ at the leaf.
@@ -3573,9 +3576,13 @@ isConInhabited recSet conEnv tcm = conInhabited recSet conEnv tcm S.empty
 --   constructors all require an uninhabited field (recursively).
 --   @type Never@ → uninhabited (0 constructors).
 --   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
---   Recursive types (@List a = Cons a (List a) | Nil@) are assumed inhabited
---   via coinductive interpretation: re-entering a recursive type constructor
---   (one in 'recursiveTypeNames') at /any/ instantiation returns True. The
+--   Recursion is a /least/ fixpoint (a strict language has no infinite
+--   values): re-entering a recursive type constructor (one in
+--   'recursiveTypeNames') yields no inhabitant on its own, so a type is
+--   inhabited only through a non-recursive base — @List a = Cons a (List a) |
+--   Nil@ via @Nil@; @Loop = MkLoop Loop@, baseless, is uninhabited (the
+--   greatest fixpoint wrongly called it inhabited, over-requiring coverage of
+--   an unreachable constructor). The
 --   guard keys on the head /name/, not the full 'Type'', because non-regular
 --   (nested) recursion grows the type argument each level
 --   (@Rec a = MkRec (Rec (Maybe a))@) so a structural key never repeats and
@@ -3605,7 +3612,7 @@ typeInhabited :: S.Set Name -> ConEnv -> TypeConsMap -> S.Set Name -> Type' -> B
 typeInhabited recSet conEnv tcm visited ty =
   case extractTyCon ty of
     Just n
-      | n `S.member` visited -> True -- recursive type re-entered (any instantiation)
+      | n `S.member` visited -> False -- least fixpoint: a recursive self-reference yields no inhabitant on its own; a non-recursive base must bottom out
       | otherwise -> case M.lookup n tcm of
           Nothing -> True -- built-in, inhabited
           Just [] -> False -- 0 constructors

@@ -1,0 +1,62 @@
+{- A right-nested `case` over fresh `eqInt32` scrutinees is the whole body of
+   `dispatch`, so it stands in tail position. The argument arrives at runtime
+   and `dispatch` is called twice, so it stays a standalone function instead of
+   being inlined into an operand. On the reference-counted backends each fresh
+   scrutinee is freed as soon as its arm is entered, keeping the emitted cleanup
+   O(depth) per level rather than re-freeing every enclosing scrutinee at each
+   leaf. Prints dispatch(n) + dispatch(n) for the parsed argument. -}
+
+import IO.Stdout
+import IO.Args
+
+type NoArg = NoArg
+
+dispatch : Int32 -> Int32
+dispatch n = case eqInt32 n 0 of
+  True -> 0
+  False -> case eqInt32 n 1 of
+    True -> 10
+    False -> case eqInt32 n 2 of
+      True -> 20
+      False -> case eqInt32 n 3 of
+        True -> 30
+        False -> case eqInt32 n 4 of
+          True -> 40
+          False -> case eqInt32 n 5 of
+            True -> 50
+            False -> case eqInt32 n 6 of
+              True -> 60
+              False -> case eqInt32 n 7 of
+                True -> 70
+                False -> case eqInt32 n 8 of
+                  True -> 80
+                  False -> case eqInt32 n 9 of
+                    True -> 90
+                    False -> 999
+
+run : List String -> IO Never Unit
+run args =
+  let res : Either (NoArg | ParseError | UnderflowError | OverflowError) Int32 = do
+        raw <- nothingAsLeft NoArg (headList args)
+        n <- parseInt32 raw
+        addInt32 (dispatch n) (dispatch n)
+   in eitherToIO res
+        |> andThenIO (\total -> IO.Stdout.print (showInt32 total))
+        |> handleErrorIO onArgError
+
+onArgError : (NoArg | ParseError | UnderflowError | OverflowError) -> IO Never Unit
+onArgError e = case e of
+  (_n : NoArg) -> IO.Stdout.print "NO_ARG"
+  (_p : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+  (_u : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
+  (_o : OverflowError) -> IO.Stdout.print "OVERFLOW"
+
+onInputError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onInputError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_s : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run
+  |> handleErrorIO onInputError

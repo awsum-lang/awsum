@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,17 +21,17 @@
     }
   };
 
-  const v__inl2_b = [24, [24, [24, "hello"]]];
+  const v_$inl2$b = [24, [24, [24, "hello"]]];
   const main = [
     7,
     (s => {
       switch (s[0]) {
         case 24: {
-          const v__inl1_b3 = s[1];
-          return v__inl1_b3[1];
+          const v_$inl1$b3 = s[1];
+          return v_$inl1$b3[1];
         }
       }
-    })(v__inl2_b[1]),
+    })(v_$inl2$b[1]),
     [5, [0]]
   ];
 

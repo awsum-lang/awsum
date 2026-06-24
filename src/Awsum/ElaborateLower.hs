@@ -33,6 +33,7 @@ import Awsum.Prelude (preludeDefNames)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Reuse (insertReuse)
 import Awsum.Scc (sccMergeProgram)
+import Awsum.ShortenNames (shortenSynthesizedNames)
 import Awsum.Simplify (simplifyProgram)
 import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
@@ -188,7 +189,21 @@ data LowerState = LowerState
   { lsFresh :: !Int,
     lsHelpers :: ![CDecl],
     lsRowTags :: !(M.Map Word32 (M.Map Text Type')),
-    lsLifters :: !(M.Map (Text, Text) Name)
+    lsLifters :: !(M.Map (Text, Text) Name),
+    -- | Derived parametric maps @$map$T@, memoised by type /name/ (not by
+    --   the instantiated @(src, tgt)@ pair 'lsLifters' uses). This keying
+    --   is what lets a non-regular nested type get one self-recursive map
+    --   instead of the unbounded per-pair expansion 'synthNominalHeadCoerce'
+    --   would produce.
+    lsDerivedMaps :: !(M.Map Name Name),
+    -- | The shared polymorphic identity helper @$mapId x = x@, emitted on
+    --   first use to fill no-parameter argument positions of a derived map.
+    lsMapId :: !(Maybe Name),
+    -- | The shared post-composition helper @$postCompose c g x = c (g x)@,
+    --   emitted on first use to map a covariant function field @X -> a@ of a
+    --   non-regular type by post-composing the result coercion @c@ onto the
+    --   stored function @g@.
+    lsPostCompose :: !(Maybe Name)
   }
 
 -- | Lowering monad — lambda-lift state on top of the existing
@@ -503,7 +518,7 @@ genBuiltInEtaWrappers arityOf names =
 --   to the user-decl list in the program pipeline).
 runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
 runLowerM m = do
-  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
+  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty M.empty Nothing Nothing)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
 -- | Whether the pipeline runs 'Awsum.Simplify'. 'SimplifyOff' is a
@@ -742,7 +757,10 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
       simplified = case simplifyMode of
         SimplifyOn -> treeShakeFromMain conInfo (simplifyProgram preludeTags tcoed)
         SimplifyOff -> tcoed
-  pure (warnings, preludeTags, insertReuse mintedTagFloor (insertDrops simplified))
+  -- Final hygiene: bound the length of synthesised top-level names (fused
+  -- recursion can compound them past a backend's symbol limit — JVM's
+  -- 65535-byte CONSTANT_Utf8 in particular). Runs last, on the final names.
+  pure (warnings, preludeTags, shortenSynthesizedNames (insertReuse mintedTagFloor (insertDrops simplified)))
 
 -- | Translate a 'StackSafetyIssue' into a user-facing 'TypeError',
 -- recovering a source span from the corresponding 'Sig' in the surface
@@ -1273,7 +1291,7 @@ saturateExpr am locals = go
         then
           lift
             $ Left
-            $ TELowering
+            $ TELowering Nothing
             $ "internal: saturate observed a partial application with "
             <> "local captures after defunctionalisation — captured "
             <> T.intercalate ", " (toList freeInArgs)
@@ -1398,7 +1416,7 @@ lowerTExpr env locals = \case
     TyCon _ "Int32" -> pure (CIntLit n TInt32)
     TyCon _ "UInt8" -> pure (CIntLit n TUInt8)
     TyCon _ "UInt32" -> pure (CIntLit n TUInt32)
-    _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type: " <> canonicalLabel ty))
+    _ -> liftEither $ Left (TELowering Nothing ("integer literal without a known numeric type: " <> canonicalLabel ty))
   TLit _ _ (LString t) -> pure (CString t)
   TBuiltIn _ ty name -> pure $ case ty of
     TyArrow {} -> CBuiltIn name
@@ -1407,7 +1425,7 @@ lowerTExpr env locals = \case
     Just ci
       | ciArity ci == 0 -> pure (CCon (ciTag ci) [])
       | otherwise -> pure (CVar (conWrapperName name))
-    Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
+    Nothing -> liftEither $ Left (TELowering Nothing ("unknown constructor: " <> name))
   -- Spines are flat after 'monomorphizeRows', so the head is never a
   -- 'TApp'. A 'TBuiltIn' head lowers to 'CBuiltIn' (a valid 'CCall'
   -- callee), so no special case is needed there. A /saturated/
@@ -1539,7 +1557,7 @@ lowerLetT env locals pat rhs body = do
     TPWild _ t -> do
       nm <- freshLetWildName
       pure (nm, t)
-    _ -> liftEither $ Left (TELowering "non-PVar let-binding should have been desugared by Awsum.Desugar")
+    _ -> liftEither $ Left (TELowering Nothing "non-PVar let-binding should have been desugared by Awsum.Desugar")
   let captures = Set.toAscList ((freeReferencesT body `Set.intersection` locals) `Set.difference` Set.singleton n)
       captureTypes =
         [ fromMaybe (TyVar noSpan "_capture") (leTypeOf env (QName [] c))
@@ -1565,7 +1583,7 @@ lowerLetT env locals pat rhs body = do
 lowerTAltM :: LowerEnv -> Locals -> TAlt -> LowerM (Int, [Name], CExpr)
 lowerTAltM env locals (TAlt pat body) = case pat of
   TPCon _ tyMatched cName subTPats -> do
-    ci <- liftEither $ maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
+    ci <- liftEither $ maybeToRight (TELowering Nothing ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
     let subPats = map tpatternToPattern subTPats
         tag = ciTag ci
         patBinders = collectPatternBindings (leConInfo env) ci (Just tyMatched) subPats
@@ -1578,7 +1596,7 @@ lowerTAltM env locals (TAlt pat body) = case pat of
     body' <- lowerTExpr env' locals' body
     (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" (0 :: Int) (zip subPats fieldTys) body'
     pure (tag, topVars, wrappedBody)
-  _ -> liftEither $ Left (TELowering "only constructor patterns are supported in case")
+  _ -> liftEither $ Left (TELowering Nothing "only constructor patterns are supported in case")
 
 -- | Lower the arms of a row-case into the @(rowTag, binder, body)@ shape
 --   'CRowCase' consumes, merging constructor arms that target the same
@@ -1593,7 +1611,7 @@ buildRowAltsT env locals alts = do
   where
     fstOf3 (a, _, _) = a
     buildOne :: [(Word32, Type', RowArmShape)] -> LowerM (Word32, Name, CExpr)
-    buildOne [] = liftEither $ Left (TELowering "buildRowAltsT: empty group (unreachable)")
+    buildOne [] = liftEither $ Left (TELowering Nothing "buildRowAltsT: empty group (unreachable)")
     buildOne g = case findCollidingLabels g of
       Just (l1, l2, tag) ->
         liftEither $ Left (RowTagCollision l1 l2 tag (tyConDeclSpan (leTypeDeclSpans env) l2))
@@ -1605,7 +1623,7 @@ buildRowAltsT env locals alts = do
           let var = "__rw" :: Name
           pure (tag, var, CCase (CVar var) merged)
         ((_, _, AscribeShape _ _) : _ : _) ->
-          liftEither $ Left (TELowering "row case has duplicate PAscribe arms for the same label (typechecker should have rejected this as DuplicateRowArm)")
+          liftEither $ Left (TELowering Nothing "row case has duplicate PAscribe arms for the same label (typechecker should have rejected this as DuplicateRowArm)")
     findCollidingLabels :: [(Word32, Type', RowArmShape)] -> Maybe (Type', Type', Word32)
     findCollidingLabels [] = Nothing
     findCollidingLabels ((tag, l0, _) : rest) =
@@ -1628,7 +1646,7 @@ lowerRowArmT env locals (TRowAlt label pat body) = case pat of
   TPCon _ _ cName innerTPats -> do
     ci <-
       liftEither
-        $ maybeToRight (TELowering ("unknown constructor in row pattern: " <> cName)) (M.lookup cName (leConInfo env))
+        $ maybeToRight (TELowering Nothing ("unknown constructor in row pattern: " <> cName)) (M.lookup cName (leConInfo env))
     let innerPats = map tpatternToPattern innerTPats
         subst =
           let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
@@ -1641,7 +1659,7 @@ lowerRowArmT env locals (TRowAlt label pat body) = case pat of
     (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" (0 :: Int) (zip innerPats fieldTys) body'
     tag <- recordRowTag label
     pure (tag, label, ConShape (ciTag ci) topVars wrappedBody)
-  _ -> liftEither $ Left (TELowering "row-case arm must be an ascription or constructor pattern")
+  _ -> liftEither $ Left (TELowering Nothing "row-case arm must be an ascription or constructor pattern")
 
 -- | Build the un-substituted result type for a constructor: e.g.
 --   @applyTyParams "Either" ["a", "b"] = TyApp (TyApp (TyCon "Either") (TyVar "a")) (TyVar "b")@.
@@ -1746,6 +1764,7 @@ synthCoerce conInfo src tgt@(TyOr {}) =
       liftEither
         $ Left
           ( TELowering
+              (loweringSpan src)
               ( "synthCoerce: no row label in "
                   <> canonicalLabel tgt
                   <> " accepts "
@@ -1756,7 +1775,14 @@ synthCoerce conInfo src tgt
   | Just headName <- extractTyCon src,
     Just headName' <- extractTyCon tgt,
     headName == headName' =
-      synthNominalHeadCoerce conInfo headName src tgt
+      -- A regular recursive type recurses into the same @(src, tgt)@ pair,
+      -- so the per-pair deep-copy memoises and terminates. A non-regular
+      -- (nested) type re-applies itself to a structurally larger argument,
+      -- so that pair grows without bound — route it to a parametric map
+      -- derived once per type name (terminating; see 'deriveMapCoerce').
+      if isNonRegularType conInfo headName
+        then deriveMapCoerce conInfo headName src tgt
+        else synthNominalHeadCoerce conInfo headName src tgt
 -- Function-typed coercion: pointwise rebuild via a top-level helper
 -- @$liftFn$N f = \a -> coerceB (f (coerceA a))@ where the per-side
 -- coercions come from recursive 'synthCoerce'. Used when IO-row
@@ -1767,6 +1793,22 @@ synthCoerce conInfo src tgt
 -- post-coercion closure lands in 'CCon' field position; subsequent
 -- 'Awsum.LowerClosures' encodes it as a tagged 'CCon' and routes the
 -- residual call through the right `$applyN` dispatcher.
+synthCoerce _conInfo src@(TyArrow _ srcA _srcB) (TyArrow _ tgtA _tgtB)
+  -- A widening that changes the argument type would need the parameter
+  -- mapped in a contravariant (argument) position, for which no finite map
+  -- exists (it would have to narrow the wider argument back to call the
+  -- original). Reject honestly here rather than letting the contravariant
+  -- 'synthCoerce tgtA srcA' below fail with a raw "incompatible shapes".
+  | not (typeEq srcA tgtA) =
+      liftEither
+        $ Left
+          ( TELowering
+              (loweringSpan src)
+              ( "row widening through a function field of shape "
+                  <> canonicalLabel src
+                  <> " is unsupported: the parameter occurs in a contravariant (argument) position"
+              )
+          )
 synthCoerce conInfo (TyArrow _ srcA srcB) (TyArrow _ tgtA tgtB) = do
   argCoerce <- synthCoerce conInfo tgtA srcA
   resCoerce <- synthCoerce conInfo srcB tgtB
@@ -1784,6 +1826,7 @@ synthCoerce _ src tgt =
   liftEither
     $ Left
       ( TELowering
+          (loweringSpan src)
           ( "synthCoerce: incompatible shapes "
               <> canonicalLabel src
               <> " ≁ "
@@ -1817,6 +1860,259 @@ synthNominalHeadCoerce conInfo tyName src tgt = do
       let body = CCase (CVar "__input") arms
       emitHelper (CFunDef helper ["__input"] body)
       pure (\v -> pure (CCall (CVar helper) [v]))
+
+-- | Source-order type arguments of a (possibly multi-arg) application:
+--   @tyAppArgs (Either A B) = [A, B]@, @tyAppArgs (TyCon T) = []@.
+tyAppArgs :: Type' -> [Type']
+tyAppArgs = reverse . go
+  where
+    go (TyApp _ f x) = x : go f
+    go _ = []
+
+-- | Does any of the named type parameters occur in the type?
+mentionsParam :: [Name] -> Type' -> Bool
+mentionsParam params = go
+  where
+    go (TyVar _ n) = n `elem` params
+    go (TyCon _ _) = False
+    go (TyEmpty _ _) = False
+    go (TyApp _ f x) = go f || go x
+    go (TyArrow _ a b) = go a || go b
+    go (TyOr _ a b) = go a || go b
+
+-- | A nominal type is /non-regular/ (a nested datatype) when some member of
+--   its mutual-recursion cluster applies a cluster member to arguments other
+--   than the enclosing member's parameters in order — directly, @Nest (Maybe
+--   a)@ in @type Nest a = Deeper (Nest (Maybe a)) | Base a@; or through a
+--   partner, @B (Maybe a)@ in @type A a = MkA (B (Maybe a)) | …@ where @B@
+--   recurses back into @A@. The per-(src,tgt) deep-copy coercion diverges on
+--   these (the argument pair grows each level); they route to a name-keyed
+--   derived map instead. A regular type ('List', 'Either', 'IO', …) keeps
+--   the existing per-pair path unchanged. The cluster (not just @tyName@) is
+--   what makes the indirect case visible: inspecting @A@'s own fields alone
+--   sees only a @B@-application, which looks regular until @B@ is known to
+--   close the cycle back to @A@.
+isNonRegularType :: ConInfoEnv -> Name -> Bool
+isNonRegularType conInfo tyName =
+  let cluster = mutualCluster conInfo tyName
+   in any (memberIrregular cluster) (Set.toList cluster)
+  where
+    memberIrregular cluster m =
+      case constructorsOfType conInfo m of
+        [] -> False
+        cons@((_, ci0) : _) ->
+          let params = ciTypeParams ci0
+           in any (any (irregular cluster params) . ciFieldTypes . snd) cons
+    irregular cluster params = goTy
+      where
+        goTy ty
+          | Just h <- extractTyCon ty,
+            Set.member h cluster,
+            let args = tyAppArgs ty,
+            not (null args) =
+              not (argsAreParams args) || any goTy args
+        goTy (TyApp _ f x) = goTy f || goTy x
+        goTy (TyArrow _ a b) = goTy a || goTy b
+        goTy (TyOr _ a b) = goTy a || goTy b
+        goTy _ = False
+        argsAreParams args =
+          length args == length params && and (zipWith isParam args params)
+        isParam (TyVar _ n) p = n == p
+        isParam _ _ = False
+
+-- | Type names mutually recursive with @root@ — its strongly-connected
+--   component in the type-dependency graph (edges: a type to every type-head
+--   in its constructor fields), @root@ included. A singleton cluster is the
+--   direct self-recursive case; a larger one is what surfaces non-regularity
+--   reachable only through a mutually-recursive partner.
+mutualCluster :: ConInfoEnv -> Name -> Set.Set Name
+mutualCluster conInfo root =
+  Set.insert root (Set.filter (Set.member root . reach) (reach root))
+  where
+    reach :: Name -> Set.Set Name
+    reach start = go Set.empty [start]
+      where
+        go seen [] = seen
+        go seen (x : xs)
+          | Set.member x seen = go seen xs
+          | otherwise = go (Set.insert x seen) (Set.toList (deps x) <> xs)
+    deps :: Name -> Set.Set Name
+    deps t =
+      Set.fromList
+        [ h
+        | (_, ci) <- constructorsOfType conInfo t,
+          fty <- ciFieldTypes ci,
+          h <- headsIn fty
+        ]
+    headsIn :: Type' -> [Name]
+    headsIn = \case
+      TyCon _ n -> [n]
+      TyApp _ f x -> headsIn f <> headsIn x
+      TyArrow _ a b -> headsIn a <> headsIn b
+      TyOr _ a b -> headsIn a <> headsIn b
+      TyVar _ _ -> []
+      TyEmpty _ _ -> []
+
+-- | A shared @$mapId x = x@, emitted once, for no-parameter argument
+--   positions of a derived map (e.g. the @Int32@ slot of @Either a Int32@).
+ensureMapId :: LowerM Name
+ensureMapId = do
+  st <- get
+  case lsMapId st of
+    Just n -> pure n
+    Nothing -> do
+      let n = "$mapId" :: Name
+      modify (\s -> s {lsMapId = Just n})
+      emitHelper (CFunDef n ["$mapId_x"] (CVar "$mapId_x"))
+      pure n
+
+-- | A shared @$postCompose c g x = c (g x)@, emitted once, to map a
+--   covariant function field @X -> a@ of a non-regular type: post-compose
+--   the result coercion @c@ onto the stored function @g@. The result
+--   coercion closes over the derived map's parameter functions, so it is
+--   passed as an argument rather than baked in — one shared helper serves
+--   every covariant field.
+ensurePostCompose :: LowerM Name
+ensurePostCompose = do
+  st <- get
+  case lsPostCompose st of
+    Just n -> pure n
+    Nothing -> do
+      let n = "$postCompose" :: Name
+      modify (\s -> s {lsPostCompose = Just n})
+      emitHelper
+        ( CFunDef
+            n
+            ["$pc_c", "$pc_g", "$pc_x"]
+            (CCall (CVar "$pc_c") [CCall (CVar "$pc_g") [CVar "$pc_x"]])
+        )
+      pure n
+
+-- | Derive (or reuse) a parametric functorial map
+--   @$map$T : (p1 -> q1) -> … -> T p1 … -> T q1 …@, memoised by type name.
+--   The name is registered before the body is built, so a recursive
+--   occurrence (including the non-regular @T (F a)@ tail) reaches a
+--   self-call — polymorphic recursion the later passes lower to a finite
+--   loop. Spine functors of a non-regular type (e.g. @Maybe@, @Tuple2@) are
+--   derived the same way on demand.
+ensureDerivedMap :: ConInfoEnv -> Name -> LowerM Name
+ensureDerivedMap conInfo tyName = do
+  st <- get
+  case M.lookup tyName (lsDerivedMaps st) of
+    Just n -> pure n
+    Nothing -> do
+      let mapName = "$map$" <> tyName
+      modify (\s -> s {lsDerivedMaps = M.insert tyName mapName (lsDerivedMaps s)})
+      let cons = constructorsOfType conInfo tyName
+          params = case cons of ((_, ci) : _) -> ciTypeParams ci; [] -> []
+          fnParams = ["$mf$" <> show i | i <- [0 .. length params - 1]]
+          paramFns = zip params fnParams
+          inputName = "$mapin" :: Name
+      arms <-
+        forM cons $ \(_, ci) -> do
+          let binders = ["$mx$" <> show i | i <- [0 .. ciArity ci - 1]]
+          mapped <-
+            forM (zip (ciFieldTypes ci) binders) $ \(fty, b) ->
+              mapFieldValue conInfo paramFns fty (CVar b)
+          pure (ciTag ci, binders, CCon (ciTag ci) mapped)
+      let body = if null cons then CVar inputName else CCase (CVar inputName) arms
+      emitHelper (CFunDef mapName (fnParams <> [inputName]) body)
+      pure mapName
+
+-- | Map a constructor field of type @fty@ held in @x@ to the target
+--   instance (saturated — the value is in hand).
+mapFieldValue :: ConInfoEnv -> [(Name, Name)] -> Type' -> CExpr -> LowerM CExpr
+mapFieldValue conInfo paramFns fty x
+  | not (mentionsParam (map fst paramFns) fty) = pure x
+  | TyVar _ p <- fty, Just (_, fn) <- find ((== p) . fst) paramFns = pure (CCall (CVar fn) [x])
+  | Just headName <- extractTyCon fty,
+    not (null (tyAppArgs fty)) = do
+      mapG <- ensureDerivedMap conInfo headName
+      argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
+      pure (CCall (CVar mapG) (argFns <> [x]))
+  -- Covariant function field @X -> a@ (parameter only in the result): map it
+  -- by post-composing the result coercion onto the stored function. A
+  -- parameter in the argument position is contravariant / invariant — no
+  -- finite map — and falls through to 'rejectFieldShape'.
+  | TyArrow _ dom cod <- fty,
+    not (mentionsParam (map fst paramFns) dom) = do
+      codFn <- fieldFnValue conInfo paramFns cod
+      pc <- ensurePostCompose
+      pure (CCall (CVar pc) [codFn, x])
+  | otherwise = rejectFieldShape fty
+
+-- | A function value @fty[p] -> fty[q]@ to pass as an argument-function to
+--   an enclosing derived map. Closes over the parameter functions it uses
+--   (a partial application of an inner map, defunctionalised downstream).
+fieldFnValue :: ConInfoEnv -> [(Name, Name)] -> Type' -> LowerM CExpr
+fieldFnValue conInfo paramFns fty
+  | not (mentionsParam (map fst paramFns) fty) = CVar <$> ensureMapId
+  | TyVar _ p <- fty, Just (_, fn) <- find ((== p) . fst) paramFns = pure (CVar fn)
+  | Just headName <- extractTyCon fty,
+    not (null (tyAppArgs fty)) = do
+      mapG <- ensureDerivedMap conInfo headName
+      argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
+      pure (CCall (CVar mapG) argFns)
+  -- Covariant function field: the function-form of the map above —
+  -- @\g x -> codFn (g x)@ via the shared post-composer (partially applied).
+  | TyArrow _ dom cod <- fty,
+    not (mentionsParam (map fst paramFns) dom) = do
+      codFn <- fieldFnValue conInfo paramFns cod
+      pc <- ensurePostCompose
+      pure (CCall (CVar pc) [codFn])
+  | otherwise = rejectFieldShape fty
+
+-- | Honest compile-time refusal for a non-regular field shape the derived
+--   map can't cover: a function field with the parameter in a contravariant
+--   or invariant (argument) position — no finite map exists — or a
+--   structural-sum field that mentions the parameter. A covariant function
+--   field (@X -> a@) is handled in 'mapFieldValue' / 'fieldFnValue' above
+--   and does not reach here. (IO carries continuation fields but is regular,
+--   so it never reaches here either.)
+rejectFieldShape :: Type' -> LowerM a
+rejectFieldShape fty =
+  liftEither
+    $ Left
+      ( TELowering
+          (loweringSpan fty)
+          ( "row widening through a non-regular recursive type is unsupported for a field of shape "
+              <> canonicalLabel fty
+          )
+      )
+
+-- | The source span of a type, or 'Nothing' when it is the synthetic
+--   all-zero span ('Eq SrcSpan' is position-blind, so the zero test compares
+--   the underlying ints). A lowering diagnostic points at the offending type
+--   when one is carried, and falls back to file-start otherwise.
+loweringSpan :: Type' -> Maybe SrcSpan
+loweringSpan ty =
+  let sp = typeSpan ty
+   in if spanStartLine sp == 0 && spanStartCol sp == 0 && spanEndLine sp == 0 && spanEndCol sp == 0
+        then Nothing
+        else Just sp
+
+-- | Coerce @T A.. → T B..@ for a non-regular head by applying the derived
+--   map to the per-parameter element coercions (identity slots reuse
+--   @$mapId@). Terminating where 'synthNominalHeadCoerce' diverges: the map
+--   is name-memoised and each element coercion @Aᵢ → Bᵢ@ is smaller.
+deriveMapCoerce :: ConInfoEnv -> Name -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
+deriveMapCoerce conInfo tyName src tgt = do
+  mapName <- ensureDerivedMap conInfo tyName
+  elemFns <-
+    forM (zip (tyAppArgs src) (tyAppArgs tgt)) $ \(a, b) ->
+      if coercionIsIdentity conInfo a b
+        then CVar <$> ensureMapId
+        else synthCoerce conInfo a b >>= reifyCoerceFn
+  pure (\v -> pure (CCall (CVar mapName) (elemFns <> [v])))
+
+-- | Reify a coercion wrapper as a first-order @$lift$N x = <coerce x>@ so
+--   it can be passed as a derived map's argument-function.
+reifyCoerceFn :: (CExpr -> LowerM CExpr) -> LowerM CExpr
+reifyCoerceFn w = do
+  h <- freshLiftName
+  body <- w (CVar "$cf_x")
+  emitHelper (CFunDef h ["$cf_x"] body)
+  pure (CVar h)
 
 -- | Per-constructor field-coercion types for a coercion @src → tgt@
 --   between two type-applications that share a nominal head. For each
@@ -1903,11 +2199,20 @@ coercionIsIdentity conInfo = go Set.empty
       | Just h1 <- extractTyCon src,
         Just h2 <- extractTyCon tgt,
         h1 == h2 =
-          let key = (canonicalLabel src, canonicalLabel tgt)
-           in Set.member key seen
-                || all
-                  (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
-                  (nominalConFieldTypes conInfo h1 src tgt)
+          -- A derived map preserves the spine and applies the element
+          -- coercions at the parameter leaves, so @T A.. → T B..@ is the
+          -- identity exactly when every @Aᵢ → Bᵢ@ is. Recursing on the
+          -- type arguments (which shrink) terminates where recursing on
+          -- the constructor fields would not for a non-regular type — the
+          -- same divergence the field-keyed memo below has.
+          if isNonRegularType conInfo h1
+            then and (zipWith (go seen) (tyAppArgs src) (tyAppArgs tgt))
+            else
+              let key = (canonicalLabel src, canonicalLabel tgt)
+               in Set.member key seen
+                    || all
+                      (\(_tag, fields) -> all (\(_fn, sTy, tTy) -> go (Set.insert key seen) sTy tTy) fields)
+                      (nominalConFieldTypes conInfo h1 src tgt)
       | otherwise = False
 
 -- | All constructors of a given user-defined type, sorted by tag.
@@ -2032,7 +2337,7 @@ mergeRowAlts alts = concat <$> traverse mergeRowGroup (groupByTag alts)
 --   coincide). A mismatched shape is the forbidden partial-catch-all
 --   rejected upstream (see 'mergeAlts').
 mergeBodies :: [CExpr] -> LowerM CExpr
-mergeBodies [] = liftEither $ Left (TELowering "mergeBodies: empty group (unreachable)")
+mergeBodies [] = liftEither $ Left (TELowering Nothing "mergeBodies: empty group (unreachable)")
 mergeBodies [body] = pure body
 mergeBodies (body0 : rest) = case body0 of
   CCase (CVar scrutVar) innerAlts -> do
@@ -2041,12 +2346,12 @@ mergeBodies (body0 : rest) = case body0 of
   CRowCase (CVar scrutVar) innerAlts -> do
     allInnerAlts <- foldM collectRow innerAlts rest
     CRowCase (CVar scrutVar) <$> mergeRowAlts allInnerAlts
-  _ -> liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+  _ -> liftEither $ Left (TELowering Nothing "conflicting pattern shapes in merge")
   where
     collectCase acc (CCase (CVar _) innerAlts) = pure (acc <> innerAlts)
-    collectCase _ _ = liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+    collectCase _ _ = liftEither $ Left (TELowering Nothing "conflicting pattern shapes in merge")
     collectRow acc (CRowCase (CVar _) innerAlts) = pure (acc <> innerAlts)
-    collectRow _ _ = liftEither $ Left (TELowering "conflicting row-case shapes in merge")
+    collectRow _ _ = liftEither $ Left (TELowering Nothing "conflicting row-case shapes in merge")
 
 -- | Reconcile the field-binder lists of arms being merged. When every arm
 --   already uses the same binders (the common case — deterministic
@@ -2172,7 +2477,7 @@ ascribeInner conInfo prefix idx other body = do
   (vars, wrappedBody) <- desugarPatsM conInfo innerPrefix 0 [(other, Nothing)] body
   case vars of
     [v] -> pure (v, wrappedBody)
-    _ -> liftEither $ Left (TELowering "ascribeInner: nested pattern produced unexpected binders")
+    _ -> liftEither $ Left (TELowering Nothing "ascribeInner: nested pattern produced unexpected binders")
 
 -- | When a 'PCon' field pattern's field type is a structural sum and the
 --   constructor belongs to one of its labels (a nominal type appearing as
@@ -2236,7 +2541,7 @@ lowerVar env q@(QName mods n) =
           Right (saturateBuiltIn (prettyQName mods n) t)
     _ ->
       Left
-        $ TELowering
+        $ TELowering Nothing
         $ "unsupported qualified name: "
         <> prettyQName mods n
   where
