@@ -198,7 +198,12 @@ data LowerState = LowerState
     lsDerivedMaps :: !(M.Map Name Name),
     -- | The shared polymorphic identity helper @$mapId x = x@, emitted on
     --   first use to fill no-parameter argument positions of a derived map.
-    lsMapId :: !(Maybe Name)
+    lsMapId :: !(Maybe Name),
+    -- | The shared post-composition helper @$postCompose c g x = c (g x)@,
+    --   emitted on first use to map a covariant function field @X -> a@ of a
+    --   non-regular type by post-composing the result coercion @c@ onto the
+    --   stored function @g@.
+    lsPostCompose :: !(Maybe Name)
   }
 
 -- | Lowering monad — lambda-lift state on top of the existing
@@ -513,7 +518,7 @@ genBuiltInEtaWrappers arityOf names =
 --   to the user-decl list in the program pipeline).
 runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
 runLowerM m = do
-  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty M.empty Nothing)
+  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty M.empty Nothing Nothing)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
 -- | Whether the pipeline runs 'Awsum.Simplify'. 'SimplifyOff' is a
@@ -1787,6 +1792,21 @@ synthCoerce conInfo src tgt
 -- post-coercion closure lands in 'CCon' field position; subsequent
 -- 'Awsum.LowerClosures' encodes it as a tagged 'CCon' and routes the
 -- residual call through the right `$applyN` dispatcher.
+synthCoerce _conInfo src@(TyArrow _ srcA _srcB) (TyArrow _ tgtA _tgtB)
+  -- A widening that changes the argument type would need the parameter
+  -- mapped in a contravariant (argument) position, for which no finite map
+  -- exists (it would have to narrow the wider argument back to call the
+  -- original). Reject honestly here rather than letting the contravariant
+  -- 'synthCoerce tgtA srcA' below fail with a raw "incompatible shapes".
+  | not (typeEq srcA tgtA) =
+      liftEither
+        $ Left
+          ( TELowering
+              ( "row widening through a function field of shape "
+                  <> canonicalLabel src
+                  <> " is unsupported: the parameter occurs in a contravariant (argument) position"
+              )
+          )
 synthCoerce conInfo (TyArrow _ srcA srcB) (TyArrow _ tgtA tgtB) = do
   argCoerce <- synthCoerce conInfo tgtA srcA
   resCoerce <- synthCoerce conInfo srcB tgtB
@@ -1857,25 +1877,34 @@ mentionsParam params = go
     go (TyArrow _ a b) = go a || go b
     go (TyOr _ a b) = go a || go b
 
--- | A nominal type is /non-regular/ (a nested datatype) when some
---   constructor field re-applies the type to arguments other than its own
---   parameters in order — @Nest (Maybe a)@ in @type Nest a = Deeper (Nest
---   (Maybe a)) | Base a@. The per-(src,tgt) deep-copy coercion diverges on
+-- | A nominal type is /non-regular/ (a nested datatype) when some member of
+--   its mutual-recursion cluster applies a cluster member to arguments other
+--   than the enclosing member's parameters in order — directly, @Nest (Maybe
+--   a)@ in @type Nest a = Deeper (Nest (Maybe a)) | Base a@; or through a
+--   partner, @B (Maybe a)@ in @type A a = MkA (B (Maybe a)) | …@ where @B@
+--   recurses back into @A@. The per-(src,tgt) deep-copy coercion diverges on
 --   these (the argument pair grows each level); they route to a name-keyed
 --   derived map instead. A regular type ('List', 'Either', 'IO', …) keeps
---   the existing per-pair path unchanged.
+--   the existing per-pair path unchanged. The cluster (not just @tyName@) is
+--   what makes the indirect case visible: inspecting @A@'s own fields alone
+--   sees only a @B@-application, which looks regular until @B@ is known to
+--   close the cycle back to @A@.
 isNonRegularType :: ConInfoEnv -> Name -> Bool
 isNonRegularType conInfo tyName =
-  case constructorsOfType conInfo tyName of
-    [] -> False
-    cons@((_, ci0) : _) ->
-      let params = ciTypeParams ci0
-       in any (any (irregular params) . ciFieldTypes . snd) cons
+  let cluster = mutualCluster conInfo tyName
+   in any (memberIrregular cluster) (Set.toList cluster)
   where
-    irregular params = goTy
+    memberIrregular cluster m =
+      case constructorsOfType conInfo m of
+        [] -> False
+        cons@((_, ci0) : _) ->
+          let params = ciTypeParams ci0
+           in any (any (irregular cluster params) . ciFieldTypes . snd) cons
+    irregular cluster params = goTy
       where
         goTy ty
-          | extractTyCon ty == Just tyName,
+          | Just h <- extractTyCon ty,
+            Set.member h cluster,
             let args = tyAppArgs ty,
             not (null args) =
               not (argsAreParams args) || any goTy args
@@ -1888,6 +1917,39 @@ isNonRegularType conInfo tyName =
         isParam (TyVar _ n) p = n == p
         isParam _ _ = False
 
+-- | Type names mutually recursive with @root@ — its strongly-connected
+--   component in the type-dependency graph (edges: a type to every type-head
+--   in its constructor fields), @root@ included. A singleton cluster is the
+--   direct self-recursive case; a larger one is what surfaces non-regularity
+--   reachable only through a mutually-recursive partner.
+mutualCluster :: ConInfoEnv -> Name -> Set.Set Name
+mutualCluster conInfo root =
+  Set.insert root (Set.filter (Set.member root . reach) (reach root))
+  where
+    reach :: Name -> Set.Set Name
+    reach start = go Set.empty [start]
+      where
+        go seen [] = seen
+        go seen (x : xs)
+          | Set.member x seen = go seen xs
+          | otherwise = go (Set.insert x seen) (Set.toList (deps x) <> xs)
+    deps :: Name -> Set.Set Name
+    deps t =
+      Set.fromList
+        [ h
+        | (_, ci) <- constructorsOfType conInfo t,
+          fty <- ciFieldTypes ci,
+          h <- headsIn fty
+        ]
+    headsIn :: Type' -> [Name]
+    headsIn = \case
+      TyCon _ n -> [n]
+      TyApp _ f x -> headsIn f <> headsIn x
+      TyArrow _ a b -> headsIn a <> headsIn b
+      TyOr _ a b -> headsIn a <> headsIn b
+      TyVar _ _ -> []
+      TyEmpty _ _ -> []
+
 -- | A shared @$mapId x = x@, emitted once, for no-parameter argument
 --   positions of a derived map (e.g. the @Int32@ slot of @Either a Int32@).
 ensureMapId :: LowerM Name
@@ -1899,6 +1961,28 @@ ensureMapId = do
       let n = "$mapId" :: Name
       modify (\s -> s {lsMapId = Just n})
       emitHelper (CFunDef n ["$mapId_x"] (CVar "$mapId_x"))
+      pure n
+
+-- | A shared @$postCompose c g x = c (g x)@, emitted once, to map a
+--   covariant function field @X -> a@ of a non-regular type: post-compose
+--   the result coercion @c@ onto the stored function @g@. The result
+--   coercion closes over the derived map's parameter functions, so it is
+--   passed as an argument rather than baked in — one shared helper serves
+--   every covariant field.
+ensurePostCompose :: LowerM Name
+ensurePostCompose = do
+  st <- get
+  case lsPostCompose st of
+    Just n -> pure n
+    Nothing -> do
+      let n = "$postCompose" :: Name
+      modify (\s -> s {lsPostCompose = Just n})
+      emitHelper
+        ( CFunDef
+            n
+            ["$pc_c", "$pc_g", "$pc_x"]
+            (CCall (CVar "$pc_c") [CCall (CVar "$pc_g") [CVar "$pc_x"]])
+        )
       pure n
 
 -- | Derive (or reuse) a parametric functorial map
@@ -1943,6 +2027,15 @@ mapFieldValue conInfo paramFns fty x
       mapG <- ensureDerivedMap conInfo headName
       argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
       pure (CCall (CVar mapG) (argFns <> [x]))
+  -- Covariant function field @X -> a@ (parameter only in the result): map it
+  -- by post-composing the result coercion onto the stored function. A
+  -- parameter in the argument position is contravariant / invariant — no
+  -- finite map — and falls through to 'rejectFieldShape'.
+  | TyArrow _ dom cod <- fty,
+    not (mentionsParam (map fst paramFns) dom) = do
+      codFn <- fieldFnValue conInfo paramFns cod
+      pc <- ensurePostCompose
+      pure (CCall (CVar pc) [codFn, x])
   | otherwise = rejectFieldShape fty
 
 -- | A function value @fty[p] -> fty[q]@ to pass as an argument-function to
@@ -1957,13 +2050,22 @@ fieldFnValue conInfo paramFns fty
       mapG <- ensureDerivedMap conInfo headName
       argFns <- traverse (fieldFnValue conInfo paramFns) (tyAppArgs fty)
       pure (CCall (CVar mapG) argFns)
+  -- Covariant function field: the function-form of the map above —
+  -- @\g x -> codFn (g x)@ via the shared post-composer (partially applied).
+  | TyArrow _ dom cod <- fty,
+    not (mentionsParam (map fst paramFns) dom) = do
+      codFn <- fieldFnValue conInfo paramFns cod
+      pc <- ensurePostCompose
+      pure (CCall (CVar pc) [codFn])
   | otherwise = rejectFieldShape fty
 
 -- | Honest compile-time refusal for a non-regular field shape the derived
---   map can't cover: a function-typed or structural-sum field that mentions
---   the type parameter (a contravariant occurrence has no finite map at
---   all; the covariant function case is simply not handled yet — IO, which
---   carries continuation fields, is regular and never reaches here).
+--   map can't cover: a function field with the parameter in a contravariant
+--   or invariant (argument) position — no finite map exists — or a
+--   structural-sum field that mentions the parameter. A covariant function
+--   field (@X -> a@) is handled in 'mapFieldValue' / 'fieldFnValue' above
+--   and does not reach here. (IO carries continuation fields but is regular,
+--   so it never reaches here either.)
 rejectFieldShape :: Type' -> LowerM a
 rejectFieldShape fty =
   liftEither

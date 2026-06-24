@@ -1,0 +1,24 @@
+{- A row-widening function over a free type variable stored in a constructor
+   field (`Box (a -> (a | Unit))`), extracted by `case` and applied. The widened
+   `Bool` matches back its `Bool` alternative, printing `T`. -}
+
+import IO.Stdout
+
+type Box a = Box (a -> (a | Unit))
+
+widen : a -> (a | Unit)
+widen x = x
+
+applyBox : Box a -> a -> (a | Unit)
+applyBox b x = case b of
+  Box f -> f x
+
+describe : (Bool | Unit) -> String
+describe r = case r of
+  (b : Bool) -> case b of
+    True -> "T"
+    False -> "F"
+  (_u : Unit) -> "U"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (applyBox (Box widen) (True : Bool)))

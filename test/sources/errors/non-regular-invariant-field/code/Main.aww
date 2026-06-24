@@ -1,0 +1,21 @@
+{- Row-widening through a non-regular type whose tail carries the parameter in
+   an invariant position (a function field `a -> a`, both argument and result)
+   has no finite map, so the implicit coercion `Inv Bool -> Inv (Bool | Unit)`
+   is rejected at compile time rather than diverging. -}
+
+import IO.Stdout
+
+type Inv a = More (Inv (Maybe a)) (a -> a) | Done a
+
+doneBool : Inv Bool
+doneBool = Done True
+
+describe : Inv (Bool | Unit) -> String
+describe x = case x of
+  More _m _f -> "more"
+  Done bu -> case bu of
+    (_x : Bool) -> "done-bool"
+    (_u : Unit) -> "done-unit"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe doneBool)

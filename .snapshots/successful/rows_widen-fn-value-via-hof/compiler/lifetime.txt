@@ -1,0 +1,64 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl11$eff                      count=0
+  case-pattern    cont                            count=0
+  let             $inl12$$arg0                    count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=4
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  row-case        $inl4$_u                        count=0
+  row-case        $inl5$_l                        count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_22                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$$rowmono$2$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  case-pattern    $inl6$h                         count=0
+  case-pattern    $inl7$_t                        count=0
+  let             $inl8$r                         count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$$rowmono$2$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_24                          count=0
+  case-pattern    s                               count=0
+
+$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$9$1:
+  param           $args                           count=5
+  param           $k                              count=1
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    $cap15_0                        count=0
+  case-pattern    $cap16_0                        count=0
+  case-pattern    $inl9$e                         count=0
+  case-pattern    $inl10$s                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+
+$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$9$1:
+  param           $k                              count=1
+  param           $x                              count=1
+  case-pattern    $pk_26                          count=0
+  case-pattern    $pk_27                          count=0
+

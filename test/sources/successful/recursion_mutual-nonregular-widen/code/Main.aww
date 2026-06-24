@@ -1,0 +1,43 @@
+{- Implicit row-widening through a pair of mutually recursive types whose
+   non-regularity is hidden behind a partner: `A a = MkA (B (Maybe a)) | BaseA
+   a` is non-regular only because `B` (which recurses back to `A`) applies it
+   to `Maybe a`. Widening `A Bool` to `A (Bool | Unit)` derives the map over
+   the whole cluster. The value comes from argv so the map runs at runtime;
+   with no arguments the widened `BaseA True` matches its `Bool` alternative,
+   printing `base-true`. -}
+
+import IO.Stdout
+import IO.Args
+
+type A a = MkA (B (Maybe a)) | BaseA a
+
+type B a = MkB (A a) | BaseB a
+
+build : List String -> A Bool
+build args = case headList args of
+  Nothing -> BaseA True
+  Just _s -> BaseA False
+
+describe : A (Bool | Unit) -> String
+describe x = case x of
+  MkA _b -> "mka"
+  BaseA bu -> case bu of
+    (b : Bool) -> case b of
+      True -> "base-true"
+      False -> "base-false"
+    (_u : Unit) -> "base-unit"
+
+run2 : List String -> IO Never Unit
+run2 args =
+  let wide : A (Bool | Unit) = build args
+   in IO.Stdout.print (describe wide)
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

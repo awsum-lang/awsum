@@ -1,0 +1,22 @@
+{- Row-widening through a (regular) type whose function field carries the
+   parameter in a contravariant (argument) position has no finite map — the
+   wider argument would have to be narrowed back to call the original — so the
+   implicit coercion `CBox Bool -> CBox (Bool | Unit)` is rejected at compile
+   time. -}
+
+import IO.Stdout
+
+type CBox a = CBox (a -> Int32)
+
+mk : CBox Bool
+mk = CBox (\_b -> 0)
+
+wide : CBox (Bool | Unit)
+wide = mk
+
+describe : CBox (Bool | Unit) -> String
+describe c = case c of
+  CBox _f -> "cbox"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe wide)

@@ -1,0 +1,41 @@
+{- Row-widening through a non-regular type with a covariant function field
+   (`Hold (Int32 -> a)`, where `Cov a = Deeper (Cov (Maybe a)) | Hold (Int32
+   -> a)`). The widening maps the stored function by post-composing the result
+   coercion, so calling it after widening yields the injected value. The
+   function comes from argv so the map runs at runtime; with no arguments the
+   widened `Int32 -> Bool` returns `True` in the `(Bool | Unit)` row, printing
+   `hold-true`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Cov a = Deeper (Cov (Maybe a)) | Hold (Int32 -> a)
+
+build : List String -> Cov Bool
+build args = case headList args of
+  Nothing -> Hold (\_i -> True)
+  Just _s -> Hold (\_i -> False)
+
+describe : Cov (Bool | Unit) -> String
+describe c = case c of
+  Deeper _d -> "deeper"
+  Hold f -> case f 0 of
+    (b : Bool) -> case b of
+      True -> "hold-true"
+      False -> "hold-false"
+    (_u : Unit) -> "hold-unit"
+
+run2 : List String -> IO Never Unit
+run2 args =
+  let wide : Cov (Bool | Unit) = build args
+   in IO.Stdout.print (describe wide)
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

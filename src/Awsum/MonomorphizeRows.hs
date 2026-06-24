@@ -125,6 +125,21 @@ goExpr defMap = go
       TCase sp ty scrut alts -> TCase sp ty <$> go Nothing scrut <*> traverse (goAlt expected) alts
       TRowCase sp ty scrut alts -> TRowCase sp ty <$> go Nothing scrut <*> traverse (goRowAlt expected) alts
       TCoerce sp s t inner -> TCoerce sp s t <$> go (Just s) inner
+      -- A row-widening function used as a /value/ (HOF argument, stored in
+      -- a constructor field, returned) — not the head of a 'TApp', so the
+      -- call-site clause above never sees it. Without this it falls through
+      -- to the catch-all, the generic body with its rigid tyvar reaches
+      -- lowering, and the row injection is dropped as a vacuous tyvar
+      -- coercion (a silent cross-backend miscompile). Specialise it here on
+      -- the same trigger as the call site; 'getOrCreateSpec' re-walks the
+      -- substituted body, so a use nested inside an enclosing definition is
+      -- handled when that definition is itself specialised at a concrete row.
+      TVar hsp declared inst (QName [] name)
+        | Just (TFunDef _ params _) <- M.lookup name defMap,
+          let inst' = refineInst 0 inst expected,
+          rowWidenedToConcrete declared inst' -> do
+            specName <- getOrCreateSpec defMap name declared inst' params
+            pure (TVar hsp inst' inst' (QName [] specName))
       TVar {} -> pure e
       TLit {} -> pure e
       TBuiltIn {} -> pure e

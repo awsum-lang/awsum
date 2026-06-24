@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":1,"startCol":1,"endLine":1,"endCol":1,"message":"row widening through a function field of shape (Bool->Int32) is unsupported: the parameter occurs in a contravariant (argument) position","fixes":[]}]

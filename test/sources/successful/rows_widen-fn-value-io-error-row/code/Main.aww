@@ -1,0 +1,24 @@
+{- A row-widening function over a free error variable (`liftErr : IO e Unit ->
+   IO (e | EB) Unit`) passed as a value to a higher-order function. The lifted
+   `failIO EA` keeps its `EA` alternative through the wider `(EA | EB)` row and
+   is recovered by `handleErrorIO`, printing `GOT_EA`. -}
+
+import IO.Stdout
+
+type EA = EA
+
+type EB = EB
+
+liftErr : IO e Unit -> IO (e | EB) Unit
+liftErr x = x
+
+applyLift : (IO e Unit -> IO (e | EB) Unit) -> IO e Unit -> IO (e | EB) Unit
+applyLift f x = f x
+
+onError : (EA | EB) -> IO Never Unit
+onError e = case e of
+  (_a : EA) -> IO.Stdout.print "GOT_EA"
+  (_b : EB) -> IO.Stdout.print "GOT_EB"
+
+main : IO Never Unit
+main = applyLift liftErr (failIO EA) |> handleErrorIO onError

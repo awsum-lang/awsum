@@ -1,0 +1,25 @@
+{- A row-widening function over a free type variable used as a value inside
+   another polymorphic function (`wrapUse x = applyWiden widen x`), itself used
+   at a concrete row only at the call site. The widened `Bool` matches back its
+   `Bool` alternative, printing `T`. -}
+
+import IO.Stdout
+
+widen : a -> (a | Unit)
+widen x = x
+
+applyWiden : (a -> (a | Unit)) -> a -> (a | Unit)
+applyWiden f x = f x
+
+wrapUse : a -> (a | Unit)
+wrapUse x = applyWiden widen x
+
+describe : (Bool | Unit) -> String
+describe r = case r of
+  (b : Bool) -> case b of
+    True -> "T"
+    False -> "F"
+  (_u : Unit) -> "U"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (wrapUse (True : Bool)))
