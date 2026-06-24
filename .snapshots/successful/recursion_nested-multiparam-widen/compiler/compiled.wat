@@ -17,7 +17,7 @@
   (data (i32.const 192) "\00\00\00\00\00\00\00\00\00\00\00\00\14\00\00\00\14\00\00\00more-done-tuple-bool")
   (data (i32.const 232) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\04\00\00\00done")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$2 $v_$apply$$df$handleErrorIO$2 $v_$scc$$apply$$scc$$apply1__$df$$lam$14$7__$df$$lam$9$3__$df$$map$Tw$0__$df$$map$Tw$1__$df$$rowmono$0$andThenIO$6__$map$Tuple2__run2__$cps$$scc$$apply1__$df$$lam$14$7__$df$$lam$9$3__$df$$map$Tw$0__$df$$map$Tw$1__$df$$rowmono$0$andThenIO$6__$map$Tuple2__run2)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$2 $v_$apply$$df$handleErrorIO$2 $v_$scc$$apply$$scc$$apply1__$df$$lam$14$7__$df$$lam$$x$1714952523)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1232,7 +1232,7 @@
       end
     end)
 
-  (func $v_$scc$$apply$$scc$$apply1__$df$$lam$14$7__$df$$lam$9$3__$df$$map$Tw$0__$df$$map$Tw$1__$df$$rowmono$0$andThenIO$6__$map$Tuple2__run2__$cps$$scc$$apply1__$df$$lam$14$7__$df$$lam$9$3__$df$$map$Tw$0__$df$$map$Tw$1__$df$$rowmono$0$andThenIO$6__$map$Tuple2__run2 (param i32) (result i32)
+  (func $v_$scc$$apply$$scc$$apply1__$df$$lam$14$7__$df$$lam$$x$1714952523 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -87,6 +87,7 @@ library
       Awsum.RestrictPreludeRefs
       Awsum.Reuse
       Awsum.Scc
+      Awsum.ShortenNames
       Awsum.Simplify
       Awsum.SrcStream
       Awsum.StackSafety
@@ -220,6 +221,7 @@ test-suite awsum-test
       Awsum.JvmMethodLimitSpec
       Awsum.LspSpec
       Awsum.LspSpec.EndToEnd
+      Awsum.NameLimitsSpec
       Awsum.NoSimplifySpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec

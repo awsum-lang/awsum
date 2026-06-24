@@ -23,6 +23,7 @@ module Awsum.HM
     bareRowLabel,
     rowSubsume,
     rowTag,
+    fnv1a32,
     canonicalLabel,
     rowRetagNeeded,
 

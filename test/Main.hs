@@ -11,6 +11,7 @@ import Awsum.HoverSpec qualified
 import Awsum.JvmFarBranchSpec qualified
 import Awsum.JvmMethodLimitSpec qualified
 import Awsum.LspSpec qualified
+import Awsum.NameLimitsSpec qualified
 import Awsum.NoSimplifySpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
@@ -51,6 +52,7 @@ main = do
     Awsum.PropertySpec.spec
     Awsum.NoSimplifySpec.spec
     Awsum.StringLiteralCapSpec.spec
+    Awsum.NameLimitsSpec.spec
     Awsum.JvmMethodLimitSpec.spec
     Awsum.JvmFarBranchSpec.spec
     Awsum.LspSpec.spec

@@ -18,7 +18,7 @@
   (data (i32.const 235) "\00\00\00\00\00\00\00\00\00\00\00\00\15\00\00\00\15\00\00\00deeper-base-just-bool")
   (data (i32.const 276) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00base-bool")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$2 $v_$apply$$df$handleErrorIO$2 $v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapNest$0__$df$mapNest$1__mapMaybe2__run2__$cps$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapNest$0__$df$mapNest$1__mapMaybe2__run2)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$2 $v_$apply$$df$handleErrorIO$2 $v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$$x$2556233793)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1233,7 +1233,7 @@
       end
     end)
 
-  (func $v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapNest$0__$df$mapNest$1__mapMaybe2__run2__$cps$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapNest$0__$df$mapNest$1__mapMaybe2__run2 (param i32) (result i32)
+  (func $v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$$x$2556233793 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -34,7 +34,7 @@
 --
 -- NOTE: We treat a /declaration terminator/ as either an explicit newline or EOF.
 --       This makes multi-decl files unambiguous without semicolons.
-module Awsum.Parser (parseProgram, parseProgramDiagnostic) where
+module Awsum.Parser (parseProgram, parseProgramDiagnostic, maxIdentifierChars) where
 
 import Awsum.SrcStream (SrcText (..))
 import Awsum.Syntax
@@ -115,9 +115,23 @@ isIdentTail c =
 --   on LLVM (IR identifier grammar is ASCII) and JS (no apostrophe), with
 --   @build@ still exiting 0. ASCII-only keeps every identifier inside the
 --   intersection of all five targets' grammars.
+-- | Maximum length (ASCII characters) of a source identifier. A generous
+--   sanity cap — far beyond any hand-written or generated name — that keeps
+--   a single mangled identifier well inside every backend's symbol-length
+--   limit, most sharply the JVM's @CONSTANT_Utf8@ u2 (65535 bytes). Past it
+--   the identifier is rejected at parse time, rather than risking a silently
+--   broken artifact on a target with a tighter limit. (Fused /synthesised/
+--   names — @$scc$…@ etc. — are bounded separately by 'Awsum.ShortenNames'.)
+maxIdentifierChars :: Int
+maxIdentifierChars = 1024
+
 identTail :: Parser Text
 identTail = do
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  when (T.length xs > maxIdentifierChars)
+    . fail
+    . toString
+    $ ("identifier too long; the maximum is " <> show maxIdentifierChars <> " characters" :: Text)
   rejectNonAsciiInIdent
   pure xs
 

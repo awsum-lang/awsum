@@ -39,7 +39,7 @@ CoreProgram
                                     )
                                     ( CDrop "$inl15$$arg0"
                                         ( CCall
-                                            ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2_$cps$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2" )
+                                            ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$$x$1714952523" )
                                             [ CCon 53
                                                 [ CCon 32
                                                     [ CProj "io" 1
@@ -60,7 +60,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$df$handleErrorIO$2" )
                 [ CCall
-                    ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2_$cps$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2" )
+                    ( CVar "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$$x$1714952523" )
                     [ CCon 53
                         [ CCon 37
                             [ CCon 8
@@ -189,7 +189,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2_$cps$$scc$$apply1_$df$$lam$14$7_$df$$lam$9$3_$df$$map$Tw$0_$df$$map$Tw$1_$df$$rowmono$0$andThenIO$6_$map$Tuple2_run2" [ "$args$1" ]
+        , CFunDef "$scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$$x$1714952523" [ "$args$1" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args$1" )

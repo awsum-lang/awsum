@@ -105,7 +105,7 @@ L_tarm2:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2__$cps$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$$x$2769931407(Ljava/lang/Object;)Ljava/lang/Object;
   astore_0
   goto L_tco0
 .end method
@@ -161,7 +161,7 @@ L_tarm2:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2__$cps$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$$x$2769931407(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_1
   anewarray java/lang/Object
   dup
@@ -421,7 +421,7 @@ L_tarm10:
 .end method
 
 
-.method static v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2__$cps$$scc$$apply1__$df$$lam$13$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$df$mapPerfect$0__$df$mapPerfect$1__bimapTuple2__run2(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$apply$$scc$$apply1__$df$$lam$13$7__$df$$lam$$x$2769931407(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 12
   .limit locals 18
 L_tco11:

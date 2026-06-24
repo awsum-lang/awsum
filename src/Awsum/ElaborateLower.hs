@@ -33,6 +33,7 @@ import Awsum.Prelude (preludeDefNames)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Reuse (insertReuse)
 import Awsum.Scc (sccMergeProgram)
+import Awsum.ShortenNames (shortenSynthesizedNames)
 import Awsum.Simplify (simplifyProgram)
 import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
@@ -751,7 +752,10 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
       simplified = case simplifyMode of
         SimplifyOn -> treeShakeFromMain conInfo (simplifyProgram preludeTags tcoed)
         SimplifyOff -> tcoed
-  pure (warnings, preludeTags, insertReuse mintedTagFloor (insertDrops simplified))
+  -- Final hygiene: bound the length of synthesised top-level names (fused
+  -- recursion can compound them past a backend's symbol limit — JVM's
+  -- 65535-byte CONSTANT_Utf8 in particular). Runs last, on the final names.
+  pure (warnings, preludeTags, shortenSynthesizedNames (insertReuse mintedTagFloor (insertDrops simplified)))
 
 -- | Translate a 'StackSafetyIssue' into a user-facing 'TypeError',
 -- recovering a source span from the corresponding 'Sig' in the surface

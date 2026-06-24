@@ -376,7 +376,7 @@ tco.case.arm.8.18:
   store ptr %t32, ptr %t33
   %t34 = getelementptr ptr, ptr %t20, i32 2
   store ptr %t31, ptr %t34
-  %t35 = call ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2__$cps$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2(ptr %t20)
+  %t35 = call ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$$x$1360977481(ptr %t20)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t4)
   store ptr %t35, ptr %t3
@@ -417,7 +417,7 @@ define internal ptr @v_main() {
   store ptr %t16, ptr %t17
   %t18 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t15, ptr %t18
-  %t19 = call ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2__$cps$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2(ptr %t0)
+  %t19 = call ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$$x$1360977481(ptr %t0)
   %t20 = call ptr @__alloc(i64 8, i32 0)
   %t21 = inttoptr i64 38 to ptr
   %t22 = getelementptr ptr, ptr %t20, i32 0
@@ -636,7 +636,7 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2__$cps$$scc$$apply1__$df$$lam$13$1__$df$$lam$16$7__$df$$lam$9$3__$df$$rowmono$0$andThenIO$6__$let$15__applyFn__run2(ptr %v_$args$1) {
+define internal ptr @v_$scc$$apply$$scc$$apply1__$df$$lam$13$1__$df$$lam$$x$1360977481(ptr %v_$args$1) {
 entry:
   %t3 = alloca ptr
   store ptr %v_$args$1, ptr %t3
