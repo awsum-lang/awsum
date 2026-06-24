@@ -100,7 +100,7 @@
     ldloc.2
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__scc_parseBinary_parseExpr(object)
+    call object AwsumMain::v_$scc$parseBinary__parseExpr(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -132,7 +132,7 @@
   }
 
 
-  .method private hidebysig static object v__scc_parseBinary_parseExpr(object) cil managed
+  .method private hidebysig static object v_$scc$parseBinary__parseExpr(object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

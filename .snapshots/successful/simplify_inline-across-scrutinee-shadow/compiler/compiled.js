@@ -21,7 +21,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -37,15 +37,15 @@
           return "NO_OUTER";
         }
         case 12: {
-          const v__inl1___p0 = s[1];
+          const v_$inl1$____p0 = s[1];
           {
-            const __s = __splitOnFirst(":", v__inl1___p0[2]);
+            const __s = __splitOnFirst(":", v_$inl1$____p0[2]);
             switch (__s[0]) {
               case 11: {
                 return "NO_INNER";
               }
               case 12: {
-                return v__inl1___p0[1];
+                return v_$inl1$____p0[1];
               }
             }
           }

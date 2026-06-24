@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (data (i32.const 113) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00ok")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_countWithBox $v__apply_countWithBox $v_outerLoop)
+  (elem (i32.const 0) $v_runIO $v_$cps$countWithBox $v_$apply$countWithBox $v_outerLoop)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -543,7 +543,7 @@
     i32.const 0
     call 7)
 
-  (func $v__cps_countWithBox (param i32 i32 i32) (result i32)
+  (func $v_$cps$countWithBox (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -698,7 +698,7 @@
       end
     end)
 
-  (func $v__apply_countWithBox (param i32 i32) (result i32)
+  (func $v_$apply$countWithBox (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

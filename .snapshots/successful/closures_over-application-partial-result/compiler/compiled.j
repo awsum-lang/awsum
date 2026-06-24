@@ -112,14 +112,14 @@ L_tarm1:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__scc__apply1_applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply1__applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
   iconst_2
   bipush 7
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__scc__apply1_applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply1__applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   aastore
@@ -147,7 +147,7 @@ L_tarm1:
 .end method
 
 
-.method static v__scc__apply1_applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$apply1__applyOnce(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 5
 L_tco2:

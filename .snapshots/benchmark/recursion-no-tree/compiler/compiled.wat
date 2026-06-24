@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0d\00\00\00\0d\00\00\00OverflowError")
   (data (i32.const 117) "\00\00\00\00\00\00\00\00\00\00\00\00\0e\00\00\00\0e\00\00\00UnderflowError")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_countTail $v_descendN $v__cps_descend $v__apply_descend $v__scc_spinA_spinB_spinC)
+  (elem (i32.const 0) $v_runIO $v_countTail $v_descendN $v_$cps$descend $v_$apply$descend $v_$scc$spinA__spinB__spinC)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1324,7 +1324,7 @@
       end
     end)
 
-  (func $v__cps_descend (param i32 i32) (result i32)
+  (func $v_$cps$descend (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1472,7 +1472,7 @@
       end
     end)
 
-  (func $v__apply_descend (param i32 i32) (result i32)
+  (func $v_$apply$descend (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1585,7 +1585,7 @@
       end
     end)
 
-  (func $v__scc_spinA_spinB_spinC (param i32) (result i32)
+  (func $v_$scc$spinA__spinB__spinC (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

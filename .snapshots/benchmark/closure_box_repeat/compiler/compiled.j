@@ -150,7 +150,7 @@ L_tarm1:
 .end method
 
 
-.method static v__cps_countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 8
 L_tco2:
@@ -180,7 +180,7 @@ L_tco2:
   iconst_1
   invokestatic AwsumMain/v_zero()Ljava/lang/Object;
   aastore
-  invokestatic AwsumMain/v__apply_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm3:
   aload_1
@@ -212,7 +212,7 @@ L_tarm3:
   iconst_1
   aload 7
   aastore
-  invokestatic AwsumMain/v__apply_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 7
   areturn
@@ -247,7 +247,7 @@ L_tarm4:
 .end method
 
 
-.method static v__apply_countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$countWithBox(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 2
   .limit locals 3
 L_tco5:
@@ -352,7 +352,7 @@ L_tarm9:
   bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps_countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$countWithBox(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 7
   aload 7

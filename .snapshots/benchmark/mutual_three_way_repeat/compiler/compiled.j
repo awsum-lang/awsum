@@ -229,7 +229,7 @@ L_tarm4:
   ldc 1000000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__scc_stepA_stepB_stepC(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$stepA__stepB__stepC(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 6
   aload 6
@@ -358,7 +358,7 @@ L_join6:
 .end method
 
 
-.method static v__scc_stepA_stepB_stepC(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$stepA__stepB__stepC(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 8
 L_tco8:

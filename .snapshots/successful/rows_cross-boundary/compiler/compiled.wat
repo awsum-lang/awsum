@@ -19,7 +19,7 @@
   (data (i32.const 192) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00 / ")
   (data (i32.const 215) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 9 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_describeLst $v__apply_describeLst $v__cps__lift_14 $v__apply__lift_14 $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4)
+  (elem (i32.const 0) $v_runIO $v_$cps$describeLst $v_$apply$describeLst $v_$cps$$lift$14 $v_$apply$$lift$14 $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -688,7 +688,7 @@
     i32.store offset=4
     local.get 0)
 
-  (func $v__cps_describeLst (param i32 i32) (result i32)
+  (func $v_$cps$describeLst (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -803,7 +803,7 @@
       end
     end)
 
-  (func $v__apply_describeLst (param i32 i32) (result i32)
+  (func $v_$apply$describeLst (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1511,7 +1511,7 @@
     local.get 0
     call 23)
 
-  (func $v__cps__lift_14 (param i32 i32) (result i32)
+  (func $v_$cps$$lift$14 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1619,7 +1619,7 @@
       end
     end)
 
-  (func $v__apply__lift_14 (param i32 i32) (result i32)
+  (func $v_$apply$$lift$14 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1696,7 +1696,7 @@
       end
     end)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1855,7 +1855,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1921,7 +1921,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2084,7 +2084,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

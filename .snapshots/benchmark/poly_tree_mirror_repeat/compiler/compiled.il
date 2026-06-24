@@ -320,7 +320,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__scc__apply_mirror__cps_mirror(object)
+    call object AwsumMain::v_$scc$$apply$mirror__$cps$mirror(object)
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -475,7 +475,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply_mirror__cps_mirror(object) cil managed
+  .method private hidebysig static object v_$scc$$apply$mirror__$cps$mirror(object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)

@@ -343,7 +343,7 @@ tco.exit.1:
 }
 
 define internal ptr @v_main() {
-  %v__inl16_scrut.jslot = alloca ptr
+  %v_$inl16$scrut.jslot = alloca ptr
   %t0 = call ptr @__parseInt32(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12))
   %t3 = getelementptr ptr, ptr %t0, i32 0
   %t4 = load ptr, ptr %t3
@@ -687,12 +687,12 @@ case.join.65:
   call void @__free_recursive(ptr %t60)
   call void @__free_recursive(ptr %t42)
   call void @__free_recursive(ptr %t20)
-  store ptr %t213, ptr %v__inl16_scrut.jslot
+  store ptr %t213, ptr %v_$inl16$scrut.jslot
   br label %join.1
 join.case.default.24:
   unreachable
 join.1:
-  %t214 = load ptr, ptr %v__inl16_scrut.jslot
+  %t214 = load ptr, ptr %v_$inl16$scrut.jslot
   %t215 = getelementptr ptr, ptr %t214, i32 0
   %t216 = load ptr, ptr %t215
   %t217 = ptrtoint ptr %t216 to i64

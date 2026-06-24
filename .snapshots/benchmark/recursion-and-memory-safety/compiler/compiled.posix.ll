@@ -297,7 +297,7 @@ case.join.5:
 }
 
 define internal ptr @v_runDemo() {
-  %v__inl7_scrut.jslot = alloca ptr
+  %v_$inl7$scrut.jslot = alloca ptr
   %t0 = call ptr @__alloc(i64 4, i32 0)
   store i32 5000000, ptr %t0
   call void @__inc_ref(ptr %t0)
@@ -386,12 +386,12 @@ case.join.30:
   %t54 = phi ptr [ %t35, %case.end.3.32 ], [ %t43, %case.end.4.40 ]
   call void @__free_recursive(ptr %t25)
   call void @__free_recursive(ptr %t6)
-  store ptr %t54, ptr %v__inl7_scrut.jslot
+  store ptr %t54, ptr %v_$inl7$scrut.jslot
   br label %join.1
 join.case.default.10:
   unreachable
 join.1:
-  %t55 = load ptr, ptr %v__inl7_scrut.jslot
+  %t55 = load ptr, ptr %v_$inl7$scrut.jslot
   %t56 = getelementptr ptr, ptr %t55, i32 0
   %t57 = load ptr, ptr %t56
   %t58 = ptrtoint ptr %t57 to i64
@@ -446,7 +446,7 @@ case.arm.4.82:
   call void @__inc_ref(ptr %t85)
   %t94 = getelementptr ptr, ptr %t89, i32 2
   store ptr %t85, ptr %t94
-  %t95 = call ptr @v__scc_deepestLeftA_deepestLeftB_deepestLeftC(ptr %t89)
+  %t95 = call ptr @v_$scc$deepestLeftA__deepestLeftB__deepestLeftC(ptr %t89)
   %t96 = getelementptr ptr, ptr %t86, i32 1
   store ptr %t95, ptr %t96
   call void @__free_recursive(ptr %t85)
@@ -735,7 +735,7 @@ tco.case.arm.4.31:
   store ptr %t39, ptr %t40
   %t41 = getelementptr ptr, ptr %t34, i32 2
   store ptr %t38, ptr %t41
-  %t42 = call ptr @v__scc__apply_mirror__cps_mirror(ptr %t34)
+  %t42 = call ptr @v_$scc$$apply$mirror__$cps$mirror(ptr %t34)
   call void @__free_recursive(ptr %t19)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
@@ -752,10 +752,10 @@ tco.exit.1:
   ret ptr %t43
 }
 
-define internal ptr @v__scc_deepestLeftA_deepestLeftB_deepestLeftC(ptr %v__args) {
+define internal ptr @v_$scc$deepestLeftA__deepestLeftB__deepestLeftC(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -897,10 +897,10 @@ tco.exit.1:
   ret ptr %t78
 }
 
-define internal ptr @v__scc__apply_mirror__cps_mirror(ptr %v__args) {
+define internal ptr @v_$scc$$apply$mirror__$cps$mirror(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

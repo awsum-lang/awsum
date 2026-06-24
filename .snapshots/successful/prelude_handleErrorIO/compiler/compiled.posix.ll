@@ -281,7 +281,7 @@ define internal ptr @v_recover() {
   %t8 = inttoptr i64 27 to ptr
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
-  %t10 = call ptr @v__cps__df_handleErrorIO_0(ptr %t0, ptr %t7)
+  %t10 = call ptr @v_$cps$$df$handleErrorIO$0(ptr %t0, ptr %t7)
   ret ptr %t10
 }
 
@@ -291,7 +291,7 @@ define internal ptr @v_dispatchA() {
   %t2 = inttoptr i64 29 to ptr
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
-  %t4 = call ptr @v__cps__df_handleErrorIO_4(ptr %t0, ptr %t1)
+  %t4 = call ptr @v_$cps$$df$handleErrorIO$4(ptr %t0, ptr %t1)
   ret ptr %t4
 }
 
@@ -301,7 +301,7 @@ define internal ptr @v_dispatchB() {
   %t2 = inttoptr i64 29 to ptr
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
-  %t4 = call ptr @v__cps__df_handleErrorIO_4(ptr %t0, ptr %t1)
+  %t4 = call ptr @v_$cps$$df$handleErrorIO$4(ptr %t0, ptr %t1)
   ret ptr %t4
 }
 
@@ -318,7 +318,7 @@ define internal ptr @v_passthrough() {
   %t6 = inttoptr i64 27 to ptr
   %t7 = getelementptr ptr, ptr %t5, i32 0
   store ptr %t6, ptr %t7
-  %t8 = call ptr @v__cps__df_handleErrorIO_0(ptr %t0, ptr %t5)
+  %t8 = call ptr @v_$cps$$df$handleErrorIO$0(ptr %t0, ptr %t5)
   ret ptr %t8
 }
 
@@ -337,12 +337,12 @@ define internal ptr @v_nested() {
   %t8 = inttoptr i64 33 to ptr
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
-  %t10 = call ptr @v__cps__df_handleErrorIO_12(ptr %t0, ptr %t7)
+  %t10 = call ptr @v_$cps$$df$handleErrorIO$12(ptr %t0, ptr %t7)
   %t11 = call ptr @__alloc(i64 8, i32 0)
   %t12 = inttoptr i64 31 to ptr
   %t13 = getelementptr ptr, ptr %t11, i32 0
   store ptr %t12, ptr %t13
-  %t14 = call ptr @v__cps__df_handleErrorIO_8(ptr %t10, ptr %t11)
+  %t14 = call ptr @v_$cps$$df$handleErrorIO$8(ptr %t10, ptr %t11)
   ret ptr %t14
 }
 
@@ -361,7 +361,7 @@ define internal ptr @v_refailNarrow() {
   %t8 = inttoptr i64 33 to ptr
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
-  %t10 = call ptr @v__cps__df_handleErrorIO_12(ptr %t0, ptr %t7)
+  %t10 = call ptr @v_$cps$$df$handleErrorIO$12(ptr %t0, ptr %t7)
   ret ptr %t10
 }
 
@@ -380,7 +380,7 @@ define internal ptr @v_refailRow() {
   %t8 = inttoptr i64 35 to ptr
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
-  %t10 = call ptr @v__cps__df_handleErrorIO_16(ptr %t0, ptr %t7)
+  %t10 = call ptr @v_$cps$$df$handleErrorIO$16(ptr %t0, ptr %t7)
   ret ptr %t10
 }
 
@@ -407,12 +407,12 @@ define internal ptr @v_treePreserve() {
   %t13 = inttoptr i64 39 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__cps__df_andThenIO_24(ptr %t0, ptr %t12)
+  %t15 = call ptr @v_$cps$$df$andThenIO$24(ptr %t0, ptr %t12)
   %t16 = call ptr @__alloc(i64 8, i32 0)
   %t17 = inttoptr i64 37 to ptr
   %t18 = getelementptr ptr, ptr %t16, i32 0
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__cps__df_handleErrorIO_20(ptr %t15, ptr %t16)
+  %t19 = call ptr @v_$cps$$df$handleErrorIO$20(ptr %t15, ptr %t16)
   ret ptr %t19
 }
 
@@ -439,7 +439,7 @@ define internal ptr @v_treeNoError() {
   %t13 = inttoptr i64 41 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__cps__df_handleErrorIO_28(ptr %t0, ptr %t12)
+  %t15 = call ptr @v_$cps$$df$handleErrorIO$28(ptr %t0, ptr %t12)
   ret ptr %t15
 }
 
@@ -466,77 +466,77 @@ define internal ptr @v_main() {
   %t13 = inttoptr i64 57 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__cps__df_andThenIO_60(ptr %t0, ptr %t12)
+  %t15 = call ptr @v_$cps$$df$andThenIO$60(ptr %t0, ptr %t12)
   %t16 = call ptr @v_recover()
   %t17 = call ptr @__alloc(i64 8, i32 0)
   %t18 = inttoptr i64 45 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
   store ptr %t18, ptr %t19
-  %t20 = call ptr @v__cps__df_mapIO_36(ptr %t16, ptr %t17)
+  %t20 = call ptr @v_$cps$$df$mapIO$36(ptr %t16, ptr %t17)
   %t21 = call ptr @__alloc(i64 8, i32 0)
   %t22 = inttoptr i64 43 to ptr
   %t23 = getelementptr ptr, ptr %t21, i32 0
   store ptr %t22, ptr %t23
-  %t24 = call ptr @v__cps__df_andThenIO_32(ptr %t20, ptr %t21)
+  %t24 = call ptr @v_$cps$$df$andThenIO$32(ptr %t20, ptr %t21)
   %t25 = call ptr @__alloc(i64 8, i32 0)
   %t26 = inttoptr i64 55 to ptr
   %t27 = getelementptr ptr, ptr %t25, i32 0
   store ptr %t26, ptr %t27
-  %t28 = call ptr @v__cps__df_andThenIO_56(ptr %t15, ptr %t24, ptr %t25)
+  %t28 = call ptr @v_$cps$$df$andThenIO$56(ptr %t15, ptr %t24, ptr %t25)
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 53 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_andThenIO_52(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$andThenIO$52(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 73 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_92(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$92(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 71 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_andThenIO_88(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$88(ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 69 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_84(ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$84(ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 67 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
   store ptr %t46, ptr %t47
-  %t48 = call ptr @v__cps__df_andThenIO_80(ptr %t44, ptr %t45)
+  %t48 = call ptr @v_$cps$$df$andThenIO$80(ptr %t44, ptr %t45)
   %t49 = call ptr @__alloc(i64 8, i32 0)
   %t50 = inttoptr i64 65 to ptr
   %t51 = getelementptr ptr, ptr %t49, i32 0
   store ptr %t50, ptr %t51
-  %t52 = call ptr @v__cps__df_andThenIO_76(ptr %t48, ptr %t49)
+  %t52 = call ptr @v_$cps$$df$andThenIO$76(ptr %t48, ptr %t49)
   %t53 = call ptr @__alloc(i64 8, i32 0)
   %t54 = inttoptr i64 63 to ptr
   %t55 = getelementptr ptr, ptr %t53, i32 0
   store ptr %t54, ptr %t55
-  %t56 = call ptr @v__cps__df_andThenIO_72(ptr %t52, ptr %t53)
+  %t56 = call ptr @v_$cps$$df$andThenIO$72(ptr %t52, ptr %t53)
   %t57 = call ptr @__alloc(i64 8, i32 0)
   %t58 = inttoptr i64 61 to ptr
   %t59 = getelementptr ptr, ptr %t57, i32 0
   store ptr %t58, ptr %t59
-  %t60 = call ptr @v__cps__df_andThenIO_68(ptr %t56, ptr %t57)
+  %t60 = call ptr @v_$cps$$df$andThenIO$68(ptr %t56, ptr %t57)
   %t61 = call ptr @__alloc(i64 8, i32 0)
   %t62 = inttoptr i64 59 to ptr
   %t63 = getelementptr ptr, ptr %t61, i32 0
   store ptr %t62, ptr %t63
-  %t64 = call ptr @v__cps__df_andThenIO_64(ptr %t60, ptr %t61)
+  %t64 = call ptr @v_$cps$$df$andThenIO$64(ptr %t60, ptr %t61)
   ret ptr %t64
 }
 
-define internal ptr @v__cps__df_handleErrorIO_0(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$0(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -549,7 +549,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_0(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$0(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -564,7 +564,7 @@ tco.case.arm.6.13:
   store i32 11, ptr %t17
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__apply__df_handleErrorIO_0(ptr %t6, ptr %t14)
+  %t19 = call ptr @v_$apply$$df$handleErrorIO$0(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t19, ptr %t2
@@ -622,12 +622,12 @@ tco.exit.1:
   ret ptr %t45
 }
 
-define internal ptr @v__apply__df_handleErrorIO_0(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$0(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -669,12 +669,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_4(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$4(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -687,7 +687,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_4(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$4(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -730,7 +730,7 @@ case.default.19:
 case.join.20:
   %t35 = phi ptr [ %t23, %case.end.2252990199.22 ], [ %t30, %case.end.2269767818.29 ]
   call void @__free_recursive(ptr %t15)
-  %t36 = call ptr @v__apply__df_handleErrorIO_4(ptr %t6, ptr %t35)
+  %t36 = call ptr @v_$apply$$df$handleErrorIO$4(ptr %t6, ptr %t35)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t36, ptr %t2
@@ -788,12 +788,12 @@ tco.exit.1:
   ret ptr %t62
 }
 
-define internal ptr @v__apply__df_handleErrorIO_4(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$4(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -835,12 +835,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_8(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$8(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -853,7 +853,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_8(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$8(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -868,7 +868,7 @@ tco.case.arm.6.13:
   store i32 55, ptr %t17
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__apply__df_handleErrorIO_8(ptr %t6, ptr %t14)
+  %t19 = call ptr @v_$apply$$df$handleErrorIO$8(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t19, ptr %t2
@@ -926,12 +926,12 @@ tco.exit.1:
   ret ptr %t45
 }
 
-define internal ptr @v__apply__df_handleErrorIO_8(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$8(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -973,12 +973,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_12(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$12(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -991,7 +991,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_12(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$12(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -1008,7 +1008,7 @@ tco.case.arm.6.13:
   store ptr %t18, ptr %t19
   %t20 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t20
-  %t21 = call ptr @v__apply__df_handleErrorIO_12(ptr %t6, ptr %t14)
+  %t21 = call ptr @v_$apply$$df$handleErrorIO$12(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t21, ptr %t2
@@ -1066,12 +1066,12 @@ tco.exit.1:
   ret ptr %t47
 }
 
-define internal ptr @v__apply__df_handleErrorIO_12(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$12(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1113,12 +1113,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_16(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$16(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1131,7 +1131,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_16(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$16(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -1139,7 +1139,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.13:
   call void @__inc_ref(ptr %t6)
   %t14 = call ptr @v_reFailC()
-  %t15 = call ptr @v__apply__df_handleErrorIO_16(ptr %t6, ptr %t14)
+  %t15 = call ptr @v_$apply$$df$handleErrorIO$16(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t15, ptr %t2
@@ -1197,12 +1197,12 @@ tco.exit.1:
   ret ptr %t41
 }
 
-define internal ptr @v__apply__df_handleErrorIO_16(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$16(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1244,12 +1244,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_20(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$20(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1262,7 +1262,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_20(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$20(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -1287,7 +1287,7 @@ tco.case.arm.6.13:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t14, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_handleErrorIO_20(ptr %t6, ptr %t14)
+  %t26 = call ptr @v_$apply$$df$handleErrorIO$20(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -1345,12 +1345,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_handleErrorIO_20(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$20(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1392,12 +1392,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_24(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$24(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1419,7 +1419,7 @@ tco.case.arm.5.11:
   store ptr %t16, ptr %t17
   %t18 = getelementptr ptr, ptr %t12, i32 1
   store ptr %t15, ptr %t18
-  %t19 = call ptr @v__apply__df_andThenIO_24(ptr %t6, ptr %t12)
+  %t19 = call ptr @v_$apply$$df$andThenIO$24(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t19, ptr %t2
@@ -1427,7 +1427,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.20:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t21 = call ptr @v__apply__df_andThenIO_24(ptr %t6, ptr %t5)
+  %t21 = call ptr @v_$apply$$df$andThenIO$24(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t21, ptr %t2
@@ -1485,12 +1485,12 @@ tco.exit.1:
   ret ptr %t47
 }
 
-define internal ptr @v__apply__df_andThenIO_24(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$24(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1532,12 +1532,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_28(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$28(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1550,7 +1550,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_28(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$28(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -1575,7 +1575,7 @@ tco.case.arm.6.13:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t14, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_handleErrorIO_28(ptr %t6, ptr %t14)
+  %t26 = call ptr @v_$apply$$df$handleErrorIO$28(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -1633,12 +1633,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_handleErrorIO_28(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$28(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1680,12 +1680,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_32(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$32(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1718,7 +1718,7 @@ tco.case.arm.5.11:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_andThenIO_32(ptr %t6, ptr %t12)
+  %t26 = call ptr @v_$apply$$df$andThenIO$32(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -1726,7 +1726,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.27:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t28 = call ptr @v__apply__df_andThenIO_32(ptr %t6, ptr %t5)
+  %t28 = call ptr @v_$apply$$df$andThenIO$32(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t28, ptr %t2
@@ -1784,12 +1784,12 @@ tco.exit.1:
   ret ptr %t54
 }
 
-define internal ptr @v__apply__df_andThenIO_32(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$32(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1831,12 +1831,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_mapIO_36(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$mapIO$36(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1859,7 +1859,7 @@ tco.case.arm.5.11:
   %t17 = call ptr @__showInt32(ptr %t13)
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__apply__df_mapIO_36(ptr %t6, ptr %t14)
+  %t19 = call ptr @v_$apply$$df$mapIO$36(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t13)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -1868,7 +1868,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.20:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t21 = call ptr @v__apply__df_mapIO_36(ptr %t6, ptr %t5)
+  %t21 = call ptr @v_$apply$$df$mapIO$36(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t21, ptr %t2
@@ -1926,12 +1926,12 @@ tco.exit.1:
   ret ptr %t47
 }
 
-define internal ptr @v__apply__df_mapIO_36(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$mapIO$36(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1973,12 +1973,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_40(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$40(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -1991,7 +1991,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_40(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$40(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -2016,7 +2016,7 @@ tco.case.arm.6.13:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t14, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_handleErrorIO_40(ptr %t6, ptr %t14)
+  %t26 = call ptr @v_$apply$$df$handleErrorIO$40(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -2074,12 +2074,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_handleErrorIO_40(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$40(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2121,12 +2121,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_handleErrorIO_44(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$44(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2139,7 +2139,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_44(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$44(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -2202,7 +2202,7 @@ case.default.19:
 case.join.20:
   %t49 = phi ptr [ %t23, %case.end.2269767818.22 ], [ %t37, %case.end.2286545437.36 ]
   call void @__free_recursive(ptr %t15)
-  %t50 = call ptr @v__apply__df_handleErrorIO_44(ptr %t6, ptr %t49)
+  %t50 = call ptr @v_$apply$$df$handleErrorIO$44(ptr %t6, ptr %t49)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t50, ptr %t2
@@ -2260,12 +2260,12 @@ tco.exit.1:
   ret ptr %t76
 }
 
-define internal ptr @v__apply__df_handleErrorIO_44(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$44(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2307,12 +2307,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df__rowmono_0_andThenIO_48(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$$rowmono$0$andThenIO$48(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2345,7 +2345,7 @@ tco.case.arm.5.11:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df__rowmono_0_andThenIO_48(ptr %t6, ptr %t12)
+  %t26 = call ptr @v_$apply$$df$$rowmono$0$andThenIO$48(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -2353,7 +2353,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.27:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t28 = call ptr @v__apply__df__rowmono_0_andThenIO_48(ptr %t6, ptr %t5)
+  %t28 = call ptr @v_$apply$$df$$rowmono$0$andThenIO$48(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t28, ptr %t2
@@ -2411,12 +2411,12 @@ tco.exit.1:
   ret ptr %t54
 }
 
-define internal ptr @v__apply__df__rowmono_0_andThenIO_48(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$$rowmono$0$andThenIO$48(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2458,12 +2458,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_52(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$52(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2493,7 +2493,7 @@ tco.case.arm.5.11:
   store ptr %t19, ptr %t22
   %t23 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t16, ptr %t23
-  %t24 = call ptr @v__apply__df_andThenIO_52(ptr %t6, ptr %t12)
+  %t24 = call ptr @v_$apply$$df$andThenIO$52(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t24, ptr %t2
@@ -2501,7 +2501,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.25:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t26 = call ptr @v__apply__df_andThenIO_52(ptr %t6, ptr %t5)
+  %t26 = call ptr @v_$apply$$df$andThenIO$52(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -2559,12 +2559,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_andThenIO_52(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$52(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2606,14 +2606,14 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_56(ptr %v_io, ptr %v__df_andThenIO_56_cap0_0, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$56(ptr %v_io, ptr %v_$df$andThenIO$56$cap0$0, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__df_andThenIO_56_cap0_0, ptr %t4
+  store ptr %v_$df$andThenIO$56$cap0$0, ptr %t4
   %t5 = alloca ptr
-  store ptr %v__k, ptr %t5
+  store ptr %v_$k, ptr %t5
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2627,7 +2627,7 @@ tco.loop.0:
 tco.case.arm.5.13:
   call void @__inc_ref(ptr %t8)
   call void @__inc_ref(ptr %t7)
-  %t14 = call ptr @v__apply__df_andThenIO_56(ptr %t8, ptr %t7)
+  %t14 = call ptr @v_$apply$$df$andThenIO$56(ptr %t8, ptr %t7)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t8)
@@ -2636,7 +2636,7 @@ tco.case.arm.5.13:
 tco.case.arm.6.15:
   call void @__inc_ref(ptr %t8)
   call void @__inc_ref(ptr %t6)
-  %t16 = call ptr @v__apply__df_andThenIO_56(ptr %t8, ptr %t6)
+  %t16 = call ptr @v_$apply$$df$andThenIO$56(ptr %t8, ptr %t6)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t8)
@@ -2696,12 +2696,12 @@ tco.exit.1:
   ret ptr %t42
 }
 
-define internal ptr @v__apply__df_andThenIO_56(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$56(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2743,12 +2743,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_60(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$60(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2778,7 +2778,7 @@ tco.case.arm.5.11:
   store ptr %t19, ptr %t22
   %t23 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t16, ptr %t23
-  %t24 = call ptr @v__apply__df_andThenIO_60(ptr %t6, ptr %t12)
+  %t24 = call ptr @v_$apply$$df$andThenIO$60(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t24, ptr %t2
@@ -2786,7 +2786,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.25:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t26 = call ptr @v__apply__df_andThenIO_60(ptr %t6, ptr %t5)
+  %t26 = call ptr @v_$apply$$df$andThenIO$60(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -2844,12 +2844,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_andThenIO_60(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$60(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2891,12 +2891,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_64(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$64(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -2930,19 +2930,19 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_treeNoError()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 55 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 53 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_52(ptr %t32, ptr %t33)
-  %t37 = call ptr @v__apply__df_andThenIO_64(ptr %t6, ptr %t36)
+  %t36 = call ptr @v_$cps$$df$andThenIO$52(ptr %t32, ptr %t33)
+  %t37 = call ptr @v_$apply$$df$andThenIO$64(ptr %t6, ptr %t36)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t37, ptr %t2
@@ -2950,7 +2950,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.38:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t39 = call ptr @v__apply__df_andThenIO_64(ptr %t6, ptr %t5)
+  %t39 = call ptr @v_$apply$$df$andThenIO$64(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t39, ptr %t2
@@ -3008,12 +3008,12 @@ tco.exit.1:
   ret ptr %t65
 }
 
-define internal ptr @v__apply__df_andThenIO_64(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$64(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3055,12 +3055,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_68(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$68(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3094,19 +3094,19 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_treePreserve()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 55 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 53 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_52(ptr %t32, ptr %t33)
-  %t37 = call ptr @v__apply__df_andThenIO_68(ptr %t6, ptr %t36)
+  %t36 = call ptr @v_$cps$$df$andThenIO$52(ptr %t32, ptr %t33)
+  %t37 = call ptr @v_$apply$$df$andThenIO$68(ptr %t6, ptr %t36)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t37, ptr %t2
@@ -3114,7 +3114,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.38:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t39 = call ptr @v__apply__df_andThenIO_68(ptr %t6, ptr %t5)
+  %t39 = call ptr @v_$apply$$df$andThenIO$68(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t39, ptr %t2
@@ -3172,12 +3172,12 @@ tco.exit.1:
   ret ptr %t65
 }
 
-define internal ptr @v__apply__df_andThenIO_68(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$68(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3219,12 +3219,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_72(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$72(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3258,34 +3258,34 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_refailRow()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 51 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df__rowmono_0_andThenIO_48(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$$rowmono$0$andThenIO$48(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 49 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_handleErrorIO_44(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$handleErrorIO$44(ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 55 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 53 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
   store ptr %t46, ptr %t47
-  %t48 = call ptr @v__cps__df_andThenIO_52(ptr %t44, ptr %t45)
-  %t49 = call ptr @v__apply__df_andThenIO_72(ptr %t6, ptr %t48)
+  %t48 = call ptr @v_$cps$$df$andThenIO$52(ptr %t44, ptr %t45)
+  %t49 = call ptr @v_$apply$$df$andThenIO$72(ptr %t6, ptr %t48)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t49, ptr %t2
@@ -3293,7 +3293,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.50:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t51 = call ptr @v__apply__df_andThenIO_72(ptr %t6, ptr %t5)
+  %t51 = call ptr @v_$apply$$df$andThenIO$72(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t51, ptr %t2
@@ -3351,12 +3351,12 @@ tco.exit.1:
   ret ptr %t77
 }
 
-define internal ptr @v__apply__df_andThenIO_72(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$72(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3398,12 +3398,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_76(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$76(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3437,34 +3437,34 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_refailNarrow()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 43 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_32(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$32(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 47 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_handleErrorIO_40(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$handleErrorIO$40(ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 55 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 53 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
   store ptr %t46, ptr %t47
-  %t48 = call ptr @v__cps__df_andThenIO_52(ptr %t44, ptr %t45)
-  %t49 = call ptr @v__apply__df_andThenIO_76(ptr %t6, ptr %t48)
+  %t48 = call ptr @v_$cps$$df$andThenIO$52(ptr %t44, ptr %t45)
+  %t49 = call ptr @v_$apply$$df$andThenIO$76(ptr %t6, ptr %t48)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t49, ptr %t2
@@ -3472,7 +3472,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.50:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t51 = call ptr @v__apply__df_andThenIO_76(ptr %t6, ptr %t5)
+  %t51 = call ptr @v_$apply$$df$andThenIO$76(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t51, ptr %t2
@@ -3530,12 +3530,12 @@ tco.exit.1:
   ret ptr %t77
 }
 
-define internal ptr @v__apply__df_andThenIO_76(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$76(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3577,12 +3577,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_80(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$80(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3616,29 +3616,29 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_nested()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 43 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_32(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$32(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 55 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 53 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_52(ptr %t40, ptr %t41)
-  %t45 = call ptr @v__apply__df_andThenIO_80(ptr %t6, ptr %t44)
+  %t44 = call ptr @v_$cps$$df$andThenIO$52(ptr %t40, ptr %t41)
+  %t45 = call ptr @v_$apply$$df$andThenIO$80(ptr %t6, ptr %t44)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t45, ptr %t2
@@ -3646,7 +3646,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.46:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t47 = call ptr @v__apply__df_andThenIO_80(ptr %t6, ptr %t5)
+  %t47 = call ptr @v_$apply$$df$andThenIO$80(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t47, ptr %t2
@@ -3704,12 +3704,12 @@ tco.exit.1:
   ret ptr %t73
 }
 
-define internal ptr @v__apply__df_andThenIO_80(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$80(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3751,12 +3751,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_84(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$84(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3790,29 +3790,29 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_passthrough()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 43 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_32(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$32(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 55 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 53 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_52(ptr %t40, ptr %t41)
-  %t45 = call ptr @v__apply__df_andThenIO_84(ptr %t6, ptr %t44)
+  %t44 = call ptr @v_$cps$$df$andThenIO$52(ptr %t40, ptr %t41)
+  %t45 = call ptr @v_$apply$$df$andThenIO$84(ptr %t6, ptr %t44)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t45, ptr %t2
@@ -3820,7 +3820,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.46:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t47 = call ptr @v__apply__df_andThenIO_84(ptr %t6, ptr %t5)
+  %t47 = call ptr @v_$apply$$df$andThenIO$84(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t47, ptr %t2
@@ -3878,12 +3878,12 @@ tco.exit.1:
   ret ptr %t73
 }
 
-define internal ptr @v__apply__df_andThenIO_84(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$84(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3925,12 +3925,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_88(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$88(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -3964,29 +3964,29 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_dispatchB()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 43 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_32(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$32(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 55 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 53 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_52(ptr %t40, ptr %t41)
-  %t45 = call ptr @v__apply__df_andThenIO_88(ptr %t6, ptr %t44)
+  %t44 = call ptr @v_$cps$$df$andThenIO$52(ptr %t40, ptr %t41)
+  %t45 = call ptr @v_$apply$$df$andThenIO$88(ptr %t6, ptr %t44)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t45, ptr %t2
@@ -3994,7 +3994,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.46:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t47 = call ptr @v__apply__df_andThenIO_88(ptr %t6, ptr %t5)
+  %t47 = call ptr @v_$apply$$df$andThenIO$88(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t47, ptr %t2
@@ -4052,12 +4052,12 @@ tco.exit.1:
   ret ptr %t73
 }
 
-define internal ptr @v__apply__df_andThenIO_88(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$88(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -4099,12 +4099,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_92(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$92(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -4138,29 +4138,29 @@ tco.case.arm.5.11:
   %t25 = inttoptr i64 57 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
-  %t27 = call ptr @v__cps__df_andThenIO_60(ptr %t12, ptr %t24)
+  %t27 = call ptr @v_$cps$$df$andThenIO$60(ptr %t12, ptr %t24)
   %t28 = call ptr @v_dispatchA()
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 45 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v__cps__df_mapIO_36(ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$mapIO$36(ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 43 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v__cps__df_andThenIO_32(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$32(ptr %t32, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 55 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v__cps__df_andThenIO_56(ptr %t27, ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$56(ptr %t27, ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 53 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v__cps__df_andThenIO_52(ptr %t40, ptr %t41)
-  %t45 = call ptr @v__apply__df_andThenIO_92(ptr %t6, ptr %t44)
+  %t44 = call ptr @v_$cps$$df$andThenIO$52(ptr %t40, ptr %t41)
+  %t45 = call ptr @v_$apply$$df$andThenIO$92(ptr %t6, ptr %t44)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t45, ptr %t2
@@ -4168,7 +4168,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.46:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t47 = call ptr @v__apply__df_andThenIO_92(ptr %t6, ptr %t5)
+  %t47 = call ptr @v_$apply$$df$andThenIO$92(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t47, ptr %t2
@@ -4226,12 +4226,12 @@ tco.exit.1:
   ret ptr %t73
 }
 
-define internal ptr @v__apply__df_andThenIO_92(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$92(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

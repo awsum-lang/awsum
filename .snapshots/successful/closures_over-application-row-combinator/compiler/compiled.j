@@ -124,7 +124,7 @@ L_tarm1:
   bipush 12
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__apply1__rowmono_0_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$cps$$scc$$apply1__$rowmono$0$bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -211,7 +211,7 @@ L_join2:
 .end method
 
 
-.method static v__cps__scc__apply1__rowmono_0_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$cps$$scc$$apply1__$rowmono$0$bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 8
   .limit locals 7
 L_tco6:
@@ -282,7 +282,7 @@ L_tarm8:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__scc__apply1__rowmono_0_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$scc$$apply1__$rowmono$0$bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   aconst_null
@@ -333,7 +333,7 @@ L_tarm7:
   aload 6
   aastore
   aastore
-  invokestatic AwsumMain/v__apply__scc__apply1__rowmono_0_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$apply$$scc$$apply1__$rowmono$0$bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 6
   aconst_null
@@ -389,7 +389,7 @@ L_tarm9:
 .end method
 
 
-.method static v__apply__scc__apply1__rowmono_0_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$apply$$scc$$apply1__$rowmono$0$bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 6
   .limit locals 8
 L_tco10:

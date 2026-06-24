@@ -122,7 +122,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__scc__apply1_applyOnce(object)
+    call object AwsumMain::v_$scc$$apply1__applyOnce(object)
     stelem.ref
     ldloc.1
     ldc.i4.2
@@ -130,7 +130,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__scc__apply1_applyOnce(object)
+    call object AwsumMain::v_$scc$$apply1__applyOnce(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -162,7 +162,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1_applyOnce(object) cil managed
+  .method private hidebysig static object v_$scc$$apply1__applyOnce(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)

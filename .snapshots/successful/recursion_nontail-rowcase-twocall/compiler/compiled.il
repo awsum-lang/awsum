@@ -387,7 +387,7 @@
     ldloc.2
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__scc__apply_sumTree__cps_sumTree(object)
+    call object AwsumMain::v_$scc$$apply$sumTree__$cps$sumTree(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -419,7 +419,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply_sumTree__cps_sumTree(object) cil managed
+  .method private hidebysig static object v_$scc$$apply$sumTree__$cps$sumTree(object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7, object V_8, object V_9)

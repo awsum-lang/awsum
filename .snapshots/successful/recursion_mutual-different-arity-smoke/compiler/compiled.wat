@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v__scc_parseBinary_parseExpr)
+  (elem (i32.const 0) $v_runIO $v_$scc$parseBinary__parseExpr)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -650,7 +650,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__scc_parseBinary_parseExpr (param i32) (result i32)
+  (func $v_$scc$parseBinary__parseExpr (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

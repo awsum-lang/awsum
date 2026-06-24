@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_repeat $v__apply_repeat $v_revInto $v_revN $v_sumList)
+  (elem (i32.const 0) $v_runIO $v_$cps$repeat $v_$apply$repeat $v_revInto $v_revN $v_sumList)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -768,7 +768,7 @@
     i32.const 0
     call 8)
 
-  (func $v__cps_repeat (param i32 i32 i32) (result i32)
+  (func $v_$cps$repeat (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -907,7 +907,7 @@
       end
     end)
 
-  (func $v__apply_repeat (param i32 i32) (result i32)
+  (func $v_$apply$repeat (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

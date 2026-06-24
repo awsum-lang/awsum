@@ -1,0 +1,13 @@
+{- Not supported: non-ASCII characters in identifiers. A name may use only
+   ASCII `[A-Za-z0-9_']` and must start with a letter or `_` — the parser
+   rejects a non-ASCII letter (here the Greek lambda) glued onto an identifier,
+   pointing at the offending character. Comments and string literals keep full
+   Unicode; transliterate non-ASCII names to ASCII. -}
+
+import IO.Stdout
+
+funcλ : Int32 -> Int32
+funcλ n = n
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (funcλ 5))

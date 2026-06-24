@@ -243,7 +243,7 @@
     call object AwsumMain::v_block()
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__scc__df_andThenEither_0__lam_13_build(object)
+    call object AwsumMain::v_$scc$$df$andThenEither$0__$lam$13__build(object)
     stloc.0
     ldloc.0
     ldc.i4.0
@@ -347,7 +347,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__df_andThenEither_0__lam_13_build(object) cil managed
+  .method private hidebysig static object v_$scc$$df$andThenEither$0__$lam$13__build(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

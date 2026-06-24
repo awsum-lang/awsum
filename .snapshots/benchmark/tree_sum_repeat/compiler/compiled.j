@@ -428,7 +428,7 @@ L_tarm7:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__scc__apply_sumTree__cps_sumTree(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply$sumTree__$cps$sumTree(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 7
   astore_2
@@ -543,7 +543,7 @@ L_join8:
 .end method
 
 
-.method static v__scc__apply_sumTree__cps_sumTree(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$apply$sumTree__$cps$sumTree(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 16
 L_tco10:

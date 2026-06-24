@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0e\00\00\00\0e\00\00\00UnderflowError")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildLeft $v_buildRight $v_mirrorN $v__scc_deepestLeftA_deepestLeftB_deepestLeftC $v__scc__apply_mirror__cps_mirror)
+  (elem (i32.const 0) $v_runIO $v_buildLeft $v_buildRight $v_mirrorN $v_$scc$deepestLeftA__deepestLeftB__deepestLeftC $v_$scc$$apply$mirror__$cps$mirror)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1456,7 +1456,7 @@
       end
     end)
 
-  (func $v__scc_deepestLeftA_deepestLeftB_deepestLeftC (param i32) (result i32)
+  (func $v_$scc$deepestLeftA__deepestLeftB__deepestLeftC (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1655,7 +1655,7 @@
       end
     end)
 
-  (func $v__scc__apply_mirror__cps_mirror (param i32) (result i32)
+  (func $v_$scc$$apply$mirror__$cps$mirror (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

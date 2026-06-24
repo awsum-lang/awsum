@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildLeft $v_repeatMirror $v_spineLast $v__scc__apply_mirror__cps_mirror)
+  (elem (i32.const 0) $v_runIO $v_buildLeft $v_repeatMirror $v_spineLast $v_$scc$$apply$mirror__$cps$mirror)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1076,7 +1076,7 @@
       local.get 2
     end)
 
-  (func $v__scc__apply_mirror__cps_mirror (param i32) (result i32)
+  (func $v_$scc$$apply$mirror__$cps$mirror (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

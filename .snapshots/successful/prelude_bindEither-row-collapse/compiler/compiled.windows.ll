@@ -1845,27 +1845,27 @@ case.default.4:
 }
 
 define internal ptr @v_render() {
-  %v__inl297_scrut.jslot = alloca ptr
-  %v__inl299_scrut.jslot = alloca ptr
-  %v__inl301_scrut.jslot = alloca ptr
-  %v__inl303_scrut.jslot = alloca ptr
-  %v__inl305_scrut.jslot = alloca ptr
-  %v__inl307_scrut.jslot = alloca ptr
-  %v__inl309_scrut.jslot = alloca ptr
-  %v__inl311_scrut.jslot = alloca ptr
-  %v__inl313_scrut.jslot = alloca ptr
-  %v__inl315_scrut.jslot = alloca ptr
-  %v__inl317_scrut.jslot = alloca ptr
-  %v__inl319_scrut.jslot = alloca ptr
-  %v__inl321_scrut.jslot = alloca ptr
-  %v__inl323_scrut.jslot = alloca ptr
-  %v__inl325_scrut.jslot = alloca ptr
-  %v__inl327_scrut.jslot = alloca ptr
-  %v__inl329_scrut.jslot = alloca ptr
-  %v__inl331_scrut.jslot = alloca ptr
-  %v__inl333_scrut.jslot = alloca ptr
-  %v__inl335_scrut.jslot = alloca ptr
-  %v__inl337_scrut.jslot = alloca ptr
+  %v_$inl297$scrut.jslot = alloca ptr
+  %v_$inl299$scrut.jslot = alloca ptr
+  %v_$inl301$scrut.jslot = alloca ptr
+  %v_$inl303$scrut.jslot = alloca ptr
+  %v_$inl305$scrut.jslot = alloca ptr
+  %v_$inl307$scrut.jslot = alloca ptr
+  %v_$inl309$scrut.jslot = alloca ptr
+  %v_$inl311$scrut.jslot = alloca ptr
+  %v_$inl313$scrut.jslot = alloca ptr
+  %v_$inl315$scrut.jslot = alloca ptr
+  %v_$inl317$scrut.jslot = alloca ptr
+  %v_$inl319$scrut.jslot = alloca ptr
+  %v_$inl321$scrut.jslot = alloca ptr
+  %v_$inl323$scrut.jslot = alloca ptr
+  %v_$inl325$scrut.jslot = alloca ptr
+  %v_$inl327$scrut.jslot = alloca ptr
+  %v_$inl329$scrut.jslot = alloca ptr
+  %v_$inl331$scrut.jslot = alloca ptr
+  %v_$inl333$scrut.jslot = alloca ptr
+  %v_$inl335$scrut.jslot = alloca ptr
+  %v_$inl337$scrut.jslot = alloca ptr
   %t0 = call ptr @v_nevOk()
   %t1 = getelementptr ptr, ptr %t0, i32 0
   %t2 = load ptr, ptr %t1
@@ -1961,12 +1961,12 @@ join.case.arm.4.61:
   call void @__inc_ref(ptr %t63)
   %t64 = call ptr @__concat(ptr %t31, ptr %t63)
   call void @__free_recursive(ptr %t48)
-  store ptr %t64, ptr %v__inl297_scrut.jslot
+  store ptr %t64, ptr %v_$inl297$scrut.jslot
   br label %join.32
 join.case.default.52:
   unreachable
 join.32:
-  %t65 = load ptr, ptr %v__inl297_scrut.jslot
+  %t65 = load ptr, ptr %v_$inl297$scrut.jslot
   %t66 = getelementptr ptr, ptr %t65, i32 0
   %t67 = load ptr, ptr %t66
   %t68 = ptrtoint ptr %t67 to i64
@@ -2031,12 +2031,12 @@ join.case.arm.4.104:
   %t109 = call ptr @__concat(ptr %t108, ptr %t106)
   call void @__free_recursive(ptr %t106)
   call void @__free_recursive(ptr %t91)
-  store ptr %t109, ptr %v__inl299_scrut.jslot
+  store ptr %t109, ptr %v_$inl299$scrut.jslot
   br label %join.75
 join.case.default.95:
   unreachable
 join.75:
-  %t110 = load ptr, ptr %v__inl299_scrut.jslot
+  %t110 = load ptr, ptr %v_$inl299$scrut.jslot
   %t111 = getelementptr ptr, ptr %t110, i32 0
   %t112 = load ptr, ptr %t111
   %t113 = ptrtoint ptr %t112 to i64
@@ -2101,12 +2101,12 @@ join.case.arm.4.149:
   %t154 = call ptr @__concat(ptr %t153, ptr %t151)
   call void @__free_recursive(ptr %t151)
   call void @__free_recursive(ptr %t136)
-  store ptr %t154, ptr %v__inl301_scrut.jslot
+  store ptr %t154, ptr %v_$inl301$scrut.jslot
   br label %join.120
 join.case.default.140:
   unreachable
 join.120:
-  %t155 = load ptr, ptr %v__inl301_scrut.jslot
+  %t155 = load ptr, ptr %v_$inl301$scrut.jslot
   %t156 = getelementptr ptr, ptr %t155, i32 0
   %t157 = load ptr, ptr %t156
   %t158 = ptrtoint ptr %t157 to i64
@@ -2155,12 +2155,12 @@ join.case.arm.4.184:
   %t189 = call ptr @__concat(ptr %t188, ptr %t186)
   call void @__free_recursive(ptr %t186)
   call void @__free_recursive(ptr %t171)
-  store ptr %t189, ptr %v__inl303_scrut.jslot
+  store ptr %t189, ptr %v_$inl303$scrut.jslot
   br label %join.165
 join.case.default.175:
   unreachable
 join.165:
-  %t190 = load ptr, ptr %v__inl303_scrut.jslot
+  %t190 = load ptr, ptr %v_$inl303$scrut.jslot
   %t191 = getelementptr ptr, ptr %t190, i32 0
   %t192 = load ptr, ptr %t191
   %t193 = ptrtoint ptr %t192 to i64
@@ -2248,12 +2248,12 @@ join.case.arm.4.243:
   %t248 = call ptr @__concat(ptr %t247, ptr %t245)
   call void @__free_recursive(ptr %t245)
   call void @__free_recursive(ptr %t230)
-  store ptr %t248, ptr %v__inl305_scrut.jslot
+  store ptr %t248, ptr %v_$inl305$scrut.jslot
   br label %join.200
 join.case.default.234:
   unreachable
 join.200:
-  %t249 = load ptr, ptr %v__inl305_scrut.jslot
+  %t249 = load ptr, ptr %v_$inl305$scrut.jslot
   %t250 = getelementptr ptr, ptr %t249, i32 0
   %t251 = load ptr, ptr %t250
   %t252 = ptrtoint ptr %t251 to i64
@@ -2341,12 +2341,12 @@ join.case.arm.4.302:
   %t307 = call ptr @__concat(ptr %t306, ptr %t304)
   call void @__free_recursive(ptr %t304)
   call void @__free_recursive(ptr %t289)
-  store ptr %t307, ptr %v__inl307_scrut.jslot
+  store ptr %t307, ptr %v_$inl307$scrut.jslot
   br label %join.259
 join.case.default.293:
   unreachable
 join.259:
-  %t308 = load ptr, ptr %v__inl307_scrut.jslot
+  %t308 = load ptr, ptr %v_$inl307$scrut.jslot
   %t309 = getelementptr ptr, ptr %t308, i32 0
   %t310 = load ptr, ptr %t309
   %t311 = ptrtoint ptr %t310 to i64
@@ -2434,12 +2434,12 @@ join.case.arm.4.361:
   %t366 = call ptr @__concat(ptr %t365, ptr %t363)
   call void @__free_recursive(ptr %t363)
   call void @__free_recursive(ptr %t348)
-  store ptr %t366, ptr %v__inl309_scrut.jslot
+  store ptr %t366, ptr %v_$inl309$scrut.jslot
   br label %join.318
 join.case.default.352:
   unreachable
 join.318:
-  %t367 = load ptr, ptr %v__inl309_scrut.jslot
+  %t367 = load ptr, ptr %v_$inl309$scrut.jslot
   %t368 = getelementptr ptr, ptr %t367, i32 0
   %t369 = load ptr, ptr %t368
   %t370 = ptrtoint ptr %t369 to i64
@@ -2507,12 +2507,12 @@ join.case.arm.4.408:
   %t413 = call ptr @__concat(ptr %t412, ptr %t410)
   call void @__free_recursive(ptr %t410)
   call void @__free_recursive(ptr %t395)
-  store ptr %t413, ptr %v__inl311_scrut.jslot
+  store ptr %t413, ptr %v_$inl311$scrut.jslot
   br label %join.377
 join.case.default.399:
   unreachable
 join.377:
-  %t414 = load ptr, ptr %v__inl311_scrut.jslot
+  %t414 = load ptr, ptr %v_$inl311$scrut.jslot
   %t415 = getelementptr ptr, ptr %t414, i32 0
   %t416 = load ptr, ptr %t415
   %t417 = ptrtoint ptr %t416 to i64
@@ -2597,12 +2597,12 @@ join.case.arm.4.465:
   %t470 = call ptr @__concat(ptr %t469, ptr %t467)
   call void @__free_recursive(ptr %t467)
   call void @__free_recursive(ptr %t452)
-  store ptr %t470, ptr %v__inl313_scrut.jslot
+  store ptr %t470, ptr %v_$inl313$scrut.jslot
   br label %join.424
 join.case.default.456:
   unreachable
 join.424:
-  %t471 = load ptr, ptr %v__inl313_scrut.jslot
+  %t471 = load ptr, ptr %v_$inl313$scrut.jslot
   %t472 = getelementptr ptr, ptr %t471, i32 0
   %t473 = load ptr, ptr %t472
   %t474 = ptrtoint ptr %t473 to i64
@@ -2687,12 +2687,12 @@ join.case.arm.4.522:
   %t527 = call ptr @__concat(ptr %t526, ptr %t524)
   call void @__free_recursive(ptr %t524)
   call void @__free_recursive(ptr %t509)
-  store ptr %t527, ptr %v__inl315_scrut.jslot
+  store ptr %t527, ptr %v_$inl315$scrut.jslot
   br label %join.481
 join.case.default.513:
   unreachable
 join.481:
-  %t528 = load ptr, ptr %v__inl315_scrut.jslot
+  %t528 = load ptr, ptr %v_$inl315$scrut.jslot
   %t529 = getelementptr ptr, ptr %t528, i32 0
   %t530 = load ptr, ptr %t529
   %t531 = ptrtoint ptr %t530 to i64
@@ -2797,12 +2797,12 @@ join.case.arm.4.591:
   %t596 = call ptr @__concat(ptr %t595, ptr %t593)
   call void @__free_recursive(ptr %t593)
   call void @__free_recursive(ptr %t578)
-  store ptr %t596, ptr %v__inl317_scrut.jslot
+  store ptr %t596, ptr %v_$inl317$scrut.jslot
   br label %join.538
 join.case.default.582:
   unreachable
 join.538:
-  %t597 = load ptr, ptr %v__inl317_scrut.jslot
+  %t597 = load ptr, ptr %v_$inl317$scrut.jslot
   %t598 = getelementptr ptr, ptr %t597, i32 0
   %t599 = load ptr, ptr %t598
   %t600 = ptrtoint ptr %t599 to i64
@@ -2907,12 +2907,12 @@ join.case.arm.4.660:
   %t665 = call ptr @__concat(ptr %t664, ptr %t662)
   call void @__free_recursive(ptr %t662)
   call void @__free_recursive(ptr %t647)
-  store ptr %t665, ptr %v__inl319_scrut.jslot
+  store ptr %t665, ptr %v_$inl319$scrut.jslot
   br label %join.607
 join.case.default.651:
   unreachable
 join.607:
-  %t666 = load ptr, ptr %v__inl319_scrut.jslot
+  %t666 = load ptr, ptr %v_$inl319$scrut.jslot
   %t667 = getelementptr ptr, ptr %t666, i32 0
   %t668 = load ptr, ptr %t667
   %t669 = ptrtoint ptr %t668 to i64
@@ -3017,12 +3017,12 @@ join.case.arm.4.729:
   %t734 = call ptr @__concat(ptr %t733, ptr %t731)
   call void @__free_recursive(ptr %t731)
   call void @__free_recursive(ptr %t716)
-  store ptr %t734, ptr %v__inl321_scrut.jslot
+  store ptr %t734, ptr %v_$inl321$scrut.jslot
   br label %join.676
 join.case.default.720:
   unreachable
 join.676:
-  %t735 = load ptr, ptr %v__inl321_scrut.jslot
+  %t735 = load ptr, ptr %v_$inl321$scrut.jslot
   %t736 = getelementptr ptr, ptr %t735, i32 0
   %t737 = load ptr, ptr %t736
   %t738 = ptrtoint ptr %t737 to i64
@@ -3127,12 +3127,12 @@ join.case.arm.4.798:
   %t803 = call ptr @__concat(ptr %t802, ptr %t800)
   call void @__free_recursive(ptr %t800)
   call void @__free_recursive(ptr %t785)
-  store ptr %t803, ptr %v__inl323_scrut.jslot
+  store ptr %t803, ptr %v_$inl323$scrut.jslot
   br label %join.745
 join.case.default.789:
   unreachable
 join.745:
-  %t804 = load ptr, ptr %v__inl323_scrut.jslot
+  %t804 = load ptr, ptr %v_$inl323$scrut.jslot
   %t805 = getelementptr ptr, ptr %t804, i32 0
   %t806 = load ptr, ptr %t805
   %t807 = ptrtoint ptr %t806 to i64
@@ -3197,12 +3197,12 @@ join.case.arm.4.843:
   %t848 = call ptr @__concat(ptr %t847, ptr %t845)
   call void @__free_recursive(ptr %t845)
   call void @__free_recursive(ptr %t830)
-  store ptr %t848, ptr %v__inl325_scrut.jslot
+  store ptr %t848, ptr %v_$inl325$scrut.jslot
   br label %join.814
 join.case.default.834:
   unreachable
 join.814:
-  %t849 = load ptr, ptr %v__inl325_scrut.jslot
+  %t849 = load ptr, ptr %v_$inl325$scrut.jslot
   %t850 = getelementptr ptr, ptr %t849, i32 0
   %t851 = load ptr, ptr %t850
   %t852 = ptrtoint ptr %t851 to i64
@@ -3267,12 +3267,12 @@ join.case.arm.4.888:
   %t893 = call ptr @__concat(ptr %t892, ptr %t890)
   call void @__free_recursive(ptr %t890)
   call void @__free_recursive(ptr %t875)
-  store ptr %t893, ptr %v__inl327_scrut.jslot
+  store ptr %t893, ptr %v_$inl327$scrut.jslot
   br label %join.859
 join.case.default.879:
   unreachable
 join.859:
-  %t894 = load ptr, ptr %v__inl327_scrut.jslot
+  %t894 = load ptr, ptr %v_$inl327$scrut.jslot
   %t895 = getelementptr ptr, ptr %t894, i32 0
   %t896 = load ptr, ptr %t895
   %t897 = ptrtoint ptr %t896 to i64
@@ -3357,12 +3357,12 @@ join.case.arm.4.945:
   %t950 = call ptr @__concat(ptr %t949, ptr %t947)
   call void @__free_recursive(ptr %t947)
   call void @__free_recursive(ptr %t932)
-  store ptr %t950, ptr %v__inl329_scrut.jslot
+  store ptr %t950, ptr %v_$inl329$scrut.jslot
   br label %join.904
 join.case.default.936:
   unreachable
 join.904:
-  %t951 = load ptr, ptr %v__inl329_scrut.jslot
+  %t951 = load ptr, ptr %v_$inl329$scrut.jslot
   %t952 = getelementptr ptr, ptr %t951, i32 0
   %t953 = load ptr, ptr %t952
   %t954 = ptrtoint ptr %t953 to i64
@@ -3447,12 +3447,12 @@ join.case.arm.4.1002:
   %t1007 = call ptr @__concat(ptr %t1006, ptr %t1004)
   call void @__free_recursive(ptr %t1004)
   call void @__free_recursive(ptr %t989)
-  store ptr %t1007, ptr %v__inl331_scrut.jslot
+  store ptr %t1007, ptr %v_$inl331$scrut.jslot
   br label %join.961
 join.case.default.993:
   unreachable
 join.961:
-  %t1008 = load ptr, ptr %v__inl331_scrut.jslot
+  %t1008 = load ptr, ptr %v_$inl331$scrut.jslot
   %t1009 = getelementptr ptr, ptr %t1008, i32 0
   %t1010 = load ptr, ptr %t1009
   %t1011 = ptrtoint ptr %t1010 to i64
@@ -3564,12 +3564,12 @@ join.case.arm.4.1075:
   %t1080 = call ptr @__concat(ptr %t1079, ptr %t1077)
   call void @__free_recursive(ptr %t1077)
   call void @__free_recursive(ptr %t1062)
-  store ptr %t1080, ptr %v__inl333_scrut.jslot
+  store ptr %t1080, ptr %v_$inl333$scrut.jslot
   br label %join.1018
 join.case.default.1066:
   unreachable
 join.1018:
-  %t1081 = load ptr, ptr %v__inl333_scrut.jslot
+  %t1081 = load ptr, ptr %v_$inl333$scrut.jslot
   %t1082 = getelementptr ptr, ptr %t1081, i32 0
   %t1083 = load ptr, ptr %t1082
   %t1084 = ptrtoint ptr %t1083 to i64
@@ -3681,12 +3681,12 @@ join.case.arm.4.1148:
   %t1153 = call ptr @__concat(ptr %t1152, ptr %t1150)
   call void @__free_recursive(ptr %t1150)
   call void @__free_recursive(ptr %t1135)
-  store ptr %t1153, ptr %v__inl335_scrut.jslot
+  store ptr %t1153, ptr %v_$inl335$scrut.jslot
   br label %join.1091
 join.case.default.1139:
   unreachable
 join.1091:
-  %t1154 = load ptr, ptr %v__inl335_scrut.jslot
+  %t1154 = load ptr, ptr %v_$inl335$scrut.jslot
   %t1155 = getelementptr ptr, ptr %t1154, i32 0
   %t1156 = load ptr, ptr %t1155
   %t1157 = ptrtoint ptr %t1156 to i64
@@ -3798,12 +3798,12 @@ join.case.arm.4.1221:
   %t1226 = call ptr @__concat(ptr %t1225, ptr %t1223)
   call void @__free_recursive(ptr %t1223)
   call void @__free_recursive(ptr %t1208)
-  store ptr %t1226, ptr %v__inl337_scrut.jslot
+  store ptr %t1226, ptr %v_$inl337$scrut.jslot
   br label %join.1164
 join.case.default.1212:
   unreachable
 join.1164:
-  %t1227 = load ptr, ptr %v__inl337_scrut.jslot
+  %t1227 = load ptr, ptr %v_$inl337$scrut.jslot
   %t1228 = getelementptr ptr, ptr %t1227, i32 0
   %t1229 = load ptr, ptr %t1228
   %t1230 = ptrtoint ptr %t1229 to i64
@@ -4246,21 +4246,21 @@ case.join.5:
   %t24 = inttoptr i64 30 to ptr
   %t25 = getelementptr ptr, ptr %t23, i32 0
   store ptr %t24, ptr %t25
-  %t26 = call ptr @v__cps__df_andThenIO_18(ptr %t22, ptr %t23)
+  %t26 = call ptr @v_$cps$$df$andThenIO$18(ptr %t22, ptr %t23)
   %t27 = call ptr @__alloc(i64 8, i32 0)
   %t28 = inttoptr i64 28 to ptr
   %t29 = getelementptr ptr, ptr %t27, i32 0
   store ptr %t28, ptr %t29
-  %t30 = call ptr @v__cps__df_handleErrorIO_14(ptr %t26, ptr %t27)
+  %t30 = call ptr @v_$cps$$df$handleErrorIO$14(ptr %t26, ptr %t27)
   ret ptr %t30
 }
 
-define internal ptr @v__cps__df_handleErrorIO_14(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$handleErrorIO$14(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -4273,7 +4273,7 @@ tco.loop.0:
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t12 = call ptr @v__apply__df_handleErrorIO_14(ptr %t6, ptr %t5)
+  %t12 = call ptr @v_$apply$$df$handleErrorIO$14(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t12, ptr %t2
@@ -4298,7 +4298,7 @@ tco.case.arm.6.13:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t14, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_handleErrorIO_14(ptr %t6, ptr %t14)
+  %t26 = call ptr @v_$apply$$df$handleErrorIO$14(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -4356,12 +4356,12 @@ tco.exit.1:
   ret ptr %t52
 }
 
-define internal ptr @v__apply__df_handleErrorIO_14(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$handleErrorIO$14(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -4403,12 +4403,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_18(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$18(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -4441,7 +4441,7 @@ tco.case.arm.5.11:
   store ptr %t21, ptr %t24
   %t25 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t18, ptr %t25
-  %t26 = call ptr @v__apply__df_andThenIO_18(ptr %t6, ptr %t12)
+  %t26 = call ptr @v_$apply$$df$andThenIO$18(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t26, ptr %t2
@@ -4449,7 +4449,7 @@ tco.case.arm.5.11:
 tco.case.arm.6.27:
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t5)
-  %t28 = call ptr @v__apply__df_andThenIO_18(ptr %t6, ptr %t5)
+  %t28 = call ptr @v_$apply$$df$andThenIO$18(ptr %t6, ptr %t5)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t28, ptr %t2
@@ -4507,12 +4507,12 @@ tco.exit.1:
   ret ptr %t54
 }
 
-define internal ptr @v__apply__df_andThenIO_18(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$18(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

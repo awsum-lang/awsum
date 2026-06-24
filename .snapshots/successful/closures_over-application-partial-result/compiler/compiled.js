@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,27 +21,27 @@
     }
   };
 
-  const v__scc__apply1_applyOnce = v__args => {
+  const v_$scc$$apply1__applyOnce = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 11: {
-          const v__cl = v__args[1];
-          const v__arg0 = v__args[2];
-          switch (v__cl[0]) {
+          const v_$cl = v_$args[1];
+          const v_$arg0 = v_$args[2];
+          switch (v_$cl[0]) {
             case 8: {
-              v__args = (v__args[0] = 12, v__args[1] = v__cl[1], v__args);
+              v_$args = (v_$args[0] = 12, v_$args[1] = v_$cl[1], v_$args);
               continue;
             }
             case 9: {
-              return v__arg0;
+              return v_$arg0;
             }
             case 10: {
-              return [8, v__arg0];
+              return [8, v_$arg0];
             }
           }
         }
         case 12: {
-          v__args = (v__args[0] = 11, v__args);
+          v_$args = (v_$args[0] = 11, v_$args);
           continue;
         }
       }
@@ -51,8 +51,8 @@
   const main = [
     7,
     String(
-      v__scc__apply1_applyOnce(
-        [11, v__scc__apply1_applyOnce([11, [10], [9]]), 7 | 0]
+      v_$scc$$apply1__applyOnce(
+        [11, v_$scc$$apply1__applyOnce([11, [10], [9]]), 7 | 0]
       )
     ),
     [5, [0]]

@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00TOO_LONG")
   (table 11 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_bytesToHexStringNoPrefix $v__apply_bytesToHexStringNoPrefix $v__cps__df_handleErrorIO_1 $v__apply__df_handleErrorIO_1 $v__cps__df_andThenIO_5 $v__apply__df_andThenIO_5 $v__cps__df_andThenIO_9 $v__apply__df_andThenIO_9 $v__cps__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8 $v__apply__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8)
+  (elem (i32.const 0) $v_runIO $v_$cps$bytesToHexStringNoPrefix $v_$apply$bytesToHexStringNoPrefix $v_$cps$$df$handleErrorIO$1 $v_$apply$$df$handleErrorIO$1 $v_$cps$$df$andThenIO$5 $v_$apply$$df$andThenIO$5 $v_$cps$$df$andThenIO$9 $v_$apply$$df$andThenIO$9 $v_$cps$$scc$$apply1__$df$$lam$11$4__$df$$lam$2$12__$df$$lam$2$8 $v_$apply$$scc$$apply1__$df$$lam$11$4__$df$$lam$2$12__$df$$lam$2$8)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -837,7 +837,7 @@
       end
     end)
 
-  (func $v__cps_bytesToHexStringNoPrefix (param i32 i32) (result i32)
+  (func $v_$cps$bytesToHexStringNoPrefix (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -952,7 +952,7 @@
       end
     end)
 
-  (func $v__apply_bytesToHexStringNoPrefix (param i32 i32) (result i32)
+  (func $v_$apply$bytesToHexStringNoPrefix (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1064,7 +1064,7 @@
     local.get 0
     call 21)
 
-  (func $v__cps__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1274,7 +1274,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1340,7 +1340,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1554,7 +1554,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1620,7 +1620,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_9 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$9 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1857,7 +1857,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_9 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$9 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1923,7 +1923,7 @@
       end
     end)
 
-  (func $v__cps__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8 (param i32 i32) (result i32)
+  (func $v_$cps$$scc$$apply1__$df$$lam$11$4__$df$$lam$2$12__$df$$lam$2$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2217,7 +2217,7 @@
       end
     end)
 
-  (func $v__apply__scc__apply1__df__lam_11_4__df__lam_2_12__df__lam_2_8 (param i32 i32) (result i32)
+  (func $v_$apply$$scc$$apply1__$df$$lam$11$4__$df$$lam$2$12__$df$$lam$2$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

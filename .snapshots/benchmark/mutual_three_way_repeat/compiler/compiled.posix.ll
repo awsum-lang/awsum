@@ -288,7 +288,7 @@ tco.case.arm.4.30:
   store i32 1000000, ptr %t36
   %t37 = getelementptr ptr, ptr %t33, i32 1
   store ptr %t36, ptr %t37
-  %t38 = call ptr @v__scc_stepA_stepB_stepC(ptr %t33)
+  %t38 = call ptr @v_$scc$stepA__stepB__stepC(ptr %t33)
   %t39 = getelementptr ptr, ptr %t38, i32 0
   %t40 = load ptr, ptr %t39
   %t41 = ptrtoint ptr %t40 to i64
@@ -390,10 +390,10 @@ case.join.6:
   ret ptr %t35
 }
 
-define internal ptr @v__scc_stepA_stepB_stepC(ptr %v__args) {
+define internal ptr @v_$scc$stepA__stepB__stepC(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

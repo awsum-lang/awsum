@@ -281,14 +281,14 @@ define internal ptr @v_zero() {
   ret ptr %t0
 }
 
-define internal ptr @v__cps_repeat(ptr %v_n, ptr %v_value, ptr %v__k) {
+define internal ptr @v_$cps$repeat(ptr %v_n, ptr %v_value, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_n, ptr %t3
   %t4 = alloca ptr
   store ptr %v_value, ptr %t4
   %t5 = alloca ptr
-  store ptr %v__k, ptr %t5
+  store ptr %v_$k, ptr %t5
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -308,7 +308,7 @@ tco.case.arm.1.15:
   %t17 = inttoptr i64 24 to ptr
   %t18 = getelementptr ptr, ptr %t16, i32 0
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__apply_repeat(ptr %t8, ptr %t16)
+  %t19 = call ptr @v_$apply$repeat(ptr %t8, ptr %t16)
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
@@ -328,7 +328,7 @@ tco.case.arm.3.26:
   %t28 = inttoptr i64 24 to ptr
   %t29 = getelementptr ptr, ptr %t27, i32 0
   store ptr %t28, ptr %t29
-  %t30 = call ptr @v__apply_repeat(ptr %t8, ptr %t27)
+  %t30 = call ptr @v_$apply$repeat(ptr %t8, ptr %t27)
   call void @__free_recursive(ptr %t21)
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t6)
@@ -369,12 +369,12 @@ tco.exit.1:
   ret ptr %t39
 }
 
-define internal ptr @v__apply_repeat(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$repeat(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -619,7 +619,7 @@ define internal ptr @v_main() {
   %t7 = inttoptr i64 26 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
-  %t9 = call ptr @v__cps_repeat(ptr %t4, ptr %t5, ptr %t6)
+  %t9 = call ptr @v_$cps$repeat(ptr %t4, ptr %t5, ptr %t6)
   %t10 = call ptr @v_revN(ptr %t3, ptr %t9)
   %t11 = call ptr @v_zero()
   %t12 = call ptr @v_sumList(ptr %t10, ptr %t11)

@@ -137,7 +137,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__scc__apply1__rowmono_0_bindEither(object, object)
+    call object AwsumMain::v_$cps$$scc$$apply1__$rowmono$0$bindEither(object, object)
     ret
   }
 
@@ -225,7 +225,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__scc__apply1__rowmono_0_bindEither(object,object) cil managed
+  .method private hidebysig static object v_$cps$$scc$$apply1__$rowmono$0$bindEither(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -294,7 +294,7 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__scc__apply1__rowmono_0_bindEither(object, object)
+    call object AwsumMain::v_$apply$$scc$$apply1__$rowmono$0$bindEither(object, object)
     ret
   IL_c1:
     pop
@@ -343,7 +343,7 @@
     ldloc.s 4
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__scc__apply1__rowmono_0_bindEither(object, object)
+    call object AwsumMain::v_$apply$$scc$$apply1__$rowmono$0$bindEither(object, object)
     ret
   IL_c2:
     pop
@@ -390,7 +390,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__scc__apply1__rowmono_0_bindEither(object,object) cil managed
+  .method private hidebysig static object v_$apply$$scc$$apply1__$rowmono$0$bindEither(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)

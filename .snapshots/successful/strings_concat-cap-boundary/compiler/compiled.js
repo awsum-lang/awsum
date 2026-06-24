@@ -22,7 +22,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -34,28 +34,28 @@
 
   const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-  const v__scc__df_andThenEither_0__lam_13_build = v__args => {
+  const v_$scc$$df$andThenEither$0__$lam$13__build = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 8: {
-          const v_x = v__args[1];
+          const v_x = v_$args[1];
           switch (v_x[0]) {
             case 3: {
               return v_x;
             }
             case 4: {
-              v__args = (v__args[0] = 9, v__args[1] = v__args[2], v__args[2] = v_x[1], v__args);
+              v_$args = (v_$args[0] = 9, v_$args[1] = v_$args[2], v_$args[2] = v_x[1], v_$args);
               continue;
             }
           }
         }
         case 9: {
-          v__args = (v__args[0] = 10, v__args);
+          v_$args = (v_$args[0] = 10, v_$args);
           continue;
         }
         case 10: {
-          const v_n = v__args[1];
-          const v_acc = v__args[2];
+          const v_n = v_$args[1];
+          const v_acc = v_$args[2];
           {
             const __s = __predUInt32(v_n);
             switch (__s[0]) {
@@ -64,10 +64,10 @@
               }
               case 4: {
                 const v_m = __s[1];
-                v__args = (v__args[0] = 8, v__args[1] = __concat(
+                v_$args = (v_$args[0] = 8, v_$args[1] = __concat(
                   v_acc,
                   v_acc
-                ), v__args[2] = v_m, v__args);
+                ), v_$args[2] = v_m, v_$args);
                 continue;
               }
             }
@@ -110,7 +110,7 @@
         }
       }
     }
-  })(v__scc__df_andThenEither_0__lam_13_build([10, 20 >>> 0, v_block]));
+  })(v_$scc$$df$andThenEither$0__$lam$13__build([10, 20 >>> 0, v_block]));
 
   const main = [7, v_runTest, [5, [0]]];
 

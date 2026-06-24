@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00TOO_LONG")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_bytesToHexStringNoPrefix $v__apply_bytesToHexStringNoPrefix $v__cps__df_handleErrorIO_1 $v__apply__df_handleErrorIO_1 $v__cps__df_andThenIO_5 $v__apply__df_andThenIO_5)
+  (elem (i32.const 0) $v_runIO $v_$cps$bytesToHexStringNoPrefix $v_$apply$bytesToHexStringNoPrefix $v_$cps$$df$handleErrorIO$1 $v_$apply$$df$handleErrorIO$1 $v_$cps$$df$andThenIO$5 $v_$apply$$df$andThenIO$5)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -652,7 +652,7 @@
       end
     end)
 
-  (func $v__cps_bytesToHexStringNoPrefix (param i32 i32) (result i32)
+  (func $v_$cps$bytesToHexStringNoPrefix (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -767,7 +767,7 @@
       end
     end)
 
-  (func $v__apply_bytesToHexStringNoPrefix (param i32 i32) (result i32)
+  (func $v_$apply$bytesToHexStringNoPrefix (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -994,7 +994,7 @@
     local.get 0
     call 20)
 
-  (func $v__cps__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1153,7 +1153,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1219,7 +1219,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1382,7 +1382,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -105,7 +105,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__scc__apply1_applyOnce(object)
+    call object AwsumMain::v_$scc$$apply1__applyOnce(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.0
@@ -137,7 +137,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__apply1_applyOnce(object) cil managed
+  .method private hidebysig static object v_$scc$$apply1__applyOnce(object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2)

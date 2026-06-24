@@ -34,7 +34,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -72,43 +72,43 @@
     }
   };
 
-  const v__scc__apply_mirror__cps_mirror = v__args => {
+  const v_$scc$$apply$mirror__$cps$mirror = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 29: {
-          const v__k = v__args[1];
-          const v__x = v__args[2];
-          switch (v__k[0]) {
+          const v_$k = v_$args[1];
+          const v_$x = v_$args[2];
+          switch (v_$k[0]) {
             case 26: {
-              return v__x;
+              return v_$x;
             }
             case 28: {
-              const v__pk_28 = v__k[1];
-              v__args = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = (v__k[0] = 25, v__k[1] = v__k[2], v__k[2] = v__k[3], v__k[3] = v__x, v__k), v__args);
+              const v_$pk__28 = v_$k[1];
+              v_$args = (v_$args[0] = 29, v_$args[1] = v_$pk__28, v_$args[2] = (v_$k[0] = 25, v_$k[1] = v_$k[2], v_$k[2] = v_$k[3], v_$k[3] = v_$x, v_$k), v_$args);
               continue;
             }
             case 27: {
-              const v_l = v__k[2];
-              v__args = (v__args[0] = 30, v__args[1] = v_l, v__args[2] = (v__k[0] = 28, v__k[2] = v__x, v__k), v__args);
+              const v_l = v_$k[2];
+              v_$args = (v_$args[0] = 30, v_$args[1] = v_l, v_$args[2] = (v_$k[0] = 28, v_$k[2] = v_$x, v_$k), v_$args);
               continue;
             }
           }
         }
         case 30: {
-          const v_t = v__args[1];
-          const v__k = v__args[2];
+          const v_t = v_$args[1];
+          const v_$k = v_$args[2];
           switch (v_t[0]) {
             case 24: {
-              v__args = (v__args[0] = 29, v__args[2] = v__args[1], v__args[1] = v__k, v__args);
+              v_$args = (v_$args[0] = 29, v_$args[2] = v_$args[1], v_$args[1] = v_$k, v_$args);
               continue;
             }
             case 25: {
-              v__args = (v__args[0] = 30, v__args[1] = v_t[3], v__args[2] = [
+              v_$args = (v_$args[0] = 30, v_$args[1] = v_t[3], v_$args[2] = [
                 27,
-                v__k,
+                v_$k,
                 v_t[1],
                 v_t[2]
-              ], v__args);
+              ], v_$args);
               continue;
             }
           }
@@ -135,7 +135,7 @@
                 case 4: {
                   const v_m = __s[1];
                   v_n = v_m;
-                  v_t = v__scc__apply_mirror__cps_mirror([30, v_t, [26]]);
+                  v_t = v_$scc$$apply$mirror__$cps$mirror([30, v_t, [26]]);
                   continue;
                 }
               }

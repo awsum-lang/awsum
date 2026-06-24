@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,15 +21,15 @@
     }
   };
 
-  const v__inl2___input = [12, [1]];
+  const v_$inl2$____input = [12, [1]];
   const main = [
     7,
     (() => {
-      let v__inl5_scrut;
+      let v_$inl5$scrut;
       $join4: {
-        switch (v__inl2___input[0]) {
+        switch (v_$inl2$____input[0]) {
           case 11: {
-            v__inl5_scrut = v__inl2___input;
+            v_$inl5$scrut = v_$inl2$____input;
             break $join4;
           }
           case 12: {
@@ -37,7 +37,7 @@
           }
         }
       }
-      switch (v__inl5_scrut[0]) {
+      switch (v_$inl5$scrut[0]) {
         case 11: {
           return "n";
         }

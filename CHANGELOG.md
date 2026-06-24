@@ -8,6 +8,11 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Fixed
+
+- **Identifiers with an apostrophe (`xs'`, `f'`) now compile identically on all five backends.** They previously passed through to the generated LLVM IR and JavaScript verbatim — an artifact `clang` / `node` rejected, while JVM/CLR/WASM accepted it, with `build` still exiting 0. The codegen name-mangler — now a single `Awsum.Codegen.Mangle` shared by every backend, replacing six divergent copies — escapes the apostrophe injectively into ASCII on every target.
+- **Non-ASCII characters in an identifier are rejected at parse time with a diagnostic pointing at the offending character**, instead of silently miscompiling on LLVM. Identifiers are ASCII `[A-Za-z0-9_']` starting with a letter or `_`; comments and string literals keep full Unicode.
+
 ## [0.0.7] - 2026-06-22
 
 ### Added

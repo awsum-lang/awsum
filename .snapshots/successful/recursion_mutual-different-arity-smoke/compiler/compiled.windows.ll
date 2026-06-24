@@ -204,7 +204,7 @@ define internal ptr @v_main() {
   store ptr %t7, ptr %t8
   %t9 = getelementptr ptr, ptr %t3, i32 1
   store ptr %t6, ptr %t9
-  %t10 = call ptr @v__scc_parseBinary_parseExpr(ptr %t3)
+  %t10 = call ptr @v_$scc$parseBinary__parseExpr(ptr %t3)
   %t11 = call ptr @__showInt32(ptr %t10)
   %t12 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t11, ptr %t12
@@ -223,10 +223,10 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__scc_parseBinary_parseExpr(ptr %v__args) {
+define internal ptr @v_$scc$parseBinary__parseExpr(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

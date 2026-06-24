@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00OVERFLOW")
   (data (i32.const 112) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df__rowmono_0_andThenIO_4 $v__apply__df__rowmono_0_andThenIO_4 $v__cps__df__rowmono_1_andThenIO_8 $v__apply__df__rowmono_1_andThenIO_8)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$$rowmono$0$andThenIO$4 $v_$apply$$df$$rowmono$0$andThenIO$4 $v_$cps$$df$$rowmono$1$andThenIO$8 $v_$apply$$df$$rowmono$1$andThenIO$8)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -797,7 +797,7 @@
     local.get 0
     call 18)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1005,7 +1005,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1071,7 +1071,7 @@
       end
     end)
 
-  (func $v__cps__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1235,7 +1235,7 @@
       end
     end)
 
-  (func $v__apply__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1301,7 +1301,7 @@
       end
     end)
 
-  (func $v__cps__df__rowmono_1_andThenIO_8 (param i32 i32) (result i32)
+  (func $v_$cps$$df$$rowmono$1$andThenIO$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1497,7 +1497,7 @@
       end
     end)
 
-  (func $v__apply__df__rowmono_1_andThenIO_8 (param i32 i32) (result i32)
+  (func $v_$apply$$df$$rowmono$1$andThenIO$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

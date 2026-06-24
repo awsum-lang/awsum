@@ -12,7 +12,7 @@
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildLeft $v__scc__apply_sumTree__cps_sumTree)
+  (elem (i32.const 0) $v_runIO $v_buildLeft $v_$scc$$apply$sumTree__$cps$sumTree)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -950,7 +950,7 @@
     i32.store offset=8
     local.get 0)
 
-  (func $v__scc__apply_sumTree__cps_sumTree (param i32) (result i32)
+  (func $v_$scc$$apply$sumTree__$cps$sumTree (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

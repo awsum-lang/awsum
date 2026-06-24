@@ -75,31 +75,31 @@
     }
   };
 
-  const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
+  const v_$apply$$df$handleErrorIO$0 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 32: {
-          return v__x;
+          return v_$x;
         }
         case 33: {
-          const v__pk_33 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_33;
+          const v_$pk__33 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__33;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
+  const v_$cps$$df$handleErrorIO$0 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df_handleErrorIO_0(v__k, v_io);
+          return v_$apply$$df$handleErrorIO$0(v_$k, v_io);
         }
         case 6: {
-          return v__apply__df_handleErrorIO_0(
-            v__k,
+          return v_$apply$$df$handleErrorIO$0(
+            v_$k,
             (s => {
               switch (s[0]) {
                 case 502975519: {
@@ -115,51 +115,51 @@
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [33, v__k, v_s];
+          v_$k = [33, v_$k, v_s];
           v_io = v_next;
           continue;
         }
         case 8: {
           const v_cont = v_io[1];
-          return v__apply__df_handleErrorIO_0(v__k, [8, [27, v_cont]]);
+          return v_$apply$$df$handleErrorIO$0(v_$k, [8, [27, v_cont]]);
         }
       }
     }
   };
 
-  const v__apply__df__rowmono_0_andThenIO_4 = (v__k, v__x) => {
+  const v_$apply$$df$$rowmono$0$andThenIO$4 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 34: {
-          return v__x;
+          return v_$x;
         }
         case 35: {
-          const v__pk_35 = v__k[1];
-          v__x = (v__k[0] = 7, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_35;
+          const v_$pk__35 = v_$k[1];
+          v_$x = (v_$k[0] = 7, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__35;
           continue;
         }
       }
     }
   };
 
-  const v__cps__df__rowmono_0_andThenIO_4 = (v_io, v__k) => {
+  const v_$cps$$df$$rowmono$0$andThenIO$4 = (v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
-          return v__apply__df__rowmono_0_andThenIO_4(
-            v__k,
+          return v_$apply$$df$$rowmono$0$andThenIO$4(
+            v_$k,
             [
               7,
               (s => {
                 switch (s[0]) {
                   case 25: {
-                    const v__inl6_v = s[1];
+                    const v_$inl6$v = s[1];
                     {
                       const __s = v_io[1];
                       switch (__s[0]) {
                         case 13: {
-                          return v__inl6_v[1];
+                          return v_$inl6$v[1];
                         }
                         case 14: {
                           return "skip";
@@ -174,83 +174,83 @@
           );
         }
         case 6: {
-          return v__apply__df__rowmono_0_andThenIO_4(v__k, v_io);
+          return v_$apply$$df$$rowmono$0$andThenIO$4(v_$k, v_io);
         }
         case 7: {
           const v_s = v_io[1];
           const v_next = v_io[2];
-          v__k = [35, v__k, v_s];
+          v_$k = [35, v_$k, v_s];
           v_io = v_next;
           continue;
         }
         case 8: {
           const v_cont = v_io[1];
-          return v__apply__df__rowmono_0_andThenIO_4(v__k, [8, [26, v_cont]]);
+          return v_$apply$$df$$rowmono$0$andThenIO$4(v_$k, [8, [26, v_cont]]);
         }
       }
     }
   };
 
-  const v__apply__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__k, v__x) => {
+  const v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1 = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 36: {
-          return v__x;
+          return v_$x;
         }
         case 37: {
-          v__k = v__k[1];
-          v__x = v__cps__df__rowmono_0_andThenIO_4(v__x, [34]);
+          v_$k = v_$k[1];
+          v_$x = v_$cps$$df$$rowmono$0$andThenIO$4(v_$x, [34]);
           continue;
         }
         case 38: {
-          v__k = v__k[1];
-          v__x = v__cps__df_handleErrorIO_0(v__x, [32]);
+          v_$k = v_$k[1];
+          v_$x = v_$cps$$df$handleErrorIO$0(v_$x, [32]);
           continue;
         }
       }
     }
   };
 
-  const v__cps__scc__apply1__df__lam_14_5__df__lam_9_1 = (v__args, v__k) => {
+  const v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1 = (v_$args, v_$k) => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 29: {
-          const v__cl = v__args[1];
-          const v__arg0 = v__args[2];
-          switch (v__cl[0]) {
+          const v_$cl = v_$args[1];
+          const v_$arg0 = v_$args[2];
+          switch (v_$cl[0]) {
             case 26: {
-              v__args = (v__args[0] = 30, v__args[1] = v__cl[1], v__args);
+              v_$args = (v_$args[0] = 30, v_$args[1] = v_$cl[1], v_$args);
               continue;
             }
             case 27: {
-              v__args = (v__args[0] = 31, v__args[1] = v__cl[1], v__args);
+              v_$args = (v_$args[0] = 31, v_$args[1] = v_$cl[1], v_$args);
               continue;
             }
             case 28: {
-              return v__apply__scc__apply1__df__lam_14_5__df__lam_9_1(
-                v__k,
+              return v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(
+                v_$k,
                 (s => {
                   switch (s[0]) {
                     case 3: {
-                      return [6, v__arg0[1]];
+                      return [6, v_$arg0[1]];
                     }
                     case 4: {
-                      return [5, v__arg0[1]];
+                      return [5, v_$arg0[1]];
                     }
                   }
-                })(v__arg0)
+                })(v_$arg0)
               );
             }
           }
         }
         case 30: {
-          v__args = (v__args[0] = 29, v__args);
-          v__k = [37, v__k];
+          v_$args = (v_$args[0] = 29, v_$args);
+          v_$k = [37, v_$k];
           continue;
         }
         case 31: {
-          v__args = (v__args[0] = 29, v__args);
-          v__k = [38, v__k];
+          v_$args = (v_$args[0] = 29, v_$args);
+          v_$k = [38, v_$k];
           continue;
         }
       }
@@ -264,15 +264,15 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl11_eff = __print(v_io[1]);
+          const v_$inl11$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
         case 8: {
           const __t0 = (() => {
-            const v__inl12__arg0 = __getArgs();
-            return v__cps__scc__apply1__df__lam_14_5__df__lam_9_1(
-              [29, v_io[1], v__inl12__arg0],
+            const v_$inl12$$arg0 = __getArgs();
+            return v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1(
+              [29, v_io[1], v_$inl12$$arg0],
               [36]
             );
           })();
@@ -283,8 +283,8 @@
     }
   };
 
-  const main = v__cps__df_handleErrorIO_0(
-    v__cps__df__rowmono_0_andThenIO_4([8, [28]], [34]),
+  const main = v_$cps$$df$handleErrorIO$0(
+    v_$cps$$df$$rowmono$0$andThenIO$4([8, [28]], [34]),
     [32]
   );
 

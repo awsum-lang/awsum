@@ -241,7 +241,7 @@ define internal ptr @v_go(ptr %v_n) {
 entry:
   %t3 = alloca ptr
   store ptr %v_n, ptr %t3
-  %v__inl2_scrut.jslot = alloca ptr
+  %v_$inl2$scrut.jslot = alloca ptr
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -267,12 +267,12 @@ tco.case.arm.2.14:
   store i32 1, ptr %t15
   %t16 = call ptr @__eqUInt32(ptr %t4, ptr %t15)
   call void @__free_recursive(ptr %t7)
-  store ptr %t16, ptr %v__inl2_scrut.jslot
+  store ptr %t16, ptr %v_$inl2$scrut.jslot
   br label %join.5
 tco.case.default.11:
   unreachable
 join.5:
-  %t17 = load ptr, ptr %v__inl2_scrut.jslot
+  %t17 = load ptr, ptr %v_$inl2$scrut.jslot
   %t18 = getelementptr ptr, ptr %t17, i32 0
   %t19 = load ptr, ptr %t18
   %t20 = ptrtoint ptr %t19 to i64

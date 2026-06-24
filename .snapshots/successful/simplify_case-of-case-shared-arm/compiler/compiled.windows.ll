@@ -201,7 +201,7 @@ tco.exit.1:
 }
 
 define internal ptr @v_main() {
-  %v__inl4_scrut.jslot = alloca ptr
+  %v_$inl4$scrut.jslot = alloca ptr
   %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -216,7 +216,7 @@ define internal ptr @v_main() {
   switch i64 %t10, label %join.case.default.11 [ i64 1, label %join.case.arm.1.12 i64 2, label %join.case.arm.2.13 ]
 join.case.arm.1.12:
   call void @__inc_ref(ptr %t5)
-  store ptr %t5, ptr %v__inl4_scrut.jslot
+  store ptr %t5, ptr %v_$inl4$scrut.jslot
   br label %join.6
 join.case.arm.2.13:
   br label %join.val.14
@@ -225,7 +225,7 @@ join.val.14:
 join.case.default.11:
   unreachable
 join.6:
-  %t15 = load ptr, ptr %v__inl4_scrut.jslot
+  %t15 = load ptr, ptr %v_$inl4$scrut.jslot
   %t16 = getelementptr ptr, ptr %t15, i32 0
   %t17 = load ptr, ptr %t16
   %t18 = ptrtoint ptr %t17 to i64

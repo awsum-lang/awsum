@@ -9,6 +9,7 @@
 module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, methodMaxLocals, methodMaxStack, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -1860,12 +1861,6 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
               <> armCode -- self-terminating; no goto-join
           chainCode = concatMap buildArm (zip armChunks (zip preLabels nextTargets))
       pure $ headI <> chainCode
-
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body
 
 -- | @(Ljava/lang/Object;...)Ljava/lang/Object;@ for N args.
 objMethodDesc :: Int -> Text

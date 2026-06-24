@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00x")
   (data (i32.const 105) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00y")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_sumRow $v__apply_sumRow)
+  (elem (i32.const 0) $v_runIO $v_$cps$sumRow $v_$apply$sumRow)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -689,7 +689,7 @@
       end
     end)
 
-  (func $v__cps_sumRow (param i32 i32) (result i32)
+  (func $v_$cps$sumRow (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -819,7 +819,7 @@
       end
     end)
 
-  (func $v__apply_sumRow (param i32 i32) (result i32)
+  (func $v_$apply$sumRow (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00empty")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v_make $v_rev $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0)
+  (elem (i32.const 0) $v_runIO $v_make $v_rev $v_$cps$$df$andThenIO$0 $v_$apply$$df$andThenIO$0)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1041,7 +1041,7 @@
     local.get 0
     call 20)
 
-  (func $v__cps__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1228,7 +1228,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

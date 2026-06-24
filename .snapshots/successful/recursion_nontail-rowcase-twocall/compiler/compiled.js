@@ -28,7 +28,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -65,37 +65,37 @@
     }
   };
 
-  const v__scc__apply_sumTree__cps_sumTree = v__args => {
+  const v_$scc$$apply$sumTree__$cps$sumTree = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 29: {
-          const v__k = v__args[1];
-          const v__x = v__args[2];
-          switch (v__k[0]) {
+          const v_$k = v_$args[1];
+          const v_$x = v_$args[2];
+          switch (v_$k[0]) {
             case 26: {
-              return v__x;
+              return v_$x;
             }
             case 28: {
-              const v__pk_28 = v__k[1];
+              const v_$pk__28 = v_$k[1];
               {
-                const __s = __addInt32(v__k[2], v__x);
+                const __s = __addInt32(v_$k[2], v_$x);
                 switch (__s[0]) {
                   case 3: {
-                    v__args = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = 0 | 0, v__args);
+                    v_$args = (v_$args[0] = 29, v_$args[1] = v_$pk__28, v_$args[2] = 0 | 0, v_$args);
                     continue;
                   }
                   case 4: {
                     const v_s = __s[1];
                     {
-                      const __s = __addInt32(v_s, v__k[3]);
+                      const __s = __addInt32(v_s, v_$k[3]);
                       switch (__s[0]) {
                         case 3: {
-                          v__args = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = 0 | 0, v__args);
+                          v_$args = (v_$args[0] = 29, v_$args[1] = v_$pk__28, v_$args[2] = 0 | 0, v_$args);
                           continue;
                         }
                         case 4: {
                           const v_s2 = __s[1];
-                          v__args = (v__args[0] = 29, v__args[1] = v__pk_28, v__args[2] = v_s2, v__args);
+                          v_$args = (v_$args[0] = 29, v_$args[1] = v_$pk__28, v_$args[2] = v_s2, v_$args);
                           continue;
                         }
                       }
@@ -105,34 +105,34 @@
               }
             }
             case 27: {
-              v__args = (v__args[0] = 30, v__args[1] = v__k[3], v__args[2] = [
+              v_$args = (v_$args[0] = 30, v_$args[1] = v_$k[3], v_$args[2] = [
                 28,
-                v__k[1],
-                v__x,
-                v__k[2]
-              ], v__args);
+                v_$k[1],
+                v_$x,
+                v_$k[2]
+              ], v_$args);
               continue;
             }
           }
         }
         case 30: {
-          const v_t = v__args[1];
-          const v__k = v__args[2];
+          const v_t = v_$args[1];
+          const v_$k = v_$args[2];
           switch (v_t[0]) {
             case 24: {
-              v__args = (v__args[0] = 29, v__args[1] = v__args[2], v__args[2] = 0 | 0, v__args);
+              v_$args = (v_$args[0] = 29, v_$args[1] = v_$args[2], v_$args[2] = 0 | 0, v_$args);
               continue;
             }
             case 25: {
               const v_l = v_t[1];
               const v_v = v_t[2];
               const v_r = v_t[3];
-              v__args = (v__args[0] = 30, v__args[1] = v_l, v__args[2] = [
+              v_$args = (v_$args[0] = 30, v_$args[1] = v_l, v_$args[2] = [
                 27,
-                v__k,
+                v_$k,
                 v_v[1],
                 v_r
-              ], v__args);
+              ], v_$args);
               continue;
             }
           }
@@ -144,7 +144,7 @@
   const main = [
     7,
     String(
-      v__scc__apply_sumTree__cps_sumTree(
+      v_$scc$$apply$sumTree__$cps$sumTree(
         [30, v_buildLeft(200000 | 0, [24]), [26]]
       )
     ),

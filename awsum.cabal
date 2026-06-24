@@ -59,6 +59,7 @@ library
       Awsum.Codegen.JVM.Instr
       Awsum.Codegen.LLVM
       Awsum.Codegen.LLVM.Syntax
+      Awsum.Codegen.Mangle
       Awsum.Codegen.ReuseSchedule
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble

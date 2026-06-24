@@ -275,7 +275,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_0(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$0(object, object)
     ret
   }
 
@@ -294,7 +294,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_4(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$4(object, object)
     ret
   }
 
@@ -313,7 +313,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_8(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$8(object, object)
     ret
   }
 
@@ -332,7 +332,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_8(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$8(object, object)
     ret
   }
 
@@ -351,7 +351,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_8(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$8(object, object)
     ret
   }
 
@@ -370,7 +370,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_0_bindIO_12(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$0$bindIO$12(object, object)
     ret
   }
 
@@ -389,7 +389,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_0_bindIO_12(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$0$bindIO$12(object, object)
     ret
   }
 
@@ -408,7 +408,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_0_bindIO_16(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$0$bindIO$16(object, object)
     ret
   }
 
@@ -427,7 +427,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_20(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$20(object, object)
     ret
   }
 
@@ -446,7 +446,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_4_bindIO_24(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$4$bindIO$24(object, object)
     ret
   }
 
@@ -465,7 +465,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_4_bindIO_24(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$4$bindIO$24(object, object)
     ret
   }
 
@@ -484,7 +484,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_8_bindIO_28(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$8$bindIO$28(object, object)
     ret
   }
 
@@ -503,7 +503,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_8_bindIO_28(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$8$bindIO$28(object, object)
     ret
   }
 
@@ -522,7 +522,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_8_bindIO_32(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$8$bindIO$32(object, object)
     ret
   }
 
@@ -541,7 +541,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_8_bindIO_28(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$8$bindIO$28(object, object)
     ret
   }
 
@@ -560,7 +560,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_4(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$4(object, object)
     ret
   }
 
@@ -579,7 +579,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_4(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$4(object, object)
     ret
   }
 
@@ -598,7 +598,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_36(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$36(object, object)
     ret
   }
 
@@ -617,7 +617,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_bindIO_36(object, object)
+    call object AwsumMain::v_$cps$$df$bindIO$36(object, object)
     ret
   }
 
@@ -636,7 +636,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_16_bindIO_44(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$16$bindIO$44(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -646,7 +646,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_12_bindIO_40(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$12$bindIO$40(object, object)
     ret
   }
 
@@ -665,7 +665,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_16_bindIO_48(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$16$bindIO$48(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -675,7 +675,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_12_bindIO_40(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$12$bindIO$40(object, object)
     ret
   }
 
@@ -694,7 +694,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_16_bindIO_44(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$16$bindIO$44(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -704,7 +704,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_12_bindIO_52(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$12$bindIO$52(object, object)
     ret
   }
 
@@ -723,7 +723,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_16_bindIO_44(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$16$bindIO$44(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -733,7 +733,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df__rowmono_12_bindIO_40(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$12$bindIO$40(object, object)
     ret
   }
 
@@ -788,7 +788,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_nevOk()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -799,7 +799,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -809,7 +809,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -819,7 +819,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -829,7 +829,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -839,7 +839,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -849,7 +849,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_204(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$204(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -859,7 +859,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_200(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$200(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -869,7 +869,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_196(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$196(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -879,7 +879,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_192(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$192(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -889,7 +889,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_188(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$188(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -899,7 +899,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_184(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$184(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -909,7 +909,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_180(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$180(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -919,7 +919,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_176(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$176(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -929,7 +929,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_172(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$172(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -939,7 +939,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_168(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$168(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -949,7 +949,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_164(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$164(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -959,7 +959,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_160(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$160(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -969,7 +969,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_156(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$156(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -979,7 +979,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_152(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$152(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -989,7 +989,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_148(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$148(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -999,7 +999,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_144(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$144(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1009,7 +1009,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_140(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$140(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1019,7 +1019,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_136(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$136(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1029,7 +1029,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_132(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$132(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1039,7 +1039,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_128(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$128(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1049,7 +1049,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_124(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$124(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.0
@@ -1059,12 +1059,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__df_andThenIO_120(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$120(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_38(object,object) cil managed
+  .method private hidebysig static object v_$cps$$lift$38(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1080,7 +1080,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__lift_38(object, object)
+    call object AwsumMain::v_$apply$$lift$38(object, object)
     ret
   IL_c0:
     dup
@@ -1118,7 +1118,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__lift_38(object, object)
+    call object AwsumMain::v_$apply$$lift$38(object, object)
     ret
   IL_c1:
     pop
@@ -1156,7 +1156,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_38(object,object) cil managed
+  .method private hidebysig static object v_$apply$$lift$38(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1205,7 +1205,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__lift_42(object,object) cil managed
+  .method private hidebysig static object v_$cps$$lift$42(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1221,7 +1221,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__lift_42(object, object)
+    call object AwsumMain::v_$apply$$lift$42(object, object)
     ret
   IL_c0:
     dup
@@ -1259,7 +1259,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__lift_42(object, object)
+    call object AwsumMain::v_$apply$$lift$42(object, object)
     ret
   IL_c1:
     pop
@@ -1297,7 +1297,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_42(object,object) cil managed
+  .method private hidebysig static object v_$apply$$lift$42(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1346,7 +1346,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__lift_46(object,object) cil managed
+  .method private hidebysig static object v_$cps$$lift$46(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1362,7 +1362,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__lift_46(object, object)
+    call object AwsumMain::v_$apply$$lift$46(object, object)
     ret
   IL_c0:
     dup
@@ -1400,7 +1400,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__lift_46(object, object)
+    call object AwsumMain::v_$apply$$lift$46(object, object)
     ret
   IL_c1:
     pop
@@ -1438,7 +1438,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_46(object,object) cil managed
+  .method private hidebysig static object v_$apply$$lift$46(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1487,7 +1487,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__lift_50(object,object) cil managed
+  .method private hidebysig static object v_$cps$$lift$50(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1503,7 +1503,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__lift_50(object, object)
+    call object AwsumMain::v_$apply$$lift$50(object, object)
     ret
   IL_c0:
     dup
@@ -1541,7 +1541,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__lift_50(object, object)
+    call object AwsumMain::v_$apply$$lift$50(object, object)
     ret
   IL_c1:
     pop
@@ -1579,7 +1579,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_50(object,object) cil managed
+  .method private hidebysig static object v_$apply$$lift$50(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1628,7 +1628,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__lift_54(object,object) cil managed
+  .method private hidebysig static object v_$cps$$lift$54(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1644,7 +1644,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__lift_54(object, object)
+    call object AwsumMain::v_$apply$$lift$54(object, object)
     ret
   IL_c0:
     dup
@@ -1682,7 +1682,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__lift_54(object, object)
+    call object AwsumMain::v_$apply$$lift$54(object, object)
     ret
   IL_c1:
     pop
@@ -1720,7 +1720,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_54(object,object) cil managed
+  .method private hidebysig static object v_$apply$$lift$54(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1769,7 +1769,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_bindIO_0(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$bindIO$0(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1800,7 +1800,7 @@
     ldelem.ref
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_bindIO_0(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$0(object, object)
     ret
   IL_c0:
     dup
@@ -1809,7 +1809,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_bindIO_0(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$0(object, object)
     ret
   IL_c1:
     pop
@@ -1847,7 +1847,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_bindIO_0(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$bindIO$0(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -1896,7 +1896,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_bindIO_4(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$bindIO$4(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -1932,7 +1932,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_bindIO_4(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$4(object, object)
     ret
   IL_c0:
     dup
@@ -1941,7 +1941,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_bindIO_4(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$4(object, object)
     ret
   IL_c1:
     pop
@@ -1979,7 +1979,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_bindIO_4(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$bindIO$4(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2028,7 +2028,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_bindIO_8(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$bindIO$8(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2059,7 +2059,7 @@
     ldelem.ref
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_bindIO_8(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$8(object, object)
     ret
   IL_c0:
     dup
@@ -2068,7 +2068,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_bindIO_8(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$8(object, object)
     ret
   IL_c1:
     pop
@@ -2106,7 +2106,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_bindIO_8(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$bindIO$8(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2155,7 +2155,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_0_bindIO_12(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$0$bindIO$12(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2195,8 +2195,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_38(object, object)
-    call object AwsumMain::v__apply__df__rowmono_0_bindIO_12(object, object)
+    call object AwsumMain::v_$cps$$lift$38(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$0$bindIO$12(object, object)
     ret
   IL_c0:
     dup
@@ -2234,7 +2234,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_0_bindIO_12(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$0$bindIO$12(object, object)
     ret
   IL_c1:
     pop
@@ -2272,7 +2272,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_0_bindIO_12(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$0$bindIO$12(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2321,7 +2321,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_0_bindIO_16(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$0$bindIO$16(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2366,8 +2366,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_38(object, object)
-    call object AwsumMain::v__apply__df__rowmono_0_bindIO_16(object, object)
+    call object AwsumMain::v_$cps$$lift$38(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$0$bindIO$16(object, object)
     ret
   IL_c0:
     dup
@@ -2405,7 +2405,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_0_bindIO_16(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$0$bindIO$16(object, object)
     ret
   IL_c1:
     pop
@@ -2443,7 +2443,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_0_bindIO_16(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$0$bindIO$16(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2492,7 +2492,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_bindIO_20(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$bindIO$20(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2520,7 +2520,7 @@
     ldstr "kS"
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_bindIO_20(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$20(object, object)
     ret
   IL_c0:
     dup
@@ -2529,7 +2529,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_bindIO_20(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$20(object, object)
     ret
   IL_c1:
     pop
@@ -2567,7 +2567,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_bindIO_20(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$bindIO$20(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2616,7 +2616,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_4_bindIO_24(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$4$bindIO$24(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2661,8 +2661,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_42(object, object)
-    call object AwsumMain::v__apply__df__rowmono_4_bindIO_24(object, object)
+    call object AwsumMain::v_$cps$$lift$42(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$4$bindIO$24(object, object)
     ret
   IL_c0:
     dup
@@ -2700,7 +2700,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_4_bindIO_24(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$4$bindIO$24(object, object)
     ret
   IL_c1:
     pop
@@ -2738,7 +2738,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_4_bindIO_24(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$4$bindIO$24(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2787,7 +2787,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_8_bindIO_28(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$8$bindIO$28(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2827,8 +2827,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_46(object, object)
-    call object AwsumMain::v__apply__df__rowmono_8_bindIO_28(object, object)
+    call object AwsumMain::v_$cps$$lift$46(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$8$bindIO$28(object, object)
     ret
   IL_c0:
     dup
@@ -2866,7 +2866,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_8_bindIO_28(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$8$bindIO$28(object, object)
     ret
   IL_c1:
     pop
@@ -2904,7 +2904,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_8_bindIO_28(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$8$bindIO$28(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -2953,7 +2953,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_8_bindIO_32(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$8$bindIO$32(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -2998,8 +2998,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_46(object, object)
-    call object AwsumMain::v__apply__df__rowmono_8_bindIO_32(object, object)
+    call object AwsumMain::v_$cps$$lift$46(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$8$bindIO$32(object, object)
     ret
   IL_c0:
     dup
@@ -3037,7 +3037,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_8_bindIO_32(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$8$bindIO$32(object, object)
     ret
   IL_c1:
     pop
@@ -3075,7 +3075,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_8_bindIO_32(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$8$bindIO$32(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3124,7 +3124,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_bindIO_36(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$bindIO$36(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -3160,7 +3160,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_bindIO_36(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$36(object, object)
     ret
   IL_c0:
     dup
@@ -3169,7 +3169,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_bindIO_36(object, object)
+    call object AwsumMain::v_$apply$$df$bindIO$36(object, object)
     ret
   IL_c1:
     pop
@@ -3207,7 +3207,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_bindIO_36(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$bindIO$36(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3256,7 +3256,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_12_bindIO_40(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$12$bindIO$40(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3296,8 +3296,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_50(object, object)
-    call object AwsumMain::v__apply__df__rowmono_12_bindIO_40(object, object)
+    call object AwsumMain::v_$cps$$lift$50(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$12$bindIO$40(object, object)
     ret
   IL_c0:
     dup
@@ -3306,7 +3306,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_12_bindIO_40(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$12$bindIO$40(object, object)
     ret
   IL_c1:
     pop
@@ -3344,7 +3344,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_12_bindIO_40(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$12$bindIO$40(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3393,7 +3393,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_16_bindIO_44(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$16$bindIO$44(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -3433,8 +3433,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_54(object, object)
-    call object AwsumMain::v__apply__df__rowmono_16_bindIO_44(object, object)
+    call object AwsumMain::v_$cps$$lift$54(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$16$bindIO$44(object, object)
     ret
   IL_c0:
     dup
@@ -3472,7 +3472,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_16_bindIO_44(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$16$bindIO$44(object, object)
     ret
   IL_c1:
     pop
@@ -3510,7 +3510,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_16_bindIO_44(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$16$bindIO$44(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3559,7 +3559,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_16_bindIO_48(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$16$bindIO$48(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -3596,8 +3596,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_54(object, object)
-    call object AwsumMain::v__apply__df__rowmono_16_bindIO_48(object, object)
+    call object AwsumMain::v_$cps$$lift$54(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$16$bindIO$48(object, object)
     ret
   IL_c0:
     dup
@@ -3635,7 +3635,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_16_bindIO_48(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$16$bindIO$48(object, object)
     ret
   IL_c1:
     pop
@@ -3673,7 +3673,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_16_bindIO_48(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$16$bindIO$48(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3722,7 +3722,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_12_bindIO_52(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$12$bindIO$52(object,object) cil managed
   {
     .maxstack 6
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -3767,8 +3767,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__lift_50(object, object)
-    call object AwsumMain::v__apply__df__rowmono_12_bindIO_52(object, object)
+    call object AwsumMain::v_$cps$$lift$50(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$12$bindIO$52(object, object)
     ret
   IL_c0:
     dup
@@ -3777,7 +3777,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_12_bindIO_52(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$12$bindIO$52(object, object)
     ret
   IL_c1:
     pop
@@ -3815,7 +3815,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_12_bindIO_52(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$12$bindIO$52(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -3864,7 +3864,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_56(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$56(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -3880,7 +3880,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$56(object, object)
     ret
   IL_c0:
     dup
@@ -3925,7 +3925,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$56(object, object)
     ret
   IL_c1:
     pop
@@ -3963,7 +3963,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_56(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$56(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4012,7 +4012,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_60(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$60(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -4067,7 +4067,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$60(object, object)
     ret
   IL_c0:
     dup
@@ -4076,7 +4076,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$60(object, object)
     ret
   IL_c1:
     pop
@@ -4114,7 +4114,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_60(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$60(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4163,7 +4163,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_mapIO_64(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$mapIO$64(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4197,7 +4197,7 @@
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_mapIO_64(object, object)
+    call object AwsumMain::v_$apply$$df$mapIO$64(object, object)
     ret
   IL_c0:
     dup
@@ -4206,7 +4206,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_mapIO_64(object, object)
+    call object AwsumMain::v_$apply$$df$mapIO$64(object, object)
     ret
   IL_c1:
     pop
@@ -4244,7 +4244,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_mapIO_64(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$mapIO$64(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4293,7 +4293,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_68(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$68(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5)
@@ -4309,7 +4309,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_68(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$68(object, object)
     ret
   IL_c0:
     dup
@@ -4408,7 +4408,7 @@
     stelem.ref
     ldloc.3
   IL_c1:
-    call object AwsumMain::v__apply__df_handleErrorIO_68(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$68(object, object)
     ret
   IL_c3:
     pop
@@ -4446,7 +4446,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_68(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$68(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4495,7 +4495,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_72(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$72(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -4511,7 +4511,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_72(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$72(object, object)
     ret
   IL_c0:
     dup
@@ -4559,7 +4559,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_handleErrorIO_72(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$72(object, object)
     ret
   IL_c1:
     pop
@@ -4597,7 +4597,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_72(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$72(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4646,7 +4646,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_76(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$76(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
@@ -4662,7 +4662,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_76(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$76(object, object)
     ret
   IL_c0:
     dup
@@ -4765,7 +4765,7 @@
     stelem.ref
     ldloc.s 4
   IL_c1:
-    call object AwsumMain::v__apply__df_handleErrorIO_76(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$76(object, object)
     ret
   IL_c3:
     pop
@@ -4803,7 +4803,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_76(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$76(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -4852,7 +4852,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_20_andThenIO_80(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$20$andThenIO$80(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -4907,7 +4907,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_20_andThenIO_80(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$20$andThenIO$80(object, object)
     ret
   IL_c0:
     dup
@@ -4916,7 +4916,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_20_andThenIO_80(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$20$andThenIO$80(object, object)
     ret
   IL_c1:
     pop
@@ -4954,7 +4954,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_20_andThenIO_80(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$20$andThenIO$80(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -5003,7 +5003,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_84(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$84(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
@@ -5019,7 +5019,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_84(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$84(object, object)
     ret
   IL_c0:
     dup
@@ -5118,7 +5118,7 @@
     stelem.ref
     ldloc.s 4
   IL_c1:
-    call object AwsumMain::v__apply__df_handleErrorIO_84(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$84(object, object)
     ret
   IL_c3:
     pop
@@ -5156,7 +5156,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_84(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$84(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -5205,7 +5205,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_21_andThenIO_88(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$21$andThenIO$88(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -5260,7 +5260,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_21_andThenIO_88(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$21$andThenIO$88(object, object)
     ret
   IL_c0:
     dup
@@ -5269,7 +5269,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_21_andThenIO_88(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$21$andThenIO$88(object, object)
     ret
   IL_c1:
     pop
@@ -5307,7 +5307,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_21_andThenIO_88(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$21$andThenIO$88(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -5356,7 +5356,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_92(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$92(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7)
@@ -5372,7 +5372,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$92(object, object)
     ret
   IL_c0:
     dup
@@ -5526,7 +5526,7 @@
     stelem.ref
     ldloc.s 4
   IL_c1:
-    call object AwsumMain::v__apply__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$92(object, object)
     ret
   IL_c5:
     pop
@@ -5564,7 +5564,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_92(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$92(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -5613,7 +5613,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_22_andThenIO_96(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$22$andThenIO$96(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -5668,7 +5668,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$22$andThenIO$96(object, object)
     ret
   IL_c0:
     dup
@@ -5677,7 +5677,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$22$andThenIO$96(object, object)
     ret
   IL_c1:
     pop
@@ -5715,7 +5715,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_22_andThenIO_96(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$22$andThenIO$96(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -5764,7 +5764,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_handleErrorIO_100(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$handleErrorIO$100(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6, object V_7)
@@ -5780,7 +5780,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$100(object, object)
     ret
   IL_c0:
     dup
@@ -5980,7 +5980,7 @@
     stelem.ref
     ldloc.s 4
   IL_c1:
-    call object AwsumMain::v__apply__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$apply$$df$handleErrorIO$100(object, object)
     ret
   IL_c6:
     pop
@@ -6018,7 +6018,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_handleErrorIO_100(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$handleErrorIO$100(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6067,7 +6067,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df__rowmono_23_andThenIO_104(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$$rowmono$23$andThenIO$104(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -6122,7 +6122,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$23$andThenIO$104(object, object)
     ret
   IL_c0:
     dup
@@ -6131,7 +6131,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$apply$$df$$rowmono$23$andThenIO$104(object, object)
     ret
   IL_c1:
     pop
@@ -6169,7 +6169,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df__rowmono_23_andThenIO_104(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$$rowmono$23$andThenIO$104(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6218,7 +6218,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_108(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$108(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -6270,7 +6270,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$108(object, object)
     ret
   IL_c0:
     dup
@@ -6279,7 +6279,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$108(object, object)
     ret
   IL_c1:
     pop
@@ -6317,7 +6317,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_108(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$108(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6366,7 +6366,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_112(object,object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$112(object,object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6382,7 +6382,7 @@
     pop
     ldarg.2
     ldarg.1
-    call object AwsumMain::v__apply__df_andThenIO_112(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$112(object, object)
     ret
   IL_c0:
     dup
@@ -6391,7 +6391,7 @@
     pop
     ldarg.2
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_112(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$112(object, object)
     ret
   IL_c1:
     pop
@@ -6431,7 +6431,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_112(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$112(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6480,7 +6480,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_116(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$116(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -6532,7 +6532,7 @@
     ldloc.3
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__apply__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$116(object, object)
     ret
   IL_c0:
     dup
@@ -6541,7 +6541,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$116(object, object)
     ret
   IL_c1:
     pop
@@ -6579,7 +6579,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_116(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$116(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6628,7 +6628,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_120(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$120(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -6689,7 +6689,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_wOk()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -6700,7 +6700,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6710,7 +6710,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$23$andThenIO$104(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6720,7 +6720,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$100(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6730,7 +6730,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6740,8 +6740,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_120(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$120(object, object)
     ret
   IL_c0:
     dup
@@ -6750,7 +6750,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_120(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$120(object, object)
     ret
   IL_c1:
     pop
@@ -6788,7 +6788,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_120(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$120(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -6837,7 +6837,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_124(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$124(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -6898,7 +6898,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_wE3()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -6909,7 +6909,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6919,7 +6919,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$23$andThenIO$104(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6929,7 +6929,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$100(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6939,7 +6939,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -6949,8 +6949,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_124(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$124(object, object)
     ret
   IL_c0:
     dup
@@ -6959,7 +6959,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_124(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$124(object, object)
     ret
   IL_c1:
     pop
@@ -6997,7 +6997,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_124(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$124(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -7046,7 +7046,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_128(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$128(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -7107,7 +7107,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_wE2str()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -7118,7 +7118,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7128,7 +7128,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$23$andThenIO$104(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7138,7 +7138,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$100(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7148,7 +7148,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7158,8 +7158,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_128(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$128(object, object)
     ret
   IL_c0:
     dup
@@ -7168,7 +7168,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_128(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$128(object, object)
     ret
   IL_c1:
     pop
@@ -7206,7 +7206,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_128(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$128(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -7255,7 +7255,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_132(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$132(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -7316,7 +7316,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_wE1()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -7327,7 +7327,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7337,7 +7337,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_23_andThenIO_104(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$23$andThenIO$104(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7347,7 +7347,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_100(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$100(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7357,7 +7357,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7367,8 +7367,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_132(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$132(object, object)
     ret
   IL_c0:
     dup
@@ -7377,7 +7377,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_132(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$132(object, object)
     ret
   IL_c1:
     pop
@@ -7415,7 +7415,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_132(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$132(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -7464,7 +7464,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_136(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$136(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -7525,7 +7525,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_idem2Second()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -7536,7 +7536,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7546,7 +7546,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7556,7 +7556,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_68(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$68(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7566,7 +7566,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7576,8 +7576,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_136(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$136(object, object)
     ret
   IL_c0:
     dup
@@ -7586,7 +7586,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_136(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$136(object, object)
     ret
   IL_c1:
     pop
@@ -7624,7 +7624,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_136(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$136(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -7673,7 +7673,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_140(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$140(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -7734,7 +7734,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_idem2First()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -7745,7 +7745,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7755,7 +7755,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7765,7 +7765,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_68(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$68(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7775,7 +7775,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7785,8 +7785,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_140(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$140(object, object)
     ret
   IL_c0:
     dup
@@ -7795,7 +7795,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_140(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$140(object, object)
     ret
   IL_c1:
     pop
@@ -7833,7 +7833,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_140(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$140(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -7882,7 +7882,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_144(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$144(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -7943,7 +7943,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_idemE2()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -7954,7 +7954,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7964,7 +7964,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7974,7 +7974,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7984,7 +7984,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -7994,8 +7994,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_144(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$144(object, object)
     ret
   IL_c0:
     dup
@@ -8004,7 +8004,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_144(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$144(object, object)
     ret
   IL_c1:
     pop
@@ -8042,7 +8042,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_144(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$144(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -8091,7 +8091,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_148(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$148(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -8152,7 +8152,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_idemE1()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -8163,7 +8163,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8173,7 +8173,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8183,7 +8183,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8193,7 +8193,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8203,8 +8203,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_148(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$148(object, object)
     ret
   IL_c0:
     dup
@@ -8213,7 +8213,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_148(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$148(object, object)
     ret
   IL_c1:
     pop
@@ -8251,7 +8251,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_148(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$148(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -8300,7 +8300,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_152(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$152(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -8361,7 +8361,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_twoOk()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -8372,7 +8372,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8382,7 +8382,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$22$andThenIO$96(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8392,7 +8392,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$92(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8402,7 +8402,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8412,8 +8412,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_152(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$152(object, object)
     ret
   IL_c0:
     dup
@@ -8422,7 +8422,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_152(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$152(object, object)
     ret
   IL_c1:
     pop
@@ -8460,7 +8460,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_152(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$152(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -8509,7 +8509,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_156(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$156(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -8570,7 +8570,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_twoE2()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -8581,7 +8581,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8591,7 +8591,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$22$andThenIO$96(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8601,7 +8601,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$92(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8611,7 +8611,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8621,8 +8621,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_156(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$156(object, object)
     ret
   IL_c0:
     dup
@@ -8631,7 +8631,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_156(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$156(object, object)
     ret
   IL_c1:
     pop
@@ -8669,7 +8669,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_156(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$156(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -8718,7 +8718,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_160(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$160(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -8779,7 +8779,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_twoSecond()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -8790,7 +8790,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8800,7 +8800,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$22$andThenIO$96(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8810,7 +8810,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$92(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8820,7 +8820,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -8830,8 +8830,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_160(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$160(object, object)
     ret
   IL_c0:
     dup
@@ -8840,7 +8840,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_160(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$160(object, object)
     ret
   IL_c1:
     pop
@@ -8878,7 +8878,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_160(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$160(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -8927,7 +8927,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_164(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$164(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -8988,7 +8988,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_twoFirst()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -8999,7 +8999,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9009,7 +9009,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_22_andThenIO_96(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$22$andThenIO$96(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9019,7 +9019,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_92(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$92(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9029,7 +9029,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9039,8 +9039,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_164(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$164(object, object)
     ret
   IL_c0:
     dup
@@ -9049,7 +9049,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_164(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$164(object, object)
     ret
   IL_c1:
     pop
@@ -9087,7 +9087,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_164(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$164(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -9136,7 +9136,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_168(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$168(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -9197,7 +9197,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_abE2()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -9208,7 +9208,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9218,7 +9218,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_21_andThenIO_88(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$21$andThenIO$88(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9228,7 +9228,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_84(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$84(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9238,7 +9238,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9248,8 +9248,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_168(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$168(object, object)
     ret
   IL_c0:
     dup
@@ -9258,7 +9258,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_168(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$168(object, object)
     ret
   IL_c1:
     pop
@@ -9296,7 +9296,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_168(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$168(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -9345,7 +9345,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_172(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$172(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -9406,7 +9406,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_abE1()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -9417,7 +9417,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9427,7 +9427,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_21_andThenIO_88(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$21$andThenIO$88(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9437,7 +9437,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_84(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$84(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9447,7 +9447,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9457,8 +9457,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_172(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$172(object, object)
     ret
   IL_c0:
     dup
@@ -9467,7 +9467,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_172(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$172(object, object)
     ret
   IL_c1:
     pop
@@ -9505,7 +9505,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_172(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$172(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -9554,7 +9554,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_176(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$176(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -9615,7 +9615,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_strIdem()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -9626,7 +9626,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9636,7 +9636,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9646,7 +9646,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_72(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$72(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9656,7 +9656,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9666,8 +9666,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_176(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$176(object, object)
     ret
   IL_c0:
     dup
@@ -9676,7 +9676,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_176(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$176(object, object)
     ret
   IL_c1:
     pop
@@ -9714,7 +9714,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_176(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$176(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -9763,7 +9763,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_180(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$180(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -9824,7 +9824,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_strE2()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -9835,7 +9835,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9845,7 +9845,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_20_andThenIO_80(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$20$andThenIO$80(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9855,7 +9855,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_76(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$76(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9865,7 +9865,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -9875,8 +9875,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_180(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$180(object, object)
     ret
   IL_c0:
     dup
@@ -9885,7 +9885,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_180(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$180(object, object)
     ret
   IL_c1:
     pop
@@ -9923,7 +9923,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_180(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$180(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -9972,7 +9972,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_184(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$184(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -10033,7 +10033,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_strE1()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -10044,7 +10044,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10054,7 +10054,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_20_andThenIO_80(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$20$andThenIO$80(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10064,7 +10064,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_76(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$76(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10074,7 +10074,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10084,8 +10084,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_184(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$184(object, object)
     ret
   IL_c0:
     dup
@@ -10094,7 +10094,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_184(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$184(object, object)
     ret
   IL_c1:
     pop
@@ -10132,7 +10132,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_184(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$184(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -10181,7 +10181,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_188(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$188(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -10242,7 +10242,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_strOk()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -10253,7 +10253,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10263,7 +10263,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df__rowmono_20_andThenIO_80(object, object)
+    call object AwsumMain::v_$cps$$df$$rowmono$20$andThenIO$80(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10273,7 +10273,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_76(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$76(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10283,7 +10283,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10293,8 +10293,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_188(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$188(object, object)
     ret
   IL_c0:
     dup
@@ -10303,7 +10303,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_188(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$188(object, object)
     ret
   IL_c1:
     pop
@@ -10341,7 +10341,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_188(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$188(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -10390,7 +10390,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_192(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$192(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -10451,7 +10451,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_pureNever()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -10462,7 +10462,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10472,7 +10472,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10482,7 +10482,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10492,8 +10492,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_192(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$192(object, object)
     ret
   IL_c0:
     dup
@@ -10502,7 +10502,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_192(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$192(object, object)
     ret
   IL_c1:
     pop
@@ -10540,7 +10540,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_192(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$192(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -10589,7 +10589,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_196(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$196(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -10650,7 +10650,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_nevRightE1()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -10661,7 +10661,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10671,7 +10671,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10681,7 +10681,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10691,7 +10691,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10701,8 +10701,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_196(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$196(object, object)
     ret
   IL_c0:
     dup
@@ -10711,7 +10711,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_196(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$196(object, object)
     ret
   IL_c1:
     pop
@@ -10749,7 +10749,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_196(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$196(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -10798,7 +10798,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_200(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$200(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -10859,7 +10859,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_nevRightOk()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -10870,7 +10870,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10880,7 +10880,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10890,7 +10890,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10900,7 +10900,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -10910,8 +10910,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_200(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$200(object, object)
     ret
   IL_c0:
     dup
@@ -10920,7 +10920,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_200(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$200(object, object)
     ret
   IL_c1:
     pop
@@ -10958,7 +10958,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_200(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$200(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -11007,7 +11007,7 @@
   }
 
 
-  .method private hidebysig static object v__cps__df_andThenIO_204(object,object) cil managed
+  .method private hidebysig static object v_$cps$$df$andThenIO$204(object,object) cil managed
   {
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -11068,7 +11068,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_116(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$116(object, object)
     call object AwsumMain::v_nevFail()
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -11079,7 +11079,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_mapIO_64(object, object)
+    call object AwsumMain::v_$cps$$df$mapIO$64(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -11089,7 +11089,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_60(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$60(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -11099,7 +11099,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_handleErrorIO_56(object, object)
+    call object AwsumMain::v_$cps$$df$handleErrorIO$56(object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -11109,7 +11109,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_112(object, object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$112(object, object, object)
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.2
@@ -11119,8 +11119,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.2
-    call object AwsumMain::v__cps__df_andThenIO_108(object, object)
-    call object AwsumMain::v__apply__df_andThenIO_204(object, object)
+    call object AwsumMain::v_$cps$$df$andThenIO$108(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$204(object, object)
     ret
   IL_c0:
     dup
@@ -11129,7 +11129,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply__df_andThenIO_204(object, object)
+    call object AwsumMain::v_$apply$$df$andThenIO$204(object, object)
     ret
   IL_c1:
     pop
@@ -11167,7 +11167,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__df_andThenIO_204(object,object) cil managed
+  .method private hidebysig static object v_$apply$$df$andThenIO$204(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)

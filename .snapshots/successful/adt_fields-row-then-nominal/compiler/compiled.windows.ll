@@ -290,26 +290,26 @@ case.join.20:
   %t68 = inttoptr i64 31 to ptr
   %t69 = getelementptr ptr, ptr %t67, i32 0
   store ptr %t68, ptr %t69
-  %t70 = call ptr @v__cps__df_andThenIO_8(ptr %t0, ptr %t67)
+  %t70 = call ptr @v_$cps$$df$andThenIO$8(ptr %t0, ptr %t67)
   %t71 = call ptr @__alloc(i64 8, i32 0)
   %t72 = inttoptr i64 29 to ptr
   %t73 = getelementptr ptr, ptr %t71, i32 0
   store ptr %t72, ptr %t73
-  %t74 = call ptr @v__cps__df_andThenIO_4(ptr %t70, ptr %t71)
+  %t74 = call ptr @v_$cps$$df$andThenIO$4(ptr %t70, ptr %t71)
   %t75 = call ptr @__alloc(i64 8, i32 0)
   %t76 = inttoptr i64 27 to ptr
   %t77 = getelementptr ptr, ptr %t75, i32 0
   store ptr %t76, ptr %t77
-  %t78 = call ptr @v__cps__df_andThenIO_0(ptr %t74, ptr %t75)
+  %t78 = call ptr @v_$cps$$df$andThenIO$0(ptr %t74, ptr %t75)
   ret ptr %t78
 }
 
-define internal ptr @v__cps__df_andThenIO_0(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$0(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -426,7 +426,7 @@ case.join.31:
   store ptr %t73, ptr %t76
   %t77 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t70, ptr %t77
-  %t78 = call ptr @v__apply__df_andThenIO_0(ptr %t6, ptr %t12)
+  %t78 = call ptr @v_$apply$$df$andThenIO$0(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t78, ptr %t2
@@ -484,12 +484,12 @@ tco.exit.1:
   ret ptr %t104
 }
 
-define internal ptr @v__apply__df_andThenIO_0(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$0(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -531,12 +531,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_4(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$4(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -653,7 +653,7 @@ case.join.31:
   store ptr %t73, ptr %t76
   %t77 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t70, ptr %t77
-  %t78 = call ptr @v__apply__df_andThenIO_4(ptr %t6, ptr %t12)
+  %t78 = call ptr @v_$apply$$df$andThenIO$4(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t78, ptr %t2
@@ -711,12 +711,12 @@ tco.exit.1:
   ret ptr %t104
 }
 
-define internal ptr @v__apply__df_andThenIO_4(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$4(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -758,12 +758,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v__cps__df_andThenIO_8(ptr %v_io, ptr %v__k) {
+define internal ptr @v_$cps$$df$andThenIO$8(ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -882,7 +882,7 @@ case.join.32:
   store ptr %t74, ptr %t77
   %t78 = getelementptr ptr, ptr %t12, i32 2
   store ptr %t71, ptr %t78
-  %t79 = call ptr @v__apply__df_andThenIO_8(ptr %t6, ptr %t12)
+  %t79 = call ptr @v_$apply$$df$andThenIO$8(ptr %t6, ptr %t12)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t79, ptr %t2
@@ -940,12 +940,12 @@ tco.exit.1:
   ret ptr %t105
 }
 
-define internal ptr @v__apply__df_andThenIO_8(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$$df$andThenIO$8(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

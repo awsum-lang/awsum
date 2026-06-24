@@ -436,7 +436,7 @@ tco.case.arm.4.23:
   store ptr %t33, ptr %t34
   %t35 = getelementptr ptr, ptr %t26, i32 3
   store ptr %t32, ptr %t35
-  %t36 = call ptr @v__scc__apply_sumTree__cps_sumTree(ptr %t26)
+  %t36 = call ptr @v_$scc$$apply$sumTree__$cps$sumTree(ptr %t26)
   call void @__inc_ref(ptr %t7)
   call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %t10)
@@ -529,10 +529,10 @@ case.join.9:
   ret ptr %t44
 }
 
-define internal ptr @v__scc__apply_sumTree__cps_sumTree(ptr %v__args) {
+define internal ptr @v_$scc$$apply$sumTree__$cps$sumTree(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

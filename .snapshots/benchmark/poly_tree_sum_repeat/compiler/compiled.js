@@ -30,7 +30,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -68,36 +68,36 @@
     }
   };
 
-  const v__scc__apply_sumTree__cps_sumTree = v__args => {
+  const v_$scc$$apply$sumTree__$cps$sumTree = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 28: {
-          const v__k = v__args[1];
-          const v__x = v__args[2];
-          switch (v__k[0]) {
+          const v_$k = v_$args[1];
+          const v_$x = v_$args[2];
+          switch (v_$k[0]) {
             case 26: {
-              return v__x;
+              return v_$x;
             }
             case 27: {
-              v__args = [29, v__k[2], v__x, v__k[1]];
+              v_$args = [29, v_$k[2], v_$x, v_$k[1]];
               continue;
             }
           }
         }
         case 29: {
-          const v_t = v__args[1];
-          const v_acc = v__args[2];
-          const v__k = v__args[3];
+          const v_t = v_$args[1];
+          const v_acc = v_$args[2];
+          const v_$k = v_$args[3];
           switch (v_t[0]) {
             case 24: {
-              v__args = [28, v__k, v_acc];
+              v_$args = [28, v_$k, v_acc];
               continue;
             }
             case 25: {
               const v_l = v_t[1];
               const v_v = v_t[2];
               const v_r = v_t[3];
-              v__args = [
+              v_$args = [
                 29,
                 v_l,
                 (s => {
@@ -106,12 +106,12 @@
                       return 0 | 0;
                     }
                     case 4: {
-                      const v__inl2_v = s[1];
-                      return v__inl2_v;
+                      const v_$inl2$v = s[1];
+                      return v_$inl2$v;
                     }
                   }
                 })(__addInt32(v_acc, v_v)),
-                [27, v__k, v_r]
+                [27, v_$k, v_r]
               ];
               continue;
             }
@@ -139,7 +139,7 @@
                 case 4: {
                   const v_m = __s[1];
                   v_n = v_m;
-                  v_acc = v__scc__apply_sumTree__cps_sumTree(
+                  v_acc = v_$scc$$apply$sumTree__$cps$sumTree(
                     [29, v_t, v_zero, [26]]
                   );
                   continue;

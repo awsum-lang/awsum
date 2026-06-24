@@ -410,7 +410,7 @@ case.arm.4.35:
   store i32 0, ptr %t43
   %t44 = getelementptr ptr, ptr %t39, i32 2
   store ptr %t43, ptr %t44
-  %t45 = call ptr @v__scc_spinA_spinB_spinC(ptr %t39)
+  %t45 = call ptr @v_$scc$spinA__spinB__spinC(ptr %t39)
   br label %case.end.4.36
 case.end.4.36:
   br label %case.join.26
@@ -590,7 +590,7 @@ tco.case.arm.2.18:
   %t20 = inttoptr i64 11 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
   store ptr %t20, ptr %t21
-  %t22 = call ptr @v__cps_descend(ptr %t6, ptr %t19)
+  %t22 = call ptr @v_$cps$descend(ptr %t6, ptr %t19)
   %t23 = getelementptr ptr, ptr %t22, i32 0
   %t24 = load ptr, ptr %t23
   %t25 = ptrtoint ptr %t24 to i64
@@ -672,12 +672,12 @@ tco.exit.1:
   ret ptr %t56
 }
 
-define internal ptr @v__cps_descend(ptr %v_n, ptr %v__k) {
+define internal ptr @v_$cps$descend(ptr %v_n, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_n, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__k, ptr %t4
+  store ptr %v_$k, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -701,7 +701,7 @@ tco.case.arm.1.13:
   store i32 0, ptr %t17
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
-  %t19 = call ptr @v__apply_descend(ptr %t6, ptr %t14)
+  %t19 = call ptr @v_$apply$descend(ptr %t6, ptr %t14)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -732,7 +732,7 @@ tco.case.arm.3.26:
   store ptr %t28, ptr %t35
   %t36 = getelementptr ptr, ptr %t29, i32 1
   store ptr %t32, ptr %t36
-  %t37 = call ptr @v__apply_descend(ptr %t6, ptr %t29)
+  %t37 = call ptr @v_$apply$descend(ptr %t6, ptr %t29)
   call void @__free_recursive(ptr %t21)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t28)
@@ -767,12 +767,12 @@ tco.exit.1:
   ret ptr %t45
 }
 
-define internal ptr @v__apply_descend(ptr %v__k, ptr %v__x) {
+define internal ptr @v_$apply$descend(ptr %v_$k, ptr %v_$x) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
+  store ptr %v_$k, ptr %t3
   %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
+  store ptr %v_$x, ptr %t4
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
@@ -853,10 +853,10 @@ tco.exit.1:
   ret ptr %t45
 }
 
-define internal ptr @v__scc_spinA_spinB_spinC(ptr %v__args) {
+define internal ptr @v_$scc$spinA__spinB__spinC(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

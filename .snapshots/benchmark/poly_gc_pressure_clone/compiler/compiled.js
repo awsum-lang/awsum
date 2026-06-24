@@ -56,7 +56,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -64,41 +64,41 @@
     }
   };
 
-  const v__apply_repeat = (v__k, v__x) => {
+  const v_$apply$repeat = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 15: {
-          return v__x;
+          return v_$x;
         }
         case 16: {
-          const v__pk_16 = v__k[1];
-          v__x = (v__k[0] = 14, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_16;
+          const v_$pk__16 = v_$k[1];
+          v_$x = (v_$k[0] = 14, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__16;
           continue;
         }
       }
     }
   };
 
-  const v__cps_repeat = (v_n, v_value, v__k) => {
+  const v_$cps$repeat = (v_n, v_value, v_$k) => {
     while (true) {
       {
         const __s = __eqInt32(v_n, v_zero);
         switch (__s[0]) {
           case 1: {
-            return v__apply_repeat(v__k, [13]);
+            return v_$apply$repeat(v_$k, [13]);
           }
           case 2: {
             {
               const __s = __predInt32(v_n);
               switch (__s[0]) {
                 case 3: {
-                  return v__apply_repeat(v__k, [13]);
+                  return v_$apply$repeat(v_$k, [13]);
                 }
                 case 4: {
                   const v_m = __s[1];
                   v_n = v_m;
-                  v__k = [16, v__k, v_value];
+                  v_$k = [16, v_$k, v_value];
                   continue;
                 }
               }
@@ -109,32 +109,32 @@
     }
   };
 
-  const v__apply_clone = (v__k, v__x) => {
+  const v_$apply$clone = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 17: {
-          return v__x;
+          return v_$x;
         }
         case 18: {
-          const v__pk_18 = v__k[1];
-          v__x = (v__k[0] = 14, v__k[1] = v__k[2], v__k[2] = v__x, v__k);
-          v__k = v__pk_18;
+          const v_$pk__18 = v_$k[1];
+          v_$x = (v_$k[0] = 14, v_$k[1] = v_$k[2], v_$k[2] = v_$x, v_$k);
+          v_$k = v_$pk__18;
           continue;
         }
       }
     }
   };
 
-  const v__cps_clone = (v_lst, v__k) => {
+  const v_$cps$clone = (v_lst, v_$k) => {
     while (true) {
       switch (v_lst[0]) {
         case 13: {
-          return v__apply_clone(v__k, v_lst);
+          return v_$apply$clone(v_$k, v_lst);
         }
         case 14: {
           const v_x = v_lst[1];
           const v_xs = v_lst[2];
-          v__k = [18, v__k, v_x];
+          v_$k = [18, v_$k, v_x];
           v_lst = v_xs;
           continue;
         }
@@ -160,7 +160,7 @@
                 case 4: {
                   const v_m = __s[1];
                   v_times = v_m;
-                  v_lst = v__cps_clone(v_lst, [17]);
+                  v_lst = v_$cps$clone(v_lst, [17]);
                   continue;
                 }
               }
@@ -175,7 +175,7 @@
     7,
     String(
       v_sumList(
-        v_cloneN(3000 | 0, v__cps_repeat(100000 | 0, 1 | 0, [15])),
+        v_cloneN(3000 | 0, v_$cps$repeat(100000 | 0, 1 | 0, [15])),
         v_zero
       )
     ),

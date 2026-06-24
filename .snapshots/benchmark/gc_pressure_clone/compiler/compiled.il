@@ -256,7 +256,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_repeat(object,object,object) cil managed
+  .method private hidebysig static object v_$cps$repeat(object,object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -283,7 +283,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__apply_repeat(object, object)
+    call object AwsumMain::v_$apply$repeat(object, object)
     ret
   IL_c0:
     pop
@@ -308,7 +308,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply_repeat(object, object)
+    call object AwsumMain::v_$apply$repeat(object, object)
     ret
   IL_c1:
     pop
@@ -342,7 +342,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_repeat(object,object) cil managed
+  .method private hidebysig static object v_$apply$repeat(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -391,7 +391,7 @@
   }
 
 
-  .method private hidebysig static object v__cps_clone(object,object) cil managed
+  .method private hidebysig static object v_$cps$clone(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2)
@@ -407,7 +407,7 @@
     pop
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__apply_clone(object, object)
+    call object AwsumMain::v_$apply$clone(object, object)
     ret
   IL_c0:
     pop
@@ -445,7 +445,7 @@
   }
 
 
-  .method private hidebysig static object v__apply_clone(object,object) cil managed
+  .method private hidebysig static object v_$apply$clone(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2)
@@ -545,7 +545,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__cps_clone(object, object)
+    call object AwsumMain::v_$cps$clone(object, object)
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -633,7 +633,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.1
-    call object AwsumMain::v__cps_repeat(object, object, object)
+    call object AwsumMain::v_$cps$repeat(object, object, object)
     call object AwsumMain::v_cloneN(object, object)
     call object AwsumMain::v_zero()
     call object AwsumMain::v_sumList(object, object)

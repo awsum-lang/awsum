@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (data (i32.const 113) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00ok")
   (table 3 funcref)
-  (elem (i32.const 0) $v_runIO $v_outerLoop $v__scc_stepA_stepB_stepC)
+  (elem (i32.const 0) $v_runIO $v_outerLoop $v_$scc$stepA__stepB__stepC)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -788,7 +788,7 @@
       local.get 2
     end)
 
-  (func $v__scc_stepA_stepB_stepC (param i32) (result i32)
+  (func $v_$scc$stepA__stepB__stepC (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

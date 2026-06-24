@@ -17,7 +17,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -25,15 +25,15 @@
     }
   };
 
-  const v__inl5_b = __eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0);
+  const v_$inl5$b = __eqUInt32(__lengthUtf8Bytes("x"), 9 >>> 0);
   const main = [
     7,
     (() => {
-      let v__inl4_scrut;
+      let v_$inl4$scrut;
       $join3: {
-        switch (v__inl5_b[0]) {
+        switch (v_$inl5$b[0]) {
           case 1: {
-            v__inl4_scrut = v__inl5_b;
+            v_$inl4$scrut = v_$inl5$b;
             break $join3;
           }
           case 2: {
@@ -41,7 +41,7 @@
           }
         }
       }
-      switch (v__inl4_scrut[0]) {
+      switch (v_$inl4$scrut[0]) {
         case 1: {
           return "yes";
         }

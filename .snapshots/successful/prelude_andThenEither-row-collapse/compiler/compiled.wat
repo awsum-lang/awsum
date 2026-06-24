@@ -44,7 +44,7 @@
   (data (i32.const 851) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00nevFail")
   (data (i32.const 878) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_tagged $v__cps__df_handleErrorIO_14 $v__apply__df_handleErrorIO_14 $v__cps__df_andThenIO_18 $v__apply__df_andThenIO_18)
+  (elem (i32.const 0) $v_runIO $v_tagged $v_$cps$$df$handleErrorIO$14 $v_$apply$$df$handleErrorIO$14 $v_$cps$$df$andThenIO$18 $v_$apply$$df$andThenIO$18)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -5748,7 +5748,7 @@
     local.get 0
     call 50)
 
-  (func $v__cps__df_handleErrorIO_14 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$14 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -5907,7 +5907,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_14 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$14 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -5973,7 +5973,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_18 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$18 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -6136,7 +6136,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_18 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$18 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

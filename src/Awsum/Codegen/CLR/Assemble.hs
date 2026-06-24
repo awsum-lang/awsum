@@ -19,15 +19,14 @@ module Awsum.Codegen.CLR.Assemble
 where
 
 import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxLocalsOf, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllBytesSpec, stdinReadAllSpec, strRef, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
-import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Relude
 
@@ -1701,13 +1700,3 @@ lkStr st t = fromMaybe 0 (Map.lookup t st.pStrC)
 
 lkBlob :: Pool -> [Word8] -> Word32
 lkBlob st sig = fromMaybe 0 (Map.lookup sig st.pBlobC)
-
--- ════════════════════════════════════════════════════════════════════════════
--- Name mangling
--- ════════════════════════════════════════════════════════════════════════════
-
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body

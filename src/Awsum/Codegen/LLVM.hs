@@ -37,6 +37,7 @@ module Awsum.Codegen.LLVM
 where
 
 import Awsum.Codegen.LLVM.Syntax
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Lifetime (elidableArmBinders)
@@ -4157,15 +4158,3 @@ emitExpr ctx = \case
           ]
     pure (innerInstrs <> bodyBlock <> afterBlock, VReg phiTmp)
   CJump j _ -> error ("LLVM codegen: CJump to " <> j <> " in non-tail position — jumps live only in tail positions of their join's inner expression")
-
--- ════════════════════════════════════════════════════════════════════════════
--- Name mangling
--- ════════════════════════════════════════════════════════════════════════════
-
--- | All names get @v_@ prefix (including @main@ → @v_main@),
---   because @\@main@ is the C entry point.
-mangle :: Text -> Text
-mangle t =
-  let ok c = Char.isAlphaNum c || c == '_' || c == '\''
-      body = T.map (\c -> if ok c then c else '_') t
-   in "v_" <> body

@@ -317,7 +317,7 @@ L_tarm7:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__scc__apply_mirror__cps_mirror(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_$scc$$apply$mirror__$cps$mirror(Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 6
   astore_1
@@ -463,7 +463,7 @@ L_join10:
 .end method
 
 
-.method static v__scc__apply_mirror__cps_mirror(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_$scc$$apply$mirror__$cps$mirror(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 8
 L_tco12:

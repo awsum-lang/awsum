@@ -19,6 +19,7 @@ module Awsum.Codegen.WASM.Assemble
   )
 where
 
+import Awsum.Codegen.Mangle (mangle)
 import Awsum.Codegen.WASM.Instr (BlockType (..), MemArg (..), ValType (..), WasmFunc (..), WasmInstr (..), addI32Spec, addU32Spec, addU8Spec, allocShapedSpec, allocSpec, boxI32Spec, byteToHexSpec, concatSpec, entryArgEitherSpec, eqI32Spec, eqStringSpec, freeRecursiveSpec, freeSpec, freeWorklistPushSpec, getArgsSpec, incRefSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, maxLocalsOf, memcmpSpec, memcpySpec, mulI32Spec, mulU32Spec, mulU8Spec, negI32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predI32Spec, predU32Spec, predU8Spec, printSpec, readStdinSpec, showI32Spec, showU32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subI32Spec, subU32Spec, subU8Spec, succI32Spec, succU32Spec, succU8Spec, utf16OfRangeSpec)
 import Awsum.Core
 import Data.Bits (shiftR, (.&.), (.|.))
@@ -2012,11 +2013,10 @@ emitTailArmChainI params depth ctx dispatchSlot scrutName pending freshScrutSlot
         <> emitTailArmChainI params (depth + 1) ctx dispatchSlot scrutName pending freshScrutSlots rest
         <> [End]
 
--- | The WAT label for a user declaration — mirrors the text codegen's @mangle@
---   (@v_@ prefix, non-identifier chars to @_@). Only the text projection
+-- | The WAT label for a user declaration. Only the text projection
 --   ('renderWat') consumes @wfName@; the binary ignores it.
 userFuncLabel :: Text -> Text
-userFuncLabel n = "v_" <> T.map (\c -> if Char.isAlphaNum c || c == '_' || c == '\'' then c else '_') n
+userFuncLabel = mangle
 
 -- | Builds a user declaration's 'WasmFunc' so both the binary and text
 --   projections derive from it. The body uses the '*I'

@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,8 +21,8 @@
     }
   };
 
-  const v__inl1_w = [24, "hello"];
-  const main = [7, v__inl1_w[1], [5, [0]]];
+  const v_$inl1$w = [24, "hello"];
+  const main = [7, v_$inl1$w[1], [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {

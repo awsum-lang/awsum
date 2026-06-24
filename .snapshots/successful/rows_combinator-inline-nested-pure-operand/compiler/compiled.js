@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -21,24 +21,24 @@
     }
   };
 
-  const v__inl6_x = [4, 7 | 0];
-  const v__inl13_r = (s => {
+  const v_$inl6$x = [4, 7 | 0];
+  const v_$inl13$r = (s => {
     switch (s[0]) {
       case 3: {
-        return v__inl6_x;
+        return v_$inl6$x;
       }
       case 4: {
         return [3, [365691641, [26]]];
       }
     }
-  })(v__inl6_x);
+  })(v_$inl6$x);
   const main = [
     7,
     (s => {
       switch (s[0]) {
         case 3: {
           {
-            const __s = v__inl13_r[1];
+            const __s = v_$inl13$r[1];
             switch (__s[0]) {
               case 365691641: {
                 return "C";
@@ -47,10 +47,10 @@
           }
         }
         case 4: {
-          return String(v__inl13_r[1]);
+          return String(v_$inl13$r[1]);
         }
       }
-    })(v__inl13_r),
+    })(v_$inl13$r),
     [5, [0]]
   ];
 

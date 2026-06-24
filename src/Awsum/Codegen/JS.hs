@@ -39,6 +39,7 @@ module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Codegen.JS.Syntax
+import Awsum.Codegen.Mangle qualified as Mangle
 import Awsum.Codegen.ReuseSchedule (ReuseStore (..), reuseSlotElided, scheduleReuse)
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -925,11 +926,9 @@ buildBuiltin name es = case name of
       [a, b] -> ECall (EVar fn) [a, b]
       _ -> error (fn <> ": arity mismatch")
 
--- | Name mangling: keep @main@ unchanged (needed by the runner); otherwise
---   prefix with @v_@ and replace any non @[A-Za-z0-9_']@ character with @_@.
+-- | Name mangling: keep @main@ unchanged (the runner calls it by name); every
+--   other identifier goes through the shared 'Mangle.mangle'.
 mangle :: Name -> Text
 mangle t
   | t == "main" = "main"
-  | otherwise = "v_" <> T.map (\c -> if ok c then c else '_') t
-  where
-    ok c = Char.isAlphaNum c || c == '_' || c == '\''
+  | otherwise = Mangle.mangle t

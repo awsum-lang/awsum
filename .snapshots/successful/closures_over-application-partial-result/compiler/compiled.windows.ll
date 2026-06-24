@@ -214,14 +214,14 @@ define internal ptr @v_main() {
   store ptr %t14, ptr %t15
   %t16 = getelementptr ptr, ptr %t6, i32 2
   store ptr %t13, ptr %t16
-  %t17 = call ptr @v__scc__apply1_applyOnce(ptr %t6)
+  %t17 = call ptr @v_$scc$$apply1__applyOnce(ptr %t6)
   %t18 = getelementptr ptr, ptr %t3, i32 1
   store ptr %t17, ptr %t18
   %t19 = call ptr @__alloc(i64 4, i32 0)
   store i32 7, ptr %t19
   %t20 = getelementptr ptr, ptr %t3, i32 2
   store ptr %t19, ptr %t20
-  %t21 = call ptr @v__scc__apply1_applyOnce(ptr %t3)
+  %t21 = call ptr @v_$scc$$apply1__applyOnce(ptr %t3)
   %t22 = call ptr @__showInt32(ptr %t21)
   %t23 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t22, ptr %t23
@@ -240,10 +240,10 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__scc__apply1_applyOnce(ptr %v__args) {
+define internal ptr @v_$scc$$apply1__applyOnce(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

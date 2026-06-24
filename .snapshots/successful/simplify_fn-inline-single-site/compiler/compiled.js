@@ -17,7 +17,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -25,7 +25,7 @@
     }
   };
 
-  const v__inl1_n = __lengthUtf8Bytes(String(-2000000000 | 0));
+  const v_$inl1$n = __lengthUtf8Bytes(String(-2000000000 | 0));
   const main = [
     7,
     (s => {
@@ -35,27 +35,27 @@
         }
         case 2: {
           {
-            const __s = __eqUInt32(v__inl1_n, 1 >>> 0);
+            const __s = __eqUInt32(v_$inl1$n, 1 >>> 0);
             switch (__s[0]) {
               case 1: {
                 return "one";
               }
               case 2: {
                 {
-                  const __s = __eqUInt32(v__inl1_n, 2 >>> 0);
+                  const __s = __eqUInt32(v_$inl1$n, 2 >>> 0);
                   switch (__s[0]) {
                     case 1: {
                       return "two";
                     }
                     case 2: {
                       {
-                        const __s = __eqUInt32(v__inl1_n, 11 >>> 0);
+                        const __s = __eqUInt32(v_$inl1$n, 11 >>> 0);
                         switch (__s[0]) {
                           case 1: {
                             return "eleven";
                           }
                           case 2: {
-                            return String(v__inl1_n);
+                            return String(v_$inl1$n);
                           }
                         }
                       }
@@ -67,7 +67,7 @@
           }
         }
       }
-    })(__eqUInt32(v__inl1_n, 0 >>> 0)),
+    })(__eqUInt32(v_$inl1$n, 0 >>> 0)),
     [5, [0]]
   ];
 

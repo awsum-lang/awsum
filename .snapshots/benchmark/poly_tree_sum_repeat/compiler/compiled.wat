@@ -13,7 +13,7 @@
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\09\00\00\00\09\00\00\00UNDERFLOW")
   (table 4 funcref)
-  (elem (i32.const 0) $v_runIO $v_buildLeft $v_repeatSum $v__scc__apply_sumTree__cps_sumTree)
+  (elem (i32.const 0) $v_runIO $v_buildLeft $v_repeatSum $v_$scc$$apply$sumTree__$cps$sumTree)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1138,7 +1138,7 @@
       local.get 2
     end)
 
-  (func $v__scc__apply_sumTree__cps_sumTree (param i32) (result i32)
+  (func $v_$scc$$apply$sumTree__$cps$sumTree (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

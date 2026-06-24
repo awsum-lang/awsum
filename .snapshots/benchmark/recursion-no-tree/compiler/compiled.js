@@ -19,7 +19,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -40,8 +40,8 @@
               const __s = __succInt32(v_acc);
               switch (__s[0]) {
                 case 3: {
-                  const v__do_e_3 = __s[1];
-                  return [3, [882564211, v__do_e_3]];
+                  const v_$do__e__3 = __s[1];
+                  return [3, [882564211, v_$do__e__3]];
                 }
                 case 4: {
                   const v_a = __s[1];
@@ -49,8 +49,8 @@
                     const __s = __predInt32(v_remaining);
                     switch (__s[0]) {
                       case 3: {
-                        const v__do_e_2 = __s[1];
-                        return [3, [3768445577, v__do_e_2]];
+                        const v_$do__e__2 = __s[1];
+                        return [3, [3768445577, v_$do__e__2]];
                       }
                       case 4: {
                         const v_r = __s[1];
@@ -69,12 +69,12 @@
     }
   };
 
-  const v__scc_spinA_spinB_spinC = v__args => {
+  const v_$scc$spinA__spinB__spinC = v_$args => {
     while (true) {
-      switch (v__args[0]) {
+      switch (v_$args[0]) {
         case 8: {
-          const v_remaining = v__args[1];
-          const v_acc = v__args[2];
+          const v_remaining = v_$args[1];
+          const v_acc = v_$args[2];
           {
             const __s = __eqInt32(v_remaining, 0 | 0);
             switch (__s[0]) {
@@ -86,8 +86,8 @@
                   const __s = __succInt32(v_acc);
                   switch (__s[0]) {
                     case 3: {
-                      const v__do_e_9 = __s[1];
-                      return [3, [882564211, v__do_e_9]];
+                      const v_$do__e__9 = __s[1];
+                      return [3, [882564211, v_$do__e__9]];
                     }
                     case 4: {
                       const v_a = __s[1];
@@ -95,12 +95,12 @@
                         const __s = __predInt32(v_remaining);
                         switch (__s[0]) {
                           case 3: {
-                            const v__do_e_8 = __s[1];
-                            return [3, [3768445577, v__do_e_8]];
+                            const v_$do__e__8 = __s[1];
+                            return [3, [3768445577, v_$do__e__8]];
                           }
                           case 4: {
                             const v_r = __s[1];
-                            v__args = (v__args[0] = 9, v__args[1] = v_r, v__args[2] = v_a, v__args);
+                            v_$args = (v_$args[0] = 9, v_$args[1] = v_r, v_$args[2] = v_a, v_$args);
                             continue;
                           }
                         }
@@ -113,8 +113,8 @@
           }
         }
         case 9: {
-          const v_remaining = v__args[1];
-          const v_acc = v__args[2];
+          const v_remaining = v_$args[1];
+          const v_acc = v_$args[2];
           {
             const __s = __eqInt32(v_remaining, 0 | 0);
             switch (__s[0]) {
@@ -126,8 +126,8 @@
                   const __s = __succInt32(v_acc);
                   switch (__s[0]) {
                     case 3: {
-                      const v__do_e_11 = __s[1];
-                      return [3, [882564211, v__do_e_11]];
+                      const v_$do__e__11 = __s[1];
+                      return [3, [882564211, v_$do__e__11]];
                     }
                     case 4: {
                       const v_a = __s[1];
@@ -135,12 +135,12 @@
                         const __s = __predInt32(v_remaining);
                         switch (__s[0]) {
                           case 3: {
-                            const v__do_e_10 = __s[1];
-                            return [3, [3768445577, v__do_e_10]];
+                            const v_$do__e__10 = __s[1];
+                            return [3, [3768445577, v_$do__e__10]];
                           }
                           case 4: {
                             const v_r = __s[1];
-                            v__args = (v__args[0] = 10, v__args[1] = v_r, v__args[2] = v_a, v__args);
+                            v_$args = (v_$args[0] = 10, v_$args[1] = v_r, v_$args[2] = v_a, v_$args);
                             continue;
                           }
                         }
@@ -153,8 +153,8 @@
           }
         }
         case 10: {
-          const v_remaining = v__args[1];
-          const v_acc = v__args[2];
+          const v_remaining = v_$args[1];
+          const v_acc = v_$args[2];
           {
             const __s = __eqInt32(v_remaining, 0 | 0);
             switch (__s[0]) {
@@ -166,8 +166,8 @@
                   const __s = __succInt32(v_acc);
                   switch (__s[0]) {
                     case 3: {
-                      const v__do_e_13 = __s[1];
-                      return [3, [882564211, v__do_e_13]];
+                      const v_$do__e__13 = __s[1];
+                      return [3, [882564211, v_$do__e__13]];
                     }
                     case 4: {
                       const v_a = __s[1];
@@ -175,12 +175,12 @@
                         const __s = __predInt32(v_remaining);
                         switch (__s[0]) {
                           case 3: {
-                            const v__do_e_12 = __s[1];
-                            return [3, [3768445577, v__do_e_12]];
+                            const v_$do__e__12 = __s[1];
+                            return [3, [3768445577, v_$do__e__12]];
                           }
                           case 4: {
                             const v_r = __s[1];
-                            v__args = (v__args[0] = 8, v__args[1] = v_r, v__args[2] = v_a, v__args);
+                            v_$args = (v_$args[0] = 8, v_$args[1] = v_r, v_$args[2] = v_a, v_$args);
                             continue;
                           }
                         }
@@ -196,37 +196,37 @@
     }
   };
 
-  const v__apply_descend = (v__k, v__x) => {
+  const v_$apply$descend = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 11: {
-          return v__x;
+          return v_$x;
         }
         case 12: {
-          const v__pk_12 = v__k[1];
-          switch (v__x[0]) {
+          const v_$pk__12 = v_$k[1];
+          switch (v_$x[0]) {
             case 3: {
-              v__k = v__pk_12;
+              v_$k = v_$pk__12;
               continue;
             }
             case 4: {
-              v__x = (() => {
-                const v__inl3___input = __succInt32(v__x[1]);
+              v_$x = (() => {
+                const v_$inl3$____input = __succInt32(v_$x[1]);
                 return (s => {
                   switch (s[0]) {
                     case 3: {
-                      return (v__k[0] = 3, v__k[1] = [
+                      return (v_$k[0] = 3, v_$k[1] = [
                         882564211,
-                        v__inl3___input[1]
-                      ], v__k);
+                        v_$inl3$____input[1]
+                      ], v_$k);
                     }
                     case 4: {
-                      return v__inl3___input;
+                      return v_$inl3$____input;
                     }
                   }
-                })(v__inl3___input);
+                })(v_$inl3$____input);
               })();
-              v__k = v__pk_12;
+              v_$k = v_$pk__12;
               continue;
             }
           }
@@ -235,26 +235,26 @@
     }
   };
 
-  const v__cps_descend = (v_n, v__k) => {
+  const v_$cps$descend = (v_n, v_$k) => {
     while (true) {
       {
         const __s = __eqInt32(v_n, 0 | 0);
         switch (__s[0]) {
           case 1: {
-            return v__apply_descend(v__k, [4, 0 | 0]);
+            return v_$apply$descend(v_$k, [4, 0 | 0]);
           }
           case 2: {
             {
               const __s = __predInt32(v_n);
               switch (__s[0]) {
                 case 3: {
-                  const v__do_e_7 = __s[1];
-                  return v__apply_descend(v__k, [3, [3768445577, v__do_e_7]]);
+                  const v_$do__e__7 = __s[1];
+                  return v_$apply$descend(v_$k, [3, [3768445577, v_$do__e__7]]);
                 }
                 case 4: {
                   const v_p = __s[1];
                   v_n = v_p;
-                  v__k = [12, v__k];
+                  v_$k = [12, v_$k];
                   continue;
                 }
               }
@@ -275,11 +275,11 @@
           }
           case 2: {
             {
-              const __s = v__cps_descend(v_depth, [11]);
+              const __s = v_$cps$descend(v_depth, [11]);
               switch (__s[0]) {
                 case 3: {
-                  const v__do_e_5 = __s[1];
-                  return [3, v__do_e_5];
+                  const v_$do__e__5 = __s[1];
+                  return [3, v_$do__e__5];
                 }
                 case 4: {
                   const v_d = __s[1];
@@ -287,8 +287,8 @@
                     const __s = __predInt32(v_rounds);
                     switch (__s[0]) {
                       case 3: {
-                        const v__do_e_4 = __s[1];
-                        return [3, [3768445577, v__do_e_4]];
+                        const v_$do__e__4 = __s[1];
+                        return [3, [3768445577, v_$do__e__4]];
                       }
                       case 4: {
                         const v_r = __s[1];
@@ -310,8 +310,8 @@
   const v_runDemo = (s => {
     switch (s[0]) {
       case 3: {
-        const v__do_e_1 = s[1];
-        return [3, v__do_e_1];
+        const v_$do__e__1 = s[1];
+        return [3, v_$do__e__1];
       }
       case 4: {
         const v_tailed = s[1];
@@ -319,12 +319,12 @@
           const __s = v_descendN(25 | 0, v_tailed);
           switch (__s[0]) {
             case 3: {
-              const v__do_e_0 = __s[1];
-              return [3, v__do_e_0];
+              const v_$do__e__0 = __s[1];
+              return [3, v_$do__e__0];
             }
             case 4: {
               const v_looped = __s[1];
-              return v__scc_spinA_spinB_spinC([8, v_looped, 0 | 0]);
+              return v_$scc$spinA__spinB__spinC([8, v_looped, 0 | 0]);
             }
           }
         }

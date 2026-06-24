@@ -308,7 +308,7 @@ define internal ptr @v_runTest() {
   %t5 = call ptr @v_block()
   %t6 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t5, ptr %t6
-  %t7 = call ptr @v__scc__df_andThenEither_0__lam_13_build(ptr %t0)
+  %t7 = call ptr @v_$scc$$df$andThenEither$0__$lam$13__build(ptr %t0)
   %t8 = getelementptr ptr, ptr %t7, i32 0
   %t9 = load ptr, ptr %t8
   %t10 = ptrtoint ptr %t9 to i64
@@ -395,10 +395,10 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__scc__df_andThenEither_0__lam_13_build(ptr %v__args) {
+define internal ptr @v_$scc$$df$andThenEither$0__$lam$13__build(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

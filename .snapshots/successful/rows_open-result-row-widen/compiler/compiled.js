@@ -13,7 +13,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -23,7 +23,7 @@
 
   const v_called = [3, [751576878, [26]]];
 
-  const v__inl3_r = v_called;
+  const v_$inl3$r = v_called;
   const main = [
     7,
     (s => {
@@ -32,10 +32,10 @@
           return "Z";
         }
         case 4: {
-          return String(v__inl3_r[1]);
+          return String(v_$inl3$r[1]);
         }
       }
-    })(v__inl3_r),
+    })(v_$inl3$r),
     [5, [0]]
   ];
 

@@ -385,7 +385,7 @@ tco.case.arm.4.21:
   store ptr %t29, ptr %t30
   %t31 = getelementptr ptr, ptr %t24, i32 2
   store ptr %t28, ptr %t31
-  %t32 = call ptr @v__scc__apply_mirror__cps_mirror(ptr %t24)
+  %t32 = call ptr @v_$scc$$apply$mirror__$cps$mirror(ptr %t24)
   call void @__free_recursive(ptr %t15)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
@@ -514,10 +514,10 @@ case.join.9:
   ret ptr %t45
 }
 
-define internal ptr @v__scc__apply_mirror__cps_mirror(ptr %v__args) {
+define internal ptr @v_$scc$$apply$mirror__$cps$mirror(ptr %v_$args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__args, ptr %t3
+  store ptr %v_$args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:

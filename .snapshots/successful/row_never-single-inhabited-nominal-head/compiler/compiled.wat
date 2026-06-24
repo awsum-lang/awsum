@@ -15,7 +15,7 @@
   (data (i32.const 108) "\00\00\00\00\00\00\00\00\00\00\00\00\05\00\00\00\05\00\00\00empty")
   (data (i32.const 133) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00ok")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__df_andThenIO_0 $v__apply__df_andThenIO_0 $v__cps__df_andThenIO_4 $v__apply__df_andThenIO_4 $v__cps__df_andThenIO_8 $v__apply__df_andThenIO_8)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$andThenIO$0 $v_$apply$$df$andThenIO$0 $v_$cps$$df$andThenIO$4 $v_$apply$$df$andThenIO$4 $v_$cps$$df$andThenIO$8 $v_$apply$$df$andThenIO$8)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -694,7 +694,7 @@
     local.get 0
     call 16)
 
-  (func $v__cps__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -880,7 +880,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -946,7 +946,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1124,7 +1124,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1190,7 +1190,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_8 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1360,7 +1360,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_8 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$8 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

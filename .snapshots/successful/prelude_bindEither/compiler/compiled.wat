@@ -16,7 +16,7 @@
   (data (i32.const 132) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00Ok ")
   (data (i32.const 155) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 5 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps__df_handleErrorIO_1 $v__apply__df_handleErrorIO_1 $v__cps__df_andThenIO_5 $v__apply__df_andThenIO_5)
+  (elem (i32.const 0) $v_runIO $v_$cps$$df$handleErrorIO$1 $v_$apply$$df$handleErrorIO$1 $v_$cps$$df$andThenIO$5 $v_$apply$$df$andThenIO$5)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -948,7 +948,7 @@
     local.get 0
     call 19)
 
-  (func $v__cps__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1107,7 +1107,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_1 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1173,7 +1173,7 @@
       end
     end)
 
-  (func $v__cps__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$cps$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1336,7 +1336,7 @@
       end
     end)
 
-  (func $v__apply__df_andThenIO_5 (param i32 i32) (result i32)
+  (func $v_$apply$$df$andThenIO$5 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

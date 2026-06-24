@@ -14,7 +14,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\08\00\00\00\08\00\00\00UNPAIRED")
   (data (i32.const 112) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 11 funcref)
-  (elem (i32.const 0) $v_runIO $v__cps_mklist $v__apply_mklist $v__cps_mkmb $v__apply_mkmb $v__cps__df_handleErrorIO_0 $v__apply__df_handleErrorIO_0 $v__cps__df__rowmono_0_andThenIO_4 $v__apply__df__rowmono_0_andThenIO_4 $v__cps__scc__apply1__df__lam_14_5__df__lam_9_1 $v__apply__scc__apply1__df__lam_14_5__df__lam_9_1)
+  (elem (i32.const 0) $v_runIO $v_$cps$mklist $v_$apply$mklist $v_$cps$mkmb $v_$apply$mkmb $v_$cps$$df$handleErrorIO$0 $v_$apply$$df$handleErrorIO$0 $v_$cps$$df$$rowmono$0$andThenIO$4 $v_$apply$$df$$rowmono$0$andThenIO$4 $v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1 $v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1)
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
@@ -1181,7 +1181,7 @@
       end
     end)
 
-  (func $v__cps_mklist (param i32 i32) (result i32)
+  (func $v_$cps$mklist (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1308,7 +1308,7 @@
       end
     end)
 
-  (func $v__apply_mklist (param i32 i32) (result i32)
+  (func $v_$apply$mklist (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1374,7 +1374,7 @@
       end
     end)
 
-  (func $v__cps_mkmb (param i32 i32) (result i32)
+  (func $v_$cps$mkmb (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1501,7 +1501,7 @@
       end
     end)
 
-  (func $v__apply_mkmb (param i32 i32) (result i32)
+  (func $v_$apply$mkmb (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1615,7 +1615,7 @@
     local.get 0
     call 25)
 
-  (func $v__cps__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$cps$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1874,7 +1874,7 @@
       end
     end)
 
-  (func $v__apply__df_handleErrorIO_0 (param i32 i32) (result i32)
+  (func $v_$apply$$df$handleErrorIO$0 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1940,7 +1940,7 @@
       end
     end)
 
-  (func $v__cps__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$cps$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2316,7 +2316,7 @@
       end
     end)
 
-  (func $v__apply__df__rowmono_0_andThenIO_4 (param i32 i32) (result i32)
+  (func $v_$apply$$df$$rowmono$0$andThenIO$4 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2382,7 +2382,7 @@
       end
     end)
 
-  (func $v__cps__scc__apply1__df__lam_14_5__df__lam_9_1 (param i32 i32) (result i32)
+  (func $v_$cps$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -2618,7 +2618,7 @@
       end
     end)
 
-  (func $v__apply__scc__apply1__df__lam_14_5__df__lam_9_1 (param i32 i32) (result i32)
+  (func $v_$apply$$scc$$apply1__$df$$lam$14$5__$df$$lam$9$1 (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

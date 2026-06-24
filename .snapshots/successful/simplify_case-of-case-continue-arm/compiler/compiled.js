@@ -20,7 +20,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -30,7 +30,7 @@
 
   const v_go = v_n => {
     while (true) {
-      let v__inl2_scrut;
+      let v_$inl2$scrut;
       $join1: {
         const __s = __eqUInt32(v_n, 0 >>> 0);
         switch (__s[0]) {
@@ -38,12 +38,12 @@
             return String(v_n);
           }
           case 2: {
-            v__inl2_scrut = __eqUInt32(v_n, 1 >>> 0);
+            v_$inl2$scrut = __eqUInt32(v_n, 1 >>> 0);
             break $join1;
           }
         }
       }
-      switch (v__inl2_scrut[0]) {
+      switch (v_$inl2$scrut[0]) {
         case 1: {
           return String(v_n);
         }

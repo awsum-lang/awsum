@@ -24,7 +24,7 @@
           return v_io[1];
         }
         case 7: {
-          const v__inl0_eff = __print(v_io[1]);
+          const v_$inl0$eff = __print(v_io[1]);
           v_io = v_io[2];
           continue;
         }
@@ -46,26 +46,26 @@
     ]
   ];
 
-  const v__apply_sumRow = (v__k, v__x) => {
+  const v_$apply$sumRow = (v_$k, v_$x) => {
     while (true) {
-      switch (v__k[0]) {
+      switch (v_$k[0]) {
         case 15: {
-          return v__x;
+          return v_$x;
         }
         case 16: {
-          const v__pk_16 = v__k[1];
+          const v_$pk__16 = v_$k[1];
           {
-            const __s = __addInt32(v__k[2], v__x);
+            const __s = __addInt32(v_$k[2], v_$x);
             switch (__s[0]) {
               case 3: {
-                v__k = v__pk_16;
-                v__x = 0 | 0;
+                v_$k = v_$pk__16;
+                v_$x = 0 | 0;
                 continue;
               }
               case 4: {
                 const v_r = __s[1];
-                v__k = v__pk_16;
-                v__x = v_r;
+                v_$k = v_$pk__16;
+                v_$x = v_r;
                 continue;
               }
             }
@@ -75,11 +75,11 @@
     }
   };
 
-  const v__cps_sumRow = (v_xs, v__k) => {
+  const v_$cps$sumRow = (v_xs, v_$k) => {
     while (true) {
       switch (v_xs[0]) {
         case 13: {
-          return v__apply_sumRow(v__k, 0 | 0);
+          return v_$apply$sumRow(v_$k, 0 | 0);
         }
         case 14: {
           const v_h = v_xs[1];
@@ -90,7 +90,7 @@
               continue;
             }
             case 2711245919: {
-              v__k = [16, v__k, v_h[1]];
+              v_$k = [16, v_$k, v_h[1]];
               v_xs = v_t;
               continue;
             }
@@ -100,7 +100,7 @@
     }
   };
 
-  const main = [7, String(v__cps_sumRow(v_mixed, [15])), [5, [0]]];
+  const main = [7, String(v_$cps$sumRow(v_mixed, [15])), [5, [0]]];
 
   if (typeof require !== "undefined" && require.main === module) {
     if (typeof main !== "undefined") {
