@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Awsum.ArbitraryInstances ()
+import Awsum.ClrMetadataWidthSpec qualified
 import Awsum.Codegen.JS.Syntax qualified as JS
 import Awsum.CoreSpec qualified
 import Awsum.ElaborateLower (elaborateLowerProgram)
@@ -54,6 +55,7 @@ main = do
     Awsum.StringLiteralCapSpec.spec
     Awsum.NameLimitsSpec.spec
     Awsum.JvmClassFileLimitSpec.spec
+    Awsum.ClrMetadataWidthSpec.spec
     Awsum.JvmFarBranchSpec.spec
     Awsum.LspSpec.spec
     jsSyntaxSpec

@@ -212,6 +212,7 @@ test-suite awsum-test
   main-is: Main.hs
   other-modules:
       Awsum.ArbitraryInstances
+      Awsum.ClrMetadataWidthSpec
       Awsum.CoreSpec
       Awsum.ErrorSnapshotsSpec
       Awsum.FormattingSnapshotsSpec
