@@ -1,0 +1,40 @@
+{- A map over `Maybe` applies a row-widening function (`Bool` into
+   `(Bool | Unit)`) to the held value. The input shape comes from argv,
+   so the map runs at runtime rather than being folded away. Prints
+   `just-bool`. -}
+
+import IO.Stdout
+import IO.Args
+
+inject : Bool -> (Bool | Unit)
+inject b = b
+
+mapMaybe2 : (a -> b) -> Maybe a -> Maybe b
+mapMaybe2 f m = case m of
+  Nothing -> Nothing
+  Just a -> Just (f a)
+
+build : List String -> Maybe Bool
+build args = case headList args of
+  Nothing -> Nothing
+  Just _s -> Just True
+
+describe : Maybe (Bool | Unit) -> String
+describe m = case m of
+  Nothing -> "nothing"
+  Just bu -> case bu of
+    (_x : Bool) -> "just-bool"
+    (_u : Unit) -> "just-unit"
+
+run2 : List String -> IO Never Unit
+run2 args = IO.Stdout.print (describe (mapMaybe2 inject (build args)))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError

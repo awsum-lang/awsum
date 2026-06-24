@@ -1,0 +1,48 @@
+{- Mapping over a constructor whose field is a function (`Fn (Int32 -> a)`)
+   composes a row-widening function (`Bool` into `(Bool | Unit)`) onto the
+   result of the stored function. The input shape comes from argv, so the
+   map runs at runtime; applying the mapped function prints `bool`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Fn a = Fn (Int32 -> a)
+
+inject : Bool -> (Bool | Unit)
+inject b = b
+
+mapFn : (a -> b) -> Fn a -> Fn b
+mapFn f fn = case fn of
+  Fn g -> Fn (\x -> f (g x))
+
+applyFn : Fn a -> Int32 -> a
+applyFn fn x = case fn of
+  Fn g -> g x
+
+constFn : Bool -> Fn Bool
+constFn b = Fn (\_x -> b)
+
+build : List String -> Fn Bool
+build args = case headList args of
+  Nothing -> constFn True
+  Just _s -> constFn False
+
+describe : (Bool | Unit) -> String
+describe bu = case bu of
+  (_x : Bool) -> "bool"
+  (_u : Unit) -> "unit"
+
+run2 : List String -> IO Never Unit
+run2 args =
+  let fn = mapFn inject (build args)
+   in IO.Stdout.print (describe (applyFn fn 0))
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run2
+  |> handleErrorIO onError
