@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":1,"startCol":1,"endLine":1,"endCol":1,"message":"row widening through a non-regular recursive type is unsupported for a field of shape (a->Bool)","fixes":[]}]
+[{"severity":"error","startLine":8,"startCol":24,"endLine":8,"endCol":35,"message":"row widening through a non-regular recursive type is unsupported for a field of shape (a->Bool)","fixes":[]}]

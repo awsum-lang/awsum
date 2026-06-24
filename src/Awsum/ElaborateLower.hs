@@ -1291,7 +1291,7 @@ saturateExpr am locals = go
         then
           lift
             $ Left
-            $ TELowering
+            $ TELowering Nothing
             $ "internal: saturate observed a partial application with "
             <> "local captures after defunctionalisation — captured "
             <> T.intercalate ", " (toList freeInArgs)
@@ -1416,7 +1416,7 @@ lowerTExpr env locals = \case
     TyCon _ "Int32" -> pure (CIntLit n TInt32)
     TyCon _ "UInt8" -> pure (CIntLit n TUInt8)
     TyCon _ "UInt32" -> pure (CIntLit n TUInt32)
-    _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type: " <> canonicalLabel ty))
+    _ -> liftEither $ Left (TELowering Nothing ("integer literal without a known numeric type: " <> canonicalLabel ty))
   TLit _ _ (LString t) -> pure (CString t)
   TBuiltIn _ ty name -> pure $ case ty of
     TyArrow {} -> CBuiltIn name
@@ -1425,7 +1425,7 @@ lowerTExpr env locals = \case
     Just ci
       | ciArity ci == 0 -> pure (CCon (ciTag ci) [])
       | otherwise -> pure (CVar (conWrapperName name))
-    Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
+    Nothing -> liftEither $ Left (TELowering Nothing ("unknown constructor: " <> name))
   -- Spines are flat after 'monomorphizeRows', so the head is never a
   -- 'TApp'. A 'TBuiltIn' head lowers to 'CBuiltIn' (a valid 'CCall'
   -- callee), so no special case is needed there. A /saturated/
@@ -1557,7 +1557,7 @@ lowerLetT env locals pat rhs body = do
     TPWild _ t -> do
       nm <- freshLetWildName
       pure (nm, t)
-    _ -> liftEither $ Left (TELowering "non-PVar let-binding should have been desugared by Awsum.Desugar")
+    _ -> liftEither $ Left (TELowering Nothing "non-PVar let-binding should have been desugared by Awsum.Desugar")
   let captures = Set.toAscList ((freeReferencesT body `Set.intersection` locals) `Set.difference` Set.singleton n)
       captureTypes =
         [ fromMaybe (TyVar noSpan "_capture") (leTypeOf env (QName [] c))
@@ -1583,7 +1583,7 @@ lowerLetT env locals pat rhs body = do
 lowerTAltM :: LowerEnv -> Locals -> TAlt -> LowerM (Int, [Name], CExpr)
 lowerTAltM env locals (TAlt pat body) = case pat of
   TPCon _ tyMatched cName subTPats -> do
-    ci <- liftEither $ maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
+    ci <- liftEither $ maybeToRight (TELowering Nothing ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
     let subPats = map tpatternToPattern subTPats
         tag = ciTag ci
         patBinders = collectPatternBindings (leConInfo env) ci (Just tyMatched) subPats
@@ -1596,7 +1596,7 @@ lowerTAltM env locals (TAlt pat body) = case pat of
     body' <- lowerTExpr env' locals' body
     (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" (0 :: Int) (zip subPats fieldTys) body'
     pure (tag, topVars, wrappedBody)
-  _ -> liftEither $ Left (TELowering "only constructor patterns are supported in case")
+  _ -> liftEither $ Left (TELowering Nothing "only constructor patterns are supported in case")
 
 -- | Lower the arms of a row-case into the @(rowTag, binder, body)@ shape
 --   'CRowCase' consumes, merging constructor arms that target the same
@@ -1611,7 +1611,7 @@ buildRowAltsT env locals alts = do
   where
     fstOf3 (a, _, _) = a
     buildOne :: [(Word32, Type', RowArmShape)] -> LowerM (Word32, Name, CExpr)
-    buildOne [] = liftEither $ Left (TELowering "buildRowAltsT: empty group (unreachable)")
+    buildOne [] = liftEither $ Left (TELowering Nothing "buildRowAltsT: empty group (unreachable)")
     buildOne g = case findCollidingLabels g of
       Just (l1, l2, tag) ->
         liftEither $ Left (RowTagCollision l1 l2 tag (tyConDeclSpan (leTypeDeclSpans env) l2))
@@ -1623,7 +1623,7 @@ buildRowAltsT env locals alts = do
           let var = "__rw" :: Name
           pure (tag, var, CCase (CVar var) merged)
         ((_, _, AscribeShape _ _) : _ : _) ->
-          liftEither $ Left (TELowering "row case has duplicate PAscribe arms for the same label (typechecker should have rejected this as DuplicateRowArm)")
+          liftEither $ Left (TELowering Nothing "row case has duplicate PAscribe arms for the same label (typechecker should have rejected this as DuplicateRowArm)")
     findCollidingLabels :: [(Word32, Type', RowArmShape)] -> Maybe (Type', Type', Word32)
     findCollidingLabels [] = Nothing
     findCollidingLabels ((tag, l0, _) : rest) =
@@ -1646,7 +1646,7 @@ lowerRowArmT env locals (TRowAlt label pat body) = case pat of
   TPCon _ _ cName innerTPats -> do
     ci <-
       liftEither
-        $ maybeToRight (TELowering ("unknown constructor in row pattern: " <> cName)) (M.lookup cName (leConInfo env))
+        $ maybeToRight (TELowering Nothing ("unknown constructor in row pattern: " <> cName)) (M.lookup cName (leConInfo env))
     let innerPats = map tpatternToPattern innerTPats
         subst =
           let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
@@ -1659,7 +1659,7 @@ lowerRowArmT env locals (TRowAlt label pat body) = case pat of
     (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" (0 :: Int) (zip innerPats fieldTys) body'
     tag <- recordRowTag label
     pure (tag, label, ConShape (ciTag ci) topVars wrappedBody)
-  _ -> liftEither $ Left (TELowering "row-case arm must be an ascription or constructor pattern")
+  _ -> liftEither $ Left (TELowering Nothing "row-case arm must be an ascription or constructor pattern")
 
 -- | Build the un-substituted result type for a constructor: e.g.
 --   @applyTyParams "Either" ["a", "b"] = TyApp (TyApp (TyCon "Either") (TyVar "a")) (TyVar "b")@.
@@ -1764,6 +1764,7 @@ synthCoerce conInfo src tgt@(TyOr {}) =
       liftEither
         $ Left
           ( TELowering
+              (loweringSpan src)
               ( "synthCoerce: no row label in "
                   <> canonicalLabel tgt
                   <> " accepts "
@@ -1802,6 +1803,7 @@ synthCoerce _conInfo src@(TyArrow _ srcA _srcB) (TyArrow _ tgtA _tgtB)
       liftEither
         $ Left
           ( TELowering
+              (loweringSpan src)
               ( "row widening through a function field of shape "
                   <> canonicalLabel src
                   <> " is unsupported: the parameter occurs in a contravariant (argument) position"
@@ -1824,6 +1826,7 @@ synthCoerce _ src tgt =
   liftEither
     $ Left
       ( TELowering
+          (loweringSpan src)
           ( "synthCoerce: incompatible shapes "
               <> canonicalLabel src
               <> " ≁ "
@@ -2071,10 +2074,22 @@ rejectFieldShape fty =
   liftEither
     $ Left
       ( TELowering
+          (loweringSpan fty)
           ( "row widening through a non-regular recursive type is unsupported for a field of shape "
               <> canonicalLabel fty
           )
       )
+
+-- | The source span of a type, or 'Nothing' when it is the synthetic
+--   all-zero span ('Eq SrcSpan' is position-blind, so the zero test compares
+--   the underlying ints). A lowering diagnostic points at the offending type
+--   when one is carried, and falls back to file-start otherwise.
+loweringSpan :: Type' -> Maybe SrcSpan
+loweringSpan ty =
+  let sp = typeSpan ty
+   in if spanStartLine sp == 0 && spanStartCol sp == 0 && spanEndLine sp == 0 && spanEndCol sp == 0
+        then Nothing
+        else Just sp
 
 -- | Coerce @T A.. → T B..@ for a non-regular head by applying the derived
 --   map to the per-parameter element coercions (identity slots reuse
@@ -2322,7 +2337,7 @@ mergeRowAlts alts = concat <$> traverse mergeRowGroup (groupByTag alts)
 --   coincide). A mismatched shape is the forbidden partial-catch-all
 --   rejected upstream (see 'mergeAlts').
 mergeBodies :: [CExpr] -> LowerM CExpr
-mergeBodies [] = liftEither $ Left (TELowering "mergeBodies: empty group (unreachable)")
+mergeBodies [] = liftEither $ Left (TELowering Nothing "mergeBodies: empty group (unreachable)")
 mergeBodies [body] = pure body
 mergeBodies (body0 : rest) = case body0 of
   CCase (CVar scrutVar) innerAlts -> do
@@ -2331,12 +2346,12 @@ mergeBodies (body0 : rest) = case body0 of
   CRowCase (CVar scrutVar) innerAlts -> do
     allInnerAlts <- foldM collectRow innerAlts rest
     CRowCase (CVar scrutVar) <$> mergeRowAlts allInnerAlts
-  _ -> liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+  _ -> liftEither $ Left (TELowering Nothing "conflicting pattern shapes in merge")
   where
     collectCase acc (CCase (CVar _) innerAlts) = pure (acc <> innerAlts)
-    collectCase _ _ = liftEither $ Left (TELowering "conflicting pattern shapes in merge")
+    collectCase _ _ = liftEither $ Left (TELowering Nothing "conflicting pattern shapes in merge")
     collectRow acc (CRowCase (CVar _) innerAlts) = pure (acc <> innerAlts)
-    collectRow _ _ = liftEither $ Left (TELowering "conflicting row-case shapes in merge")
+    collectRow _ _ = liftEither $ Left (TELowering Nothing "conflicting row-case shapes in merge")
 
 -- | Reconcile the field-binder lists of arms being merged. When every arm
 --   already uses the same binders (the common case — deterministic
@@ -2462,7 +2477,7 @@ ascribeInner conInfo prefix idx other body = do
   (vars, wrappedBody) <- desugarPatsM conInfo innerPrefix 0 [(other, Nothing)] body
   case vars of
     [v] -> pure (v, wrappedBody)
-    _ -> liftEither $ Left (TELowering "ascribeInner: nested pattern produced unexpected binders")
+    _ -> liftEither $ Left (TELowering Nothing "ascribeInner: nested pattern produced unexpected binders")
 
 -- | When a 'PCon' field pattern's field type is a structural sum and the
 --   constructor belongs to one of its labels (a nominal type appearing as
@@ -2526,7 +2541,7 @@ lowerVar env q@(QName mods n) =
           Right (saturateBuiltIn (prettyQName mods n) t)
     _ ->
       Left
-        $ TELowering
+        $ TELowering Nothing
         $ "unsupported qualified name: "
         <> prettyQName mods n
   where

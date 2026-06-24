@@ -351,6 +351,7 @@ generateSpec specName origName slotClosures = do
       lift
         $ Left
         $ TELowering
+          Nothing
           ( "defunctionalize: cannot specialise a non-function declaration "
               <> origName
           )
@@ -358,4 +359,5 @@ generateSpec specName origName slotClosures = do
       lift
         $ Left
         $ TELowering
+          Nothing
           ("defunctionalize: missing declaration for " <> origName)
