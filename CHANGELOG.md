@@ -8,6 +8,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Changed
+
+- **Typechecking a wide structural-error row is a constant factor faster.** Row subsumption (`rowSubsume`) skips the set-semantic dedup when matching a value into a wider row — the dedup's `Ord Type'` comparisons dominated checking a `do`-block whose every `<-` step carries a distinct error type. Output and diagnostics are unchanged; the check stays quadratic in the row width (closing that asymptotically needs cross-call caching the stateless typecheck monad can't currently host).
+
 ### Fixed
 
 - **Identifiers with an apostrophe (`xs'`, `f'`) now compile identically on all five backends.** They previously passed through to the generated LLVM IR and JavaScript verbatim — an artifact `clang` / `node` rejected, while JVM/CLR/WASM accepted it, with `build` still exiting 0. The codegen name-mangler — now a single `Awsum.Codegen.Mangle` shared by every backend, replacing six divergent copies — escapes the apostrophe injectively into ASCII on every target.
