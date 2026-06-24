@@ -1550,6 +1550,8 @@
                     i32.const 1
                     i32.eq
                     if (result i32)
+                      local.get 4
+                      call 13
                       local.get 0
                       i32.load offset=4
                       call 13
@@ -1570,8 +1572,6 @@
                       i32.store offset=8
                       local.get 0
                       local.set 5
-                      local.get 4
-                      call 13
                       local.get 3
                       call 13
                       local.get 2
@@ -1582,6 +1582,8 @@
                       local.set 0
                       br 8
                     else
+                      local.get 4
+                      call 13
                       local.get 0
                       i32.load offset=4
                       call 13
@@ -1602,8 +1604,6 @@
                       i32.store offset=8
                       local.get 0
                       local.set 5
-                      local.get 4
-                      call 13
                       local.get 3
                       call 13
                       local.get 2

@@ -824,9 +824,9 @@
       i32.const 882564211
       i32.eq
       if (result i32)
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 96
           i32.const 121
           call 7
@@ -836,9 +836,9 @@
           local.get 4
         end
       else
+        local.get 2
+        call 14
         block (result i32)
-          local.get 2
-          call 14
           i32.const 96
           i32.const 154
           call 7

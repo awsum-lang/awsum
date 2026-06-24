@@ -584,6 +584,7 @@ case.arm.3.5:
   %t6 = getelementptr ptr, ptr %t0, i32 1
   %t7 = load ptr, ptr %t6
   call void @__inc_ref(ptr %t7)
+  call void @__free_recursive(ptr %t0)
   %t8 = call ptr @__alloc(i64 16, i32 1)
   %t9 = inttoptr i64 3 to ptr
   %t10 = getelementptr ptr, ptr %t8, i32 0
@@ -591,7 +592,6 @@ case.arm.3.5:
   call void @__inc_ref(ptr %t7)
   %t11 = getelementptr ptr, ptr %t8, i32 1
   store ptr %t7, ptr %t11
-  call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %v_label)
   call void @__free_recursive(ptr %v_val)
@@ -600,6 +600,7 @@ case.arm.4.12:
   %t13 = getelementptr ptr, ptr %t0, i32 1
   %t14 = load ptr, ptr %t13
   call void @__inc_ref(ptr %t14)
+  call void @__free_recursive(ptr %t0)
   call void @__inc_ref(ptr %t14)
   call void @__inc_ref(ptr %v_val)
   %t15 = call ptr @__concat(ptr %t14, ptr %v_val)
@@ -611,6 +612,7 @@ case.arm.3.20:
   %t21 = getelementptr ptr, ptr %t15, i32 1
   %t22 = load ptr, ptr %t21
   call void @__inc_ref(ptr %t22)
+  call void @__free_recursive(ptr %t15)
   %t23 = call ptr @__alloc(i64 16, i32 1)
   %t24 = inttoptr i64 3 to ptr
   %t25 = getelementptr ptr, ptr %t23, i32 0
@@ -618,8 +620,6 @@ case.arm.3.20:
   call void @__inc_ref(ptr %t22)
   %t26 = getelementptr ptr, ptr %t23, i32 1
   store ptr %t22, ptr %t26
-  call void @__free_recursive(ptr %t15)
-  call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t22)
   call void @__free_recursive(ptr %t14)
   call void @__free_recursive(ptr %v_label)
@@ -629,10 +629,9 @@ case.arm.4.27:
   %t28 = getelementptr ptr, ptr %t15, i32 1
   %t29 = load ptr, ptr %t28
   call void @__inc_ref(ptr %t29)
+  call void @__free_recursive(ptr %t15)
   call void @__inc_ref(ptr %t29)
   %t30 = call ptr @__concat(ptr %t29, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
-  call void @__free_recursive(ptr %t15)
-  call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t29)
   call void @__free_recursive(ptr %t14)
   call void @__free_recursive(ptr %v_label)

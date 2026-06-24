@@ -804,9 +804,9 @@
     i32.const 25
     i32.eq
     if (result i32)
+      local.get 2
+      call 14
       block (result i32)
-        local.get 2
-        call 14
         local.get 1
         local.tee 3
         call 13
@@ -824,6 +824,8 @@
         local.get 3
       end
     else
+      local.get 2
+      call 14
       local.get 1
       local.tee 3
       call 13
@@ -844,11 +846,9 @@
         local.set 4
         local.get 4
         call 13
+        local.get 3
+        call 14
         block (result i32)
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           i32.const 8
           i32.const 1
           call 12
@@ -878,11 +878,9 @@
         local.set 4
         local.get 4
         call 13
+        local.get 3
+        call 14
         block (result i32)
-          local.get 2
-          call 14
-          local.get 3
-          call 14
           local.get 4
           local.tee 5
           call 13

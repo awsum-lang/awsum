@@ -2760,9 +2760,9 @@
       local.set 3
       local.get 3
       call 12
+      local.get 2
+      call 13
       block (result i32)
-        local.get 2
-        call 13
         i32.const 8
         i32.const 1
         call 11
@@ -2792,6 +2792,8 @@
       local.set 3
       local.get 3
       call 12
+      local.get 2
+      call 13
       local.get 3
       local.tee 4
       call 12
@@ -2812,11 +2814,9 @@
         local.set 5
         local.get 5
         call 12
+        local.get 4
+        call 13
         block (result i32)
-          local.get 2
-          call 13
-          local.get 4
-          call 13
           i32.const 8
           i32.const 1
           call 11
@@ -2848,11 +2848,9 @@
         local.set 5
         local.get 5
         call 12
+        local.get 4
+        call 13
         block (result i32)
-          local.get 2
-          call 13
-          local.get 4
-          call 13
           local.get 5
           local.tee 6
           call 12

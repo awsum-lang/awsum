@@ -504,6 +504,7 @@ case.arm.1.7:
   call void @__free_recursive(ptr %v_k)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
 case.arm.2.8:
+  call void @__free_recursive(ptr %t2)
   call void @__inc_ref(ptr %v_k)
   %t9 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t9
@@ -558,7 +559,6 @@ case.default.14:
 case.join.15:
   %t41 = phi ptr [ %t18, %case.end.1.17 ], [ %t40, %case.end.2.22 ]
   call void @__free_recursive(ptr %t10)
-  call void @__free_recursive(ptr %t2)
   store ptr %t41, ptr %v_$inl1$scrut.jslot
   br label %join.0
 case.default.6:

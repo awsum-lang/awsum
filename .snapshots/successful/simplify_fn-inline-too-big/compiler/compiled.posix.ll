@@ -245,6 +245,7 @@ case.arm.1.6:
   call void @__free_recursive(ptr %v_n)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
 case.arm.2.7:
+  call void @__free_recursive(ptr %t1)
   call void @__inc_ref(ptr %v_n)
   %t8 = call ptr @__alloc(i64 4, i32 0)
   store i32 1, ptr %t8
@@ -255,10 +256,10 @@ case.arm.2.7:
   switch i64 %t12, label %case.default.13 [ i64 1, label %case.arm.1.14 i64 2, label %case.arm.2.15 ]
 case.arm.1.14:
   call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr getelementptr inbounds (i8, ptr @.str.1, i64 12)
 case.arm.2.15:
+  call void @__free_recursive(ptr %t9)
   call void @__inc_ref(ptr %v_n)
   %t16 = call ptr @__alloc(i64 4, i32 0)
   store i32 2, ptr %t16
@@ -269,11 +270,10 @@ case.arm.2.15:
   switch i64 %t20, label %case.default.21 [ i64 1, label %case.arm.1.22 i64 2, label %case.arm.2.23 ]
 case.arm.1.22:
   call void @__free_recursive(ptr %t17)
-  call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr getelementptr inbounds (i8, ptr @.str.2, i64 12)
 case.arm.2.23:
+  call void @__free_recursive(ptr %t17)
   call void @__inc_ref(ptr %v_n)
   %t24 = call ptr @__alloc(i64 4, i32 0)
   store i32 11, ptr %t24
@@ -284,18 +284,12 @@ case.arm.2.23:
   switch i64 %t28, label %case.default.29 [ i64 1, label %case.arm.1.30 i64 2, label %case.arm.2.31 ]
 case.arm.1.30:
   call void @__free_recursive(ptr %t25)
-  call void @__free_recursive(ptr %t17)
-  call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr getelementptr inbounds (i8, ptr @.str.3, i64 12)
 case.arm.2.31:
+  call void @__free_recursive(ptr %t25)
   call void @__inc_ref(ptr %v_n)
   %t32 = call ptr @__showUInt32(ptr %v_n)
-  call void @__free_recursive(ptr %t25)
-  call void @__free_recursive(ptr %t17)
-  call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr %t32
 case.default.29:

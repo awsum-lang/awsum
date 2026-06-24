@@ -255,18 +255,18 @@ tco.loop.0:
   %t10 = ptrtoint ptr %t9 to i64
   switch i64 %t10, label %tco.case.default.11 [ i64 1, label %tco.case.arm.1.12 i64 2, label %tco.case.arm.2.14 ]
 tco.case.arm.1.12:
+  call void @__free_recursive(ptr %t7)
   call void @__inc_ref(ptr %t4)
   %t13 = call ptr @__showUInt32(ptr %t4)
-  call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t4)
   store ptr %t13, ptr %t2
   br label %tco.exit.1
 tco.case.arm.2.14:
+  call void @__free_recursive(ptr %t7)
   call void @__inc_ref(ptr %t4)
   %t15 = call ptr @__alloc(i64 4, i32 0)
   store i32 1, ptr %t15
   %t16 = call ptr @__eqUInt32(ptr %t4, ptr %t15)
-  call void @__free_recursive(ptr %t7)
   store ptr %t16, ptr %v_$inl2$scrut.jslot
   br label %join.5
 tco.case.default.11:

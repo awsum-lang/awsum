@@ -309,6 +309,7 @@ tco.loop.0:
   %t11 = ptrtoint ptr %t10 to i64
   switch i64 %t11, label %tco.case.default.12 [ i64 1, label %tco.case.arm.1.13 i64 2, label %tco.case.arm.2.20 ]
 tco.case.arm.1.13:
+  call void @__free_recursive(ptr %t8)
   call void @__inc_ref(ptr %t6)
   %t14 = call ptr @__alloc(i64 16, i32 1)
   %t15 = inttoptr i64 4 to ptr
@@ -319,12 +320,12 @@ tco.case.arm.1.13:
   %t18 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t17, ptr %t18
   %t19 = call ptr @v_$apply$countDown(ptr %t6, ptr %t14)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
   store ptr %t19, ptr %t2
   br label %tco.exit.1
 tco.case.arm.2.20:
+  call void @__free_recursive(ptr %t8)
   call void @__inc_ref(ptr %t5)
   %t21 = call ptr @__predInt32(ptr %t5)
   %t22 = getelementptr ptr, ptr %t21, i32 0
@@ -335,6 +336,7 @@ tco.case.arm.3.26:
   %t27 = getelementptr ptr, ptr %t21, i32 1
   %t28 = load ptr, ptr %t27
   call void @__inc_ref(ptr %t28)
+  call void @__free_recursive(ptr %t21)
   call void @__inc_ref(ptr %t6)
   %t29 = call ptr @__alloc(i64 16, i32 1)
   %t30 = inttoptr i64 3 to ptr
@@ -344,8 +346,6 @@ tco.case.arm.3.26:
   %t32 = getelementptr ptr, ptr %t29, i32 1
   store ptr %t28, ptr %t32
   %t33 = call ptr @v_$apply$countDown(ptr %t6, ptr %t29)
-  call void @__free_recursive(ptr %t21)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t28)
   call void @__free_recursive(ptr %t5)
   call void @__free_recursive(ptr %t6)
@@ -355,6 +355,7 @@ tco.case.arm.4.34:
   %t35 = getelementptr ptr, ptr %t21, i32 1
   %t36 = load ptr, ptr %t35
   call void @__inc_ref(ptr %t36)
+  call void @__free_recursive(ptr %t21)
   %t37 = call ptr @__alloc(i64 16, i32 1)
   %t38 = inttoptr i64 21 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
@@ -362,8 +363,6 @@ tco.case.arm.4.34:
   call void @__inc_ref(ptr %t6)
   %t40 = getelementptr ptr, ptr %t37, i32 1
   store ptr %t6, ptr %t40
-  call void @__free_recursive(ptr %t21)
-  call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
   store ptr %t36, ptr %t3

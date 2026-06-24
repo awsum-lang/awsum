@@ -786,9 +786,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 15
         block (result i32)
-          local.get 2
-          call 15
           local.get 1
           local.set 3
           local.get 0
@@ -796,6 +796,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 15
         local.get 0
         local.tee 3
         call 14
@@ -807,11 +809,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 3
+          call 15
           block (result i32)
-            local.get 2
-            call 15
-            local.get 3
-            call 15
             local.get 1
             local.set 5
             local.get 0
@@ -824,6 +824,8 @@
           local.set 4
           local.get 4
           call 14
+          local.get 3
+          call 15
           local.get 4
           local.set 5
           i32.const 16
@@ -865,10 +867,6 @@
           i32.store offset=12
           local.get 7
           local.set 6
-          local.get 2
-          call 15
-          local.get 3
-          call 15
           local.get 1
           call 15
           local.get 0
@@ -1074,6 +1072,8 @@
             i32.const 3
             i32.eq
             if (result i32)
+              local.get 6
+              call 15
               local.get 0
               i32.load offset=4
               call 15
@@ -1095,8 +1095,6 @@
               i32.store offset=8
               local.get 0
               local.set 8
-              local.get 6
-              call 15
               local.get 3
               call 15
               local.get 2
@@ -1112,6 +1110,8 @@
               local.set 7
               local.get 7
               call 14
+              local.get 6
+              call 15
               local.get 7
               local.tee 8
               call 14
@@ -1128,6 +1128,8 @@
               i32.const 3
               i32.eq
               if (result i32)
+                local.get 8
+                call 15
                 local.get 0
                 i32.load offset=4
                 call 15
@@ -1149,10 +1151,6 @@
                 i32.store offset=8
                 local.get 0
                 local.set 10
-                local.get 6
-                call 15
-                local.get 8
-                call 15
                 local.get 7
                 call 15
                 local.get 3
@@ -1170,6 +1168,8 @@
                 local.set 9
                 local.get 9
                 call 14
+                local.get 8
+                call 15
                 local.get 0
                 i32.load offset=4
                 call 15
@@ -1193,10 +1193,6 @@
                 call 14
                 local.get 0
                 local.set 10
-                local.get 6
-                call 15
-                local.get 8
-                call 15
                 local.get 9
                 call 15
                 local.get 7

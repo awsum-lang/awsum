@@ -736,9 +736,9 @@
     i32.const 1
     i32.eq
     if (result i32)
+      local.get 1
+      call 15
       block (result i32)
-        local.get 1
-        call 15
         i32.const 96
         local.set 2
         local.get 0
@@ -746,6 +746,8 @@
         local.get 2
       end
     else
+      local.get 1
+      call 15
       local.get 0
       local.tee 2
       call 14
@@ -759,11 +761,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 15
         block (result i32)
-          local.get 1
-          call 15
-          local.get 2
-          call 15
           i32.const 120
           local.set 3
           local.get 0
@@ -771,6 +771,8 @@
           local.get 3
         end
       else
+        local.get 2
+        call 15
         local.get 0
         local.tee 3
         call 14
@@ -784,13 +786,9 @@
         i32.const 1
         i32.eq
         if (result i32)
+          local.get 3
+          call 15
           block (result i32)
-            local.get 1
-            call 15
-            local.get 2
-            call 15
-            local.get 3
-            call 15
             i32.const 143
             local.set 4
             local.get 0
@@ -798,6 +796,8 @@
             local.get 4
           end
         else
+          local.get 3
+          call 15
           local.get 0
           local.tee 4
           call 14
@@ -811,15 +811,9 @@
           i32.const 1
           i32.eq
           if (result i32)
+            local.get 4
+            call 15
             block (result i32)
-              local.get 1
-              call 15
-              local.get 2
-              call 15
-              local.get 3
-              call 15
-              local.get 4
-              call 15
               i32.const 166
               local.set 5
               local.get 0
@@ -827,15 +821,9 @@
               local.get 5
             end
           else
+            local.get 4
+            call 15
             block (result i32)
-              local.get 1
-              call 15
-              local.get 2
-              call 15
-              local.get 3
-              call 15
-              local.get 4
-              call 15
               local.get 0
               local.tee 5
               call 14

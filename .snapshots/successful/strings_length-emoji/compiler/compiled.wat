@@ -806,9 +806,9 @@
     i32.const 1
     i32.eq
     if (result i32)
+      local.get 3
+      call 17
       block (result i32)
-        local.get 3
-        call 17
         local.get 2
         local.tee 4
         call 16
@@ -825,6 +825,8 @@
         local.get 4
       end
     else
+      local.get 3
+      call 17
       local.get 2
       local.tee 4
       call 16
@@ -842,11 +844,9 @@
         local.set 5
         local.get 5
         call 16
+        local.get 4
+        call 17
         block (result i32)
-          local.get 3
-          call 17
-          local.get 4
-          call 17
           i32.const 8
           i32.const 1
           call 15
@@ -878,6 +878,8 @@
         local.set 5
         local.get 5
         call 16
+        local.get 4
+        call 17
         local.get 5
         local.tee 6
         call 16
@@ -899,13 +901,9 @@
           local.set 7
           local.get 7
           call 16
+          local.get 6
+          call 17
           block (result i32)
-            local.get 3
-            call 17
-            local.get 4
-            call 17
-            local.get 6
-            call 17
             i32.const 8
             i32.const 1
             call 15
@@ -939,6 +937,8 @@
           local.set 7
           local.get 7
           call 16
+          local.get 6
+          call 17
           local.get 7
           local.tee 8
           call 16
@@ -956,15 +956,9 @@
             local.set 9
             local.get 9
             call 16
+            local.get 8
+            call 17
             block (result i32)
-              local.get 3
-              call 17
-              local.get 4
-              call 17
-              local.get 6
-              call 17
-              local.get 8
-              call 17
               i32.const 8
               i32.const 1
               call 15
@@ -1000,6 +994,8 @@
             local.set 9
             local.get 9
             call 16
+            local.get 8
+            call 17
             local.get 9
             local.tee 10
             call 16
@@ -1021,17 +1017,9 @@
               local.set 11
               local.get 11
               call 16
+              local.get 10
+              call 17
               block (result i32)
-                local.get 3
-                call 17
-                local.get 4
-                call 17
-                local.get 6
-                call 17
-                local.get 8
-                call 17
-                local.get 10
-                call 17
                 i32.const 8
                 i32.const 1
                 call 15
@@ -1069,17 +1057,9 @@
               local.set 11
               local.get 11
               call 16
+              local.get 10
+              call 17
               block (result i32)
-                local.get 3
-                call 17
-                local.get 4
-                call 17
-                local.get 6
-                call 17
-                local.get 8
-                call 17
-                local.get 10
-                call 17
                 local.get 11
                 local.tee 12
                 call 16

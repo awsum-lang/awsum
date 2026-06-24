@@ -8,7 +8,15 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Added
+
+- **`awsum asm` now prints the human-readable generated code for all five targets.** It gains `llvm` (the LLVM IR `build` emits) and `js` (the indented JavaScript whose compact form `build` ships), alongside the existing `jvm` / `clr` / `wasm` assembly text — so every backend has a way to inspect its generated code, mirroring how `asm -t jvm` shows readable bytecode for the binary `build -t jvm` produces.
+
 ### Changed
+
+- **A deeply right-nested `case` over fresh scrutinees no longer generates `O(N²)` cleanup code on the reference-counted backends (LLVM, WASM).** In tail position, each leaf of such a chain — a long `eqInt32`-based dispatch (a generated range table, a hand-written `if`/`else if` ladder) — re-freed every still-live enclosing scrutinee, so the emitted `__free_recursive` count grew quadratically with depth (at depth 800, LLVM spent ~71 s in `clang` on a 13.8 MB binary). Each fresh scrutinee is now freed once, as its arm is entered — the discipline the operand-position lowering already used — making the cleanup `O(N)`. Output is identical on all five backends; JVM and CLR were already linear (host GC) and are untouched.
+
+- **`awsum build` / `awsum run` emit JavaScript as a single compact line.** The shipped (and run) artifact no longer carries the pretty-printer's per-level indentation — which grew its whitespace quadratically with nesting depth — and is instead minified-style: the same code, no newlines or indentation. The readable, indented form is now `awsum asm -t js`; the JS snapshots stay pretty. Stdout is unchanged.
 
 - **Typechecking a wide structural-error row is a constant factor faster.** Row subsumption (`rowSubsume`) skips the set-semantic dedup when matching a value into a wider row — the dedup's `Ord Type'` comparisons dominated checking a `do`-block whose every `<-` step carries a distinct error type. Output and diagnostics are unchanged; the check stays quadratic in the row width (closing that asymptotically needs cross-call caching the stateless typecheck monad can't currently host).
 

@@ -6,7 +6,7 @@ module Main (main) where
 import Awsum.Codegen
 import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
-import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.JS (codegenJS, codegenJsPretty)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
@@ -209,7 +209,7 @@ pCommand =
           <> subcmd "run" "Compile and run (forward args after --)" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> argForwardedArgs)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath <*> optProgramType)
-          <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
+          <> subcmd "asm" "Print human-readable generated code (llvm, jvm, clr, wasm, js)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
           <> subcmd "symbols" "Print top-level symbols (outline)" (CmdSymbols <$> argFilePath <*> optJson)
           <> subcmd "lsp" "Run Language Server Protocol (transport: --stdio)" (CmdLsp <$> optLspTransport)
@@ -286,11 +286,15 @@ runCommand = \case
         pPrint ir
   CmdAsm filePath progType target -> do
     (ptags, core) <- compileToCoreOrDie progType filePath
-    case target of
-      TargetJVM -> putTextLn (codegenJVM ptags core)
-      TargetCLR -> putTextLn (codegenCLR ptags core)
-      TargetWASM -> putTextLn (codegenWASM ptags core)
-      _ -> die "asm is only supported for jvm, clr, and wasm targets"
+    -- The human-readable generated code for every target: the assembly text
+    -- that assembles to the JVM/CLR/WASM binaries, the LLVM IR that `build`
+    -- emits directly, and the indented JS whose compact form `build` ships.
+    putTextLn $ case target of
+      TargetLLVM -> codegenLLVM llvmHostFromSystem ptags core
+      TargetJVM -> codegenJVM ptags core
+      TargetCLR -> codegenCLR ptags core
+      TargetWASM -> codegenWASM ptags core
+      TargetJS -> codegenJsPretty progType ptags core
   CmdFormat filePath inPlace -> do
     src <- readFileTextUtf8 filePath
     case formatSource src of

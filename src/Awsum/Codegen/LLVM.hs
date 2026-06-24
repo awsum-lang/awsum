@@ -204,13 +204,12 @@ data EmitCtx = EmitCtx
 data JoinTarget = JoinTarget
   { jtLabel :: Text,
     jtParams :: [Text],
-    -- | Lengths of the tail walks' @pending@ / @freshScruts@ stacks at
-    -- the 'CJoin' node. Binders and scrutinees accumulated past these
-    -- baselines belong to the jumping path and are released at the jump
-    -- (mirroring 'CContinue'); whatever was already pending at the node
-    -- outlives it and is released at the join body's own terminals.
-    jtPendingBase :: Int,
-    jtScrutBase :: Int
+    -- | Length of the tail walks' @pending@ stack at the 'CJoin' node.
+    -- Binders accumulated past this baseline belong to the jumping path
+    -- and are released at the jump (mirroring 'CContinue'); whatever was
+    -- already pending at the node outlives it and is released at the join
+    -- body's own terminals.
+    jtPendingBase :: Int
   }
 
 -- | The prologue-allocated slot carrying a join parameter's value across
@@ -2951,24 +2950,23 @@ emitJoinArm ctx afterLbl scrutDec body0 =
 -- param is "moved" out; for any fresh source (CCon, CCall,
 -- CIntLit, etc.) all params are dec'd.
 emitNonLoopBody :: EmitCtx -> [Name] -> CExpr -> CodegenM [LInstr]
-emitNonLoopBody ctx0 params = go ctx0 [] []
+emitNonLoopBody ctx0 params = go ctx0 []
   where
     -- 'pending' accumulates 'CDrop'-bound binders during the tail
-    -- walk; 'freshScruts' accumulates fresh case-scrutinee SSAs
-    -- (no live binding-side owner once the case is over). Both
-    -- get dec'd at every terminal, with move-semantics carve-out
-    -- for the result-CVar on 'pending'/params (scruts have no
-    -- name so they're dec'd unconditionally).
-    go :: EmitCtx -> [Name] -> [LVal] -> CExpr -> CodegenM [LInstr]
-    go ctx pending freshScruts = \case
-      CCase scrut alts -> goCase ctx pending freshScruts scrut alts
+    -- walk; they're dec'd at every terminal, with a move-semantics
+    -- carve-out for the result-CVar on 'pending'/params. A fresh case
+    -- scrutinee is freed per-arm by 'goCase' (right after its binders
+    -- are extracted), so it never reaches a terminal.
+    go :: EmitCtx -> [Name] -> CExpr -> CodegenM [LInstr]
+    go ctx pending = \case
+      CCase scrut alts -> goCase ctx pending scrut alts
       CRowCase scrut alts ->
-        goCase ctx pending freshScruts scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      CDrop n body -> go ctx (n : pending) freshScruts body
+        goCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      CDrop n body -> go ctx (n : pending) body
       CLet x rhs body -> do
         (ri, rv) <- emitExpr ctx rhs
         let ctx' = ctx {locals = Map.insert x rv ctx.locals}
-        bodyInstrs <- go ctx' pending freshScruts body
+        bodyInstrs <- go ctx' pending body
         pure (ri <> emitIncIfCVar ctx rhs rv <> bodyInstrs)
       -- Native join point: the inner expression continues the tail walk
       -- with the target registered; its jumps store into the prologue
@@ -2981,31 +2979,28 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
       -- terminals, never between a jump and the body.
       CJoin j ps body inner -> do
         joinLbl <- freshLabel "join"
-        let jt = JoinTarget joinLbl ps (length pending) (length freshScruts)
+        let jt = JoinTarget joinLbl ps (length pending)
             ctxJ = ctx {joinTargets = Map.insert j jt ctx.joinTargets}
-        innerInstrs <- go ctxJ pending freshScruts inner
+        innerInstrs <- go ctxJ pending inner
         loads <- forM ps $ \p -> do
           t <- freshTemp
           pure ((p, VReg t), ILoad t Ptr (VReg (joinSlotName p)))
         let ctxB = ctx {locals = foldl' (\m (p, v) -> Map.insert p v m) ctx.locals (map fst loads)}
-        bodyInstrs <- go ctxB (ps <> pending) freshScruts body
+        bodyInstrs <- go ctxB (ps <> pending) body
         pure (innerInstrs <> [ILabel joinLbl] <> map snd loads <> bodyInstrs)
       -- Mirror of 'CContinue': evaluate the arguments, inc the borrowed
       -- ones (the join parameter takes its own reference), release the
-      -- scrutinees and pending binders accumulated /since/ the join node
-      -- (the jumping path's own arms), store into the parameter slots,
-      -- branch.
+      -- pending binders accumulated /since/ the join node (the jumping
+      -- path's own arms), store into the parameter slots, branch.
       CJump j args
         | Just jt <- Map.lookup j ctx.joinTargets -> do
             argResults <- traverse (emitExpr ctx) args
             let (argInstrsList, argVals) = unzip argResults
                 incs = concat [emitIncIfCVar ctx e r | (e, r) <- zip args argVals]
                 sincePending = take (length pending - jt.jtPendingBase) pending
-                sinceScruts = take (length freshScruts - jt.jtScrutBase) freshScruts
-                scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- sinceScruts]
                 frees = concatMap (emitFree ctx) sincePending
                 stores = [IStore Ptr r (VReg (joinSlotName p)) | (r, p) <- zip argVals jt.jtParams]
-            pure (concat argInstrsList <> incs <> scrutDecs <> frees <> stores <> [IBr jt.jtLabel])
+            pure (concat argInstrsList <> incs <> frees <> stores <> [IBr jt.jtLabel])
       CJump j _ -> error ("LLVM codegen: CJump to unknown join " <> j <> " (pipeline bug)")
       other -> do
         (instrs, result) <- emitExpr ctx other
@@ -3018,18 +3013,16 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
                 not (inResult p),
                 p `notElem` pending
               ]
-            scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- freshScruts]
             frees =
-              scrutDecs
-                <> concatMap (emitFree ctx) pendingToDec
+              concatMap (emitFree ctx) pendingToDec
                 <> concatMap (emitFree ctx) paramsToDec
         pure (instrs <> frees <> [IRet (Just (Ptr, result))])
 
     -- Per-arm dec: each arm body emits its own (potentially
     -- different) param decs based on its own tail-form. Each arm
     -- self-terminates with a @ret@, so no phi join is needed.
-    goCase :: EmitCtx -> [Name] -> [LVal] -> CExpr -> [(Int, [Name], CExpr)] -> CodegenM [LInstr]
-    goCase ctx pending freshScruts scrut alts = do
+    goCase :: EmitCtx -> [Name] -> CExpr -> [(Int, [Name], CExpr)] -> CodegenM [LInstr]
+    goCase ctx pending scrut alts = do
       (instrS, resS) <- emitExpr ctx scrut
       tagSlot <- freshTemp
       tagLoaded <- freshTemp
@@ -3040,11 +3033,16 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
               IConv tagTmp PtrToInt Ptr (VReg tagLoaded) I64
             ]
       defLabel <- freshLabel "case.default"
-      -- Thread fresh scrut SSA through each arm so its terminator
-      -- dec's it.
-      let freshScruts' = case borrowedSource ctx scrut of
-            Just _ -> freshScruts
-            Nothing -> resS : freshScruts
+      -- A fresh scrutinee is dead once its arm binders are extracted and
+      -- inc'd (below): free it at the start of each arm rather than
+      -- carrying it to every terminal, where a deep tail-position case
+      -- would have leaf k re-free all k enclosing scruts (O(N^2)). A
+      -- borrowed (CVar) scrut has a binding-side owner released by its own
+      -- CDrop, so it is never freed here. Mirrors 'emitJoinInnerExpr', the
+      -- operand-position lowering that is already linear for this reason.
+      let scrutFree = case borrowedSource ctx scrut of
+            Just _ -> []
+            Nothing -> [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, resS)]]
       arms <- forM alts $ \(tag, vars, body) -> do
         lbl <- freshLabel ("case.arm." <> show tag)
         let armElidedSelfMove = case scrut of
@@ -3072,8 +3070,8 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
                in case scrut of
                     CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
                     _ -> withElided
-        armBody <- go ctx' pending freshScruts' body
-        pure (tag, lbl, varCode <> armBody)
+        armBody <- go ctx' pending body
+        pure (tag, lbl, varCode <> scrutFree <> armBody)
       let switchInstr = ISwitch I64 (VReg tagTmp) defLabel [(toInteger tag, lbl) | (tag, lbl, _) <- arms]
           armBlocks = concat [ILabel lbl : blk | (_, lbl, blk) <- arms]
           defBlock = [ILabel defLabel, IUnreachable]
@@ -3095,16 +3093,15 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
 emitTail :: EmitCtx -> CExpr -> CodegenM [LInstr]
 emitTail ctx expr = case ctx.loopCtx of
   Nothing -> error "LLVM codegen: emitTail called without LoopCtx (pipeline bug)"
-  Just lctx -> go ctx lctx [] [] expr
+  Just lctx -> go ctx lctx [] expr
   where
-    -- 'freshScruts' accumulates SSA names of fresh case-scrutinees
-    -- (those whose source isn't a 'CVar', so they have no live
-    -- binding-side owner once the case is over). Each terminator
-    -- (CContinue, value-tail) dec's them after the inc-on-CVar
-    -- pass for new args/result so cascade-free of slot values
-    -- happens after the new owners have bumped their refcount.
-    go :: EmitCtx -> LoopCtx -> [Name] -> [LVal] -> CExpr -> CodegenM [LInstr]
-    go ctx' lctx pending freshScruts = \case
+    -- 'pending' accumulates 'CDrop'-bound binders during the tail walk;
+    -- they're dec'd at every terminal (CContinue / value-tail). A fresh
+    -- case scrutinee is freed per-arm in the 'CCase' branch below (right
+    -- after its binders are extracted and inc'd), so it never reaches a
+    -- terminal.
+    go :: EmitCtx -> LoopCtx -> [Name] -> CExpr -> CodegenM [LInstr]
+    go ctx' lctx pending = \case
       CContinue newArgs -> do
         argResults <- traverse (emitExpr ctx') newArgs
         let (argInstrsList, argNames) = unzip argResults
@@ -3122,7 +3119,6 @@ emitTail ctx expr = case ctx.loopCtx of
                 [ if isMoveArg ctx' moved e then [] else emitIncIfCVar ctx' e r
                 | (e, r) <- zip newArgs argNames
                 ]
-            scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- freshScruts]
             frees = concatMap (emitFree ctx') (filter (`Set.notMember` moved) pending)
             stores =
               [ IStore Ptr r (VReg slot)
@@ -3131,7 +3127,6 @@ emitTail ctx expr = case ctx.loopCtx of
         pure
           $ concat argInstrsList
           <> incs
-          <> scrutDecs
           <> frees
           <> stores
           <> [IBr lctx.lcLoopLabel]
@@ -3146,11 +3141,12 @@ emitTail ctx expr = case ctx.loopCtx of
                 IConv tagTmp PtrToInt Ptr (VReg tagLoaded) I64
               ]
         defLabel <- freshLabel "tco.case.default"
-        -- If the scrut is fresh, thread its SSA through to each
-        -- arm so the arm's terminator dec's it.
-        let freshScruts' = case borrowedSource ctx' scrut of
-              Just _ -> freshScruts
-              Nothing -> resS : freshScruts
+        -- Free a fresh scrutinee at the start of each arm (dead once its
+        -- binders are extracted and inc'd below), rather than carrying it
+        -- to every terminal — see 'emitNonLoopBody'.'goCase'.
+        let scrutFree = case borrowedSource ctx' scrut of
+              Just _ -> []
+              Nothing -> [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, resS)]]
         armBlocks <- forM alts $ \(tag, vars, body) -> do
           lbl <- freshLabel ("tco.case.arm." <> show tag)
           let armElidedSelfMove = case scrut of
@@ -3184,8 +3180,8 @@ emitTail ctx expr = case ctx.loopCtx of
                  in case scrut of
                       CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
                       _ -> withElided
-          bodyInstrs <- go ctx'' lctx pending freshScruts' body
-          pure (tag, lbl, varCode <> bodyInstrs)
+          bodyInstrs <- go ctx'' lctx pending body
+          pure (tag, lbl, varCode <> scrutFree <> bodyInstrs)
         let switchInstr = ISwitch I64 (VReg tagTmp) defLabel [(toInteger tag, lbl) | (tag, lbl, _) <- armBlocks]
             armsEmitted = concat [ILabel lbl : blk | (_, lbl, blk) <- armBlocks]
             defBlock = [ILabel defLabel, IUnreachable]
@@ -3196,14 +3192,14 @@ emitTail ctx expr = case ctx.loopCtx of
           <> armsEmitted
           <> defBlock
       CRowCase scrut alts ->
-        go ctx' lctx pending freshScruts (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-      CDrop n body -> go ctx' lctx (n : pending) freshScruts body
+        go ctx' lctx pending (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+      CDrop n body -> go ctx' lctx (n : pending) body
       -- Bind, then the body continues in tail position (the binder's
       -- 'CDrop' joins the pending stack like any other).
       CLet x rhs body -> do
         (ri, rv) <- emitExpr ctx' rhs
         let ctx'' = ctx' {locals = Map.insert x rv ctx'.locals}
-        bodyInstrs <- go ctx'' lctx pending freshScruts body
+        bodyInstrs <- go ctx'' lctx pending body
         pure (ri <> emitIncIfCVar ctx' rhs rv <> bodyInstrs)
       -- Native join point under a 'CLoop' — same shape as in
       -- 'emitNonLoopBody': inner walks with the target registered, the
@@ -3214,14 +3210,14 @@ emitTail ctx expr = case ctx.loopCtx of
       -- their ordinary 'CContinue' handling.
       CJoin j ps body inner -> do
         joinLbl <- freshLabel "join"
-        let jt = JoinTarget joinLbl ps (length pending) (length freshScruts)
+        let jt = JoinTarget joinLbl ps (length pending)
             ctxJ = ctx' {joinTargets = Map.insert j jt ctx'.joinTargets}
-        innerInstrs <- go ctxJ lctx pending freshScruts inner
+        innerInstrs <- go ctxJ lctx pending inner
         loads <- forM ps $ \p -> do
           t <- freshTemp
           pure ((p, VReg t), ILoad t Ptr (VReg (joinSlotName p)))
         let ctxB = ctx' {locals = foldl' (\m (p, v) -> Map.insert p v m) ctx'.locals (map fst loads)}
-        bodyInstrs <- go ctxB lctx (ps <> pending) freshScruts body
+        bodyInstrs <- go ctxB lctx (ps <> pending) body
         pure (innerInstrs <> [ILabel joinLbl] <> map snd loads <> bodyInstrs)
       -- Mirror of 'CContinue' (see 'emitNonLoopBody' for the rationale).
       CJump j args
@@ -3230,11 +3226,9 @@ emitTail ctx expr = case ctx.loopCtx of
             let (argInstrsList, argVals) = unzip argResults
                 incs = concat [emitIncIfCVar ctx' e r | (e, r) <- zip args argVals]
                 sincePending = take (length pending - jt.jtPendingBase) pending
-                sinceScruts = take (length freshScruts - jt.jtScrutBase) freshScruts
-                scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- sinceScruts]
                 frees = concatMap (emitFree ctx') sincePending
                 stores = [IStore Ptr r (VReg (joinSlotName p)) | (r, p) <- zip argVals jt.jtParams]
-            pure (concat argInstrsList <> incs <> scrutDecs <> frees <> stores <> [IBr jt.jtLabel])
+            pure (concat argInstrsList <> incs <> frees <> stores <> [IBr jt.jtLabel])
       CJump j _ -> error ("LLVM codegen: CJump to unknown join " <> j <> " (pipeline bug)")
       other -> do
         (instrs, result) <- emitExpr ctx' other
@@ -3245,8 +3239,6 @@ emitTail ctx expr = case ctx.loopCtx of
         --     (move-semantics). Without this, the dec of @m@ would
         --     drop the cell we just returned, leaving the caller
         --     with a dangling pointer.
-        --   * 'freshScruts' SSAs are dec'd unconditionally (they
-        --     have no name to match for move-semantics).
         --   * Pending (the binders accumulated from outer 'CDrop's
         --     during tail recursion) are dec'd with the same
         --     move-semantics carve-out.
@@ -3263,10 +3255,8 @@ emitTail ctx expr = case ctx.loopCtx of
                 not (inResult p),
                 p `notElem` pending
               ]
-            scrutDecs = [ICall Nothing Void Nothing "@__free_recursive" [(Ptr, s)] | s <- freshScruts]
             frees =
-              scrutDecs
-                <> concatMap (emitFree ctx') pendingToDec
+              concatMap (emitFree ctx') pendingToDec
                 <> concatMap (emitFree ctx') paramsToDec
         pure
           $ instrs
@@ -4128,7 +4118,7 @@ emitExpr ctx = \case
   CJoin j ps body inner -> do
     joinLbl <- freshLabel "join"
     afterLbl <- freshLabel "join.after"
-    let jt = JoinTarget joinLbl ps 0 0
+    let jt = JoinTarget joinLbl ps 0
         ctxJ = ctx {joinTargets = Map.insert j jt ctx.joinTargets}
     (innerInstrs, valueEnds) <- emitJoinInnerExpr ctxJ afterLbl [] inner
     loads <- forM ps $ \p -> do

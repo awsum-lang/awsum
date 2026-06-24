@@ -298,14 +298,15 @@ define internal ptr @v_callBox(ptr %v_b, ptr %v_x) {
   %t4 = ptrtoint ptr %t3 to i64
   switch i64 %t4, label %case.default.5 [ i64 25, label %case.arm.25.6 i64 26, label %case.arm.26.8 ]
 case.arm.25.6:
+  call void @__free_recursive(ptr %t1)
   call void @__inc_ref(ptr %v_x)
   call void @__inc_ref(ptr %v_x)
   %t7 = call ptr @__addInt32(ptr %v_x, ptr %v_x)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %v_b)
   call void @__free_recursive(ptr %v_x)
   ret ptr %t7
 case.arm.26.8:
+  call void @__free_recursive(ptr %t1)
   call void @__inc_ref(ptr %v_x)
   call void @__inc_ref(ptr %v_x)
   %t9 = call ptr @__addInt32(ptr %v_x, ptr %v_x)
@@ -317,6 +318,7 @@ case.arm.3.14:
   %t15 = getelementptr ptr, ptr %t9, i32 1
   %t16 = load ptr, ptr %t15
   call void @__inc_ref(ptr %t16)
+  call void @__free_recursive(ptr %t9)
   %t17 = call ptr @__alloc(i64 16, i32 1)
   %t18 = inttoptr i64 3 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
@@ -324,8 +326,6 @@ case.arm.3.14:
   call void @__inc_ref(ptr %t16)
   %t20 = getelementptr ptr, ptr %t17, i32 1
   store ptr %t16, ptr %t20
-  call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %t16)
   call void @__free_recursive(ptr %v_b)
   call void @__free_recursive(ptr %v_x)
@@ -334,11 +334,10 @@ case.arm.4.21:
   %t22 = getelementptr ptr, ptr %t9, i32 1
   %t23 = load ptr, ptr %t22
   call void @__inc_ref(ptr %t23)
+  call void @__free_recursive(ptr %t9)
   call void @__inc_ref(ptr %t23)
   call void @__inc_ref(ptr %v_x)
   %t24 = call ptr @__addInt32(ptr %t23, ptr %v_x)
-  call void @__free_recursive(ptr %t9)
-  call void @__free_recursive(ptr %t1)
   call void @__free_recursive(ptr %t23)
   call void @__free_recursive(ptr %v_b)
   call void @__free_recursive(ptr %v_x)

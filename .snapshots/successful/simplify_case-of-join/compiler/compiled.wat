@@ -1046,9 +1046,9 @@
         i32.const 1
         i32.eq
         if
+          local.get 3
+          call 15
           block (result i32)
-            local.get 3
-            call 15
             i32.const 96
             local.set 4
             local.get 0
@@ -1058,6 +1058,8 @@
           local.set 1
           br 2
         else
+          local.get 3
+          call 15
           local.get 0
           local.tee 4
           call 14
@@ -1121,8 +1123,6 @@
             end
           end
           local.set 2
-          local.get 3
-          call 15
           br 1
         end
       end

@@ -256,6 +256,7 @@ tco.loop.0:
   %t13 = ptrtoint ptr %t12 to i64
   switch i64 %t13, label %tco.case.default.14 [ i64 1, label %tco.case.arm.1.15 i64 2, label %tco.case.arm.2.22 ]
 tco.case.arm.1.15:
+  call void @__free_recursive(ptr %t10)
   call void @__inc_ref(ptr %t8)
   %t16 = call ptr @__alloc(i64 16, i32 1)
   %t17 = inttoptr i64 4 to ptr
@@ -266,13 +267,13 @@ tco.case.arm.1.15:
   %t20 = getelementptr ptr, ptr %t16, i32 1
   store ptr %t19, ptr %t20
   %t21 = call ptr @v_$apply$countWithBox(ptr %t8, ptr %t16)
-  call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t8)
   store ptr %t21, ptr %t2
   br label %tco.exit.1
 tco.case.arm.2.22:
+  call void @__free_recursive(ptr %t10)
   call void @__inc_ref(ptr %t7)
   %t23 = call ptr @__predInt32(ptr %t7)
   %t24 = getelementptr ptr, ptr %t23, i32 0
@@ -283,6 +284,7 @@ tco.case.arm.3.28:
   %t29 = getelementptr ptr, ptr %t23, i32 1
   %t30 = load ptr, ptr %t29
   call void @__inc_ref(ptr %t30)
+  call void @__free_recursive(ptr %t23)
   call void @__inc_ref(ptr %t8)
   %t31 = call ptr @__alloc(i64 16, i32 1)
   %t32 = inttoptr i64 3 to ptr
@@ -292,8 +294,6 @@ tco.case.arm.3.28:
   %t34 = getelementptr ptr, ptr %t31, i32 1
   store ptr %t30, ptr %t34
   %t35 = call ptr @v_$apply$countWithBox(ptr %t8, ptr %t31)
-  call void @__free_recursive(ptr %t23)
-  call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t30)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
@@ -304,6 +304,7 @@ tco.case.arm.4.36:
   %t37 = getelementptr ptr, ptr %t23, i32 1
   %t38 = load ptr, ptr %t37
   call void @__inc_ref(ptr %t38)
+  call void @__free_recursive(ptr %t23)
   %t39 = call ptr @__alloc(i64 24, i32 2)
   %t40 = inttoptr i64 27 to ptr
   %t41 = getelementptr ptr, ptr %t39, i32 0
@@ -315,8 +316,6 @@ tco.case.arm.4.36:
   %t43 = getelementptr ptr, ptr %t39, i32 2
   store ptr %t6, ptr %t43
   call void @__inc_ref(ptr %t6)
-  call void @__free_recursive(ptr %t23)
-  call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t6)

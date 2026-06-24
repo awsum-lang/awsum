@@ -1095,9 +1095,9 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 1
+        call 16
         block (result i32)
-          local.get 1
-          call 16
           i32.const 4
           i32.const 0
           call 14
@@ -1112,6 +1112,8 @@
           local.get 2
         end
       else
+        local.get 1
+        call 16
         local.get 0
         local.tee 2
         call 15
@@ -1123,11 +1125,9 @@
         i32.const 3
         i32.eq
         if (result i32)
+          local.get 2
+          call 16
           block (result i32)
-            local.get 1
-            call 16
-            local.get 2
-            call 16
             i32.const 4
             i32.const 0
             call 14
@@ -1147,12 +1147,10 @@
           local.set 3
           local.get 3
           call 15
-          local.get 3
-          local.set 4
-          local.get 1
-          call 16
           local.get 2
           call 16
+          local.get 3
+          local.set 4
           local.get 0
           call 16
           local.get 4
@@ -1311,9 +1309,9 @@
     i32.const 27
     i32.eq
     if (result i32)
+      local.get 1
+      call 16
       block (result i32)
-        local.get 1
-        call 16
         i32.const 96
         local.set 2
         local.get 0
@@ -1326,9 +1324,9 @@
       i32.const 28
       i32.eq
       if (result i32)
+        local.get 1
+        call 16
         block (result i32)
-          local.get 1
-          call 16
           i32.const 117
           local.set 2
           local.get 0
@@ -1336,9 +1334,9 @@
           local.get 2
         end
       else
+        local.get 1
+        call 16
         block (result i32)
-          local.get 1
-          call 16
           i32.const 138
           local.set 2
           local.get 0

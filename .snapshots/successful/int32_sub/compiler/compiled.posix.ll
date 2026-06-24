@@ -317,13 +317,13 @@ case.arm.3.4:
   %t9 = ptrtoint ptr %t8 to i64
   switch i64 %t9, label %case.default.10 [ i64 882564211, label %case.arm.882564211.11 i64 3768445577, label %case.arm.3768445577.13 ]
 case.arm.882564211.11:
-  %t12 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
   call void @__free_recursive(ptr %t6)
+  %t12 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
   call void @__free_recursive(ptr %v_r)
   ret ptr %t12
 case.arm.3768445577.13:
-  %t14 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr getelementptr inbounds (i8, ptr @.str.2, i64 12))
   call void @__free_recursive(ptr %t6)
+  %t14 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.0, i64 12), ptr getelementptr inbounds (i8, ptr @.str.2, i64 12))
   call void @__free_recursive(ptr %v_r)
   ret ptr %t14
 case.default.10:

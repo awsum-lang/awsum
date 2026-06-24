@@ -1631,6 +1631,8 @@
             local.set 6
             local.get 6
             call 10
+            local.get 5
+            call 11
             local.get 2
             local.set 7
             local.get 1
@@ -1672,8 +1674,6 @@
               call 11
             end
             local.set 8
-            local.get 5
-            call 11
             local.get 0
             call 11
             local.get 6
@@ -1691,6 +1691,8 @@
             local.set 6
             local.get 6
             call 10
+            local.get 5
+            call 11
             local.get 2
             local.set 7
             local.get 6
@@ -1703,8 +1705,6 @@
             local.get 9
             call 7
             local.set 8
-            local.get 5
-            call 11
             local.get 1
             call 11
             local.get 0

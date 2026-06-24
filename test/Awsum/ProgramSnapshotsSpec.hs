@@ -133,8 +133,11 @@ compilerSnapshotItems snap = do
     res.clrText `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.il")
   it "WASM code should match snapshot" $ \res -> do
     res.wasmText `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.wat")
+  -- The pretty (indented) JS — the `asm -t js` form — not the compact
+  -- artifact `runOn` ran above; the golden is for reading, like the `.j` /
+  -- `.il` / `.wat` text snapshots vs the binaries they assemble to.
   it "JS code should match snapshot" $ \res -> do
-    res.artifacts.caJS `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.js")
+    res.artifacts.caJSPretty `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.js")
   it "Lifetime should match snapshot" $ \res -> do
     res.lifetimeText `shouldMatchTextSnapshot` (snap <> "/compiler/lifetime.txt")
 

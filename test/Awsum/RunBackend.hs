@@ -27,7 +27,7 @@ where
 
 import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
-import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.JS (codegenJS, codegenJsPretty)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
@@ -109,7 +109,13 @@ data CompiledArtifacts = CompiledArtifacts
     caJVMBytes :: ByteString,
     caCLRBytes :: ByteString,
     caWASMBytes :: ByteString,
+    -- The compact, single-line JS that @awsum build@ / @run@ ship — what
+    -- 'runOn' actually executes, so the cross-backend stdout check verifies
+    -- the artifact users get. 'caJSPretty' is its indented projection (the
+    -- @asm -t js@ form), read only by the snapshot golden — kept lazy so the
+    -- property / no-simplify layers, which only run, never render it.
     caJS :: Text,
+    caJSPretty :: Text,
     -- The elaborated Core and the JVM/CLR/WASM text, all derived from the
     -- SAME elaboration as the bytes above. The snapshot spec reads these
     -- instead of elaborating a second time, so a golden text snapshot is a
@@ -187,6 +193,7 @@ compileFromTextWith mode src = do
           caCLRBytes = clrBytes,
           caWASMBytes = wasmBytes,
           caJS = jsText,
+          caJSPretty = codegenJsPretty ProgramCli ptags core,
           caCore = core,
           caJVMText = jvmText,
           caCLRText = clrText,

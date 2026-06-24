@@ -364,9 +364,9 @@ tco.case.arm.16.12:
   %t20 = ptrtoint ptr %t19 to i64
   switch i64 %t20, label %tco.case.default.21 [ i64 3, label %tco.case.arm.3.22 i64 4, label %tco.case.arm.4.24 ]
 tco.case.arm.3.22:
+  call void @__free_recursive(ptr %t17)
   %t23 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t23
-  call void @__free_recursive(ptr %t17)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t5)
   store ptr %t14, ptr %t3

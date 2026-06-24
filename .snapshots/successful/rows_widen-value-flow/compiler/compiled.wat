@@ -1165,6 +1165,8 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 2
+        call 13
         call 16
         local.set 3
         local.get 3
@@ -1173,8 +1175,6 @@
         i32.eq
         if (result i32)
           block (result i32)
-            local.get 2
-            call 13
             i32.const 8
             i32.const 1
             call 11
@@ -1209,8 +1209,6 @@
           end
         else
           block (result i32)
-            local.get 2
-            call 13
             local.get 3
             local.set 5
             local.get 0
@@ -1219,6 +1217,8 @@
           end
         end
       else
+        local.get 2
+        call 13
         call 20
         local.set 3
         local.get 3
@@ -1227,8 +1227,6 @@
         i32.eq
         if (result i32)
           block (result i32)
-            local.get 2
-            call 13
             i32.const 8
             i32.const 1
             call 11
@@ -1263,8 +1261,6 @@
           end
         else
           block (result i32)
-            local.get 2
-            call 13
             local.get 3
             local.set 5
             local.get 0
@@ -1349,9 +1345,9 @@
       local.set 3
       local.get 3
       call 12
+      local.get 2
+      call 13
       block (result i32)
-        local.get 2
-        call 13
         i32.const 8
         i32.const 1
         call 11
@@ -1381,6 +1377,8 @@
       local.set 3
       local.get 3
       call 12
+      local.get 2
+      call 13
       local.get 3
       local.tee 4
       call 12
@@ -1401,11 +1399,9 @@
         local.set 5
         local.get 5
         call 12
+        local.get 4
+        call 13
         block (result i32)
-          local.get 2
-          call 13
-          local.get 4
-          call 13
           i32.const 8
           i32.const 1
           call 11
@@ -1437,11 +1433,9 @@
         local.set 5
         local.get 5
         call 12
+        local.get 4
+        call 13
         block (result i32)
-          local.get 2
-          call 13
-          local.get 4
-          call 13
           local.get 5
           local.tee 6
           call 12

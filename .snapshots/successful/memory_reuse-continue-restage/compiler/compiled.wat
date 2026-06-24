@@ -697,14 +697,14 @@
       i32.const 1
       i32.eq
       if (result i32)
+        local.get 3
+        call 14
         local.get 2
         i32.load
         i32.const 24
         i32.eq
         if (result i32)
           block (result i32)
-            local.get 3
-            call 14
             i32.const 96
             local.set 4
             local.get 0
@@ -717,8 +717,6 @@
           end
         else
           block (result i32)
-            local.get 3
-            call 14
             local.get 2
             i32.load offset=4
             local.tee 6
@@ -736,6 +734,8 @@
           end
         end
       else
+        local.get 3
+        call 14
         local.get 1
         i32.load
         i32.const 24
@@ -747,8 +747,6 @@
           i32.eq
           if (result i32)
             block (result i32)
-              local.get 3
-              call 14
               i32.const 96
               local.set 4
               local.get 0
@@ -761,8 +759,6 @@
             end
           else
             block (result i32)
-              local.get 3
-              call 14
               local.get 2
               i32.load offset=4
               local.tee 6
@@ -796,16 +792,14 @@
           i32.const 3
           i32.eq
           if (result i32)
+            local.get 6
+            call 14
             local.get 2
             i32.load
             i32.const 24
             i32.eq
             if (result i32)
               block (result i32)
-                local.get 3
-                call 14
-                local.get 6
-                call 14
                 i32.const 96
                 local.set 8
                 local.get 5
@@ -820,10 +814,6 @@
               end
             else
               block (result i32)
-                local.get 3
-                call 14
-                local.get 6
-                call 14
                 local.get 2
                 i32.load offset=4
                 local.tee 10
@@ -848,6 +838,8 @@
             local.set 7
             local.get 7
             call 13
+            local.get 6
+            call 14
             local.get 7
             local.set 8
             i32.const 12
@@ -871,10 +863,6 @@
             local.set 9
             local.get 1
             local.set 10
-            local.get 3
-            call 14
-            local.get 6
-            call 14
             local.get 2
             call 14
             local.get 0
