@@ -951,8 +951,8 @@ isHeapBorrow ctx = \case
   CLet _ _ body -> isHeapBorrow ctx body
   _ -> False
 
--- | The binders a tail transfer ('CContinue' back-edge / 'CJump' to a join)
--- /moves/ into the destination slots instead of copying. A binder @m@
+-- | The binders the 'CContinue' back-edge /moves/ into the destination
+-- slots instead of copying. A binder @m@
 -- qualifies when an argument is a bare 'CVar m', @m@ is in the @pending@
 -- drop set (so it would otherwise be freed here), and @m@ occurs exactly
 -- once across all transfer arguments — linear, one destination for its one

@@ -3380,8 +3380,8 @@ emitIncIfCVar ctx expr ssa = case borrowedSource ctx expr of
   Just _ -> [ICall Nothing Void Nothing "@__inc_ref" [(Ptr, ssa)]]
   Nothing -> []
 
--- | The binders a tail transfer (a 'CContinue' back-edge or a 'CJump' to a
--- join) /moves/ into the destination slots instead of copying. A binder
+-- | The binders the 'CContinue' back-edge /moves/ into the destination
+-- slots instead of copying. A binder
 -- @m@ qualifies when an argument is a bare borrowed @CVar m@, @m@ is in the
 -- @pending@ drop set (so it would otherwise be freed right here), and @m@
 -- occurs exactly once across all the transfer arguments — linear, so its
