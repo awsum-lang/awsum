@@ -1,0 +1,25 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+$cps$$scc$walkA_walkB:
+  param           $args                           count=3
+  param           $k                              count=1
+  case-pattern    c                               count=2
+  case-pattern    x                               count=0
+  case-pattern    c                               count=2
+  case-pattern    x                               count=0
+
+$apply$$scc$walkA_walkB:
+  param           $k                              count=1
+  param           $x                              count=3
+  case-pattern    $pk_30                          count=0
+  case-pattern    _e                              count=0
+  case-pattern    r                               count=0
+  case-pattern    $pk_31                          count=0
+  case-pattern    _e                              count=0
+  case-pattern    r                               count=0
+

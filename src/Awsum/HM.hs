@@ -8,6 +8,8 @@ module Awsum.HM
     nullSubst,
     applySubst,
     composeSubst,
+    restrictSubst,
+    filterSubst,
 
     -- * Occurs check
     occursIn,
@@ -77,6 +79,22 @@ singletonSubst v t = Subst (M.singleton v t)
 --   full structural rewrite when there is nothing to substitute.
 nullSubst :: Subst -> Bool
 nullSubst (Subst m) = M.null m
+
+-- | Keep only the bindings for the given variables. For pinning one
+--   side of a unification without touching the other side's variables —
+--   'Awsum.Typing.mkRowInject' pins an injection source's freshened
+--   variables against its matched row alternative, while the
+--   alternative's own (declared) variables must stay free.
+restrictSubst :: S.Set Name -> Subst -> Subst
+restrictSubst keep (Subst m) = Subst (M.restrictKeys m keep)
+
+-- | Keep only the bindings whose bound type satisfies the predicate.
+--   'Awsum.Typing.mkRowInject' drops bindings that would bind a
+--   variable to a whole row: that choice belongs to
+--   'Awsum.MonomorphizeRows' (per call site), and unification reaches
+--   it greedily and order-dependently.
+filterSubst :: (Type' -> Bool) -> Subst -> Subst
+filterSubst keep (Subst m) = Subst (M.filter keep m)
 
 -- | Apply a substitution to a type, replacing every free 'TyVar'
 --   whose name is in the substitution's domain. The replacement

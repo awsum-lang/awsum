@@ -1,0 +1,16 @@
+{- Error: `Tip 7` injected into `(Chain Int32 | Chain String)` is
+   ambiguous — the literal argument leaves the constructor's type
+   parameter unpinned and both alternatives share the `Chain` head.
+   No-defaulting requires an ascription naming the intended one. -}
+
+import IO.Stdout
+
+type Chain a = Tip a | Link (a | Chain a)
+
+describe : (Chain Int32 | Chain String) -> String
+describe x = case x of
+  (_ci : Chain Int32) -> "I"
+  (_cs : Chain String) -> "S"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe (Tip 7))

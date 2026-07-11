@@ -1,0 +1,22 @@
+{- A parametric recursive type whose recursion sits inside a row-typed
+   field (`LinkN (a | Ch a)`), built two levels deep and counted back
+   down. Prints `2`. -}
+
+import IO.Stdout
+
+type Ch a = TipN | LinkN (a | Ch a)
+
+v : Ch Int32
+v = LinkN (LinkN TipN)
+
+walk : Ch Int32 -> Int32
+walk c = case c of
+  TipN -> 0
+  LinkN x -> case x of
+    (n : Int32) -> n
+    (rest : Ch Int32) -> case succInt32 (walk rest) of
+      Left _e -> 0
+      Right r -> r
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (walk v))

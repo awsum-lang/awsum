@@ -1,0 +1,22 @@
+{- A row-recursive chain with the recursive alternative declared first
+   (`LinkN (Ch a | a)`): rows are set-equal regardless of declared order,
+   so the order must not change behaviour. Prints `2`. -}
+
+import IO.Stdout
+
+type Ch a = TipN | LinkN (Ch a | a)
+
+v : Ch Int32
+v = LinkN (LinkN TipN)
+
+walk : Ch Int32 -> Int32
+walk c = case c of
+  TipN -> 0
+  LinkN x -> case x of
+    (n : Int32) -> n
+    (rest : Ch Int32) -> case succInt32 (walk rest) of
+      Left _e -> 0
+      Right r -> r
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (walk v))

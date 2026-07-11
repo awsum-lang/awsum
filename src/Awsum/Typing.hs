@@ -51,7 +51,7 @@ module Awsum.Typing
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
-import Awsum.HM (Subst, applySubst, bareRowLabel, collectTypeVars, flattenRow, freshenType, nullSubst, rowRetagNeeded, rowSubsume, singletonSubst, stripSyntheticTyvarSuffix, unify)
+import Awsum.HM (Subst, applySubst, bareRowLabel, collectTypeVars, filterSubst, flattenRow, freshenType, nullSubst, restrictSubst, rowRetagNeeded, rowSubsume, singletonSubst, stripSyntheticTyvarSuffix, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Awsum.TExpr (TAlt (..), TDecl (..), TExpr (..), TParam (..), TPattern (..), TRowAlt (..), TypedProgram (..), substTExpr, tAltBody, tRowAltBody, texprType)
@@ -1772,9 +1772,30 @@ checkExpr conEnv tcm crossExempt env expected = \case
                 fieldExpected = map (applySubst s) freshFieldTys
             argEs <- zipWithM (checkExpr conEnv tcm crossExempt env) fieldExpected args
             pure (TApp conSp resultTy (TConRef conSp declaredConTy instConTy cName) argEs)
-          Left _ -> do
-            eE <- typeOfExpr conEnv tcm env e
-            acceptInto expected eE e
+          -- A constructor application in structural-sum position: synthesis
+          -- first (a self-typing argument decides the alternative on its
+          -- own — @Tip "hi"@ into @(Chain Int32 | Chain String)@ stays
+          -- accepted); on synthesis failure, re-check against the unique
+          -- alternative the constructor's return type unifies with, so the
+          -- alternative's type reaches the arguments — a bare integer
+          -- literal in an injected constructor application (@Link (Tip 7)@
+          -- into @Chain Int32@'s field row) pins from it, where synthesis
+          -- rejects it under no-defaulting. Several unifiable alternatives
+          -- with nothing to decide between them: picking one silently would
+          -- be a miscompile, so that is 'AmbiguousRowInjection' — the same
+          -- rule as 'mkRowInject'. An open tyvar tail is an extension slot,
+          -- not a candidate (mirroring 'mkRowInject').
+          Left _ -> case runCheck (typeOfExpr conEnv tcm env e) of
+            Right eE -> acceptInto expected eE e
+            Left synthErr
+              | TyOr {} <- expected ->
+                  case filter (\l -> not (isTyVarTy l) && isRight (unify freshGenericRetTy l)) (flattenRow expected) of
+                    [alt] -> do
+                      eE <- checkExpr conEnv tcm crossExempt env alt e
+                      acceptInto expected eE e
+                    (_ : _ : _) -> throwTE (AmbiguousRowInjection (exprSpan e) freshGenericRetTy expected)
+                    [] -> throwTE synthErr
+              | otherwise -> throwTE synthErr
   -- Non-constructor application. The bidirectional spine check
   -- synthesises the head, then threads a substitution through the
   -- arguments left-to-right, pushing @expected@ into each position. Two
@@ -1920,6 +1941,33 @@ checkExpr conEnv tcm crossExempt env expected = \case
             Nothing -> do
               eE <- typeOfExpr conEnv tcm env e
               acceptInto expected eE e
+        -- Bidirectional target for an application in structural-sum position
+        -- whose synthesis failed: the alternative of @expected@ that the
+        -- head's result type can inhabit. With exactly one concrete
+        -- candidate, the whole application is re-checked against it, so the
+        -- alternative's type reaches the arguments — a bare integer literal
+        -- inside an injected constructor application (@Link (Tip 7)@ into
+        -- @Chain Int32@'s field row) pins from it, where synthesis rejects
+        -- it under no-defaulting and the spine cannot pin a nominal result
+        -- against a row. With several candidates accepting a still-free
+        -- head (@Tip 7@ into @(Chain Int32 | Chain String)@), picking one
+        -- silently would be a miscompile — 'AmbiguousRowInjection', the
+        -- same rule as 'mkRowInject', decided before any argument is
+        -- elaborated. An open tyvar tail is an extension slot, not a
+        -- candidate (mirroring 'mkRowInject'). A row-typed or variable
+        -- result is not this rule: a row-returning combinator matches
+        -- per-label downstream, and a bare-variable head (@identity 7@)
+        -- already resolves through the literal-in-row rule.
+        rowAltTargetForApp = do
+          TyOr {} <- pure expected
+          headE0 <- rightToMaybe (runCheck (typeOfExpr conEnv tcm env appHead))
+          let headE = freshenHeadInst (exprSpan appHead) headE0
+          (_argTys, resultTy) <- zipParamsToArrow (texprType headE) (length spineArgs)
+          _ <- extractTyCon resultTy
+          case filter (\l -> not (isTyVarTy l) && rowSubsume l resultTy) (flattenRow expected) of
+            [alt] -> Just (Right alt)
+            (_ : _ : _) -> Just (Left (AmbiguousRowInjection (exprSpan e) resultTy expected))
+            [] -> Nothing
      in -- Synthesis runs once; 'Check' is a pure 'Either', so branch on its
         -- result instead of calling 'spine' inside a 'catchTE' that would
         -- re-run it on a 'spine' failure. When @expected@ pins a variable the
@@ -1929,13 +1977,20 @@ checkExpr conEnv tcm crossExempt env expected = \case
         -- those injections are tagged and the call head specialises. Otherwise
         -- accept the synth result. Each branch keeps the other as its fallback,
         -- so a shape one path cannot type still checks via the other, and
-        -- 'spine' runs at most once.
+        -- 'spine' runs at most once. On synth failure with a structural-sum
+        -- @expected@, redo against the unique alternative the head can
+        -- inhabit ('rowAltTargetForApp') instead of the spine — which cannot.
         case runCheck (typeOfExpr conEnv tcm env e) of
           Right eE
             | nullSubst (solveRowVars True (collectTypeVars expected) S.empty (texprType eE) expected) ->
                 acceptInto expected eE e `catchTE` const spine
             | otherwise -> spine `catchTE` const (acceptInto expected eE e)
-          Left _ -> spine
+          Left _ -> case rowAltTargetForApp of
+            Nothing -> spine
+            Just (Left ambiguous) -> throwTE ambiguous
+            Just (Right alt) -> do
+              eE <- checkExpr conEnv tcm crossExempt env alt e
+              acceptInto expected eE e
   -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' check
   -- gives the bidirectional spine logic above for free, so a pipe call
   -- against a polymorphic head (@x |> apply g@) gets the same
@@ -2265,20 +2320,44 @@ mkRowInject sp src tgt inner
   | TyVar {} <- src = pure plain
   -- Ground source: its matching alternative is unique by construction.
   | S.null (collectTypeVars src) = pure plain
-  -- A nominal-headed source with a free parameter (@Nothing : Maybe a@) —
-  -- the bug domain. If more than one /concrete/ alternative would accept
-  -- it, the target is undetermined; picking the first (what the greedy
-  -- lowering coercion does) is a silent miscompile, so reject. With one
-  -- (or zero, unreachable after the caller's 'rowSubsume' guard) the
-  -- unique label is resolved correctly downstream, so emit the coercion
-  -- unchanged. An open tyvar tail (@(Maybe T | r)@) is /not/ a competing
-  -- alternative — it is an extension slot resolved per-call-site by
+  -- A nominal-headed source with a free parameter (@Nothing : Maybe a@,
+  -- a synthesised constructor application still carrying its freshened
+  -- instantiation variables) — the bug domain. If more than one
+  -- /concrete/ alternative would accept it, the target is undetermined;
+  -- picking the first (what the greedy lowering coercion does) is a
+  -- silent miscompile, so reject. With exactly one, pin @src@ to that
+  -- alternative — lowering mints the runtime row tag from the recorded
+  -- source label, so a free variable left in it becomes a tag minted
+  -- from the variable's /name/, which no consumer dispatches on. Two
+  -- restrictions on the pin. Only @src@'s /compiler-freshened/
+  -- variables are bound (name carrying the @$@ freshness sigil, which
+  -- the parser forbids in source identifiers): a declared scheme
+  -- variable — @e2@ / @b@ in the prelude combinators' own bodies, where
+  -- this injection also fires — is 'Awsum.MonomorphizeRows' territory,
+  -- and binding one there rewrites the combinator's recorded
+  -- instantiations (@e2@ absorbed into @(e1 | e2)@), mis-specialising
+  -- every call site. And a binding whose bound type contains a row is
+  -- dropped ('filterSubst'): unification reaches a whole-row binding
+  -- greedily and order-dependently, and that choice belongs to
+  -- 'Awsum.MonomorphizeRows' per call site, while a binding to a single
+  -- row-free type is exactly what it would derive anyway. A 'unify'
+  -- failure is the open-tail row-absorb shape ('rowSubsume' accepts
+  -- what 'unifyRows' won't bind) — deferred to 'Awsum.MonomorphizeRows'
+  -- unchanged. An
+  -- open tyvar tail (@(Maybe T | r)@) is /not/ a competing alternative —
+  -- it is an extension slot resolved per-call-site by
   -- 'Awsum.MonomorphizeRows', mirroring the @TyVar src@ case above; it
   -- would otherwise "accept" every source and make every injection into
   -- an open row spuriously ambiguous.
   | otherwise = case filter (\l -> not (isTyVarTy l) && rowSubsume l src) (flattenRow tgt) of
       (_ : _ : _) -> throwTE (AmbiguousRowInjection sp src tgt)
-      _ -> pure plain
+      [alt] -> case unify src alt of
+        Right s ->
+          let freshenedVars = S.filter (T.isInfixOf "$") (collectTypeVars src)
+              sPin = filterSubst (not . containsRow) (restrictSubst freshenedVars s)
+           in pure (TCoerce sp (applySubst sPin src) tgt (substTExpr sPin inner))
+        Left _ -> pure plain
+      [] -> pure plain
   where
     plain = TCoerce sp src tgt inner
 

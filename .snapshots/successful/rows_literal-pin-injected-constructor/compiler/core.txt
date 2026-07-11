@@ -1,0 +1,620 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "seven"
+            ( CIntLit 7 TInt32 )
+        , CValDef "direct"
+            ( CCon 24
+                [ CIntLit 7 TInt32 ]
+            )
+        , CValDef "nested"
+            ( CCon 25
+                [ CRow 1730259187
+                    ( CCon 24
+                        [ CIntLit 7 TInt32 ]
+                    )
+                ]
+            )
+        , CValDef "bare"
+            ( CCon 25
+                [ CRow 2711245919
+                    ( CIntLit 7 TInt32 )
+                ]
+            )
+        , CValDef "ascribed"
+            ( CCon 25
+                [ CRow 1730259187
+                    ( CCon 24
+                        [ CIntLit 7 TInt32 ]
+                    )
+                ]
+            )
+        , CValDef "named"
+            ( CCon 25
+                [ CRow 1730259187
+                    ( CCon 24
+                        [ CVar "seven" ]
+                    )
+                ]
+            )
+        , CValDef "wrapped"
+            ( CCon 28
+                [ CRow 1519763639
+                    ( CCon 26
+                        [ CIntLit 7 TInt32 ]
+                    )
+                ]
+            )
+        , CValDef "shown"
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "addInt32" )
+                    [ CLet "$inl7$c"
+                        ( CVar "direct" )
+                        ( CDrop "$inl7$c"
+                            ( CCase
+                                ( CVar "$inl7$c" )
+                                [
+                                    ( 24
+                                    , [ "$inl1$n" ]
+                                    , CProj "$inl7$c" 1
+                                    )
+                                ,
+                                    ( 25
+                                    , [ "$inl2$x" ]
+                                    , CRowCase
+                                        ( CVar "$inl2$x" )
+                                        [
+                                            ( 1730259187
+                                            , "$inl3$rest"
+                                            , CCase
+                                                ( CVar "$inl3$rest" )
+                                                [
+                                                    ( 24
+                                                    , [ "$inl4$k" ]
+                                                    , CProj "$inl3$rest" 1
+                                                    )
+                                                ,
+                                                    ( 25
+                                                    , [ "$inl5$_deep" ]
+                                                    , CIntLit 0 TInt32
+                                                    )
+                                                ]
+                                            )
+                                        ,
+                                            ( 2711245919
+                                            , "$inl6$m"
+                                            , CProj "$inl2$x" 1
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CLet "$inl14$c"
+                        ( CVar "nested" )
+                        ( CDrop "$inl14$c"
+                            ( CCase
+                                ( CVar "$inl14$c" )
+                                [
+                                    ( 24
+                                    , [ "$inl8$n" ]
+                                    , CProj "$inl14$c" 1
+                                    )
+                                ,
+                                    ( 25
+                                    , [ "$inl9$x" ]
+                                    , CRowCase
+                                        ( CVar "$inl9$x" )
+                                        [
+                                            ( 1730259187
+                                            , "$inl10$rest"
+                                            , CCase
+                                                ( CVar "$inl10$rest" )
+                                                [
+                                                    ( 24
+                                                    , [ "$inl11$k" ]
+                                                    , CProj "$inl10$rest" 1
+                                                    )
+                                                ,
+                                                    ( 25
+                                                    , [ "$inl12$_deep" ]
+                                                    , CIntLit 0 TInt32
+                                                    )
+                                                ]
+                                            )
+                                        ,
+                                            ( 2711245919
+                                            , "$inl13$m"
+                                            , CProj "$inl9$x" 1
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_4" ]
+                    , CCon 3
+                        [ CVar "$do_e_4" ]
+                    )
+                ,
+                    ( 4
+                    , [ "s1" ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "addInt32" )
+                            [ CVar "s1"
+                            , CLet "$inl21$c"
+                                ( CVar "bare" )
+                                ( CDrop "$inl21$c"
+                                    ( CCase
+                                        ( CVar "$inl21$c" )
+                                        [
+                                            ( 24
+                                            , [ "$inl15$n" ]
+                                            , CProj "$inl21$c" 1
+                                            )
+                                        ,
+                                            ( 25
+                                            , [ "$inl16$x" ]
+                                            , CRowCase
+                                                ( CVar "$inl16$x" )
+                                                [
+                                                    ( 1730259187
+                                                    , "$inl17$rest"
+                                                    , CCase
+                                                        ( CVar "$inl17$rest" )
+                                                        [
+                                                            ( 24
+                                                            , [ "$inl18$k" ]
+                                                            , CProj "$inl17$rest" 1
+                                                            )
+                                                        ,
+                                                            ( 25
+                                                            , [ "$inl19$_deep" ]
+                                                            , CIntLit 0 TInt32
+                                                            )
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 2711245919
+                                                    , "$inl20$m"
+                                                    , CProj "$inl16$x" 1
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "$do_e_3" ]
+                            , CCon 3
+                                [ CVar "$do_e_3" ]
+                            )
+                        ,
+                            ( 4
+                            , [ "s2" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "addInt32" )
+                                    [ CVar "s2"
+                                    , CLet "$inl28$c"
+                                        ( CVar "ascribed" )
+                                        ( CDrop "$inl28$c"
+                                            ( CCase
+                                                ( CVar "$inl28$c" )
+                                                [
+                                                    ( 24
+                                                    , [ "$inl22$n" ]
+                                                    , CProj "$inl28$c" 1
+                                                    )
+                                                ,
+                                                    ( 25
+                                                    , [ "$inl23$x" ]
+                                                    , CRowCase
+                                                        ( CVar "$inl23$x" )
+                                                        [
+                                                            ( 1730259187
+                                                            , "$inl24$rest"
+                                                            , CCase
+                                                                ( CVar "$inl24$rest" )
+                                                                [
+                                                                    ( 24
+                                                                    , [ "$inl25$k" ]
+                                                                    , CProj "$inl24$rest" 1
+                                                                    )
+                                                                ,
+                                                                    ( 25
+                                                                    , [ "$inl26$_deep" ]
+                                                                    , CIntLit 0 TInt32
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ,
+                                                            ( 2711245919
+                                                            , "$inl27$m"
+                                                            , CProj "$inl23$x" 1
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_2" ]
+                                    , CCon 3
+                                        [ CVar "$do_e_2" ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "s3" ]
+                                    , CCase
+                                        ( CCall
+                                            ( CBuiltIn "addInt32" )
+                                            [ CVar "s3"
+                                            , CLet "$inl35$c"
+                                                ( CVar "named" )
+                                                ( CDrop "$inl35$c"
+                                                    ( CCase
+                                                        ( CVar "$inl35$c" )
+                                                        [
+                                                            ( 24
+                                                            , [ "$inl29$n" ]
+                                                            , CProj "$inl35$c" 1
+                                                            )
+                                                        ,
+                                                            ( 25
+                                                            , [ "$inl30$x" ]
+                                                            , CRowCase
+                                                                ( CVar "$inl30$x" )
+                                                                [
+                                                                    ( 1730259187
+                                                                    , "$inl31$rest"
+                                                                    , CCase
+                                                                        ( CVar "$inl31$rest" )
+                                                                        [
+                                                                            ( 24
+                                                                            , [ "$inl32$k" ]
+                                                                            , CProj "$inl31$rest" 1
+                                                                            )
+                                                                        ,
+                                                                            ( 25
+                                                                            , [ "$inl33$_deep" ]
+                                                                            , CIntLit 0 TInt32
+                                                                            )
+                                                                        ]
+                                                                    )
+                                                                ,
+                                                                    ( 2711245919
+                                                                    , "$inl34$m"
+                                                                    , CProj "$inl30$x" 1
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "$do_e_1" ]
+                                            , CCon 3
+                                                [ CVar "$do_e_1" ]
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "s4" ]
+                                            , CCase
+                                                ( CCall
+                                                    ( CBuiltIn "addInt32" )
+                                                    [ CVar "s4"
+                                                    , CCase
+                                                        ( CVar "wrapped" )
+                                                        [
+                                                            ( 28
+                                                            , [ "$inl36$x" ]
+                                                            , CRowCase
+                                                                ( CVar "$inl36$x" )
+                                                                [
+                                                                    ( 1519763639
+                                                                    , "$inl37$b"
+                                                                    , CProj "$inl37$b" 1
+                                                                    )
+                                                                ,
+                                                                    ( 2711245919
+                                                                    , "$inl38$m"
+                                                                    , CProj "$inl36$x" 1
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ]
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "$do_e_0" ]
+                                                    , CCon 3
+                                                        [ CVar "$do_e_0" ]
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "s5" ]
+                                                    , CCon 4
+                                                        [ CCall
+                                                            ( CBuiltIn "showInt32" )
+                                                            [ CVar "s5" ]
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CCall
+                    ( CVar "$cps$$df$$rowmono$0$andThenIO$4" )
+                    [ CLet "$inl43$x"
+                        ( CVar "shown" )
+                        ( CDrop "$inl43$x"
+                            ( CCase
+                                ( CVar "$inl43$x" )
+                                [
+                                    ( 3
+                                    , [ "$inl41$e" ]
+                                    , CCon 6
+                                        [ CProj "$inl43$x" 1 ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "$inl42$a" ]
+                                    , CCon 5
+                                        [ CProj "$inl43$x" 1 ]
+                                    )
+                                ]
+                            )
+                        )
+                    , CCon 31 []
+                    ]
+                , CCon 29 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CRowCase
+                                ( CProj "io" 1 )
+                                [
+                                    ( 882564211
+                                    , "$inl39$__rw"
+                                    , CCon 7
+                                        [ CString "OVERFLOW"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ,
+                                    ( 3768445577
+                                    , "$inl40$__rw"
+                                    , CCon 7
+                                        [ CString "UNDERFLOW"
+                                        , CCon 5
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 30
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 29
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 30
+                        ,
+                            [ "$pk_30"
+                            , "s"
+                            ]
+                        , CDrop "$pk_30"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_30"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$cps$$df$$rowmono$0$andThenIO$4"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
+                            [ CVar "$k"
+                            , CCon 7
+                                [ CProj "io" 1
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$$rowmono$0$andThenIO$4" )
+                            [ CVar "$k"
+                            , CVar "io"
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop "s"
+                            ( CDrop "next"
+                                ( CDrop "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse ReuseGuarded "io" 32
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$$rowmono$0$andThenIO$4"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 31
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 32
+                        ,
+                            [ "$pk_32"
+                            , "s"
+                            ]
+                        , CDrop "$pk_32"
+                            ( CDrop "s"
+                                ( CDrop "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_32"
+                                        , CReuse ReuseUnique "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

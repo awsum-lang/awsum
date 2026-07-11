@@ -1,0 +1,226 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "v"
+            ( CCon 25
+                [ CRow 1907350996
+                    ( CCon 25
+                        [ CRow 1907350996
+                            ( CCon 24
+                                [ CIntLit 1 TInt32 ]
+                            )
+                        , CRow 1907350996
+                            ( CCon 24
+                                [ CIntLit 2 TInt32 ]
+                            )
+                        ]
+                    )
+                , CRow 1907350996
+                    ( CCon 24
+                        [ CIntLit 3 TInt32 ]
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$scc$$apply$$scc$sumSide_sumT_$cps$$scc$sumSide_sumT" )
+                        [ CCon 32
+                            [ CCon 27
+                                [ CVar "v" ]
+                            , CCon 28 []
+                            ]
+                        ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$scc$$apply$$scc$sumSide_sumT_$cps$$scc$sumSide_sumT" [ "$args$1" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args$1" )
+                    [
+                        ( 31
+                        ,
+                            [ "$k"
+                            , "$x"
+                            ]
+                        , CDrop "$x"
+                            ( CCase
+                                ( CVar "$k" )
+                                [
+                                    ( 28
+                                    , []
+                                    , CDrop "$k"
+                                        ( CVar "$x" )
+                                    )
+                                ,
+                                    ( 30
+                                    ,
+                                        [ "$pk_30"
+                                        , "$rcv_0"
+                                        ]
+                                    , CDrop "$pk_30"
+                                        ( CDrop "$rcv_0"
+                                            ( CCase
+                                                ( CCall
+                                                    ( CBuiltIn "addInt32" )
+                                                    [ CVar "$rcv_0"
+                                                    , CVar "$x"
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "_e" ]
+                                                    , CDrop "$args$1"
+                                                        ( CContinue
+                                                            [ CReuse ReuseUnique "$k" 31
+                                                                [ CVar "$pk_30"
+                                                                , CIntLit 0 TInt32
+                                                                ]
+                                                            ]
+                                                        )
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "s" ]
+                                                    , CDrop "s"
+                                                        ( CDrop "$args$1"
+                                                            ( CContinue
+                                                                [ CReuse ReuseUnique "$k" 31
+                                                                    [ CVar "$pk_30"
+                                                                    , CVar "s"
+                                                                    ]
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 29
+                                    ,
+                                        [ "$pk_29"
+                                        , "r"
+                                        ]
+                                    , CDrop "$pk_29"
+                                        ( CDrop "r"
+                                            ( CContinue
+                                                [ CReuse ReuseUnique "$args$1" 32
+                                                    [ CCon 26
+                                                        [ CVar "r" ]
+                                                    , CReuse ReuseUnique "$k" 30
+                                                        [ CVar "$pk_29"
+                                                        , CVar "$x"
+                                                        ]
+                                                    ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ,
+                        ( 32
+                        ,
+                            [ "$args"
+                            , "$k"
+                            ]
+                        , CDrop "$k"
+                            ( CCase
+                                ( CVar "$args" )
+                                [
+                                    ( 26
+                                    , [ "x" ]
+                                    , CDrop "x"
+                                        ( CContinue
+                                            [ CReuse ReuseUnique "$args$1" 32
+                                                [ CReuse ReuseUnique "$args" 27
+                                                    [ CProj "x" 1 ]
+                                                , CVar "$k"
+                                                ]
+                                            ]
+                                        )
+                                    )
+                                ,
+                                    ( 27
+                                    , [ "t" ]
+                                    , CDrop "t"
+                                        ( CCase
+                                            ( CVar "t" )
+                                            [
+                                                ( 24
+                                                , [ "n" ]
+                                                , CDrop "$args"
+                                                    ( CContinue
+                                                        [ CReuse ReuseUnique "$args$1" 31
+                                                            [ CVar "$k"
+                                                            , CProj "t" 1
+                                                            ]
+                                                        ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 25
+                                                ,
+                                                    [ "l"
+                                                    , "r"
+                                                    ]
+                                                , CContinue
+                                                    [ CCon 32
+                                                        [ CReuse ReuseUnique "$args" 26
+                                                            [ CProj "t" 1 ]
+                                                        , CReuse ReuseUnique "$args$1" 29
+                                                            [ CVar "$k"
+                                                            , CProj "t" 2
+                                                            ]
+                                                        ]
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    }

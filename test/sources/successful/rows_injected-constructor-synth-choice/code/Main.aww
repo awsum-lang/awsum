@@ -1,0 +1,19 @@
+{- A constructor application whose self-typing argument decides between
+   two same-head row alternatives: `Tip "hi"` synthesises `Chain String`,
+   so the `(Chain Int32 | Chain String)` target is not ambiguous.
+   Prints `S`. -}
+
+import IO.Stdout
+
+type Chain a = Tip a | Link (a | Chain a)
+
+choice : Chain Int32 | Chain String
+choice = Tip "hi"
+
+describe : (Chain Int32 | Chain String) -> String
+describe x = case x of
+  (_ci : Chain Int32) -> "I"
+  (_cs : Chain String) -> "S"
+
+main : IO Never Unit
+main = IO.Stdout.print (describe choice)

@@ -1,0 +1,166 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CProj "io" 1
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CLet "$inl0$eff"
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CProj "io" 1 ]
+                            )
+                            ( CDrop "$inl0$eff"
+                                ( CDrop "io"
+                                    ( CContinue
+                                        [ CProj "io" 2 ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "v"
+            ( CCon 25
+                [ CRow 1938575252
+                    ( CCon 12
+                        [ CCon 25
+                            [ CRow 1938575252
+                                ( CCon 12
+                                    [ CCon 24 [] ]
+                                )
+                            ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$cps$walk"
+            [ "c"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "c" )
+                    [
+                        ( 24
+                        , []
+                        , CCall
+                            ( CVar "$apply$walk" )
+                            [ CVar "$k"
+                            , CIntLit 0 TInt32
+                            ]
+                        )
+                    ,
+                        ( 25
+                        , [ "x" ]
+                        , CDrop "x"
+                            ( CCase
+                                ( CProj "x" 1 )
+                                [
+                                    ( 11
+                                    , []
+                                    , CCall
+                                        ( CVar "$apply$walk" )
+                                        [ CVar "$k"
+                                        , CIntLit 0 TInt32
+                                        ]
+                                    )
+                                ,
+                                    ( 12
+                                    , [ "rest" ]
+                                    , CDrop "rest"
+                                        ( CDrop "$k"
+                                            ( CContinue
+                                                [ CVar "rest"
+                                                , CReuse ReuseGuarded "c" 27
+                                                    [ CVar "$k" ]
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$walk"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 26
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 27
+                        , [ "$pk_27" ]
+                        , CDrop "$pk_27"
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "succInt32" )
+                                    [ CVar "$x" ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "_e" ]
+                                    , CDrop "$k"
+                                        ( CDrop "$x"
+                                            ( CContinue
+                                                [ CVar "$pk_27"
+                                                , CIntLit 0 TInt32
+                                                ]
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "r" ]
+                                    , CDrop "r"
+                                        ( CDrop "$k"
+                                            ( CDrop "$x"
+                                                ( CContinue
+                                                    [ CVar "$pk_27"
+                                                    , CVar "r"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCon 7
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$cps$walk" )
+                        [ CVar "v"
+                        , CCon 26 []
+                        ]
+                    ]
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

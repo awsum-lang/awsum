@@ -1,0 +1,25 @@
+{- A recursive type with two row-typed fields (`Nd (a | T a) (a | T a)`),
+   its leaves built from bare integer literals pinned through the
+   enclosing constructor applications. Sums the leaves, prints `6`. -}
+
+import IO.Stdout
+
+type T a = Lf a | Nd (a | T a) (a | T a)
+
+v : T Int32
+v = Nd (Nd (Lf 1) (Lf 2)) (Lf 3)
+
+sumT : T Int32 -> Int32
+sumT t = case t of
+  Lf n -> n
+  Nd l r -> case addInt32 (sumSide l) (sumSide r) of
+    Left _e -> 0
+    Right s -> s
+
+sumSide : (Int32 | T Int32) -> Int32
+sumSide x = case x of
+  (n : Int32) -> n
+  (sub : T Int32) -> sumT sub
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (sumT v))
