@@ -29,7 +29,7 @@ Two consequences:
 - **A target's hard limit is refused at compile time, not discovered at runtime.** Where a backend's runtime would reject an artifact the compiler could technically emit, the compiler refuses to emit it and reports why — a build error with a clear message, not a crash when the program is launched.
 - **Capable targets are not capped to match limited ones.** A limit that binds on one backend does not shrink what the others accept. The compiler does not cap how large a function may be everywhere just because one target caps it; LLVM, CLR, and WASM keep their far higher (or absent) ceilings.
 
-### JVM: 65535 bytes per method
+### JVM: class-file limits
 
 The JVM caps a method's `Code` attribute at 65535 bytes (`code_length`, JVM Spec §4.7.3); a method over that yields a class the JVM rejects at load. `awsum build -t jvm` / `awsum run -t jvm` therefore refuse such a program at compile time, naming the method and its size:
 
@@ -40,7 +40,16 @@ of 65535 bytes per method. This program can't be built for the JVM target.
 
 The size is the **actual** assembled bytecode, measured after every Core-to-Core pass and codegen — not an estimate. Reaching the limit takes a pathologically large single function (a multi-thousand-element literal lowered into one straight-line body, say); ordinary code is nowhere near it. The other four backends build and run the same program unchanged.
 
-Other JVM ceilings of the same `u2` shape — at most 65535 methods per class, 65535 constant-pool entries — sit far higher and aren't reached by today's programs; should one ever bind, the same principle applies: refuse for the JVM target, never silently emit a class the runtime would reject.
+Five more class-file limits are guarded by the same discipline — refuse at compile time, never silently emit a class the JVM would reject at load with `ClassFormatError`:
+
+- **255 parameters per method** (a method descriptor encodes at most 255 parameter units, §4.3.3, §4.11). Reachable through code generation — defunctionalization prepends a closure's captures to the parameter list — so synthesised methods are covered too.
+- **65535 bytes per constant-pool entry** (`CONSTANT_Utf8_info` `length`, §4.4.7). A source literal can't cross it — literals are capped at 21845 UTF-16 code units precisely so a single one's worst-case encoding fits — and `Simplify` deliberately doesn't fold string `++` into longer constants; this guard is the backstop those two decisions lean on.
+- **65535 constant-pool entries** (`constant_pool_count`, §4.1). The whole-program one: roughly 10,000+ functions — a large but ordinary codebase, not a pathological definition — would reach it.
+- **65535 `max_stack` / `max_locals` slots per method** (§4.7.3).
+
+A program over several limits at once gets the most actionable one reported: a function with tens of thousands of parameters overflows its descriptor's Utf8 entry and `max_locals` too, but the parameter count is what's named. Per-method messages name the method — labelling a compiler-synthesised one (`$scc$…`, `$cps$…`) with a line on where it came from; whole-class ones state the limit and the figure that crossed it.
+
+The one same-shape ceiling not guarded — at most 65535 methods per class (§4.1) — cannot bind first: every method contributes at least one unique constant-pool entry (its name), so a program with that many methods trips the constant-pool guard before the method count matters.
 
 ## Maximum string length
 
