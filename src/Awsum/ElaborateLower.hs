@@ -25,7 +25,7 @@ import Awsum.Cps (cpsProgram)
 import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
-import Awsum.HM (applySubst, bareRowLabel, canonicalLabel, flattenRow, rowRetagNeeded, rowTag, singletonSubst, unify)
+import Awsum.HM (applySubst, bareRowLabel, canonicalLabel, collectTypeVars, flattenRow, rowRetagNeeded, rowTag, singletonSubst, unify)
 import Awsum.Lifetime (insertDrops)
 import Awsum.LowerClosures (lowerClosuresProgram)
 import Awsum.MonomorphizeRows (monomorphizeRows)
@@ -273,6 +273,21 @@ emitHelper d = modify (\s -> s {lsHelpers = d : lsHelpers s})
 --   'rowTag' directly here would silently bypass collision detection.
 recordRowTag :: Type' -> LowerM Word32
 recordRowTag lbl = do
+  -- A freshened type variable (name carrying the compiler's @$@
+  -- freshness sigil, impossible in a source identifier) inside a label
+  -- here means the typechecker recorded an unpinned type at a row
+  -- injection or row-case arm: the tag would be minted from the
+  -- variable's /name/, which no consumer dispatches on — a silent
+  -- cross-target miscompile. Refuse loudly instead.
+  case Set.toList (Set.filter (T.isInfixOf "$") (collectTypeVars lbl)) of
+    (v : _) ->
+      liftEither
+        $ Left
+          ( TELowering
+              (loweringSpan lbl)
+              ("recordRowTag: unsolved type variable '" <> v <> "' in row label " <> canonicalLabel lbl <> " — a compiler bug, please report")
+          )
+    [] -> pass
   let tag = rowTag lbl
       key = canonicalLabel lbl
   modify
@@ -1697,10 +1712,19 @@ coercible src tgt
   | otherwise = False
 
 -- | Find a label in the target row that 'src' can be coerced to.
---   Prefers exact matches (handled by caller before this is reached);
---   falls back to recursive 'coercible' check.
+--   Exact matches win, then concrete coercible labels, and a bare
+--   tyvar label — which 'coercible' treats as a wildcard — only as the
+--   last resort: row equivalence is order-free, so a concrete label
+--   must not lose to a wildcard that merely appears earlier in the
+--   declared order.
 findCoercibleLabel :: Type' -> [Type'] -> Maybe Type'
-findCoercibleLabel src = find (coercible src)
+findCoercibleLabel src labels =
+  find (typeEq src) labels
+    <|> find (\l -> not (isTyVarLabel l) && coercible src l) labels
+    <|> find (coercible src) labels
+  where
+    isTyVarLabel TyVar {} = True
+    isTyVarLabel _ = False
 
 -- | Synthesise a CExpr-level coercion from @src@ to @tgt@. The
 --   returned function wraps a CExpr of source type into one of target

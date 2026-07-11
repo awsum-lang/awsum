@@ -1,0 +1,80 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl20$eff                      count=0
+  case-pattern    cont                            count=0
+  let             $inl21$$arg0                    count=0
+
+$cps$walk:
+  param           c                               count=2
+  param           $k                              count=2
+  case-pattern    x                               count=0
+  row-case        rest                            count=0
+  row-case        n                               count=0
+
+$apply$walk:
+  param           $k                              count=1
+  param           $x                              count=2
+  case-pattern    $pk_33                          count=0
+  case-pattern    _e                              count=0
+  case-pattern    r                               count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=4
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  row-case        $inl10$__rw                     count=0
+  row-case        $inl11$__rw                     count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_35                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$$rowmono$0$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  let             $inl17$args                     count=0
+  join-param      $inl13$scrut                    count=1
+  case-pattern    $inl14$s                        count=0
+  case-pattern    $inl15$h                        count=0
+  case-pattern    $inl16$_t                       count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$$rowmono$0$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_37                          count=0
+  case-pattern    s                               count=0
+
+$cps$$scc$$apply1_$df$$lam$14$5_$df$$lam$9$1:
+  param           $args                           count=5
+  param           $k                              count=1
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    $cap26_0                        count=0
+  case-pattern    $cap27_0                        count=0
+  case-pattern    $inl18$e                        count=0
+  case-pattern    $inl19$s                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+
+$apply$$scc$$apply1_$df$$lam$14$5_$df$$lam$9$1:
+  param           $k                              count=1
+  param           $x                              count=1
+  case-pattern    $pk_39                          count=0
+  case-pattern    $pk_40                          count=0
+

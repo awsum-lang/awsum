@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":16,"startCol":35,"endLine":16,"endCol":40,"message":"Ambiguous injection of Chain a into Chain Int32 | Chain String: more than one alternative could accept it, and the value's type is not pinned. Add an explicit type annotation that names the intended alternative.","fixes":[]}]

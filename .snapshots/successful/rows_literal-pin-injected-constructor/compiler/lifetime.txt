@@ -1,0 +1,92 @@
+runIO:
+  param           io                              count=3
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  let             $inl0$eff                       count=0
+
+shown:
+  let             $inl7$c                         count=0
+  case-pattern    $inl1$n                         count=0
+  case-pattern    $inl2$x                         count=2
+  row-case        $inl3$rest                      count=2
+  case-pattern    $inl4$k                         count=0
+  case-pattern    $inl5$_deep                     count=0
+  row-case        $inl6$m                         count=0
+  let             $inl14$c                        count=0
+  case-pattern    $inl8$n                         count=0
+  case-pattern    $inl9$x                         count=2
+  row-case        $inl10$rest                     count=2
+  case-pattern    $inl11$k                        count=0
+  case-pattern    $inl12$_deep                    count=0
+  row-case        $inl13$m                        count=0
+  case-pattern    $do_e_4                         count=1
+  case-pattern    s1                              count=1
+  let             $inl21$c                        count=0
+  case-pattern    $inl15$n                        count=0
+  case-pattern    $inl16$x                        count=2
+  row-case        $inl17$rest                     count=2
+  case-pattern    $inl18$k                        count=0
+  case-pattern    $inl19$_deep                    count=0
+  row-case        $inl20$m                        count=0
+  case-pattern    $do_e_3                         count=1
+  case-pattern    s2                              count=1
+  let             $inl28$c                        count=0
+  case-pattern    $inl22$n                        count=0
+  case-pattern    $inl23$x                        count=2
+  row-case        $inl24$rest                     count=2
+  case-pattern    $inl25$k                        count=0
+  case-pattern    $inl26$_deep                    count=0
+  row-case        $inl27$m                        count=0
+  case-pattern    $do_e_2                         count=1
+  case-pattern    s3                              count=1
+  let             $inl35$c                        count=0
+  case-pattern    $inl29$n                        count=0
+  case-pattern    $inl30$x                        count=2
+  row-case        $inl31$rest                     count=2
+  case-pattern    $inl32$k                        count=0
+  case-pattern    $inl33$_deep                    count=0
+  row-case        $inl34$m                        count=0
+  case-pattern    $do_e_1                         count=1
+  case-pattern    s4                              count=1
+  case-pattern    $inl36$x                        count=2
+  row-case        $inl37$b                        count=1
+  row-case        $inl38$m                        count=0
+  case-pattern    $do_e_0                         count=1
+  case-pattern    s5                              count=1
+
+main:
+  let             $inl43$x                        count=0
+  case-pattern    $inl41$e                        count=0
+  case-pattern    $inl42$a                        count=0
+
+$cps$$df$handleErrorIO$0:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  row-case        $inl39$__rw                     count=0
+  row-case        $inl40$__rw                     count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$handleErrorIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_30                          count=0
+  case-pattern    s                               count=0
+
+$cps$$df$$rowmono$0$andThenIO$4:
+  param           io                              count=4
+  param           $k                              count=2
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$apply$$df$$rowmono$0$andThenIO$4:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_32                          count=0
+  case-pattern    s                               count=0
+

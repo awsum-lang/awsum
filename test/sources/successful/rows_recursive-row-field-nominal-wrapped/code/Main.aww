@@ -1,0 +1,23 @@
+{- A recursive type reachable through a nominal head inside its row-typed
+   field (`Link (a | Maybe (Ch a))`), built two levels deep. Prints `2`. -}
+
+import IO.Stdout
+
+type Ch a = Tip | Link (a | Maybe (Ch a))
+
+v : Ch Int32
+v = Link (Just (Link (Just Tip)))
+
+walk : Ch Int32 -> Int32
+walk c = case c of
+  Tip -> 0
+  Link x -> case x of
+    (n : Int32) -> n
+    (m : Maybe (Ch Int32)) -> case m of
+      Nothing -> 0
+      Just rest -> case succInt32 (walk rest) of
+        Left _e -> 0
+        Right r -> r
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (walk v))

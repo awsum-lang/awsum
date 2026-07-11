@@ -1,0 +1,32 @@
+{- Two types mutually recursive through each other's row-typed fields
+   (`AGo (a | B a)` / `BGo (a | A a)`), built four levels deep and walked
+   with alternating counters. Prints `4`. -}
+
+import IO.Stdout
+
+type A a = AStop | AGo (a | B a)
+
+type B a = BGo (a | A a)
+
+v : A Int32
+v = AGo (BGo (AGo (BGo AStop)))
+
+walkA : A Int32 -> Int32
+walkA c = case c of
+  AStop -> 0
+  AGo x -> case x of
+    (n : Int32) -> n
+    (rest : B Int32) -> case succInt32 (walkB rest) of
+      Left _e -> 0
+      Right r -> r
+
+walkB : B Int32 -> Int32
+walkB c = case c of
+  BGo x -> case x of
+    (n : Int32) -> n
+    (rest : A Int32) -> case succInt32 (walkA rest) of
+      Left _e -> 0
+      Right r -> r
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (walkA v))

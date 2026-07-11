@@ -1,0 +1,70 @@
+{- Integer literals pinned through constructor applications injected into
+   row alternatives: nested (`Link (Tip 7)`), bare into the row's `Int32`
+   alternative (`Link 7`), through a non-recursive nominal wrapper
+   (`WLink (MkBox 7)`), plus direct, ascribed, and named-value controls.
+   Sums all six probes, prints `42`. -}
+
+import IO.Stdout
+
+type Chain a = Tip a | Link (a | Chain a)
+
+type Box a = MkBox a
+
+type W a = WTip a | WLink (a | Box a)
+
+seven : Int32
+seven = 7
+
+direct : Chain Int32
+direct = Tip 7
+
+nested : Chain Int32
+nested = Link (Tip 7)
+
+bare : Chain Int32
+bare = Link 7
+
+ascribed : Chain Int32
+ascribed = Link (Tip (7 : Int32))
+
+named : Chain Int32
+named = Link (Tip seven)
+
+wrapped : W Int32
+wrapped = WLink (MkBox 7)
+
+leafOf : Chain Int32 -> Int32
+leafOf c = case c of
+  Tip n -> n
+  Link x -> case x of
+    (m : Int32) -> m
+    (rest : Chain Int32) -> case rest of
+      Tip k -> k
+      Link _deep -> 0
+
+boxOf : W Int32 -> Int32
+boxOf w = case w of
+  WTip n -> n
+  WLink x -> case x of
+    (m : Int32) -> m
+    (b : Box Int32) -> case b of
+      MkBox inner -> inner
+
+shown : Either (UnderflowError | OverflowError) String
+shown = do
+  s1 <- addInt32 (leafOf direct) (leafOf nested)
+  s2 <- addInt32 s1 (leafOf bare)
+  s3 <- addInt32 s2 (leafOf ascribed)
+  s4 <- addInt32 s3 (leafOf named)
+  s5 <- addInt32 s4 (boxOf wrapped)
+  pureEither (showInt32 s5)
+
+onError : (UnderflowError | OverflowError) -> IO Never Unit
+onError e = case e of
+  UnderflowError -> IO.Stdout.print "UNDERFLOW"
+  OverflowError -> IO.Stdout.print "OVERFLOW"
+
+main : IO Never Unit
+main = eitherToIO shown
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError

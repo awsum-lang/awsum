@@ -1,0 +1,37 @@
+{- The row-typed field of a recursive type dispatched on data that only
+   exists at runtime: the argument picks whether the chain's payload is a
+   bare `Int32` or a deeper chain, so the row dispatch cannot be resolved
+   at compile time. Prints `5` for `int`, `2` for `deep`, `0` otherwise. -}
+
+import IO.Stdout
+import IO.Args
+
+type Ch a = TipN | LinkN (a | Ch a)
+
+pick : List String -> Ch Int32
+pick args = case headList args of
+  Nothing -> TipN
+  Just s -> case eqString s "int" of
+    True -> LinkN 5
+    False -> case eqString s "deep" of
+      True -> LinkN (LinkN TipN)
+      False -> TipN
+
+walk : Ch Int32 -> Int32
+walk c = case c of
+  TipN -> 0
+  LinkN x -> case x of
+    (n : Int32) -> n
+    (rest : Ch Int32) -> case succInt32 (walk rest) of
+      Left _e -> 0
+      Right r -> r
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\args -> IO.Stdout.print (showInt32 (walk (pick args))))
+  |> handleErrorIO onError
