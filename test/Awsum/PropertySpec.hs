@@ -19,8 +19,11 @@
 -- construction.
 module Awsum.PropertySpec (spec) where
 
+import Awsum.ConstEval (ArithError (..), IntOutcome (..), evalInt, foldableIntBuiltins, intTypeHi, intTypeLo)
+import Awsum.Core (IntType (..))
 import Awsum.RunBackend (Backend, CompiledArtifacts, SimplifyMode (..), compileFromFile, compileFromFileWith, compileFromText, compileFromTextWith, runOnAllStdinBytes)
 import Data.ByteString qualified as BS
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Numeric (showHex)
 import Relude
@@ -92,6 +95,9 @@ spec = describe "Property tests"
     -- 'Awsum.Simplify' evaluates them at compile time — unlike every property
     -- above, whose inputs arrive at runtime and never fold.
     constFoldDifferentialSpec
+    -- Coverage guard: the generator's op set equals 'Awsum.ConstEval's table,
+    -- so a new foldable built-in can't slip in untested.
+    constFoldCoverageSpec
     -- Function-inlining differential: generated helper chains exercising
     -- every argument-binding shape of the inliner, seeded with a runtime
     -- value so the inlined code actually executes on the SimplifyOn leg.
@@ -1532,13 +1538,13 @@ deMorganProp =
 -- exercised in every QuickCheck iteration, with random magnitudes.
 
 -- | One case of the generated program: a built-in applied to literal
---   operands, the arm shape the program scrutinises its result with, and
---   the stdout marker the Haskell oracle expects.
+--   operands and the arm shape the program scrutinises its result with. The
+--   expected stdout is derived centrally from "Awsum.ConstEval" ('evalInt'
+--   via 'foldExpected'), not stored here.
 data FoldCaseV = FoldCaseV
   { fcvOp :: Text,
     fcvArgs :: [Integer],
-    fcvArm :: FoldArmStyle,
-    fcvExpected :: Text
+    fcvArm :: FoldArmStyle
   }
   deriving stock (Show)
 
@@ -1556,10 +1562,10 @@ data FoldArmStyle
   deriving stock (Show)
 
 i32Lo, i32Hi, u8Hi, u32Hi :: Integer
-i32Lo = -2147483648
-i32Hi = 2147483647
-u8Hi = 255
-u32Hi = 4294967295
+i32Lo = intTypeLo TInt32
+i32Hi = intTypeHi TInt32
+u8Hi = intTypeHi TUInt8
+u32Hi = intTypeHi TUInt32
 
 -- | All cases of one generated program: one instance per (operation,
 --   outcome). 41 cases — 3 outcomes × 3 signed ops, 2 × 12 unsigned-op
@@ -1569,22 +1575,22 @@ genFoldCases :: Gen [FoldCaseV]
 genFoldCases =
   concat
     <$> sequence
-      [ int32ArithCases "addInt32" (+) genAddOk,
-        int32ArithCases "subInt32" (-) genSubOk,
-        int32ArithCases "mulInt32" (*) genMulOk,
+      [ int32ArithCases "addInt32" genAddOk,
+        int32ArithCases "subInt32" genSubOk,
+        int32ArithCases "mulInt32" genMulOk,
         unsignedAdd "addUInt8" "showUInt8" u8Hi,
         unsignedSub "subUInt8" "showUInt8" u8Hi,
         unsignedMul "mulUInt8" "showUInt8" u8Hi,
         unsignedAdd "addUInt32" "showUInt32" u32Hi,
         unsignedSub "subUInt32" "showUInt32" u32Hi,
         unsignedMul "mulUInt32" "showUInt32" u32Hi,
-        unaryCases "negInt32" "showInt32" "O" i32Lo (i32Lo, i32Hi) (\a -> if a == i32Lo then "O" else show (negate a)),
-        unaryCases "succInt32" "showInt32" "O" i32Hi (i32Lo, i32Hi) (\a -> if a == i32Hi then "O" else show (a + 1)),
-        unaryCases "predInt32" "showInt32" "U" i32Lo (i32Lo, i32Hi) (\a -> if a == i32Lo then "U" else show (a - 1)),
-        unaryCases "succUInt8" "showUInt8" "O" u8Hi (0, u8Hi) (\a -> if a == u8Hi then "O" else show (a + 1)),
-        unaryCases "predUInt8" "showUInt8" "U" 0 (0, u8Hi) (\a -> if a == 0 then "U" else show (a - 1)),
-        unaryCases "succUInt32" "showUInt32" "O" u32Hi (0, u32Hi) (\a -> if a == u32Hi then "O" else show (a + 1)),
-        unaryCases "predUInt32" "showUInt32" "U" 0 (0, u32Hi) (\a -> if a == 0 then "U" else show (a - 1)),
+        unaryCases "negInt32" "showInt32" "O" i32Lo (i32Lo, i32Hi),
+        unaryCases "succInt32" "showInt32" "O" i32Hi (i32Lo, i32Hi),
+        unaryCases "predInt32" "showInt32" "U" i32Lo (i32Lo, i32Hi),
+        unaryCases "succUInt8" "showUInt8" "O" u8Hi (0, u8Hi),
+        unaryCases "predUInt8" "showUInt8" "U" 0 (0, u8Hi),
+        unaryCases "succUInt32" "showUInt32" "O" u32Hi (0, u32Hi),
+        unaryCases "predUInt32" "showUInt32" "U" 0 (0, u32Hi),
         eqCases "eqInt32" (i32Lo, i32Hi),
         eqCases "eqUInt8" (0, u8Hi),
         eqCases "eqUInt32" (0, u32Hi)
@@ -1593,7 +1599,7 @@ genFoldCases =
     -- Signed Int32 add/sub/mul: three outcomes each. Overflow/underflow
     -- operands are constructed per operation; the in-range generator is the
     -- operation's NoOverflow* construction.
-    int32ArithCases name f genOk = do
+    int32ArithCases name genOk = do
       ovf <- case name of
         "subInt32" -> do
           a <- chooseInteger (0, i32Hi)
@@ -1621,13 +1627,9 @@ genFoldCases =
           b <- chooseInteger (i32Lo, i32Lo - a - 1)
           pure (a, b)
       ok <- genOk
-      pure [mk name f ab | ab <- [ovf, unf, ok]]
+      pure [mk ab | ab <- [ovf, unf, ok]]
       where
-        mk n g (a, b) = FoldCaseV n [a, b] (FoldArmRow "showInt32") (oracle (g a b))
-        oracle r
-          | r > i32Hi = "O"
-          | r < i32Lo = "U"
-          | otherwise = show r
+        mk (a, b) = FoldCaseV name [a, b] (FoldArmRow "showInt32")
     genAddOk = do
       a <- chooseInteger (i32Lo, i32Hi)
       b <- chooseInteger (max i32Lo (i32Lo - a), min i32Hi (i32Hi - a))
@@ -1651,7 +1653,7 @@ genFoldCases =
         a <- chooseInteger (0, hi)
         b <- chooseInteger (0, hi - a)
         pure (a, b)
-      pure [mkOverflowing name showFn hi (+) ab | ab <- [ovf, ok]]
+      pure [mkLeft name "O" showFn ab | ab <- [ovf, ok]]
     unsignedMul name showFn hi = do
       ovf <- do
         a <- chooseInteger (2, hi)
@@ -1661,9 +1663,7 @@ genFoldCases =
         a <- chooseInteger (0, hi)
         b <- chooseInteger (0, if a == 0 then hi else hi `div` a)
         pure (a, b)
-      pure [mkOverflowing name showFn hi (*) ab | ab <- [ovf, ok]]
-    mkOverflowing name showFn hi f (a, b) =
-      FoldCaseV name [a, b] (FoldArmLeft "O" showFn) (if f a b > hi then "O" else show (f a b))
+      pure [mkLeft name "O" showFn ab | ab <- [ovf, ok]]
     -- Unsigned sub: two outcomes (underflow is the only failure).
     unsignedSub name showFn hi = do
       unf <- do
@@ -1674,16 +1674,17 @@ genFoldCases =
         a <- chooseInteger (0, hi)
         b <- chooseInteger (0, a)
         pure (a, b)
-      pure [mk ab | ab <- [unf, ok]]
-      where
-        mk (a, b) = FoldCaseV name [a, b] (FoldArmLeft "U" showFn) (if a < b then "U" else show (a - b))
+      pure [mkLeft name "U" showFn ab | ab <- [unf, ok]]
+    -- A two-operand op whose Left is a bare single-error constructor: the arm
+    -- prints `marker` on Left, the named show function on Right.
+    mkLeft name marker showFn (a, b) = FoldCaseV name [a, b] (FoldArmLeft marker showFn)
     -- Unary succ/pred/neg: the boundary value (the op's only failure) plus a
     -- uniform draw from the full domain.
-    unaryCases name showFn marker boundary (lo, hi) oracle = do
+    unaryCases name showFn marker boundary (lo, hi) = do
       x <- chooseInteger (lo, hi)
       pure [mk boundary, mk x]
       where
-        mk a = FoldCaseV name [a] (FoldArmLeft marker showFn) (oracle a)
+        mk a = FoldCaseV name [a] (FoldArmLeft marker showFn)
     -- Equality: a forced-equal pair (uniform sampling almost never produces
     -- one) plus an independent pair.
     eqCases name (lo, hi) = do
@@ -1691,8 +1692,8 @@ genFoldCases =
       a2 <- chooseInteger (lo, hi)
       b2 <- chooseInteger (lo, hi)
       pure
-        [ FoldCaseV name [a1, a1] FoldArmBool "T",
-          FoldCaseV name [a2, b2] FoldArmBool (if a2 == b2 then "T" else "F")
+        [ FoldCaseV name [a1, a1] FoldArmBool,
+          FoldCaseV name [a2, b2] FoldArmBool
         ]
 
 -- | Render the generated cases as one Awsum program: a @String@ definition
@@ -1707,7 +1708,7 @@ renderFoldProgram cs =
         <> mainLines
     )
   where
-    defLines (i, FoldCaseV op args arm _) =
+    defLines (i, FoldCaseV op args arm) =
       [ "c" <> show i <> " : String",
         "c" <> show i <> " = case " <> op <> " " <> unwords (map lit args) <> " of"
       ]
@@ -1751,12 +1752,46 @@ constFoldDifferentialSpec =
     $ forAll genFoldCases
     $ \cs -> ioProperty $ do
       let src = renderFoldProgram cs
-          expected = T.intercalate ";" (map fcvExpected cs)
+          expected = T.intercalate ";" (map foldExpected cs)
       arts <- (,) <$> compileFromText src <*> compileFromTextWith SimplifyOff src
       results <- runBothStdinBytes arts ""
       pure
         $ counterexample (toString (formatFailure src expected results))
         $ allMatch expected results
+
+-- | The oracle for one generated case: project "Awsum.ConstEval"'s
+--   'IntOutcome' into the stdout marker the program prints — the same
+--   function 'constFold' folds with, so this asserts fold == runtime rather
+--   than re-stating the semantics. Every generated case is a foldable
+--   built-in by construction ('constFoldCoverageSpec' guards it), so 'evalInt'
+--   is total here.
+foldExpected :: FoldCaseV -> Text
+foldExpected (FoldCaseV op args _) =
+  maybe (error ("constFold oracle: non-foldable op " <> op)) renderOutcome (evalInt op args)
+
+-- | An 'IntOutcome' rendered as the marker 'renderFoldProgram''s arms print:
+--   a 'Right' value shows its digits, an error its one-letter marker, a Bool
+--   "T"\/"F".
+renderOutcome :: IntOutcome -> Text
+renderOutcome = \case
+  IntValue _ v -> show v
+  IntError _ ErrOverflow -> "O"
+  IntError _ ErrUnderflow -> "U"
+  IntBool b -> if b then "T" else "F"
+
+-- | Coverage guard: 'genFoldCases' must exercise exactly the foldable int
+--   built-ins "Awsum.ConstEval" knows. An entry added to the table without a
+--   matching generator case — or a generator op no longer in the table —
+--   fails here, the automatic check the hand-synced generator lacked. Cheap
+--   (no compilation); one sample suffices because every operation is
+--   generated unconditionally.
+constFoldCoverageSpec :: Spec
+constFoldCoverageSpec =
+  describe "constFold-coverage"
+    $ it "genFoldCases exercises exactly the foldable int built-ins"
+    $ do
+      cs <- QC.generate genFoldCases
+      Set.fromList (map fcvOp cs) `shouldBe` foldableIntBuiltins
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Function-inlining differential

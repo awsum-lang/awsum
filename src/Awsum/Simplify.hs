@@ -131,7 +131,8 @@
 -- join (only this pass mints them).
 --
 -- __Integer const-fold.__ A call to an integer built-in whose operands are
--- all literals is evaluated at compile time ('constFold'):
+-- all literals is evaluated at compile time ('constFold', the Core
+-- projection of "Awsum.ConstEval"'s 'evalInt'):
 --
 -- @
 --   addInt32 2 3            ==>  Right 5
@@ -147,10 +148,13 @@
 -- two-label row (a 'CRow' carrying the label's FNV-1a tag, the same
 -- 'rowTag' the codegen helpers embed), the single-error operations build a
 -- bare error constructor. Covered: @add@\/@sub@\/@mul@\/@succ@\/@pred@\/@eq@
--- over the three integer types plus @negInt32@. String built-ins are left
--- alone for now — a folded result 'CString' would sit outside the
--- source-literal length cap, and a concatenation over 21845 UTF-16 code
--- units cannot be carried by a single JVM @CONSTANT_Utf8_info@ entry.
+-- over the three integer types plus @negInt32@ — the op set, bounds and
+-- overflow semantics all live once in "Awsum.ConstEval", which the property
+-- oracle reads too, so @fold@ and @runtime@ are compared, not co-maintained.
+-- String built-ins are left alone for now — a folded result 'CString' would
+-- sit outside the source-literal length cap, and a concatenation over 21845
+-- UTF-16 code units cannot be carried by a single JVM @CONSTANT_Utf8_info@
+-- entry.
 --
 -- A folded result is a literal constructor, so case-of-known-constructor
 -- picks it up in the same walk: a whole case chain over literal arithmetic
@@ -210,6 +214,7 @@
 module Awsum.Simplify (simplifyProgram) where
 
 import Awsum.CallGraph (containsSelfCall, declName, stronglyConnected)
+import Awsum.ConstEval (ArithError (..), ErrShape (..), IntOutcome (..), evalInt, intOperandType)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Lifetime (scrutReuseEligible, soleScrutineeUse)
@@ -1112,61 +1117,41 @@ hasLoopOrContinue e = self || any hasLoopOrContinue (children e)
       CContinue _ -> True
       _ -> False
 
--- | Compile-time evaluation of the integer built-ins over literal operands
---   (see the module header). The result is exactly the cell the runtime
+-- | The Core projection of 'Awsum.ConstEval.evalInt': fold an integer
+--   built-in call over literal operands into the exact cell the runtime
 --   helper builds, so folding is observationally invisible — pinned by the
---   @constFold-differential@ property and the no-simplify differential
---   suite, whose 'SimplifyOff' leg routes the same literals to the runtime
---   helpers.
+--   @constFold-differential@ property (which checks fold against runtime
+--   through the same 'evalInt' oracle) and the no-simplify differential.
 --
---   Each equation requires operands of the built-in's own 'IntType' — after
---   typechecking nothing else can appear, but a mismatch must miss the fold
---   rather than evaluate under the wrong width. Arithmetic is on the
---   literals' arbitrary-precision 'Integer' payloads, range-checked against
---   the result type exactly as the helpers check (signed @add@\/@sub@\/@mul@
---   against both ends, unsigned against one — the other is unreachable, see
---   "Awsum.BuiltIn").
+--   The semantics — which operations fold, their bounds, their
+--   overflow\/underflow outcome — lives once in "Awsum.ConstEval"; this
+--   function only guards the operands (every one a 'CIntLit' of the
+--   operation's operand type, else the fold is missed — after typechecking
+--   the guard always holds) and builds the cell from the abstract
+--   'IntOutcome' ('cell').
 constFold :: PreludeTags -> Name -> [CExpr] -> Maybe CExpr
-constFold pt op args = case (op, args) of
-  ("addInt32", [CIntLit a TInt32, CIntLit b TInt32]) -> Just (int32Arith (a + b))
-  ("subInt32", [CIntLit a TInt32, CIntLit b TInt32]) -> Just (int32Arith (a - b))
-  ("mulInt32", [CIntLit a TInt32, CIntLit b TInt32]) -> Just (int32Arith (a * b))
-  ("negInt32", [CIntLit a TInt32]) -> Just (if a == lo TInt32 then leftOverflow else right (negate a) TInt32)
-  ("succInt32", [CIntLit a TInt32]) -> Just (if a == hi TInt32 then leftOverflow else right (a + 1) TInt32)
-  ("predInt32", [CIntLit a TInt32]) -> Just (if a == lo TInt32 then leftUnderflow else right (a - 1) TInt32)
-  ("eqInt32", [CIntLit a TInt32, CIntLit b TInt32]) -> Just (boolCon (a == b))
-  ("addUInt8", [CIntLit a TUInt8, CIntLit b TUInt8]) -> Just (unsignedAdd TUInt8 a b)
-  ("subUInt8", [CIntLit a TUInt8, CIntLit b TUInt8]) -> Just (unsignedSub TUInt8 a b)
-  ("mulUInt8", [CIntLit a TUInt8, CIntLit b TUInt8]) -> Just (unsignedMul TUInt8 a b)
-  ("succUInt8", [CIntLit a TUInt8]) -> Just (if a == hi TUInt8 then leftOverflow else right (a + 1) TUInt8)
-  ("predUInt8", [CIntLit a TUInt8]) -> Just (if a == 0 then leftUnderflow else right (a - 1) TUInt8)
-  ("eqUInt8", [CIntLit a TUInt8, CIntLit b TUInt8]) -> Just (boolCon (a == b))
-  ("addUInt32", [CIntLit a TUInt32, CIntLit b TUInt32]) -> Just (unsignedAdd TUInt32 a b)
-  ("subUInt32", [CIntLit a TUInt32, CIntLit b TUInt32]) -> Just (unsignedSub TUInt32 a b)
-  ("mulUInt32", [CIntLit a TUInt32, CIntLit b TUInt32]) -> Just (unsignedMul TUInt32 a b)
-  ("succUInt32", [CIntLit a TUInt32]) -> Just (if a == hi TUInt32 then leftOverflow else right (a + 1) TUInt32)
-  ("predUInt32", [CIntLit a TUInt32]) -> Just (if a == 0 then leftUnderflow else right (a - 1) TUInt32)
-  ("eqUInt32", [CIntLit a TUInt32, CIntLit b TUInt32]) -> Just (boolCon (a == b))
-  _ -> Nothing
+constFold pt op args = do
+  ty <- intOperandType op
+  xs <- traverse (intLit ty) args
+  cell pt <$> evalInt op xs
   where
-    -- Signed Int32 add/sub/mul: both overflow directions are reachable, and
-    -- the error side is the structural two-label row — 'CRow' wrapped, like
-    -- the helpers' returns.
-    int32Arith r
-      | r > hi TInt32 = CCon (ptLeft pt) [CRow overflowRowTag (CCon (ptOverflowError pt) [])]
-      | r < lo TInt32 = CCon (ptLeft pt) [CRow underflowRowTag (CCon (ptUnderflowError pt) [])]
-      | otherwise = right r TInt32
-    -- Unsigned add/sub/mul: one reachable failure direction each, so the
-    -- error side is the bare single-constructor type — no row.
-    unsignedAdd ty a b = if a + b > hi ty then leftOverflow else right (a + b) ty
-    unsignedSub ty a b = if a < b then leftUnderflow else right (a - b) ty
-    unsignedMul ty a b = if a * b > hi ty then leftOverflow else right (a * b) ty
-    right r ty = CCon (ptRight pt) [CIntLit r ty]
-    leftOverflow = CCon (ptLeft pt) [CCon (ptOverflowError pt) []]
-    leftUnderflow = CCon (ptLeft pt) [CCon (ptUnderflowError pt) []]
-    boolCon c = CCon (if c then ptTrue pt else ptFalse pt) []
-    lo ty = if intSigned ty then negate (2 ^ (intWidth ty - 1)) else 0
-    hi ty = if intSigned ty then 2 ^ (intWidth ty - 1) - 1 else 2 ^ intWidth ty - 1
+    intLit ty = \case
+      CIntLit a t | t == ty -> Just a
+      _ -> Nothing
+
+-- | Build the exact Core cell the runtime helper returns for an outcome:
+--   'IntValue' → @Right v@; 'IntBool' → @True@\/@False@; an error into either
+--   the two-label row @Left (CRow … err)@ (signed @add@\/@sub@\/@mul@, the
+--   'CRow' carrying the label's FNV-1a 'rowTag' the codegen helpers embed) or
+--   the bare @Left err@ (every other operation).
+cell :: PreludeTags -> IntOutcome -> CExpr
+cell pt = \case
+  IntValue ty r -> CCon (ptRight pt) [CIntLit r ty]
+  IntBool c -> CCon (if c then ptTrue pt else ptFalse pt) []
+  IntError RowTwoLabel ErrOverflow -> CCon (ptLeft pt) [CRow overflowRowTag (CCon (ptOverflowError pt) [])]
+  IntError RowTwoLabel ErrUnderflow -> CCon (ptLeft pt) [CRow underflowRowTag (CCon (ptUnderflowError pt) [])]
+  IntError BareSingle ErrOverflow -> CCon (ptLeft pt) [CCon (ptOverflowError pt) []]
+  IntError BareSingle ErrUnderflow -> CCon (ptLeft pt) [CCon (ptUnderflowError pt) []]
 
 -- | Row tags of the two error labels of the signed-arithmetic row
 --   @(UnderflowError | OverflowError)@ — the same FNV-1a hashes the codegen
