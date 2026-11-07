@@ -6,7 +6,7 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 |                            | LLVM                                              | JVM                                                                                                 | CLR                                                                  | WASM                                                          | JS                                                          |
 | -------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
-| **Runtime**                | Native binary (via Clang 15+)                     | Java 11+                                                                                            | .NET 9+ (dotnet)                                                     | wasmtime (WASI)                                               | Node.js 22+                                                 |
+| **Runtime**                | Native binary (via Clang 15+)                     | Java 25+                                                                                            | .NET 10+ (dotnet)                                                    | wasmtime (WASI)                                               | Node.js 26+                                                 |
 | **String type**            | `ptr` to null-terminated C string                 | `java.lang.String` (boxed as `Object`)                                                              | `System.String` (boxed as `object`)                                  | `i32` pointer to null-terminated bytes in linear memory       | Native JS string                                            |
 | **Concat**                 | `strlen` + `malloc` + `strcpy` + `strcat`         | `String.concat`                                                                                     | `System.String.Concat(object, object)`                               | `__concat`: strlen + bump alloc + memcpy                      | `+`                                                         |
 | **Print**                  | `printf("%s", s)`                                 | `System.out.print(s)`                                                                               | `System.Console.Write(object)`                                       | WASI `fd_write` via iovec                                     | `process.stdout.write(s)`                                   |
@@ -155,7 +155,7 @@ return i < 0
   : [1, [0, str.substring(0, i), str.substring(i + sep.length)]];
 ```
 
-Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be split inside a codepoint. UTF-8-aware splitting is a separate, future API.
+Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be split inside a codepoint.
 
 ## Parsing decimals
 
@@ -210,7 +210,7 @@ The `4294967295L` constant (= `maxUInt32`) used by `parseUInt32` / `addUInt32` /
 - **WASM** — `i64.const 4294967295` in WAT; binary uses a new `encodeSLEB128I64 :: Int64 -> [Word8]` helper since the existing `encodeSLEB128` is fixed at `Int32` and overflows at this magnitude.
 - **JS** — IEEE-754 double represents `4294967295` exactly, written directly.
 
-The grammar is byte-level (ASCII digits 0x30..0x39 only); other Unicode digit forms are rejected. UTF-8-aware parsing is a separate, future API.
+The grammar is byte-level (ASCII digits 0x30..0x39 only); other Unicode digit forms are rejected.
 
 ## Print
 
@@ -415,7 +415,7 @@ define ptr @v_compose(ptr %v_g, ptr %v_f, ptr %v_x) {
 
 This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer annotations needed.
 
-**JVM**: Function values are `java.lang.invoke.MethodHandle` (available since Java 7; we emit class version 55.0 = Java 11). When a function is used as a value (not called directly), it is loaded as a `CONSTANT_MethodHandle` from the constant pool via `ldc`. Indirect calls use `invokevirtual MethodHandle.invoke(...)`:
+**JVM**: Function values are `java.lang.invoke.MethodHandle` (available since Java 7; we emit class version 69.0 = Java 25). When a function is used as a value (not called directly), it is loaded as a `CONSTANT_MethodHandle` from the constant pool via `ldc`. Indirect calls use `invokevirtual MethodHandle.invoke(...)`:
 
 ```
 ; compose g f x = g (f x)
@@ -720,7 +720,7 @@ Also practical: if we generated C and mandated "use Clang", we'd go through LLVM
 
 ## JVM-Specific Details
 
-**Class file version**: 55.0 (Java 11). Matches the JVM target floor (see [docs/platform-version-policy.md](platform-version-policy.md)). Generated `.class` files run on any JVM 11+; modern Android `D8` accepts class files well past this version.
+**Class file version**: 69.0 (Java 25). Matches the JVM target floor (see [docs/platform-version-policy.md](platform-version-policy.md)). Generated `.class` files run on any JVM 25+.
 
 **Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
 
@@ -744,7 +744,7 @@ Also practical: if we generated C and mandated "use Clang", we'd go through LLVM
 
 **Generic type variables in signatures**: MemberRef signatures for `Invoke` on generic Func TypeSpec instantiations use `ELEMENT_TYPE_VAR` (0x13) for type parameters, not concrete `object` types. This is required by the CLR metadata specification.
 
-**Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL — `awsum build -t clr -o X.dll` writes it next to `X.dll`, `awsum run -t clr` writes it into the temp run dir, so a by-hand run only needs to keep the two together. The compiler generates a fixed template targeting .NET 9.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions, and `"System.GC.Server": true`: awsum programs allocate a heap object per Core cell, so Server GC's parallel per-core heaps clear that allocation churn faster than the workstation GC's single heap. Output is identical either way; only GC throughput changes.
+**Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL — `awsum build -t clr -o X.dll` writes it next to `X.dll`, `awsum run -t clr` writes it into the temp run dir, so a by-hand run only needs to keep the two together. The compiler generates a fixed template targeting .NET 10.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions, and `"System.GC.Server": true`: awsum programs allocate a heap object per Core cell, so Server GC's parallel per-core heaps clear that allocation churn faster than the workstation GC's single heap. Output is identical either way; only GC throughput changes.
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode, used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` and `awsum run -t clr`.
 

@@ -1,12 +1,12 @@
 -- | JVM .class file assembler for Awsum 'Core'.
 --
--- Generates a single @AwsumMain.class@ file (class version 55.0, Java 11+)
+-- Generates a single @AwsumMain.class@ file (class version 'classFileMajorVersion')
 -- containing runtime helpers, user declarations, and a @main(String[])@
 -- entry point.
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
-module Awsum.Codegen.JVM.Assemble (assembleJVM, JvmLimitExceeded (..), renderJvmLimitExceeded, jvmU2Max, methodLimitViolations, selectLimit, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
+module Awsum.Codegen.JVM.Assemble (assembleJVM, classFileMajorVersion, JvmLimitExceeded (..), renderJvmLimitExceeded, jvmU2Max, methodLimitViolations, selectLimit, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, methodMaxLocals, methodMaxStack, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Codegen.Mangle (mangle)
@@ -22,6 +22,12 @@ import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
+
+-- | Class-file major version of the generated @.class@: 69 is Java 25, the
+--   latest LTS (see docs/platform-version-policy.md). The text projection
+--   ('Awsum.Codegen.JVM') prints the same number.
+classFileMajorVersion :: Word16
+classFileMajorVersion = 69
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Public API
@@ -2047,7 +2053,7 @@ buildClassFile st argvFieldNameIdx argvFieldDescIdx methods =
    in mconcat
         [ B.word32BE 0xCAFEBABE,
           B.word16BE 0, -- minor version
-          B.word16BE 55, -- major version (Java 11)
+          B.word16BE classFileMajorVersion, -- major version
           B.word16BE st.nextIdx, -- constant_pool_count
           foldMap encodeCPEntry cpList,
           B.word16BE 0x0021, -- ACC_PUBLIC | ACC_SUPER

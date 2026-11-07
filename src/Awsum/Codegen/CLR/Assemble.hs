@@ -1,6 +1,6 @@
 -- | CLR PE/.NET assembly binary assembler for Awsum 'Core'.
 --
--- Generates a single @AwsumMain.dll@ (.NET 9.0) containing runtime helpers,
+-- Generates a single @AwsumMain.dll@ (.NET 'dotnetMajorVersion') containing runtime helpers,
 -- user declarations, and a @Main(string[])@ entry point.
 --
 -- All values are @System.Object@; strings are @System.String@;
@@ -10,6 +10,8 @@
 -- Only @dotnet@ is needed to run the output.
 module Awsum.Codegen.CLR.Assemble
   ( assembleCLR,
+    dotnetMajorVersion,
+    runtimeConfigJson,
     -- The one gated method list both projections render from
     -- ('Awsum.Codegen.CLR' for text, 'assembleCLR' for bytes).
     CilModule (..),
@@ -32,6 +34,39 @@ import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text.Encoding qualified as TE
 import Relude
+
+-- | Major version of the .NET runtime the generated assembly targets — the
+--   latest LTS (see docs/platform-version-policy.md). Sets the
+--   @System.Runtime@ / @System.Console@ reference versions in the DLL and
+--   the framework in 'runtimeConfigJson'.
+dotnetMajorVersion :: Word16
+dotnetMajorVersion = 10
+
+-- | @AwsumMain.runtimeconfig.json@, which @dotnet@ needs next to the DLL.
+--   @LatestMajor@ roll-forward lets newer runtimes run it. Enables Server GC
+--   (parallel per-core heaps): awsum programs allocate a heap object per Core
+--   cell, so the workstation GC's single heap serialises that allocation
+--   churn. Output is identical either way; only GC throughput changes.
+runtimeConfigJson :: Text
+runtimeConfigJson =
+  unlines
+    [ "{",
+      "  \"runtimeOptions\": {",
+      "    \"tfm\": \"net" <> v <> ".0\",",
+      "    \"framework\": {",
+      "      \"name\": \"Microsoft.NETCore.App\",",
+      "      \"version\": \"" <> v <> ".0.0\"",
+      "    },",
+      "    \"rollForward\": \"LatestMajor\",",
+      "    \"configProperties\": {",
+      "      \"System.GC.Server\": true",
+      "    }",
+      "  }",
+      "}"
+    ]
+  where
+    v :: Text
+    v = show dotnetMajorVersion
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Public API
@@ -1737,10 +1772,10 @@ buildTables st methods methodRVAs =
       -- AssemblyRef rows
       pkt = lkBlob st [0xB0, 0x3F, 0x5F, 0x7F, 0x11, 0xD5, 0x0A, 0x3A]
       mkAR name =
-        w16le 9
+        w16le dotnetMajorVersion
           <> w16le 0
           <> w16le 0
-          <> w16le 0 -- Version 9.0.0.0
+          <> w16le 0 -- Version <dotnetMajorVersion>.0.0.0
           <> w32le 0 -- Flags
           <> ix blobW pkt -- PublicKeyOrToken (#Blob)
           <> ix strW (lkStr st name) -- Name

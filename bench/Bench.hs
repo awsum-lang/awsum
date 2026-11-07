@@ -25,7 +25,7 @@
 --   branch to call @\/usr\/bin\/time -v@ and parse a different shape.
 module Main (main) where
 
-import Awsum.Codegen.CLR.Assemble (assembleCLR)
+import Awsum.Codegen.CLR.Assemble (assembleCLR, runtimeConfigJson)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
@@ -513,22 +513,3 @@ printFailureDetail b r = do
   putText (rrStderr r)
   putTextLn ""
 
--- ────────────────────────────────────────────────────────────────────────────
--- CLR runtime config (kept in sync with awsum/Main.hs and test/Awsum/RunBackend.hs).
--- ────────────────────────────────────────────────────────────────────────────
-
-runtimeConfigJson :: Text
-runtimeConfigJson =
-  "{\n\
-  \  \"runtimeOptions\": {\n\
-  \    \"tfm\": \"net9.0\",\n\
-  \    \"framework\": {\n\
-  \      \"name\": \"Microsoft.NETCore.App\",\n\
-  \      \"version\": \"9.0.0\"\n\
-  \    },\n\
-  \    \"rollForward\": \"LatestMajor\",\n\
-  \    \"configProperties\": {\n\
-  \      \"System.GC.Server\": true\n\
-  \    }\n\
-  \  }\n\
-  \}\n"

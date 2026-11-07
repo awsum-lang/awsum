@@ -14,8 +14,8 @@ The exact criteria for selecting minimum mobile OS versions are yet to be define
 
 | Target     | Minimum version | Rationale                     |
 | ---------- | --------------- | ----------------------------- |
-| Node.js    | 22 (LTS)        | Latest LTS                    |
+| Node.js    | 26 (LTS)        | Latest LTS                    |
 | LLVM/Clang | 15              | Opaque pointer support        |
-| JVM        | 11 (LTS)        | LTS, baseline modern JVM      |
+| JVM        | 25 (LTS)        | Latest LTS                    |
 | WASM/WASI  | wasmtime        | WASI preview 1                |
-| .NET       | 9.0             | Latest LTS-adjacent release   |
+| .NET       | 10 (LTS)        | Latest LTS                    |

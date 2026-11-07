@@ -161,9 +161,9 @@ build-tests:
 build-tests-watch:
   stack build --pedantic --test --no-run-tests --file-watch
 
-# Aggregate linearity statistics across every program under test/sources/successful/.
-# Phase A.2 of the memory-safety roadmap: see how big a fraction of binders is linear (count==1)
-# vs unused (==0) vs multi (>1), broken down by binder kind (Param / CasePattern / RowCaseBinder).
+# Aggregate linearity statistics across every program under test/sources/successful/:
+# how big a fraction of binders is linear (count==1) vs unused (==0) vs multi (>1),
+# broken down by binder kind (Param / CasePattern / RowCaseBinder).
 stat-linearity:
   stack run awsum-stats --
 

@@ -26,7 +26,7 @@ module Awsum.RunBackend
 where
 
 import Awsum.Codegen.CLR (codegenCLR)
-import Awsum.Codegen.CLR.Assemble (assembleCLR)
+import Awsum.Codegen.CLR.Assemble (assembleCLR, runtimeConfigJson)
 import Awsum.Codegen.JS (codegenJS, codegenJsPretty)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
@@ -468,22 +468,3 @@ runJsStdin code input = withSystemTempDirectory "awsum" $ \dir -> do
   let tempFile = dir </> "out.js"
   writeFileText tempFile code
   runProcStdinBytes "node" [tempFile] input
-
--- | CLR runtime config for the test harness. Enables Server GC for the same
---   reason as the awsum/Main.hs and bench/Bench.hs copies it mirrors; keep all
---   three in sync.
-runtimeConfigJson :: Text
-runtimeConfigJson =
-  "{\n\
-  \  \"runtimeOptions\": {\n\
-  \    \"tfm\": \"net9.0\",\n\
-  \    \"framework\": {\n\
-  \      \"name\": \"Microsoft.NETCore.App\",\n\
-  \      \"version\": \"9.0.0\"\n\
-  \    },\n\
-  \    \"rollForward\": \"LatestMajor\",\n\
-  \    \"configProperties\": {\n\
-  \      \"System.GC.Server\": true\n\
-  \    }\n\
-  \  }\n\
-  \}\n"

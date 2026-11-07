@@ -13,7 +13,7 @@ The language has three categories of public functions and types:
 The design goals:
 
 - There is **one entry point** the user sees — `Prelude.aww` — where every prelude-visible signature and every prelude-level type lives.
-- Hover and go-to-definition in the IDE land there, not inside the compiler's Haskell.
+- Hover in the IDE shows the signatures and doc comments written there, not anything from the compiler's Haskell.
 - For category-3 functions, the per-target implementation lives in the compiler's built-in table and is substituted at codegen.
 - A category-1 function can later migrate to category 3 (e.g. for a target-specific optimisation) without any visible change on the user side.
 
@@ -76,14 +76,14 @@ main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showInt32 42)
 ```
 
-`showInt32` is in scope without an explicit import because the prelude is injected implicitly. Go-to-definition on `showInt32` opens `Prelude.aww` at the line:
+`showInt32` is in scope without an explicit import because the prelude is injected implicitly. Its definition in `Prelude.aww` is:
 
 ```
 showInt32 : Int32 -> String
 showInt32 = BuiltIn.showInt32
 ```
 
-and stops there — `BuiltIn.showInt32` has no Awsum definition to open. This is the same transparency boundary as `foreign import` in GHC or `@external` in Elm.
+and the Awsum source stops there — `BuiltIn.showInt32` has no Awsum definition. This is the same transparency boundary as `foreign import` in GHC or `@external` in Elm.
 
 ### Enabling future migration
 
@@ -100,7 +100,7 @@ not : Bool -> Bool
 not = BuiltIn.not
 ```
 
-The user sees no change — signature identical, go-to-definition lands in the same place. The compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
+The user sees no change — the signature and its doc comment stay where they were. The compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
 
 ## `IO e a`, `runIO`, and `BuiltIn.internalStdoutPrint`
 
@@ -156,7 +156,7 @@ Core-level uniformity is deliberate: both classes collapse to `CBuiltIn`. Backen
 - `src/Awsum/Prelude.hs` — loading, `withPrelude`, prelude-warning filtering.
 - `src/Awsum/BuiltIn.hs` — the prelude built-in table (flat keys) and `lookupBuiltIn`.
 - `src/Awsum/Program.hs` — `ProgramType` enum + `platformTable` dispatch.
-- `src/Awsum/Program/Cli.hs` — the CLI platform-effect table (dotted qualified keys: `IO.Stdout.print`, …). Future `Awsum/Program/Browser.hs` etc. will follow the same shape.
+- `src/Awsum/Program/Cli.hs` — the CLI platform-effect table (dotted qualified keys: `IO.Stdout.print`, …).
 - `src/Awsum/Syntax.hs` — `EBuiltIn` surface node.
 - `src/Awsum/Core.hs` — `CBuiltIn` core node (the one node for both built-in kinds — dispatch is on the key string).
 - `src/Awsum/Parser.hs` — recognising `BuiltIn.foo` as a syntactic primitive.

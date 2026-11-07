@@ -177,21 +177,21 @@ jobs:
             exit 1
           fi
 
-      # Pin Java to 11 — the documented JVM target floor (see
-      # docs/platform-version-policy.md). The assembler emits class
-      # version 55.0 (Java 11); JDK 11 understands it natively, and on
-      # any JDK ≥ 11 the same .class loads. Temurin (Eclipse Adoptium)
+      # Each runtime is pinned to the documented target floor — the latest
+      # LTS (see docs/platform-version-policy.md), so CI proves the floor
+      # itself runs the artifacts. The assembler emits class version 69.0
+      # (Java 25) and a net10.0 runtimeconfig. Temurin (Eclipse Adoptium)
       # distribution kept for consistency across the four runners.
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: "temurin"
-          java-version: "11"
+          java-version: "25"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "9"
+          dotnet-version: "10"
 
       - name: Set up Wasmtime
         uses: bytecodealliance/actions/wasmtime/setup@v1
@@ -199,9 +199,9 @@ jobs:
           version: "latest"
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
 
       - name: Set up Haskell
         uses: haskell-actions/setup@v2
@@ -216,7 +216,7 @@ jobs:
       # for whichever flavor lost the race to write last.
       - name: Restore STACK_ROOT cache
         id: cache-stack-global
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.STACK_ROOT }}
           key: ${{ matrix.target }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
@@ -225,7 +225,7 @@ jobs:
 
       - name: Restore .stack-work cache
         id: cache-stack-work
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: .stack-work
           key: ${{ matrix.target }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
@@ -276,14 +276,14 @@ jobs:
 
       - name: Save STACK_ROOT cache
         if: always()
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.STACK_ROOT }}
           key: ${{ steps.cache-stack-global.outputs.cache-primary-key }}
 
       - name: Save .stack-work cache
         if: always()
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: .stack-work
           key: ${{ steps.cache-stack-work.outputs.cache-primary-key }}

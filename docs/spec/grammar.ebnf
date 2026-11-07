@@ -1,5 +1,5 @@
 (* Awsum surface grammar — EBNF.
-   Applies-to: Awsum 0.0.7
+   Applies-to: Awsum 0.0.8
 *)
 
 Program             = [ ModuleComment , BlankLine ] ,
@@ -57,12 +57,13 @@ ParamBinder         = LIdent | "(" , Pattern , ")" | "(" , Pattern , ":" , Type 
 
 (* Name of a top-level declaration. The parenthesised "++" form is how the
    bundled prelude spells the concatenation operator itself
-   (`(++) = BuiltIn.concatString`), so hover and go-to-definition on `a ++ b`
-   land on the same binding. The form is syntactically allowed in user files
-   too but is practically prelude-only: only the literal "++" token is
-   accepted, `a ++ b` always compiles to the prelude binding regardless of
-   any user-level redefinition, and a user declaration would collide with
-   the prelude's. User-defined infix operators are not a language feature. *)
+   (`(++) a b = BuiltIn.concatString a b`), so the operator's signature and
+   doc comment sit in the prelude under its own name, like any other
+   function's. The form is syntactically allowed in user files too but is
+   practically prelude-only: only the literal "++" token is accepted,
+   `a ++ b` always compiles to `BuiltIn.concatString` regardless of any
+   user-level redefinition, and a user declaration would collide with the
+   prelude's. User-defined infix operators are not a language feature. *)
 DeclName            = LIdent | "(" , "++" , ")" ;
 
 TopComment          = LineComment | BlockComment ;
@@ -229,9 +230,12 @@ any                 = U+0000…U+10FFFF ;
       (function params, pattern vars, top-level defs, type params).
 
    5. Reserved words (parser). The identifiers `import`, `type`,
-      `case`, `of`, `do`, `let`, and `in` are reserved by the
+      `empty`, `case`, `of`, `do`, `let`, and `in` are reserved by the
       grammar and cannot be used as `LIdent` (function name,
       parameter, pattern variable, type variable). They appear as
-      literals in `Import`, `TypeDecl`, `CaseExpr`, `DoBlock`,
-      `DoStmt`, and `LetIn`; the parser rejects them in any other
-      position with a parse error. *)
+      literals in `Import`, `TypeDecl`, `EmptyTypeDecl`, `CaseExpr`,
+      `DoBlock`, `DoStmt`, and `LetIn`; the parser rejects them in any
+      other position with a parse error.
+
+   6. Identifier length (parser). An identifier is at most 1024
+      characters; a longer one is a parse error. *)

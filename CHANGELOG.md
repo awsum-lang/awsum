@@ -8,11 +8,15 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-11-07
+
 ### Added
 
 - **`awsum asm` now prints the human-readable generated code for all five targets.** It gains `llvm` (the LLVM IR `build` emits) and `js` (the indented JavaScript whose compact form `build` ships), alongside the existing `jvm` / `clr` / `wasm` assembly text — so every backend has a way to inspect its generated code, mirroring how `asm -t jvm` shows readable bytecode for the binary `build -t jvm` produces.
 
 ### Changed
+
+- **Minimum runtimes are now the current LTS releases: Java 25, .NET 10, Node.js 26** (previously Java 11, .NET 9, Node.js 22), as the platform-version policy requires. The JVM target emits class-file version 69, and the CLR target references .NET 10 in the DLL and its `runtimeconfig.json`. Generated programs no longer run on older runtimes, and CI runs every backend on these versions.
 
 - **The `textmate-tests` suite checks block-comment scoping.** A new invariant requires every `{-` / `-}` outside strings and line comments to sit in a `comment.block.*` scope, catching a TextMate grammar that loses comment nesting or doesn't recognise comments in some context.
 
@@ -24,8 +28,11 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 - **Integer constant-folding semantics now lives in one place.** The op set, bounds and overflow/underflow outcomes of the foldable integer built-ins moved out of `Awsum.Simplify.constFold` into a new `Awsum.ConstEval` module that the `constFold-differential` property oracle reads too — one definition instead of two hand-synced copies, leaving the per-target runtime helpers as the only second implementation (validated against it by the differential). Generated code and program behaviour are unchanged; a new `constFold-coverage` test fails if a foldable built-in is added without a matching property-generator case.
 
+- CI: `actions/cache`, `actions/setup-dotnet`, `actions/setup-java` v5 → v6, `actions/setup-node` v6 → v7.
+
 ### Fixed
 
+- **The TextMate grammar in `editors/textmate/` catches up with `awsum-vscode`.** Identifiers stop at a non-ASCII letter, and block comments are highlighted in `import` lines, type signatures, `type` declarations, and function parameters.
 - **Block comments nest in every position.** `{- outer {- inner -} more -}` was one comment only at top level, in leading comments and between `case` arms. After a token (inline in an expression, in a signature or `type` declaration, after `do` / `of`, in a `let`) the comment closed at the first `-}`, and the rest failed to parse, contrary to the type-system reference. Those positions now nest the same way.
 - **A parametric recursive type whose recursion goes through a row-typed field (`type Ch a = Tip | Link (a | Ch a)`) no longer miscompiles at depth ≥ 2.** A constructor application synthesised inside another constructor's argument kept its not-yet-solved instantiation variables in the recorded row coercion; lowering then minted the runtime row tag from the variable's *name* and dropped the row wrapper inside the generated lifting helper, so a valid, typechecking program crashed or diverged on every backend (JVM `ArrayIndexOutOfBoundsException`, LLVM runtime error, CLR `IndexOutOfRangeException`, WASM memory fault, JS hang) — with the declared order of the row's alternatives deciding whether it broke. The typechecker now pins the injected value's freshened variables against the unique matching row alternative before recording the coercion; self, mutual, multi-field, and nominal-wrapped recursion through row fields all compile and produce identical output on all five targets, in either alternative order.
 - **An integer literal inside a constructor application injected into a row alternative now typechecks.** `v : Chain Int32 = Link (Tip 7)` (with `type Chain a = Tip a | Link (a | Chain a)`) was rejected with "expected a, got integer literal": the injected application was synthesised bottom-up, so the literal never saw the alternative's concrete type. Such an application is now re-checked against the unique row alternative its constructor can inhabit, so the expected type reaches the arguments. When several same-head alternatives could accept it — `Tip 7` into `(Chain Int32 | Chain String)` — the program is rejected as an ambiguous injection with a hint to ascribe, never resolved silently; an argument that decides the alternative on its own (`Tip "hi"`) is accepted as before.
