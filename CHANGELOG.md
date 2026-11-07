@@ -28,7 +28,8 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 - **Integer constant-folding semantics now lives in one place.** The op set, bounds and overflow/underflow outcomes of the foldable integer built-ins moved out of `Awsum.Simplify.constFold` into a new `Awsum.ConstEval` module that the `constFold-differential` property oracle reads too — one definition instead of two hand-synced copies, leaving the per-target runtime helpers as the only second implementation (validated against it by the differential). Generated code and program behaviour are unchanged; a new `constFold-coverage` test fails if a foldable built-in is added without a matching property-generator case.
 
-- CI: `actions/cache`, `actions/setup-dotnet`, `actions/setup-java` v5 → v6, `actions/setup-node` v6 → v7.
+- **The platform version policy covers everything the project depends on, with a 7-day cooldown.** `docs/platform-version-policy.md` now governs editors and every dependency, not only target platforms: a release becomes eligible once it has been public for 7 days (immediately if it fixes a known vulnerability that every eligible release has), the minimum is the newest eligible LTS or stable release, and every reference is pinned exactly.
+- CI: every GitHub Action pinned to the commit SHA of a release at least 7 days old (`actions/cache`, `actions/setup-dotnet`, `actions/setup-java` v5 → v6, `actions/setup-node` v6 → v7); the runtimes CI installs are exact versions (Temurin 25.0.5, .NET SDK 10.0.403, Node.js 26.13.0, wasmtime 50.0.1).
 
 ### Fixed
 
