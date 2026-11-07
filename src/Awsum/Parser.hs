@@ -22,9 +22,9 @@
 --     the “NoLineComments” variants (which DO NOT skip line comments) on the
 --     right-hand side of signatures/definitions and then capture an optional
 --     trailing '-- …' before newline/EOF.
---   • Top-level block comments are captured as 'CommentDecl' via a simple
---     non-nested "{- -}" parser; skipping elsewhere still supports nested
---     block comments via Megaparsec's block comment consumer.
+--   • Block comments nest everywhere: captured ones ('CommentDecl', leading
+--     comments) go through the balanced 'pBlockCommentText', skipped ones
+--     through Megaparsec's 'L.skipBlockCommentNested'.
 --
 -- Operator precedence (lowest to highest):
 --   1) "|>"   (left-assoc)   — pure syntactic rewrite to application; not a name
@@ -57,11 +57,11 @@ type Parser = Parsec Void SrcText
 
 -- | Skip /horizontal/ space + comments (does NOT consume newlines).
 sc :: Parser ()
-sc = L.space C.hspace1 (L.skipLineComment "--") (L.skipBlockComment "{-" "-}")
+sc = L.space C.hspace1 (L.skipLineComment "--") (L.skipBlockCommentNested "{-" "-}")
 
 -- | Spaces + block comments, but **no** line comments (so '--' stays visible).
 scNoLineComments :: Parser ()
-scNoLineComments = L.space C.hspace1 P.empty (L.skipBlockComment "{-" "-}")
+scNoLineComments = L.space C.hspace1 P.empty (L.skipBlockCommentNested "{-" "-}")
 
 -- | Attach space consumer to a token parser.
 lexeme :: Parser a -> Parser a
