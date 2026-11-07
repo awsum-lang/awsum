@@ -87,7 +87,7 @@ awsum --version
 
 ## AI use
 
-The Awsum compiler, its design documents, and test suite are developed with substantial usage of generative AI. Every generated change is reviewed, edited, and accepted by a human before it lands in the repository, and no output is shipped unedited.
+The Awsum compiler, its design documents, and test suite are developed with substantial usage of generative AI.
 
 ## License
 
