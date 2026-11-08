@@ -108,7 +108,10 @@ executables:
     ghc-options:
       - -threaded
       - -rtsopts
-      - -with-rtsopts=-N
+      # One capability per core, so independent work can run in parallel;
+      # parallel GC only for the old generation: synchronising every core
+      # for each short young-generation collection costs more than it saves.
+      - '"-with-rtsopts=-N -qg1"'
     # Per-OS linker flags required for byte-reproducible final binaries.
     # On macOS we intentionally do NOT pass -no_uuid — that strips LC_UUID
     # entirely, which makes dyld on macOS 14+ refuse to load the binary.
@@ -205,7 +208,7 @@ tests:
       - hspec # for unit tests
       - hspec-golden # for snapshot tests
       - lsp-test # in-process end-to-end LSP tests (Awsum.LspSpec.EndToEnd) drive a real server over a pipe pair
-      - lsp-types # for HoverSpec — it exercises Awsum.Lsp.hoverForPosition end-to-end and needs the LSP Position / Hover / MarkupContent record types
+      - lsp-types # for HoverSpec — it exercises Awsum.Lsp.hoverAt end-to-end and needs the LSP Position / Hover / MarkupContent record types
       - pretty-simple # for pretty-printing snapshots
       - process # for codegen tests
       - QuickCheck # for property-based tests

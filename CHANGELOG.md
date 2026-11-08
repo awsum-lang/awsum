@@ -8,6 +8,16 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Changed
+
+- **Typechecking types with many parameters no longer leaks memory or slows down quadratically.** Composing two substitutions left a lazy thunk in every binding, so each step of unifying a type application stacked a thunk on the last, and the typed AST kept the chains alive: checking 300 uses of a 300-parameter type held 326 MB live and spent most of its time in GC. The unifier also re-applied each new binding to all earlier ones, `O(n²)` per unification of an n-argument type application; it now extends a triangular substitution and resolves it once. That program checks in 0.17 s instead of 0.8 s (a 600-parameter one in 0.24 s instead of 2.6 s), in `awsum check` and `awsum lsp` alike. Typechecker output is unchanged.
+
+- **`awsum lsp` checks documents on worker threads.** Opening or saving a file used to check it on the server's single request loop, so every request — in any file — waited for the check (4.6 s on a large one). Checks now run in parallel across documents, and an edit cancels the check of the version it replaces: a fresh error shows about half a second after typing stops, not after a stale check finishes. Code actions no longer wait on another file's check in progress. Hover answers from the last check of the current text instead of re-parsing and re-typechecking the file on every request; right after an edit it waits for that edit's check rather than answer from older text. A compiler crash during a check shows as an error diagnostic.
+
+- **The outline (`textDocument/documentSymbol`, `awsum symbols`) takes time linear in the file length.** Symbol extraction appended each symbol to the end of a growing list, and the LSP looked each range's line up from the first line; on 40 000 definitions `awsum symbols` took 21.8 s, now 1.7 s.
+
+- **`awsum` collects only the old generation in parallel.** The binary keeps one capability per core, but every young-generation collection used to synchronise all of them — frequent and short, they cost more than they saved: checking a large file took up to 2.5× the CPU time and ran slower than on one core. Young-generation collections are now single-threaded (`-qg1`); a 1200-level nested `case` checks in 0.54 s instead of 0.69 s, on half the CPU.
+
 ## [0.0.8] - 2026-11-07
 
 ### Added

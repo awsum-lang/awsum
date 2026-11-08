@@ -12,6 +12,7 @@ https://github.com/user-attachments/assets/718fc854-8a22-4a8a-8fd9-bfdabad2d065
 
 - [Home Page](https://awsum-lang.org)
 - [Language docs](https://awsum-lang.org/docs)
+- Docs for LLMs & AI tools: [llms.txt](https://awsum-lang.org/llms.txt) · [llms-full.txt](https://awsum-lang.org/llms-full.txt)
 
 ## Design documents
 
