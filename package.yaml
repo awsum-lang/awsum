@@ -108,7 +108,10 @@ executables:
     ghc-options:
       - -threaded
       - -rtsopts
-      - -with-rtsopts=-N
+      # One capability per core, so independent work can run in parallel;
+      # parallel GC only for the old generation: synchronising every core
+      # for each short young-generation collection costs more than it saves.
+      - '"-with-rtsopts=-N -qg1"'
     # Per-OS linker flags required for byte-reproducible final binaries.
     # On macOS we intentionally do NOT pass -no_uuid — that strips LC_UUID
     # entirely, which makes dyld on macOS 14+ refuse to load the binary.
