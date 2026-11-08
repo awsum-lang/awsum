@@ -21,9 +21,10 @@ import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Set qualified as S
 import Data.Text qualified as T
 import Relude
+import System.Timeout (timeout)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
-import Test.QuickCheck ((.&&.), (===))
+import Test.QuickCheck (property, (.&&.), (===))
 
 -- | Concrete error type for 'TC' computations in this spec — 'TC' is
 --   error-polymorphic, so call sites must pin it. Using 'Text' keeps
@@ -266,6 +267,37 @@ spec = do
       case unify l r of
         Right s -> applySubst s l `shouldBe` applySubst s r
         Left err -> expectationFailure ("unexpected " <> show err)
+
+  describe "Awsum.HM.unify (triangular substitution)" $ do
+    prop "returns an idempotent substitution" $ \t1 t2 ->
+      case unify t1 t2 of
+        Right s ->
+          (applySubst s (applySubst s t1) === applySubst s t1)
+            .&&. (applySubst s (applySubst s t2) === applySubst s t2)
+        Left _ -> property True
+
+    it "rejects row absorption that would bind a variable to a type containing it" $ do
+      -- Absorbing 'Maybe a' into 'b' and 'List b' into 'a' binds
+      -- b ↦ Maybe (List b); resolving that binding would never end.
+      let a = TyVar noSpan "a"
+          b = TyVar noSpan "b"
+          c = TyVar noSpan "c"
+          app f = TyApp noSpan (TyCon noSpan f)
+          lhs = TyOr noSpan a (app "Maybe" a)
+          rhs = TyOr noSpan b (TyOr noSpan c (app "List" b))
+      result <- timeout 10_000_000 (evaluateWHNF (unify lhs rhs))
+      result `shouldBe` Just (Left (CannotUnify lhs rhs))
+
+    it "unifies a wide type-application spine in near-linear time" $ do
+      -- One binding per argument. Re-applying each new binding to every
+      -- earlier one is ~n²/2 map updates, far past the limit at this n.
+      let n = 50000 :: Int
+          spine :: [Type'] -> Type'
+          spine = foldl' (TyApp noSpan) (TyCon noSpan "T")
+          lhs = spine [TyVar noSpan ("a" <> show i) | i <- [1 .. n]]
+          rhs = spine (replicate n (TyCon noSpan "Bool"))
+      result <- timeout 10_000_000 (evaluateWHNF (((`applySubst` lhs) <$> unify lhs rhs) == Right rhs))
+      result `shouldBe` Just True
 
   describe "Awsum.HM.collectTypeVars" $ do
     it "empty for a TyCon"

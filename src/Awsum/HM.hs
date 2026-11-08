@@ -5,6 +5,7 @@ module Awsum.HM
   ( -- * Substitutions
     Subst,
     singletonSubst,
+    simultaneousSubst,
     nullSubst,
     applySubst,
     composeSubst,
@@ -61,7 +62,8 @@ import Relude
 --   @(.)@ on functions. 'mempty' is the identity substitution.
 --
 --   The internal 'M.Map' representation is intentionally hidden; build
---   substitutions through 'mempty', 'singletonSubst', and '(<>)'.
+--   substitutions through 'mempty', 'singletonSubst', 'simultaneousSubst',
+--   and '(<>)'.
 newtype Subst = Subst (M.Map Name Type')
   deriving stock (Show, Eq)
 
@@ -74,6 +76,14 @@ instance Monoid Subst where
 -- | A single-binding substitution: @v ↦ t@.
 singletonSubst :: Name -> Type' -> Subst
 singletonSubst v t = Subst (M.singleton v t)
+
+-- | A simultaneous substitution: every binding applies to the original
+--   type, none to another binding's range. For a renaming or a
+--   skolemisation (no range mentions a variable of the domain) it equals
+--   the '(<>)'-fold of the 'singletonSubst's, which re-applies each new
+--   binding to every range built so far: O(n²) in the number of bindings.
+simultaneousSubst :: [(Name, Type')] -> Subst
+simultaneousSubst = Subst . M.fromList
 
 -- | Is the substitution empty (binds no variables)? Lets callers skip a
 --   full structural rewrite when there is nothing to substitute.
@@ -122,7 +132,7 @@ applySubst (Subst s) = go
 --   named form for clarity.
 composeSubst :: Subst -> Subst -> Subst
 composeSubst (Subst s2) (Subst s1) =
-  Subst ((applySubst (Subst s2) <$> s1) `M.union` s2)
+  Subst (M.map (applySubst (Subst s2)) s1 `M.union` s2)
 
 -- | Does the named type variable occur anywhere in the given type?
 --
@@ -185,25 +195,59 @@ data UnifyError
 --   payloads so the bidirectional-checker layer above can produce
 --   diagnostics that point at exact source positions.
 unify :: Type' -> Type' -> Either UnifyError Subst
-unify t1 t2 = case (t1, t2) of
+unify t1 t2 = do
+  tri <- unifyT M.empty t1 t2
+  Right (Subst (M.map (resolve tri) tri))
+
+-- | The unifier's working substitution, /triangular/: a binding's range
+--   may mention variables bound after it, so reading a variable chases
+--   the chain ('resolve'). Extending it is one 'M.insert'; extending an
+--   idempotent 'Subst' re-applies the new binding to every range, which
+--   along an n-argument 'TyApp' spine costs O(n²). Acyclic apart from
+--   @v ↦ v@ bindings 'absorbAndMatch' can produce: every other binding
+--   passes the occurs check against its resolved range.
+type Tri = M.Map Name Type'
+
+-- | Apply a triangular substitution: replace every bound variable by its
+--   range, resolved in turn. A @v ↦ v@ binding resolves to its range
+--   once, as 'applySubst' would.
+resolve :: Tri -> Type' -> Type'
+resolve tri = go
+  where
+    go = \case
+      t@(TyVar _ v) -> case M.lookup v tri of
+        Just r@(TyVar _ v') | v' == v -> r
+        Just r -> go r
+        Nothing -> t
+      TyCon sp c -> TyCon sp c
+      TyEmpty sp n -> TyEmpty sp n
+      TyApp sp f x -> TyApp sp (go f) (go x)
+      TyArrow sp a b -> TyArrow sp (go a) (go b)
+      TyOr sp a b -> TyOr sp (go a) (go b)
+
+-- | 'unify' over the triangular substitution built so far. Both types
+--   arrive resolved against it, so a variable on either side is unbound
+--   (or bound to itself).
+unifyT :: Tri -> Type' -> Type' -> Either UnifyError Tri
+unifyT tri t1 t2 = case (t1, t2) of
   -- Bind a free 'TyVar' to whatever sits on the other side, including
   -- a whole 'TyOr' row. The occurs guard keeps
   -- @unify (TyOr a a) (TyVar a)@ on the row path below: the
   -- duplicated label would trip 'bindVar' even though the row is
   -- semantically just @a@; 'unifyRows' flattens and dedupes before
   -- deciding, so it handles the dedup case correctly.
-  (TyVar _ v, _) | not (occursIn v t2) -> bindVar v t2
-  (_, TyVar _ v) | not (occursIn v t1) -> bindVar v t1
+  (TyVar _ v, _) | not (occursIn v t2) -> bindVar v t2 tri
+  (_, TyVar _ v) | not (occursIn v t1) -> bindVar v t1 tri
   -- Set-semantic unification for structural sums. Falls through to here
   -- when neither side is a free tyvar bindable to the other (e.g.
   -- @TyOr a a ~ TyVar a@): 'unifyRows' flattens and dedupes both sides
   -- first. Non-'TyOr' types are treated as singleton rows.
-  (TyOr {}, _) -> unifyRows t1 t2
-  (_, TyOr {}) -> unifyRows t1 t2
-  (TyVar _ v, _) -> bindVar v t2
-  (_, TyVar _ v) -> bindVar v t1
+  (TyOr {}, _) -> unifyRows tri t1 t2
+  (_, TyOr {}) -> unifyRows tri t1 t2
+  (TyVar _ v, _) -> bindVar v t2 tri
+  (_, TyVar _ v) -> bindVar v t1 tri
   (TyCon _ c1, TyCon _ c2)
-    | c1 == c2 -> Right mempty
+    | c1 == c2 -> Right tri
     | otherwise -> Left (CannotUnify t1 t2)
   -- Two 'TyEmpty' references unify regardless of declared name. An
   -- @empty type@ is the row identity; the standard library declares the
@@ -215,15 +259,13 @@ unify t1 t2 = case (t1, t2) of
   -- non-'TyEmpty' (other than a free 'TyVar', already handled above) is
   -- a real mismatch: a populated 'TyCon' or row carries values; an
   -- empty type has none.
-  (TyEmpty _ _, TyEmpty _ _) -> Right mempty
+  (TyEmpty _ _, TyEmpty _ _) -> Right tri
   (TyApp _ f1 x1, TyApp _ f2 x2) -> do
-    s1 <- unify f1 f2
-    s2 <- unify (applySubst s1 x1) (applySubst s1 x2)
-    Right (s2 <> s1)
+    tri1 <- unifyT tri f1 f2
+    unifyT tri1 (resolve tri1 x1) (resolve tri1 x2)
   (TyArrow _ a1 b1, TyArrow _ a2 b2) -> do
-    s1 <- unify a1 a2
-    s2 <- unify (applySubst s1 b1) (applySubst s1 b2)
-    Right (s2 <> s1)
+    tri1 <- unifyT tri a1 a2
+    unifyT tri1 (resolve tri1 b1) (resolve tri1 b2)
   _ -> Left (CannotUnify t1 t2)
 
 -- | Flatten a (possibly deeply-nested) 'TyOr' into a deduplicated list
@@ -382,8 +424,8 @@ rowSubsume expected actual = case (expected, actual) of
 --   The 'CannotUnify' error reports the original (unflattened) types so
 --   the user sees the surface form they wrote, not an internal
 --   normalised list.
-unifyRows :: Type' -> Type' -> Either UnifyError Subst
-unifyRows lhs rhs =
+unifyRows :: Tri -> Type' -> Type' -> Either UnifyError Tri
+unifyRows tri lhs rhs =
   let ls = flattenRow lhs
       rs = flattenRow rhs
       mismatch = Left (CannotUnify lhs rhs)
@@ -403,10 +445,10 @@ unifyRows lhs rhs =
           if all isGround ls && all isGround rs
             then
               if sort (map canonicalLabel ls) == sort (map canonicalLabel rs)
-                then Right mempty
+                then Right tri
                 else mismatch
-            else goMatch mismatch ls rs mempty
-        else absorbAndMatch lhs rhs ls rs mismatch
+            else goMatch mismatch ls rs tri
+        else absorbAndMatch tri lhs rhs ls rs mismatch
 
 -- | Length-mismatch path of 'unifyRows'. The two flattened, deduped
 --   row sides have different cardinalities — set-equality is then
@@ -422,14 +464,21 @@ unifyRows lhs rhs =
 --   label is around. Only fires when 'goMatch' on the equal-cardinality
 --   path would have failed by length, so the reflexive case
 --   @t ~ t@ never reaches here and never produces spurious bindings.
+--
+--   The absorption bindings skip the occurs check and are composed
+--   without re-applying each other, so they can bind a variable to a
+--   type containing it (@(a | Maybe a) ~ (b | c | List b)@ binds
+--   @b ↦ Maybe (List b)@). Entering the triangular substitution, such a
+--   binding is a mismatch: chasing it would never terminate.
 absorbAndMatch ::
+  Tri ->
   Type' ->
   Type' ->
   [Type'] ->
   [Type'] ->
-  Either UnifyError Subst ->
-  Either UnifyError Subst
-absorbAndMatch lhs rhs ls rs mismatch =
+  Either UnifyError Tri ->
+  Either UnifyError Tri
+absorbAndMatch tri lhs rhs ls rs mismatch =
   let (lConc, lTv) = partition (not . isRowTyVar) ls
       (rConc, rTv) = partition (not . isRowTyVar) rs
       lConcSet = S.fromList lConc
@@ -477,17 +526,23 @@ absorbAndMatch lhs rhs ls rs mismatch =
                         mconcat (map (`bindRowVar` anchor) (drop pairLen remTvL))
                           <> mconcat (map (`bindRowVar` anchor) (drop pairLen remTvR))
                    in Right (paired <> extras)
-          let combined = subst1 <> subst2
-              -- Drop empties before the final cardinality check + match:
+          let Subst combined = subst1 <> subst2
+              enter t (v, ty) = case resolve t ty of
+                r@(TyVar _ v') | v' == v -> Right (M.insert v r t)
+                r
+                  | occursIn v r -> Left (CannotUnify lhs rhs)
+                  | otherwise -> Right (M.insert v r t)
+          tri' <- foldlM enter tri (M.toList combined)
+          let -- Drop empties before the final cardinality check + match:
               -- they are the row identity, and a tyvar bound to 'Never'
               -- above (the '(Never | e2) ~ Never' ⇒ e2 ↦ Never case) has
               -- now become one, so it must not count against length
               -- equality. '(Never | A)' and 'A' both reduce to '[A]'.
-              lsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) ls))
-              rsDone = ordNub (filter (not . isEmptyLabel) (map (applySubst combined) rs))
+              lsDone = ordNub (filter (not . isEmptyLabel) (map (resolve tri') ls))
+              rsDone = ordNub (filter (not . isEmptyLabel) (map (resolve tri') rs))
           if length lsDone /= length rsDone
             then Left (CannotUnify lhs rhs)
-            else goMatch (Left (CannotUnify lhs rhs)) lsDone rsDone combined
+            else goMatch (Left (CannotUnify lhs rhs)) lsDone rsDone tri'
 
 isRowTyVar :: Type' -> Bool
 isRowTyVar (TyVar _ _) = True
@@ -517,18 +572,18 @@ bindRowVar _ _ = mempty
 -- | Helper: pair every element of the first list with /some/ element of
 --   the second, accumulating substitutions. Greedy from the left.
 goMatch ::
-  Either UnifyError Subst ->
+  Either UnifyError Tri ->
   [Type'] ->
   [Type'] ->
-  Subst ->
-  Either UnifyError Subst
-goMatch _ [] [] s = Right s
-goMatch mismatch (l : ls') rs s = tryRs rs []
+  Tri ->
+  Either UnifyError Tri
+goMatch _ [] [] tri = Right tri
+goMatch mismatch (l : ls') rs tri = tryRs rs []
   where
     tryRs [] _ = mismatch
     tryRs (r : rs'') prev =
-      case unify (applySubst s l) (applySubst s r) of
-        Right s' -> goMatch mismatch ls' (reverse prev <> rs'') (s' <> s)
+      case unifyT tri (resolve tri l) (resolve tri r) of
+        Right tri' -> goMatch mismatch ls' (reverse prev <> rs'') tri'
         Left _ -> tryRs rs'' (r : prev)
 goMatch mismatch _ _ _ = mismatch
 
@@ -585,18 +640,20 @@ fnv1a32 = T.foldl' step fnvOffset
 
 -- | Bind a tyvar to a type, with two early-outs:
 --
---   * @v ↦ v@ is a no-op (returns the identity substitution): we never
---     need a binding that maps a variable to itself, and including it
---     would make composed substitutions accumulate trivial entries.
+--   * @v ↦ v@ is a no-op: we never need a binding that maps a variable
+--     to itself.
 --
 --   * @v@ occurring inside @t@ is the infinite-type case — return
---     'OccursCheckFailed' rather than producing a substitution that
---     would cause non-terminating 'applySubst' calls down the line.
-bindVar :: Name -> Type' -> Either UnifyError Subst
-bindVar v (TyVar _ v') | v' == v = Right mempty
-bindVar v t
+--     'OccursCheckFailed' rather than producing a substitution whose
+--     resolution would never terminate.
+--
+--   @t@ is resolved against the substitution, so the occurs check sees
+--   through every earlier binding.
+bindVar :: Name -> Type' -> Tri -> Either UnifyError Tri
+bindVar v (TyVar _ v') tri | v' == v = Right tri
+bindVar v t tri
   | occursIn v t = Left (OccursCheckFailed v t)
-  | otherwise = Right (singletonSubst v t)
+  | otherwise = Right (M.insert v t tri)
 
 -- | Collect every type-variable name occurring in a type.
 --
@@ -646,11 +703,7 @@ generalize envVars t =
 instantiate :: Scheme -> TC e Type'
 instantiate (Forall vars t) = do
   freshNames <- traverse (const fresh) vars
-  let subst =
-        foldMap
-          (\(v, fn) -> singletonSubst v (TyVar noSpan fn))
-          (zip vars freshNames)
-  pure (applySubst subst t)
+  pure (applySubst (simultaneousSubst (zip vars (map (TyVar noSpan) freshNames))) t)
 
 -- | Position-based instantiate: rename every tyvar in @t@ by appending
 --   the given suffix. The non-monadic counterpart of 'instantiate' —
@@ -665,9 +718,8 @@ freshenType :: Text -> Type' -> Type'
 freshenType suffix ty = applySubst subst ty
   where
     subst =
-      foldMap
-        (\v -> singletonSubst v (TyVar noSpan (v <> suffix)))
-        (collectTypeVars ty)
+      simultaneousSubst
+        [(v, TyVar noSpan (v <> suffix)) | v <- S.toList (collectTypeVars ty)]
 
 -- | Strip the typechecker-internal disambiguation suffix from a tyvar
 --   name for user-facing presentation.

@@ -8,6 +8,10 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ## [Unreleased]
 
+### Changed
+
+- **Typechecking types with many parameters no longer leaks memory or slows down quadratically.** Composing two substitutions left a lazy thunk in every binding, so each step of unifying a type application stacked a thunk on the last, and the typed AST kept the chains alive: checking 300 uses of a 300-parameter type held 326 MB live and spent most of its time in GC. The unifier also re-applied each new binding to all earlier ones, `O(n²)` per unification of an n-argument type application; it now extends a triangular substitution and resolves it once. That program checks in 0.17 s instead of 0.8 s (a 600-parameter one in 0.24 s instead of 2.6 s), in `awsum check` and `awsum lsp` alike. Typechecker output is unchanged.
+
 ## [0.0.8] - 2026-11-07
 
 ### Added
