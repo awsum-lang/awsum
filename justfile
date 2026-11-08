@@ -161,9 +161,9 @@ build-tests:
 build-tests-watch:
   stack build --pedantic --test --no-run-tests --file-watch
 
-# Aggregate linearity statistics across every program under test/sources/successful/.
-# Phase A.2 of the memory-safety roadmap: see how big a fraction of binders is linear (count==1)
-# vs unused (==0) vs multi (>1), broken down by binder kind (Param / CasePattern / RowCaseBinder).
+# Aggregate linearity statistics across every program under test/sources/successful/:
+# how big a fraction of binders is linear (count==1) vs unused (==0) vs multi (>1),
+# broken down by binder kind (Param / CasePattern / RowCaseBinder).
 stat-linearity:
   stack run awsum-stats --
 
@@ -232,6 +232,16 @@ show-binary-sizes:
   #!/bin/sh
   set -eu
   du -h $(stack path --dist-dir)/build/awsum/awsum
+
+# Time one `awsum lsp` check of FILE on the current build: from `didOpen` until
+# the server pushes diagnostics for it (the diagnostics are discarded)
+lsp-check-time FILE: build
+  #!/bin/sh
+  set -eu
+  dist="$(stack path --dist-dir)"
+  case "$dist" in /*) ;; *) dist="$PWD/$dist" ;; esac
+  cd "{{invocation_directory()}}"
+  node "{{justfile_directory()}}/scripts/lsp-check-time.mjs" "$dist/build/awsum/awsum" "{{FILE}}"
 
 # Format all source files and apply fixes (Haskell + Awsum test sources + prelude)
 format-fix:

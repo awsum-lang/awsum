@@ -1,6 +1,6 @@
 {- `|>` is a syntactic operator, not a referenceable name. Unlike
-   `(++)`, which the prelude can spell as `(++) = BuiltIn.concatString`
-   to make hover and go-to-definition land on a binding, `(|>)` has
+   `(++)`, which the prelude spells as `(++) a b = BuiltIn.concatString
+   a b` to declare and document it under its own name, `(|>)` has
    no first-class form: it lowers in `ElaborateLower` directly to
    function application, with no Core symbol to point at. The parser
    accordingly rejects `(|>)` in any name position. -}

@@ -22,9 +22,9 @@
 --     the “NoLineComments” variants (which DO NOT skip line comments) on the
 --     right-hand side of signatures/definitions and then capture an optional
 --     trailing '-- …' before newline/EOF.
---   • Top-level block comments are captured as 'CommentDecl' via a simple
---     non-nested "{- -}" parser; skipping elsewhere still supports nested
---     block comments via Megaparsec's block comment consumer.
+--   • Block comments nest everywhere: captured ones ('CommentDecl', leading
+--     comments) go through the balanced 'pBlockCommentText', skipped ones
+--     through Megaparsec's 'L.skipBlockCommentNested'.
 --
 -- Operator precedence (lowest to highest):
 --   1) "|>"   (left-assoc)   — pure syntactic rewrite to application; not a name
@@ -57,11 +57,11 @@ type Parser = Parsec Void SrcText
 
 -- | Skip /horizontal/ space + comments (does NOT consume newlines).
 sc :: Parser ()
-sc = L.space C.hspace1 (L.skipLineComment "--") (L.skipBlockComment "{-" "-}")
+sc = L.space C.hspace1 (L.skipLineComment "--") (L.skipBlockCommentNested "{-" "-}")
 
 -- | Spaces + block comments, but **no** line comments (so '--' stays visible).
 scNoLineComments :: Parser ()
-scNoLineComments = L.space C.hspace1 P.empty (L.skipBlockComment "{-" "-}")
+scNoLineComments = L.space C.hspace1 P.empty (L.skipBlockCommentNested "{-" "-}")
 
 -- | Attach space consumer to a token parser.
 lexeme :: Parser a -> Parser a
@@ -97,7 +97,7 @@ skipBlankLinesNoComments = void $ P.many (try (hspaceNoComments *> C.eol))
 -- ────────────────────────────────────────────────────────────────────────────
 
 -- | Tail characters allowed in identifiers: ASCII alphanumerics, @_@, and the
---   apostrophe (primed names like @xs'@). ASCII-only on purpose — see 'identTail'.
+--   apostrophe (primed names like @xs'@). ASCII-only on purpose — see 'identFrom'.
 identChar :: Parser Char
 identChar = P.satisfy isIdentTail
 
@@ -108,13 +108,6 @@ isIdentTail :: Char -> Bool
 isIdentTail c =
   Char.isAsciiUpper c || Char.isAsciiLower c || Char.isDigit c || c == '_' || c == '\''
 
--- | Read an identifier tail, then reject a non-ASCII letter or digit glued
---   directly onto it (e.g. @fooλ@) with a targeted diagnostic. The parser once
---   admitted such names and codegen passed them straight into the emitted
---   identifier — valid on JVM/CLR/WASM (raw UTF-8 bytes) but a broken artifact
---   on LLVM (IR identifier grammar is ASCII) and JS (no apostrophe), with
---   @build@ still exiting 0. ASCII-only keeps every identifier inside the
---   intersection of all five targets' grammars.
 -- | Maximum length (ASCII characters) of a source identifier. A generous
 --   sanity cap — far beyond any hand-written or generated name — that keeps
 --   a single mangled identifier well inside every backend's symbol-length
@@ -125,15 +118,25 @@ isIdentTail c =
 maxIdentifierChars :: Int
 maxIdentifierChars = 1024
 
-identTail :: Parser Text
-identTail = do
+-- | Complete an identifier whose leading character(s) @start@ the caller has
+--   already matched (@x@, or @_X@ for an unused type name): read the tail,
+--   cap the whole identifier at 'maxIdentifierChars', then reject a non-ASCII
+--   letter or digit glued directly onto it (e.g. @fooλ@) with a targeted
+--   diagnostic. The parser once admitted such names and codegen passed them
+--   straight into the emitted identifier — valid on JVM/CLR/WASM (raw UTF-8
+--   bytes) but a broken artifact on LLVM (IR identifier grammar is ASCII) and
+--   JS (no apostrophe), with @build@ still exiting 0. ASCII-only keeps every
+--   identifier inside the intersection of all five targets' grammars.
+identFrom :: Text -> Parser Text
+identFrom start = do
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
-  when (T.length xs > maxIdentifierChars)
+  let w = start <> xs
+  when (T.length w > maxIdentifierChars)
     . fail
     . toString
     $ ("identifier too long; the maximum is " <> show maxIdentifierChars <> " characters" :: Text)
   rejectNonAsciiInIdent
-  pure xs
+  pure w
 
 -- | When an ASCII identifier is immediately followed by a non-ASCII letter or
 --   digit, fail with a clear message instead of a silent broken artifact or a
@@ -184,15 +187,15 @@ rwordNoLine w = (lexemeNoLine . try) (P.chunk w *> P.notFollowedBy identChar)
 lident :: Parser Name
 lident = (lexeme . try) $ do
   x <- P.satisfy isBinderStart
-  xs <- identTail
-  let w = T.cons x xs
+  w <- identFrom (T.singleton x)
   guard (w `notElem` reserved)
   pure w
 
 -- | Top-level declaration name: an 'lident' or a parenthesised operator like
 --   @(++)@. The operator form lets the prelude spell the infix symbol itself —
---   e.g. @(++) = BuiltIn.concatString@ — so go-to-definition on @a ++ b@ lands
---   on the same binding, instead of a differently-named helper.
+--   @(++) a b = BuiltIn.concatString a b@ — so the operator's signature and doc
+--   comment live in the prelude under its own name, instead of behind a
+--   differently-named helper.
 --   The internal 'Name' stored for @(++)@ is @"++"@.
 declName :: Parser Name
 declName = parenOp <|> lident
@@ -220,14 +223,13 @@ uidentBody = do
   if T.null underscore
     then do
       x <- P.satisfy Char.isAsciiUpper <?> "uppercase letter"
-      T.cons x <$> identTail
+      identFrom (T.singleton x)
     else
       P.choice
         [ -- "_X..." — the typical "intentionally unused" shape.
           do
             x <- P.satisfy Char.isAsciiUpper <?> "uppercase letter"
-            xs <- identTail
-            pure (underscore <> T.cons x xs),
+            identFrom (T.snoc underscore x),
           -- Bare "_" — only when the next char isn't part of a name,
           -- so "_foo" doesn't sneak in as "_" + leftover.
           P.notFollowedBy (P.satisfy isIdentTail) $> underscore
@@ -237,8 +239,7 @@ uidentBody = do
 lidentNoLine :: Parser Name
 lidentNoLine = (lexemeNoLine . try) $ do
   x <- P.satisfy isBinderStart
-  xs <- identTail
-  let w = T.cons x xs
+  w <- identFrom (T.singleton x)
   guard (w `notElem` reserved)
   pure w
 
@@ -251,8 +252,7 @@ uidentNoLine = (lexemeNoLine . try) uidentBody
 binderName :: Parser Name
 binderName = try $ do
   x <- P.satisfy isBinderStart
-  xs <- identTail
-  let w = T.cons x xs
+  w <- identFrom (T.singleton x)
   guard (w `notElem` reserved)
   pure w
 
@@ -786,8 +786,7 @@ pTypeAtomNoLineComments =
       start <- P.getSourcePos
       n <- try $ do
         x <- P.satisfy isBinderStart
-        xs <- identTail
-        let w = T.cons x xs
+        w <- identFrom (T.singleton x)
         guard (w `notElem` reserved)
         pure w
       end <- P.getSourcePos

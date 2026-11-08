@@ -8,7 +8,7 @@
 --
 --   * `corpus` — every `.aww` under `test/sources/successful/`,
 --     `test/sources/property/` and `test/sources/formatting/` is
---     tokenized and asserted to satisfy four invariants on the
+--     tokenized and asserted to satisfy five invariants on the
 --     resulting scope stacks. The same three roots used by the
 --     tree-sitter spec; `formatting/` is included because the
 --     malformed-but-recoverable inputs there are exactly where a
@@ -16,16 +16,17 @@
 --
 --   * `property` — for each QuickCheck-generated `Program`, render it
 --     via `Awsum.Render.renderProgram` (the same path the formatter
---     uses) and apply the four corpus invariants plus one AST-aware
+--     uses) and apply the five corpus invariants plus one AST-aware
 --     invariant: every `LString` in the AST is covered by a
 --     `string.*`-scoped region in the tokenization.
 --
--- The invariants (I1–I5) are documented at their assertion sites
+-- The invariants (I1–I6) are documented at their assertion sites
 -- below. They were chosen because they catch the regressions that
 -- have historically slipped through code review on this grammar:
 -- a keyword's regex stops matching after a punctuation change, the
 -- string rule's `end` regex breaks and lets `string.*` leak into the
 -- rest of the line, a comment regex starts consuming inside strings,
+-- a block comment loses its nesting,
 -- the numeric rule rejects an underscore-grouped literal, or a new
 -- AST shape produces strings the grammar doesn't recognise.
 --
@@ -213,7 +214,7 @@ tokenizeFile res path = do
 -- Invariants
 -- ════════════════════════════════════════════════════════════════════
 
--- | The four source-only invariants (I1–I4) checked on both layers.
+-- | The five source-only invariants (I1–I5) checked on both layers.
 -- Returns @Right ()@ on success or @Left explanation@ on the first
 -- violation found.
 assertSourceInvariants :: (HasCallStack) => Text -> [LineTokens] -> Expectation
@@ -228,13 +229,14 @@ checkSourceInvariants _src lns = do
   checkI2StringBalance lns
   checkI3NoCommentInString lns
   checkI4Numeric lns
+  checkI5BlockCommentDelimiters lns
 
--- | All five — source-only plus I5 (AST-aware) — used in the
+-- | All six — source-only plus I6 (AST-aware) — used in the
 -- property layer where the AST is available.
 checkAllInvariants :: Text -> Program -> [LineTokens] -> Either String ()
 checkAllInvariants src prog lns = do
   checkSourceInvariants src lns
-  checkI5StringCoverage prog lns
+  checkI6StringCoverage prog lns
 
 -- ─── I1: keyword identifiers receive `keyword.*` scope ─────────────
 --
@@ -374,20 +376,56 @@ isIntegerLiteral t = case T.uncons t of
       [] -> False
       parts -> all (\p -> not (T.null p) && T.all isDigit p) parts
 
--- ─── I5: every `LString` in AST is covered by a string region ─────
+-- ─── I5: block-comment delimiters receive `comment.block.*` scope ──
+--
+-- Outside string literals and line comments, `{-` and `-}` only ever
+-- delimit block comments, so both characters of such a digraph must
+-- sit in a `comment.block.*` scope. One outside it means a block
+-- comment closed early (lost nesting: `{- a {- b -} c -}` ending at
+-- the first `-}`) or never opened. Checked per character, since a
+-- grammar that misses the comment may split `{` and `-` into
+-- separate tokens.
+checkI5BlockCommentDelimiters :: [LineTokens] -> Either String ()
+checkI5BlockCommentDelimiters lns =
+  case listToMaybe (concatMap violations lns) of
+    Nothing -> Right ()
+    Just (i, digraph, scs) ->
+      Left
+        $ "I5 (block-comment delimiters): line "
+        <> show i
+        <> " `"
+        <> digraph
+        <> "` sits outside `comment.block.*`: "
+        <> show scs
+  where
+    violations :: LineTokens -> [(Int, String, [Text])]
+    violations (LineTokens i ts) =
+      [ (i, [a, b], sa)
+      | ((a, sa), (b, sb)) <- zip chars (drop 1 chars),
+        (a, b) `elem` [('{', '-'), ('-', '}')],
+        not (any (\sc -> "string." `T.isPrefixOf` sc || "comment.line." `T.isPrefixOf` sc) sa),
+        not (isBlock sa && isBlock sb)
+      ]
+      where
+        chars = [(c, scopes t) | t <- ts, c <- toString (text t)]
+
+    isBlock :: [Text] -> Bool
+    isBlock = any ("comment.block." `T.isPrefixOf`)
+
+-- ─── I6: every `LString` in AST is covered by a string region ─────
 --
 -- The number of `LString` literals in the AST must equal the number
 -- of maximal contiguous regions of `string.*`-scoped tokens in the
 -- tokenization. We count rather than position-match because the
 -- string rule splits a `"..."` into begin-punct / content / end-
 -- punct tokens — each is its own token but together one region.
-checkI5StringCoverage :: Program -> [LineTokens] -> Either String ()
-checkI5StringCoverage prog lns =
+checkI6StringCoverage :: Program -> [LineTokens] -> Either String ()
+checkI6StringCoverage prog lns =
   if astCount == tokCount
     then Right ()
     else
       Left
-        $ "I5 (string coverage): AST has "
+        $ "I6 (string coverage): AST has "
         <> show astCount
         <> " LString literal(s) but tokenization has "
         <> show tokCount

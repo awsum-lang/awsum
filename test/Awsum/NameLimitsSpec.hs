@@ -47,8 +47,13 @@ identifierCapSpec = describe "Source identifier length cap" $ do
     $ parseProgram (mkProgram (T.replicate maxIdentifierChars "a"))
     `shouldSatisfy` isRight
 
-  it "rejects an identifier well past the cap, with a clear message"
-    $ case parseProgram (mkProgram (T.replicate (maxIdentifierChars + 50) "a")) of
+  it "rejects an identifier one past the cap, with a clear message"
+    $ rejectsAsTooLong (mkProgram (T.replicate (maxIdentifierChars + 1) "a"))
+
+  it "counts a leading underscore toward the cap"
+    $ rejectsAsTooLong ("type _" <> T.replicate maxIdentifierChars "T")
+  where
+    rejectsAsTooLong src = case parseProgram src of
       Left msg -> msg `shouldSatisfy` T.isInfixOf "identifier too long"
       Right _ -> expectationFailure "expected the over-long identifier to be rejected"
 

@@ -11,6 +11,7 @@ import Awsum.HMSpec qualified
 import Awsum.HoverSpec qualified
 import Awsum.JvmClassFileLimitSpec qualified
 import Awsum.JvmFarBranchSpec qualified
+import Awsum.JvmLaunchSpec qualified
 import Awsum.LspSpec qualified
 import Awsum.NameLimitsSpec qualified
 import Awsum.NoSimplifySpec qualified
@@ -57,6 +58,7 @@ main = do
     Awsum.JvmClassFileLimitSpec.spec
     Awsum.ClrMetadataWidthSpec.spec
     Awsum.JvmFarBranchSpec.spec
+    Awsum.JvmLaunchSpec.spec
     Awsum.LspSpec.spec
     jsSyntaxSpec
 

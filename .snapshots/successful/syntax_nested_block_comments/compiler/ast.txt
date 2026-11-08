@@ -1,0 +1,256 @@
+Program
+    { moduleComment = Just " Block comments nest: `{- outer {- inner -} more -}` is one comment
+         in every position, while a comment inside a string literal is text.
+         Prints `nested {- comments -}`. "
+    , imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls =
+        [ CommentDecl
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 52
+                }
+            )
+            ( BlockComment " Standalone {- nested -} between declarations. " )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 23
+                }
+            ) "label"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 9
+                    , spanEndLine = 10
+                    , spanEndCol = 23
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 9
+                        , spanEndLine = 10
+                        , spanEndCol = 13
+                        }
+                    ) "Bool"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 17
+                        , spanEndLine = 10
+                        , spanEndCol = 23
+                        }
+                    ) "String"
+                )
+            ) Nothing
+            ( Just "Doc comment {- nested {- twice -} -} on `label`." )
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 14
+                , spanEndCol = 25
+                }
+            ) "label"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 7
+                    , spanEndLine = 11
+                    , spanEndCol = 8
+                    }
+                ) "b"
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 11
+                    , spanEndLine = 14
+                    , spanEndCol = 25
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 16
+                        , spanEndLine = 11
+                        , spanEndCol = 18
+                        }
+                    )
+                    ( QName [] "b" )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 3
+                            , spanEndLine = 12
+                            , spanEndCol = 7
+                            }
+                        ) "True" []
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 11
+                            , spanEndLine = 12
+                            , spanEndCol = 34
+                            }
+                        )
+                        ( LString "nested {- comments -}" )
+                    ) Nothing :|
+                    [ CaseAltLeaf
+                        [ BlockComment " Between case arms {--} {---} " ]
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 3
+                                , spanEndLine = 14
+                                , spanEndCol = 8
+                                }
+                            ) "False" []
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 12
+                                , spanEndLine = 14
+                                , spanEndCol = 25
+                                }
+                            )
+                            ( LString "unreachable" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 16
+                , spanStartCol = 1
+                , spanEndLine = 16
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 8
+                    , spanEndLine = 16
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 16
+                        , spanStartCol = 8
+                        , spanEndLine = 16
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 8
+                            , spanEndLine = 16
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 11
+                            , spanEndLine = 16
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 16
+                        , spanStartCol = 17
+                        , spanEndLine = 16
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 17
+                , spanStartCol = 1
+                , spanEndLine = 17
+                , spanEndCol = 36
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 17
+                    , spanStartCol = 8
+                    , spanEndLine = 17
+                    , spanEndCol = 36
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 17
+                        , spanStartCol = 8
+                        , spanEndLine = 17
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 17
+                        , spanStartCol = 24
+                        , spanEndLine = 17
+                        , spanEndCol = 36
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 17
+                            , spanStartCol = 25
+                            , spanEndLine = 17
+                            , spanEndCol = 35
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 25
+                                , spanEndLine = 17
+                                , spanEndCol = 31
+                                }
+                            )
+                            ( QName [] "label" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 31
+                                , spanEndLine = 17
+                                , spanEndCol = 35
+                                }
+                            ) "True"
+                        )
+                    )
+                )
+            ) Nothing Nothing
+        ]
+    }

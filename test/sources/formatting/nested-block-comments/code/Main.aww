@@ -1,0 +1,23 @@
+{- Nested block comments inside declarations and expressions. -}
+
+import IO.Stdout
+
+type Pick = A {- a {- b -} c -} | B
+
+pick : Pick {- a {- b -} c -} -> Int32
+pick p = case p of {- a {- b -} c -}
+  A -> {- a {- b -} c -} 1
+  B -> 2
+
+_total : Either (UnderflowError | OverflowError) Int32
+_total = do {- a {- b -} c -}
+  x <- addInt32 (pick A) {- a {- b -} c -} (pick B)
+  pureEither x
+
+inLet : Int32
+inLet =
+  let n = {- a {- b -} c -} (pick B)
+   in n {- a {- b -} c -}
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 inLet)

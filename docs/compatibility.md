@@ -7,10 +7,10 @@ What Awsum compiles to (target backends + minimum runtime versions) and what it'
 The same Awsum program lowers to any of five backends; cross-backend equivalence is checked on every commit (see [testing.md](testing.md)). Per-backend implementation details: [targets.md](targets.md). Minimum-runtime rationale: [platform-version-policy.md](platform-version-policy.md).
 
 - **LLVM** — native binary via Clang (LLVM 15+)
-- **JVM** — Java 11+ bytecode (generated directly, no Jasmin/javac)
-- **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
+- **JVM** — Java 25+ bytecode (generated directly, no Jasmin/javac)
+- **CLR** — .NET 10+ DLL (generated directly, no ilasm/csc)
 - **WASM** — WebAssembly via WASI (wasmtime)
-- **JS** — Node.js 22+ (LTS), browser (planned)
+- **JS** — Node.js 26+ (LTS)
 
 ## Supported host platforms
 

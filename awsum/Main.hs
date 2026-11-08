@@ -5,10 +5,10 @@ module Main (main) where
 
 import Awsum.Codegen
 import Awsum.Codegen.CLR (codegenCLR)
-import Awsum.Codegen.CLR.Assemble (assembleCLR)
+import Awsum.Codegen.CLR.Assemble (assembleCLR, runtimeConfigJson)
 import Awsum.Codegen.JS (codegenJS, codegenJsPretty)
 import Awsum.Codegen.JVM (codegenJVM)
-import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, jvmLaunchFlags, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
@@ -367,13 +367,7 @@ runOnTarget progType target ptags core args = case target of
         withSystemTempDirectory "awsum" $ \dir -> do
           let classPath = dir </> "AwsumMain.class"
           writeFileBS classPath bytes
-          -- Pin the JVM's I/O charsets to UTF-8 so 'argv' survives the
-          -- startup decode on hosts whose default charset isn't UTF-8 (the
-          -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
-          -- from the system ANSI code page and supplementary code points
-          -- collapse to '?' before our 'main' runs). Stdout side is handled
-          -- inside the emitted 'main' itself via a 'System.setOut' prologue.
-          runChild "java error" "java" (["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] <> map toString args)
+          runChild "java error" "java" (jvmLaunchFlags <> ["-cp", dir, "AwsumMain"] <> map toString args)
   TargetCLR ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let dllPath = dir </> "AwsumMain.dll"
@@ -422,28 +416,6 @@ runChild errLabel cmd args = do
   case exit of
     ExitSuccess -> putTextLn (decodeUtf8 outBs)
     ExitFailure _ -> die $ toString (errLabel <> ":\n" <> decodeUtf8 errBs)
-
--- | .NET runtime configuration template for CLR target. Enables Server GC
---   (parallel per-core heaps): awsum programs allocate a heap object per Core
---   cell, so the workstation GC's single heap serialises that allocation
---   churn. Output is identical either way; only GC throughput changes. Keep in
---   sync with the copies in test/Awsum/RunBackend.hs (tests) and
---   bench/Bench.hs (benchmarks).
-runtimeConfigJson :: Text
-runtimeConfigJson =
-  "{\n\
-  \  \"runtimeOptions\": {\n\
-  \    \"tfm\": \"net9.0\",\n\
-  \    \"framework\": {\n\
-  \      \"name\": \"Microsoft.NETCore.App\",\n\
-  \      \"version\": \"9.0.0\"\n\
-  \    },\n\
-  \    \"rollForward\": \"LatestMajor\",\n\
-  \    \"configProperties\": {\n\
-  \      \"System.GC.Server\": true\n\
-  \    }\n\
-  \  }\n\
-  \}\n"
 
 -- | Parse → typecheck → lower to Core, or terminate with an error.
 --   Warnings are printed to stderr but do not block compilation. Use
