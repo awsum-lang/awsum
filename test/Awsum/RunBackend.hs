@@ -22,6 +22,7 @@ module Awsum.RunBackend
     runOnAllStdinBytes,
     runJVM,
     runJVMStdin,
+    timeLimitMicros,
   )
 where
 
@@ -29,7 +30,7 @@ import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR, runtimeConfigJson)
 import Awsum.Codegen.JS (codegenJS, codegenJsPretty)
 import Awsum.Codegen.JVM (codegenJVM)
-import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, jvmLaunchFlags, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
@@ -308,12 +309,7 @@ runJVM :: ByteString -> Text -> IO (Either Text Text)
 runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let classFile = dir </> "AwsumMain.class"
   writeFileBS classFile classBytes
-  -- Pin JVM I/O charsets to UTF-8 so 'argv[1]' survives the startup
-  -- decode on hosts whose default charset isn't UTF-8 (Windows ANSI).
-  -- Stdout side is handled by the 'System.setOut' prologue baked into
-  -- emitted 'main'. Keep these flags in sync with awsum/Main.hs's
-  -- 'awsum run -t jvm' so the test harness mirrors what users get.
-  runProcArgv "java" "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input]
+  runProcArgv "java" "java" (jvmLaunchFlags <> ["-cp", dir, "AwsumMain", toString input])
 
 runCLR :: ByteString -> Text -> IO (Either Text Text)
 runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -443,11 +439,7 @@ runJVMStdin :: ByteString -> ByteString -> IO (Either Text Text)
 runJVMStdin classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let classFile = dir </> "AwsumMain.class"
   writeFileBS classFile classBytes
-  -- '-Dsun.jnu.encoding' only governs argv; stdin reads through
-  -- 'System.in' which we wire to an explicit UTF-8 'StreamReader' on
-  -- the program side. '-Dfile.encoding' still matters for stdout
-  -- formatting in case other code paths reach the default charset.
-  runProcStdinBytes "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] input
+  runProcStdinBytes "java" (jvmLaunchFlags <> ["-cp", dir, "AwsumMain"]) input
 
 runCLRStdin :: ByteString -> ByteString -> IO (Either Text Text)
 runCLRStdin dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do

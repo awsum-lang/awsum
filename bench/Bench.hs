@@ -27,7 +27,7 @@ module Main (main) where
 
 import Awsum.Codegen.CLR.Assemble (assembleCLR, runtimeConfigJson)
 import Awsum.Codegen.JS (codegenJS)
-import Awsum.Codegen.JVM.Assemble (assembleJVM, renderJvmLimitExceeded)
+import Awsum.Codegen.JVM.Assemble (assembleJVM, jvmLaunchFlags, renderJvmLimitExceeded)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram, PreludeTags)
@@ -449,7 +449,7 @@ buildLLVMBin dir ll = do
 
 runOne :: Int -> FilePath -> Artifacts -> Backend -> IO RunResult
 runOne t _dir a LLVM = runWithStats t a.aLLVMBin []
-runOne t _dir a JVM = runWithStats t "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", a.aJVMDir, "AwsumMain"]
+runOne t _dir a JVM = runWithStats t "java" (jvmLaunchFlags <> ["-cp", a.aJVMDir, "AwsumMain"])
 runOne t _dir a CLR = runWithStats t "dotnet" [a.aCLRDll]
 runOne t _dir a WASM = runWithStats t "wasmtime" [a.aWASM]
 runOne t _dir a JS = runWithStats t "node" [a.aJS]

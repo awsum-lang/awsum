@@ -6,7 +6,7 @@
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
-module Awsum.Codegen.JVM.Assemble (assembleJVM, classFileMajorVersion, JvmLimitExceeded (..), renderJvmLimitExceeded, jvmU2Max, methodLimitViolations, selectLimit, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
+module Awsum.Codegen.JVM.Assemble (assembleJVM, classFileMajorVersion, jvmLaunchFlags, JvmLimitExceeded (..), renderJvmLimitExceeded, jvmU2Max, methodLimitViolations, selectLimit, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, methodMaxLocals, methodMaxStack, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinDecodeStrictSpec, stdinReadAllBytesSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Codegen.Mangle (mangle)
@@ -28,6 +28,28 @@ import Relude
 --   ('Awsum.Codegen.JVM') prints the same number.
 classFileMajorVersion :: Word16
 classFileMajorVersion = 69
+
+-- | Options for the @java@ launcher that runs the generated @AwsumMain.class@,
+--   shared by @awsum run -t jvm@, the test harness, and the benchmarks.
+--
+--   * Charsets pinned to UTF-8, so @argv@ survives the startup decode on hosts
+--     whose default charset isn't UTF-8 (on Windows the ANSI code page turns
+--     supplementary code points into @?@ before @main@ runs). The emitted
+--     @main@ sets up stdout and stdin itself.
+--   * The JVM's own output goes to stderr, so stdout carries only the
+--     program's. By default the JVM prints unified-logging warnings (@-Xlog@)
+--     and its VM output stream to stdout.
+--   * No perf-data file: JVMs starting at the same time race on the shared
+--     @hsperfdata_<user>@ directory.
+jvmLaunchFlags :: [String]
+jvmLaunchFlags =
+  [ "-Dsun.jnu.encoding=UTF-8",
+    "-Dfile.encoding=UTF-8",
+    "-Xlog:disable",
+    "-Xlog:all=warning:stderr",
+    "-XX:+DisplayVMOutputToStderr",
+    "-XX:-UsePerfData"
+  ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Public API

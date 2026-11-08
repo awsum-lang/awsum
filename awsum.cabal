@@ -222,6 +222,7 @@ test-suite awsum-test
       Awsum.HoverSpec
       Awsum.JvmClassFileLimitSpec
       Awsum.JvmFarBranchSpec
+      Awsum.JvmLaunchSpec
       Awsum.LspSpec
       Awsum.LspSpec.EndToEnd
       Awsum.NameLimitsSpec
