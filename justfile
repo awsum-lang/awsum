@@ -233,6 +233,16 @@ show-binary-sizes:
   set -eu
   du -h $(stack path --dist-dir)/build/awsum/awsum
 
+# Time one `awsum lsp` check of FILE on the current build: from `didOpen` until
+# the server pushes diagnostics for it (the diagnostics are discarded)
+lsp-check-time FILE: build
+  #!/bin/sh
+  set -eu
+  dist="$(stack path --dist-dir)"
+  case "$dist" in /*) ;; *) dist="$PWD/$dist" ;; esac
+  cd "{{invocation_directory()}}"
+  node "{{justfile_directory()}}/scripts/lsp-check-time.mjs" "$dist/build/awsum/awsum" "{{FILE}}"
+
 # Format all source files and apply fixes (Haskell + Awsum test sources + prelude)
 format-fix:
   #!/bin/sh

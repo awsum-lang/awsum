@@ -13,6 +13,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 ### Added
 
 - **`awsum asm` now prints the human-readable generated code for all five targets.** It gains `llvm` (the LLVM IR `build` emits) and `js` (the indented JavaScript whose compact form `build` ships), alongside the existing `jvm` / `clr` / `wasm` assembly text — so every backend has a way to inspect its generated code, mirroring how `asm -t jvm` shows readable bytecode for the binary `build -t jvm` produces.
+- `just lsp-check-time FILE` — times one `awsum lsp` check on the current build: from `didOpen` until the server pushes diagnostics for FILE (the diagnostics are discarded). Development tooling; needs Node.
 
 ### Changed
 
@@ -33,6 +34,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ### Fixed
 
+- **`awsum run -t jvm` (and the test harness) launch the JVM with `-XX:-UsePerfData`.** JVMs starting at the same time race on the shared perf-data directory (`/tmp/hsperfdata_<user>`), and the loser prints a warning to stdout, mixed into the program's output. The race surfaced in CI as a spurious cross-backend mismatch.
 - **The TextMate grammar in `editors/textmate/` catches up with `awsum-vscode`.** Identifiers stop at a non-ASCII letter, and block comments are highlighted in `import` lines, type signatures, `type` declarations, and function parameters.
 - **Block comments nest in every position.** `{- outer {- inner -} more -}` was one comment only at top level, in leading comments and between `case` arms. After a token (inline in an expression, in a signature or `type` declaration, after `do` / `of`, in a `let`) the comment closed at the first `-}`, and the rest failed to parse, contrary to the type-system reference. Those positions now nest the same way.
 - **A parametric recursive type whose recursion goes through a row-typed field (`type Ch a = Tip | Link (a | Ch a)`) no longer miscompiles at depth ≥ 2.** A constructor application synthesised inside another constructor's argument kept its not-yet-solved instantiation variables in the recorded row coercion; lowering then minted the runtime row tag from the variable's *name* and dropped the row wrapper inside the generated lifting helper, so a valid, typechecking program crashed or diverged on every backend (JVM `ArrayIndexOutOfBoundsException`, LLVM runtime error, CLR `IndexOutOfRangeException`, WASM memory fault, JS hang) — with the declared order of the row's alternatives deciding whether it broke. The typechecker now pins the injected value's freshened variables against the unique matching row alternative before recording the coercion; self, mutual, multi-field, and nominal-wrapped recursion through row fields all compile and produce identical output on all five targets, in either alternative order.
