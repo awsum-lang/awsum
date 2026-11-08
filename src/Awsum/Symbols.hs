@@ -60,8 +60,9 @@ symbolsOfProgram :: Program -> [Symbol]
 symbolsOfProgram Program {decls} =
   let ds = toList decls
       funDefByName = M.fromList [(n, (sp, args)) | FunDef sp n args _ _ _ <- ds]
-   in snd $ foldl' (emit funDefByName) (S.empty, []) ds
+   in reverse (snd (foldl' (emit funDefByName) (S.empty, []) ds))
   where
+    -- Symbols accumulate in reverse (consed), so each step is O(1).
     emit ::
       M.Map Name (SrcSpan, [Param]) ->
       (S.Set Name, [Symbol]) ->
@@ -72,14 +73,14 @@ symbolsOfProgram Program {decls} =
         let sym = case M.lookup n funDefByName of
               Just (fnSp, args) -> mkBindingSymbol args n (combineSpans sp fnSp) (nameSpanAt sp n)
               Nothing -> mkBindingSymbol [] n sp (nameSpanAt sp n) -- orphan sig
-         in (S.insert n processed, acc <> [sym])
+         in (S.insert n processed, sym : acc)
       FunDef sp n args _body _ _
         | S.member n processed -> (processed, acc) -- already emitted with its sig
         | otherwise ->
             let sym = mkBindingSymbol args n sp (nameSpanAt sp n)
-             in (S.insert n processed, acc <> [sym])
+             in (S.insert n processed, sym : acc)
       TypeDecl sp n _tvars _cons _ _ _ ->
-        (processed, acc <> [Symbol SkType n sp (typeNameSpanAt sp n) []])
+        (processed, Symbol SkType n sp (typeNameSpanAt sp n) [] : acc)
       CommentDecl _ _ -> (processed, acc)
 
     mkBindingSymbol :: [Param] -> Name -> SrcSpan -> SrcSpan -> Symbol

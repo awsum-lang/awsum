@@ -3,11 +3,11 @@
 --   Two layers, both exercised here:
 --
 --     * /Unit/ — the request logic extracted from the handlers
---       ('formatEdits', 'compileToDiagnostics' + 'awsumDiagToLsp',
---       'documentSymbolsForSource', 'fixToCodeAction',
+--       ('formatEdits', 'compileDocument' + 'awsumDiagToLsp',
+--       'documentSymbolsForSource', 'fixEdits' + 'fixToCodeAction',
 --       'workspaceSymbolsForFile', 'shouldWarnVersionMismatch',
 --       'extractClientHints'), driven directly on small fixtures the
---       way 'Awsum.HoverSpec' drives 'hoverForPosition'.
+--       way 'Awsum.HoverSpec' drives 'hoverAt'.
 --
 --     * /End-to-end/ — a real server spun up in-process over a pipe pair
 --       ('runLspServerWithHandles' + @lsp-test@), confirming the handlers
@@ -43,6 +43,7 @@ import Language.LSP.Protocol.Types
 import Relude
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
+import System.Timeout (timeout)
 import Test.Hspec
 
 spec :: Spec
@@ -103,13 +104,17 @@ formatEditsSpec = describe "formatEdits" $ do
     applyEdits messy (formatEdits messy) `shouldBe` fmt messy
 
 -- ════════════════════════════════════════════════════════════════════════════
--- textDocument/publishDiagnostics → compileToDiagnostics + awsumDiagToLsp
+-- textDocument/publishDiagnostics → compileDocument + awsumDiagToLsp
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | The Awsum diagnostics the server computes for a source.
+diagnosticsOf :: Text -> [AD.Diagnostic]
+diagnosticsOf = fst . compileDocument
+
 diagnosticsSpec :: Spec
-diagnosticsSpec = describe "compileToDiagnostics / awsumDiagToLsp" $ do
+diagnosticsSpec = describe "compileDocument / awsumDiagToLsp" $ do
   it "reports no diagnostics for a clean program"
-    $ compileToDiagnostics (fmt twoFns)
+    $ diagnosticsOf (fmt twoFns)
     `shouldBe` []
 
   it "reports an error for an out-of-range integer literal" $ do
@@ -123,21 +128,21 @@ diagnosticsSpec = describe "compileToDiagnostics / awsumDiagToLsp" $ do
               "main : IO Never Unit",
               "main = IO.Stdout.print \"x\""
             ]
-    case compileToDiagnostics src of
+    case diagnosticsOf src of
       (d : _) -> do
         AD.diagSeverity d `shouldBe` AD.SevError
         AD.diagMessage d `shouldSatisfy` T.isInfixOf "UInt8"
       [] -> expectationFailure "expected an out-of-range error"
 
   it "reports a warning (with a quick-fix) for an unused parameter"
-    $ case find (not . null . AD.diagFixes) (compileToDiagnostics unusedParamProg) of
+    $ case find (not . null . AD.diagFixes) (diagnosticsOf unusedParamProg) of
       Just d -> do
         AD.diagSeverity d `shouldBe` AD.SevWarning
         AD.diagMessage d `shouldSatisfy` T.isInfixOf "Unused parameter"
       Nothing -> expectationFailure "expected an unused-parameter warning carrying a fix"
 
   it "maps Awsum severity to the LSP severity field" $ do
-    let lsp = awsumDiagToLsp [] (AD.Diagnostic AD.SevWarning (SrcSpan 1 1 1 2) "w" [])
+    let lsp = awsumDiagToLsp (docLines "") (AD.Diagnostic AD.SevWarning (SrcSpan 1 1 1 2) "w" [])
     case lsp of
       Diagnostic {_severity = sev, _source = src} -> do
         sev `shouldBe` Just DiagnosticSeverity_Warning
@@ -156,7 +161,7 @@ columnConversionSpec = describe "span (code points) ↔ LSP Position (UTF-16)" $
   let wideThenX = toText [chr 0x732B, 'x']
       mathThenX = toText [chr 0x1D400, 'x']
       rangeOf src sc ec =
-        case awsumDiagToLsp [src] (AD.Diagnostic AD.SevError (SrcSpan 1 sc 1 ec) "e" []) of
+        case awsumDiagToLsp (docLines src) (AD.Diagnostic AD.SevError (SrcSpan 1 sc 1 ec) "e" []) of
           Diagnostic {_range = Range (Position _ s) (Position _ e)} -> (s, e)
 
   it "emits UTF-16 columns after a wide char (1 col, 1 unit)"
@@ -197,6 +202,14 @@ documentSymbolsSpec = describe "documentSymbolsForSource" $ do
     $ documentSymbolsForSource "@@@ not awsum @@@"
     `shouldBe` []
 
+  it "converts symbol ranges in time linear in the document" $ do
+    -- Each range looks its source line up. Walking from the first line
+    -- each time is ~n²/2 line steps, far past the limit at this size.
+    let n = 40000 :: Int
+        src = unlines (concat [["b" <> show i <> " : Bool", "b" <> show i <> " = True"] | i <- [1 .. n]])
+    result <- timeout 5_000_000 (evaluateNF (documentSymbolsForSource src))
+    length <$> result `shouldBe` Just n
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- textDocument/codeAction → fixToCodeAction
 -- ════════════════════════════════════════════════════════════════════════════
@@ -204,10 +217,11 @@ documentSymbolsSpec = describe "documentSymbolsForSource" $ do
 codeActionSpec :: Spec
 codeActionSpec = describe "fixToCodeAction"
   $ it "wraps a compiler fix as a QuickFix CodeAction with the edit"
-  $ case mapMaybe firstFix (compileToDiagnostics unusedParamProg) of
+  $ case mapMaybe firstFix (diagnosticsOf unusedParamProg) of
     ((d, qf) : _) -> do
       let uri = toNormalizedUri (filePathToUri "/x/Main.aww")
-      case fixToCodeAction (lines unusedParamProg) uri (awsumDiagToLsp (lines unusedParamProg) d) qf of
+          ls = docLines unusedParamProg
+      case fixToCodeAction uri (awsumDiagToLsp ls d) (fixEdits ls qf) of
         CodeAction {_kind = k, _edit = edit, _diagnostics = ds} -> do
           k `shouldBe` Just CodeActionKind_QuickFix
           (length <$> ds) `shouldBe` Just 1

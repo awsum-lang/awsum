@@ -12,22 +12,32 @@
 --   * formatting via @Awsum.Format@;
 --   * document symbols via @Awsum.Symbols@;
 --   * workspace symbols by scanning @.aww@ files under @rootUri@;
---   * hover with the doc comment attached to the declaration under the
+--   * hover with the type and the doc comment of the name under the
 --     cursor (markdown).
+--
+-- The @lsp@ request loop is one thread: a handler that computes holds up
+-- every other request. So checks and requests that do real work run on
+-- worker threads ('scheduleCheck', 'respondFromWorker'), fully evaluated
+-- there — @lsp@ serialises outgoing messages on a single writer thread,
+-- which would otherwise inherit the work. Checks of different documents
+-- run in parallel; a newer version of a document cancels the check of the
+-- older one.
 module Awsum.Lsp
   ( runLspServer,
     runLspServerWithHandles,
-    -- Internals exported for testing. 'Awsum.HoverSpec' drives
-    -- 'hoverForPosition' on small fixtures; 'Awsum.LspSpec' drives the
-    -- rest of the request logic directly (formatting edits, diagnostics,
-    -- symbols, code actions, version check, client hints) and the whole
-    -- server end-to-end through 'runLspServerWithHandles'.
-    compileToTypedProgram,
-    hoverForPosition,
+    -- Internals exported for testing. 'Awsum.HoverSpec' drives 'hoverAt'
+    -- on small fixtures; 'Awsum.LspSpec' drives the rest of the request
+    -- logic directly (formatting edits, diagnostics, symbols, code
+    -- actions, version check, client hints) and the whole server
+    -- end-to-end through 'runLspServerWithHandles'.
+    debounceMicros,
+    docLines,
+    compileDocument,
+    hoverAt,
     formatEdits,
-    compileToDiagnostics,
     awsumDiagToLsp,
     documentSymbolsForSource,
+    fixEdits,
     fixToCodeAction,
     workspaceSymbolsForFile,
     looksLikeSemver,
@@ -37,9 +47,8 @@ module Awsum.Lsp
   )
 where
 
-import Awsum.Desugar (desugarProgram)
 import Awsum.Diagnostic qualified as AD
-import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.ElaborateLower (Elaborated (..), SimplifyMode (..), elaborateProgram, lowerElaborated)
 import Awsum.Format (formatSource)
 import Awsum.HM (stripSyntheticTyvarSuffix)
 import Awsum.Parser (parseProgramDiagnostic)
@@ -58,11 +67,11 @@ import Awsum.TExpr
     TypedProgram (..),
     tdeclName,
   )
-import Awsum.Typing (emptyTypeNamesInProgram, markEmptyTypesInDecl, typecheckProgram)
 import Awsum.Width qualified as Width
 import Common.File (readFileTextUtf8)
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Exception (catch)
+import Control.Concurrent (ThreadId, forkIO, killThread, myThreadId)
+import Control.Concurrent.MVar (withMVarMasked)
+import Control.Exception (SomeAsyncException, catch, throwIO, try)
 import Control.Lens ((^.))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as AesonKey
@@ -71,13 +80,15 @@ import Data.Algorithm.Diff qualified as Diff
 import Data.Char (isDigit)
 import Data.List (minimumBy)
 import Data.Map.Strict qualified as Map
+import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import GHC.Conc (registerDelay, retry)
 import Language.LSP.Protocol.Lens qualified as L
 import Language.LSP.Protocol.Message
 import Language.LSP.Protocol.Types
 import Language.LSP.Server
-import Language.LSP.VFS (virtualFileText)
+import Language.LSP.VFS (virtualFileText, virtualFileVersion)
 import Relude
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath (takeExtension, (</>))
@@ -86,18 +97,14 @@ import System.FilePath (takeExtension, (</>))
 -- Server state
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Per-server state, held behind 'IORef's so handlers can mutate from
---   either the main LSP thread or a forked debouncer thread.
+-- | Per-server state, shared by the request loop and the worker threads.
 data ServerState = ServerState
-  { -- | Latest /pending/ check version per document. The debouncer fork
-    --   compares against this to drop stale checks (a newer @didChange@
-    --   bumps the counter, the older fork's wakeup sees the newer counter
-    --   and silently exits).
-    ssVersions :: IORef (Map NormalizedUri Word),
-    -- | Compiler-supplied quick fixes per @(uri, range)@. Refilled on every
-    --   successful check; consulted by the @textDocument/codeAction@
-    --   handler.
-    ssFixes :: IORef (Map (NormalizedUri, RangeKey) [AD.Fix]),
+  { -- | Every open document's check state.
+    ssDocs :: TVar (Map NormalizedUri DocState),
+    -- | Held from a check's version test to its diagnostics push, so a
+    --   check publishes only while its version is still the latest, and
+    --   pushes reach the client in version order.
+    ssPublish :: MVar (),
     -- | Workspace folders received during initialize. Used by
     --   @workspace/symbol@ as scan roots.
     ssWorkspaceRoots :: IORef [FilePath],
@@ -139,22 +146,52 @@ defaultClientHints =
       chPreferButtonsOverLinks = False
     }
 
--- | Stable @Ord@-able key for a 'Range' so we can index the fixes map.
-type RangeKey = (UInt, UInt, UInt, UInt)
+-- | One open document.
+data DocState = DocState
+  { -- | The latest version the client announced (@didOpen@ / @didChange@).
+    dsVersion :: Int32,
+    -- | The check scheduled or running for 'dsVersion', if any.
+    dsPending :: Maybe PendingCheck,
+    -- | The last published check — possibly of an older version.
+    dsResult :: Maybe CheckResult
+  }
 
-rangeKey :: Range -> RangeKey
-rangeKey r =
-  ( r ^. L.start . L.line,
-    r ^. L.start . L.character,
-    r ^. L.end . L.line,
-    r ^. L.end . L.character
+-- | A scheduled or running check. Setting 'pcKick' ends its debounce.
+data PendingCheck = PendingCheck
+  { pcThread :: ThreadId,
+    pcKick :: TVar Bool
+  }
+
+-- | Everything the handlers serve from one check of one document version,
+--   evaluated on the check's worker thread before it is stored.
+data CheckResult = CheckResult
+  { crVersion :: Int32,
+    crDiagnostics :: [Diagnostic],
+    -- | Quick fixes (title, edits) per diagnostic.
+    crFixes :: Map FixKey [(Text, [TextEdit])],
+    -- | 'Nothing' when the document doesn't parse.
+    crHover :: Maybe HoverIndex
+  }
+
+-- | Identifies the diagnostic a quick fix belongs to: clients send the
+--   diagnostics under the cursor back with @textDocument/codeAction@.
+type FixKey = ((UInt, UInt, UInt, UInt), Text)
+
+fixKey :: Diagnostic -> FixKey
+fixKey d =
+  ( ( d ^. L.range . L.start . L.line,
+      d ^. L.range . L.start . L.character,
+      d ^. L.range . L.end . L.line,
+      d ^. L.range . L.end . L.character
+    ),
+    d ^. L.message
   )
 
 newServerState :: Text -> IO ServerState
 newServerState compilerVersion =
   ServerState
-    <$> newIORef Map.empty
-    <*> newIORef Map.empty
+    <$> newTVarIO Map.empty
+    <*> newMVar ()
     <*> newIORef []
     <*> pure compilerVersion
     <*> newIORef defaultClientHints
@@ -165,11 +202,12 @@ newServerState compilerVersion =
 
 -- | Document text split on newlines; 1-based span line numbers index into
 --   it. Carried by every range producer because the column-unit conversion
---   below needs the source line.
-type SrcLines = [Text]
+--   below needs the source line. A 'Seq', not a list: every range a
+--   response carries looks its line up.
+type SrcLines = Seq Text
 
 docLines :: Text -> SrcLines
-docLines = lines
+docLines = Seq.fromList . lines
 
 -- | Awsum spans are 1-based @(line, col)@ with columns in /code points/ (one
 --   column per character — see "Awsum.SrcStream"); LSP 'Range's are 0-based
@@ -188,7 +226,7 @@ spanToRange ls (ASyn.SrcSpan sl sc el ec) =
     character :: Int -> Int -> UInt
     character ln col = fromIntegral (Width.codePointColToUtf16 (lineAt ln) col)
     lineAt :: Int -> Text
-    lineAt n = fromMaybe "" (ls !!? (n - 1))
+    lineAt n = fromMaybe "" (Seq.lookup (n - 1) ls)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Hover type index
@@ -259,6 +297,14 @@ hoverRecords prog mtp =
     [ (spanKey sp, (sp, r))
     | (sp, r) <- headRecords (toList (ASyn.decls prog)) <> maybe [] bodyRecords mtp
     ]
+
+-- | What hover reads for one checked document: its lines (for the UTF-16
+--   column conversion), the parsed user program (for doc comments and the
+--   reference walks), and the type records.
+data HoverIndex = HoverIndex SrcLines ASyn.Program HoverRecords
+
+mkHoverIndex :: SrcLines -> ASyn.Program -> Maybe TypedProgram -> HoverIndex
+mkHoverIndex ls prog mtp = HoverIndex ls prog (hoverRecords prog mtp)
 
 -- | Head-name records from the /user/ AST: a 'Sig' contributes its
 --   declared type, a 'TypeDecl' its return type. A 'FunDef' head carries
@@ -377,23 +423,22 @@ bodyRecords tp =
 --   'TExpr' carries the binder's monomorphic type, so the popup still
 --   has content to show.
 --
---   The type index is 'Nothing' when the program does not typecheck
---   (or hasn't been elaborated): hover then degrades to doc-only, which
---   the AST walks still serve.
-hoverForPosition :: SrcLines -> Maybe TypedProgram -> ASyn.Program -> Position -> Maybe Hover
-hoverForPosition ls mtp prog (Position l c) =
+--   The index holds only head-name types when the program does not
+--   typecheck: hover then degrades to doc-only, which the AST walks still
+--   serve.
+hoverAt :: HoverIndex -> Position -> Maybe Hover
+hoverAt (HoverIndex ls prog records) (Position l c) =
   let line = fromIntegral l + 1
-      lineText = fromMaybe "" (ls !!? (line - 1))
+      lineText = fromMaybe "" (Seq.lookup (line - 1) ls)
       col = Width.utf16ColToCodePoint lineText (fromIntegral c)
       userDecls = toList (ASyn.decls prog)
       -- User decls are listed first so that, when both the user
       -- program and the prelude define a name (e.g. the user
       -- redefines @const@), the user's doc is found first and wins.
       allDecls = userDecls <> toList (ASyn.decls preludeProgram)
-      recs = hoverRecords prog mtp
-   in headNameHover recs line col userDecls allDecls
-        <|> referenceHover recs line col userDecls allDecls
-        <|> binderHover recs line col
+   in headNameHover records line col userDecls allDecls
+        <|> referenceHover records line col userDecls allDecls
+        <|> binderHover records line col
   where
     -- Cursor sits on a top-level decl's head name. Surfaces the
     -- decl's type (from the index) and its doc (with sibling fallback).
@@ -726,117 +771,220 @@ documentSymbolsForSource src = case parseProgramDiagnostic src of
 -- Compile pipeline
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Source text → elaborated 'TypedProgram'. Returns 'Nothing' on any
---   failure (parse error, prelude-reference violation, type error) so
---   hover gracefully degrades to doc-only — the AST-based doc walks
---   already work on the unmodified user program.
---
---   The pipeline here mirrors 'compileToDiagnostics' minus the Core
---   lowering steps: parsing and typechecking is all hover needs, and
---   skipping lowering keeps it responsive to partially-typed programs
---   (e.g. user is still typing).
-compileToTypedProgram :: Text -> Maybe TypedProgram
-compileToTypedProgram src =
+-- | Source text → Awsum diagnostics plus the hover index, from one run of
+--   the @awsum check@ pipeline ("Main.runCheck"): parse, typecheck, lower
+--   through every Core-to-Core pass. The typecheck feeds hover even when
+--   lowering then fails; when typechecking fails, the index serves head
+--   names and doc comments only. 'Nothing' only when the source doesn't
+--   parse.
+compileDocument :: Text -> ([AD.Diagnostic], Maybe HoverIndex)
+compileDocument src =
   case parseProgramDiagnostic src of
-    Left _ -> Nothing
-    Right userProg -> case AD.userProgramRestrictionDiagnostics userProg of
-      _ : _ -> Nothing
-      [] ->
-        -- Desugar before typechecking — mirrors 'elaborateLowerProgram'
-        -- so the hover path and the lowering path see the same
-        -- normalised AST (no 'EDo' / 'ParamPat' / non-'PVar' lets reach
-        -- the typechecker). On desugar failure, degrade to doc-only hover.
-        case desugarProgram (withPrelude userProg) of
-          Left _ -> Nothing
-          Right desugared ->
-            let emptyNames = emptyTypeNamesInProgram desugared
-                prog =
-                  desugared
-                    { ASyn.decls = fmap (markEmptyTypesInDecl emptyNames) (ASyn.decls desugared)
-                    }
-             in case typecheckProgram ProgramCli preludeDefNames prog of
-                  Left _ -> Nothing
-                  Right (typed, _) -> Just typed
+    Left parseErrs -> (map AD.parseErrorToDiagnostic parseErrs, Nothing)
+    Right userProg ->
+      let index = Just . mkHoverIndex (docLines src) userProg
+       in case AD.userProgramRestrictionDiagnostics userProg of
+            ds@(_ : _) -> (ds, index Nothing)
+            [] -> case elaborateProgram ProgramCli (withPrelude userProg) of
+              Left typeErr -> ([AD.typeErrorToDiagnostic typeErr], index Nothing)
+              Right el ->
+                ( case lowerElaborated SimplifyOn ProgramCli el of
+                    Left typeErr -> [AD.typeErrorToDiagnostic typeErr]
+                    Right (warns, _ptags, _core) -> map AD.warningToDiagnostic (stripPreludeWarnings warns),
+                  index (Just (elTyped el))
+                )
 
--- | Source text → Awsum diagnostics. Mirrors the @awsum check@ pipeline in
---   "Main.runCheck" — parse, elaborate (which runs typecheck + every
---   Core-to-Core pass), warn-or-error.
-compileToDiagnostics :: Text -> [AD.Diagnostic]
-compileToDiagnostics src =
-  case parseProgramDiagnostic src of
-    Left parseErrs -> map AD.parseErrorToDiagnostic parseErrs
-    Right userProg -> case AD.userProgramRestrictionDiagnostics userProg of
-      ds@(_ : _) -> ds
-      [] ->
-        case elaborateLowerProgram ProgramCli (withPrelude userProg) of
-          Left typeErr -> [AD.typeErrorToDiagnostic typeErr]
-          Right (warns, _ptags, _core) ->
-            map AD.warningToDiagnostic (stripPreludeWarnings warns)
+-- | Check one document version and evaluate everything a handler or the
+--   @lsp@ writer thread would otherwise compute: the diagnostics and fixes
+--   in full, the hover records' map (the walk over the typed program).
+--   A compiler crash becomes an error diagnostic instead of a lost result,
+--   which a waiting hover request would wait on forever.
+computeCheck :: Int32 -> Text -> IO CheckResult
+computeCheck version src = do
+  outcome <- try $ do
+    let ls = docLines src
+        (diags, hover) = compileDocument src
+        result =
+          CheckResult
+            { crVersion = version,
+              crDiagnostics = map (awsumDiagToLsp ls) diags,
+              crFixes =
+                Map.fromListWith
+                  (<>)
+                  [ (fixKey (awsumDiagToLsp ls d), map (fixEdits ls) (AD.diagFixes d))
+                  | d <- diags,
+                    not (null (AD.diagFixes d))
+                  ],
+              crHover = hover
+            }
+    evaluateNF_ (crDiagnostics result, crFixes result)
+    traverse_ (\(HoverIndex _ _ records) -> evaluateWHNF_ records) (crHover result)
+    pure result
+  case outcome of
+    Right result -> pure result
+    Left (e :: SomeException)
+      | isJust (fromException e :: Maybe SomeAsyncException) -> throwIO e
+      | otherwise ->
+          pure
+            CheckResult
+              { crVersion = version,
+                crDiagnostics = [internalErrorDiagnostic e],
+                crFixes = Map.empty,
+                crHover = Nothing
+              }
+  where
+    internalErrorDiagnostic e =
+      Diagnostic
+        { _range = Range (Position 0 0) (Position 0 0),
+          _severity = Just DiagnosticSeverity_Error,
+          _code = Nothing,
+          _codeDescription = Nothing,
+          _source = Just "awsum",
+          _message = "internal compiler error: " <> show e,
+          _tags = Nothing,
+          _relatedInformation = Nothing,
+          _data_ = Nothing
+        }
 
 -- ════════════════════════════════════════════════════════════════════════════
--- Diagnostics + fix index update
+-- Checks on worker threads
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Run the compile pipeline, push diagnostics to the client, and refresh
---   the fixes index for the document.
-publishCheckResult ::
-  ServerState ->
-  NormalizedUri ->
-  Maybe Int32 ->
-  Text ->
+-- | How long a check waits after a @didChange@ for the next one.
+debounceMicros :: Int
+debounceMicros = 500_000
+
+-- | Schedule a check of @version@ after @delay@ µs on a worker thread,
+--   in place of the check pending for an older version — which is killed:
+--   its result could no longer be published, it would only occupy a core.
+--   A no-op when the document is not open.
+scheduleCheck :: ServerState -> NormalizedUri -> Int32 -> Int -> LspM () ()
+scheduleCheck st uri version delay = do
+  env <- getLspEnv
+  liftIO $ do
+    kick <- newTVarIO False
+    registered <- newEmptyMVar
+    -- The worker waits until it is registered, so a quick check never
+    -- publishes before its own 'PendingCheck' is in place to be cleared.
+    tid <- forkIO $ do
+      open <- takeMVar registered
+      when open (runCheck st env uri version delay kick)
+    replaced <- atomically $ do
+      docs <- readTVar (ssDocs st)
+      case Map.lookup uri docs of
+        Nothing -> pure Nothing
+        Just ds -> do
+          writeTVar (ssDocs st) (Map.insert uri ds {dsVersion = version, dsPending = Just (PendingCheck tid kick)} docs)
+          pure (Just (dsPending ds))
+    putMVar registered (isJust replaced)
+    whenJust (join replaced) (cancelCheck . pcThread)
+
+-- | Kill a check's worker without waiting on it: 'killThread' blocks until
+--   the exception is delivered, and a worker inside its publish section
+--   defers it.
+cancelCheck :: ThreadId -> IO ()
+cancelCheck = void . forkIO . killThread
+
+-- | The worker: wait out the debounce (or a kick), check the document if
+--   it is still at @version@, publish.
+runCheck :: ServerState -> LanguageContextEnv () -> NormalizedUri -> Int32 -> Int -> TVar Bool -> IO ()
+runCheck st env uri version delay kick = do
+  elapsed <- registerDelay delay
+  atomically $ do
+    ready <- (||) <$> readTVar elapsed <*> readTVar kick
+    unless ready retry
+  mvf <- runLspT env (getVirtualFile uri)
+  whenJust mvf $ \vf ->
+    when (virtualFileVersion vf == version)
+      $ computeCheck version (virtualFileText vf)
+      >>= publishResult st env uri
+
+-- | Store a check's result and push its diagnostics — only while its
+--   version is still the document's latest, and never after @shutdown@.
+--   Masked, so a cancellation cannot land between storing the result and
+--   pushing it.
+publishResult :: ServerState -> LanguageContextEnv () -> NormalizedUri -> CheckResult -> IO ()
+publishResult st env uri result = withMVarMasked (ssPublish st) $ \() -> do
+  me <- myThreadId
+  shuttingDown <- runLspT env isShuttingDown
+  current <- atomically $ do
+    docs <- readTVar (ssDocs st)
+    case Map.lookup uri docs of
+      Just ds | dsVersion ds == crVersion result -> do
+        let pending = mfilter ((/= me) . pcThread) (dsPending ds)
+        writeTVar (ssDocs st) (Map.insert uri ds {dsResult = Just result, dsPending = pending} docs)
+        pure True
+      _ -> pure False
+  when (current && not shuttingDown)
+    $ runLspT env
+    $ sendNotification
+      SMethod_TextDocumentPublishDiagnostics
+      PublishDiagnosticsParams
+        { _uri = fromNormalizedUri uri,
+          _version = Just (crVersion result),
+          _diagnostics = crDiagnostics result
+        }
+
+-- | Make sure @version@ gets checked now: end the debounce of its pending
+--   check, or schedule one if there is none. A no-op once it is checked,
+--   or when the document has moved on to a newer version.
+checkNow :: ServerState -> NormalizedUri -> Int32 -> LspM () ()
+checkNow st uri version = do
+  missing <- liftIO $ atomically $ do
+    docs <- readTVar (ssDocs st)
+    case Map.lookup uri docs of
+      Just ds
+        | dsVersion ds == version,
+          (crVersion <$> dsResult ds) /= Just version ->
+            case dsPending ds of
+              Just pc -> writeTVar (pcKick pc) True >> pure False
+              Nothing -> pure True
+      _ -> pure False
+  when missing (scheduleCheck st uri version 0)
+
+-- | The check result for the document's current text: at once when it is
+--   already checked, otherwise after a check started now rather than at
+--   the end of the debounce. 'Nothing' when the document is closed, or
+--   edited again before its check publishes.
+currentResult :: ServerState -> LanguageContextEnv () -> NormalizedUri -> IO (Maybe CheckResult)
+currentResult st env uri = do
+  mvf <- runLspT env (getVirtualFile uri)
+  case virtualFileVersion <$> mvf of
+    Nothing -> pure Nothing
+    Just version -> do
+      runLspT env (checkNow st uri version)
+      atomically $ do
+        docs <- readTVar (ssDocs st)
+        case Map.lookup uri docs of
+          Nothing -> pure Nothing
+          Just ds
+            | Just r <- dsResult ds, crVersion r == version -> pure (Just r)
+            | dsVersion ds /= version -> pure Nothing
+            | otherwise -> retry
+
+-- | Answer a request from a worker thread, the result evaluated in full
+--   there. A crash answers with an error rather than leaving the client
+--   waiting.
+respondFromWorker ::
+  (NFData a) =>
+  (Either (TResponseError m) a -> LspM () ()) ->
+  (LanguageContextEnv () -> IO a) ->
   LspM () ()
-publishCheckResult st uri mVersion src = do
-  let ls = docLines src
-      diags = compileToDiagnostics src
-      lspDiags = map (awsumDiagToLsp ls) diags
-      newFixEntries =
-        [ ((uri, rangeKey (spanToRange ls (AD.diagSpan d))), AD.diagFixes d)
-        | d <- diags,
-          not (null (AD.diagFixes d))
-        ]
-  -- Replace fixes for this URI atomically: drop stale ones, install new ones.
-  liftIO $ atomicModifyIORef' (ssFixes st) $ \m ->
-    let cleared = Map.filterWithKey (\(u, _) _ -> u /= uri) m
-        updated = foldr (uncurry Map.insert) cleared newFixEntries
-     in (updated, ())
-  sendNotification
-    SMethod_TextDocumentPublishDiagnostics
-    PublishDiagnosticsParams
-      { _uri = fromNormalizedUri uri,
-        _version = mVersion,
-        _diagnostics = lspDiags
-      }
+respondFromWorker responder compute = do
+  env <- getLspEnv
+  void $ liftIO $ forkIO $ do
+    outcome <- try (compute env >>= evaluateNF)
+    response <- case outcome of
+      Right r -> pure (Right r)
+      Left (e :: SomeException)
+        | isJust (fromException e :: Maybe SomeAsyncException) -> throwIO e
+        | otherwise -> pure (Left (TResponseError (InR ErrorCodes_InternalError) ("internal error: " <> show e) Nothing))
+    runLspT env (responder response)
 
 -- | Read current text from VFS. @Nothing@ when the document is not tracked
 --   (e.g. closed before the handler ran).
 readDocText :: NormalizedUri -> LspM () (Maybe Text)
 readDocText uri = fmap virtualFileText <$> getVirtualFile uri
-
--- ════════════════════════════════════════════════════════════════════════════
--- Debounced check on didChange
--- ════════════════════════════════════════════════════════════════════════════
-
--- | Schedule a debounced check for a document. Each @didChange@ bumps a
---   per-URI counter; a fork sleeps 500 ms and only runs the check if it
---   still holds the latest counter. Newer changes silently invalidate
---   older forks — at most one published-diagnostics burst per quiet
---   period.
-scheduleDebouncedCheck ::
-  ServerState ->
-  NormalizedUri ->
-  Maybe Int32 ->
-  LspM () ()
-scheduleDebouncedCheck st uri mVersion = do
-  myVer <- liftIO $ atomicModifyIORef' (ssVersions st) $ \m ->
-    let v = Map.findWithDefault 0 uri m + 1
-     in (Map.insert uri v m, v)
-  env <- getLspEnv
-  void $ liftIO $ forkIO $ do
-    threadDelay 500_000 -- 500 ms
-    currentVer <- Map.lookup uri <$> readIORef (ssVersions st)
-    when (currentVer == Just myVer) $ runLspT env $ do
-      mtxt <- readDocText uri
-      whenJust mtxt $ \src -> publishCheckResult st uri mVersion src
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Handlers
@@ -858,9 +1006,10 @@ stubNotifications =
       -- Trace-level toggle from the client (`$/setTrace`). We don't
       -- emit LSP trace output, so silently accept and discard.
       notificationHandler SMethod_SetTrace (const pass),
-      -- Request cancellation. Our handlers are short and synchronous —
-      -- there's nothing meaningful to cancel mid-flight, the response
-      -- arrives fast enough that the client discards it as stale.
+      -- Request cancellation. A cancelled request's worker still answers,
+      -- and the client discards the answer; the work it would save is a
+      -- hover lookup or one parse, while checks are cancelled by newer
+      -- versions of the document.
       notificationHandler SMethod_CancelRequest (const pass)
     ]
 
@@ -985,51 +1134,65 @@ serverHandlers st =
       -- receive notifications. Triggers the lockstep version check;
       -- see 'checkVersionOnInitialized' for the comparison logic.
       notificationHandler SMethod_Initialized $ \_ -> checkVersionOnInitialized st,
-      -- New document: run check immediately so the user sees diagnostics
-      -- without waiting for the first edit.
+      -- @shutdown@: nothing may reach the client after the response. @lsp@
+      -- raises 'isShuttingDown' before this handler runs, so taking the
+      -- publish lock waits out a push in progress and every later one
+      -- skips; the pending checks are stopped.
+      requestHandler SMethod_Shutdown $ \_ responder -> do
+        liftIO $ withMVarMasked (ssPublish st) $ \() -> do
+          docs <- readTVarIO (ssDocs st)
+          traverse_ (cancelCheck . pcThread) (mapMaybe dsPending (Map.elems docs))
+        responder (Right Null),
+      -- New document: check at once, so the user sees diagnostics without
+      -- waiting for the first edit.
       notificationHandler SMethod_TextDocumentDidOpen $ \msg -> do
         let item = msg ^. L.params . L.textDocument
             uri = toNormalizedUri (item ^. L.uri)
             ver = item ^. L.version
-            src = item ^. L.text
-        publishCheckResult st uri (Just ver) src,
-      -- Each keystroke: schedule a check via the 500 ms debouncer.
+        liftIO $ atomically $ modifyTVar' (ssDocs st) (Map.insert uri (DocState ver Nothing Nothing))
+        scheduleCheck st uri ver 0,
+      -- Each keystroke: check once the edits pause for 'debounceMicros'.
       notificationHandler SMethod_TextDocumentDidChange $ \msg -> do
         let uri = toNormalizedUri (msg ^. L.params . L.textDocument . L.uri)
             ver = msg ^. L.params . L.textDocument . L.version
-        scheduleDebouncedCheck st uri (Just ver),
-      -- Save: re-check with the on-disk content (which is what the VFS now
-      -- reports — clients send didChange before didSave).
+        scheduleCheck st uri ver debounceMicros,
+      -- Save: the buffer is final — end the debounce. The text is the one
+      -- the last @didChange@ announced, so nothing is re-checked.
       notificationHandler SMethod_TextDocumentDidSave $ \msg -> do
         let uri = toNormalizedUri (msg ^. L.params . L.textDocument . L.uri)
-        mtxt <- readDocText uri
-        whenJust mtxt $ \src -> publishCheckResult st uri Nothing src,
-      -- Close: drop tracking state and clear the squigglies.
+        mvf <- getVirtualFile uri
+        whenJust mvf (checkNow st uri . virtualFileVersion),
+      -- Close: cancel the check, drop the state, clear the squigglies.
+      -- Under the publish lock, so no check pushes after the clear.
       notificationHandler SMethod_TextDocumentDidClose $ \msg -> do
         let uri = toNormalizedUri (msg ^. L.params . L.textDocument . L.uri)
-        liftIO $ atomicModifyIORef' (ssVersions st) $ \m -> (Map.delete uri m, ())
-        liftIO $ atomicModifyIORef' (ssFixes st) $ \m ->
-          (Map.filterWithKey (\(u, _) _ -> u /= uri) m, ())
-        sendNotification
-          SMethod_TextDocumentPublishDiagnostics
-          PublishDiagnosticsParams
-            { _uri = fromNormalizedUri uri,
-              _version = Nothing,
-              _diagnostics = []
-            },
-      -- Quick fixes: pull from the fix index by (uri, range), wrap as
-      -- CodeAction(WorkspaceEdit).
+        env <- getLspEnv
+        liftIO $ withMVarMasked (ssPublish st) $ \() -> do
+          pending <- atomically $ do
+            docs <- readTVar (ssDocs st)
+            writeTVar (ssDocs st) (Map.delete uri docs)
+            pure (Map.lookup uri docs >>= dsPending)
+          whenJust pending (cancelCheck . pcThread)
+          runLspT env
+            $ sendNotification
+              SMethod_TextDocumentPublishDiagnostics
+              PublishDiagnosticsParams
+                { _uri = fromNormalizedUri uri,
+                  _version = Nothing,
+                  _diagnostics = []
+                },
+      -- Quick fixes for the diagnostics the client sends back, from the
+      -- last published check.
       requestHandler SMethod_TextDocumentCodeAction $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
             ctxDiags = req ^. L.params . L.context . L.diagnostics
-        fixesIdx <- liftIO $ readIORef (ssFixes st)
-        mtxt <- readDocText uri
-        let ls = maybe [] docLines mtxt
+        docs <- liftIO $ readTVarIO (ssDocs st)
+        let fixes = maybe Map.empty crFixes (Map.lookup uri docs >>= dsResult)
             actions :: [Command |? CodeAction]
             actions =
-              [ InR (fixToCodeAction ls uri d qf)
+              [ InR (fixToCodeAction uri d f)
               | d <- ctxDiags,
-                qf <- fromMaybe [] (Map.lookup (uri, rangeKey (d ^. L.range)) fixesIdx)
+                f <- fromMaybe [] (Map.lookup (fixKey d) fixes)
               ]
         responder (Right (InL actions)),
       -- Formatting: re-render via Awsum.Format and return the minimal
@@ -1040,21 +1203,17 @@ serverHandlers st =
       requestHandler SMethod_TextDocumentFormatting $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
         mtxt <- readDocText uri
-        case mtxt of
-          Nothing -> responder (Right (InR Null))
-          Just src -> responder (Right (InL (formatEdits src))),
+        respondFromWorker responder $ \_ ->
+          pure (maybe (InR Null) (InL . formatEdits) mtxt),
       -- Outline / breadcrumbs / symbol search inside a file.
       requestHandler SMethod_TextDocumentDocumentSymbol $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
         mtxt <- readDocText uri
-        let syms :: [DocumentSymbol]
-            syms = maybe [] documentSymbolsForSource mtxt
-            -- lsp-types orders the union as `SymbolInformation[] | DocumentSymbol[] | null`
-            -- (legacy alternative first, then DocumentSymbol[], then null).
-            -- We always pick the DocumentSymbol[] branch.
-            result :: [SymbolInformation] |? ([DocumentSymbol] |? Null)
-            result = InR (InL syms)
-        responder (Right result),
+        -- lsp-types orders the union as `SymbolInformation[] | DocumentSymbol[] | null`
+        -- (legacy alternative first, then DocumentSymbol[], then null).
+        -- We always pick the DocumentSymbol[] branch.
+        respondFromWorker responder $ \_ ->
+          pure (InR (InL (maybe [] documentSymbolsForSource mtxt))),
       -- Hover: surface (a) the typechecker's type for whatever name /
       -- binder the cursor is on, and (b) the doc comment attached to
       -- the declaration it resolves to. Both pieces are shipped as a
@@ -1067,65 +1226,55 @@ serverHandlers st =
       -- precedes — almost always the Sig. Hover on either node resolves
       -- by name across the program, so a cursor on the function body's
       -- name still shows the signature's doc.
+      --
+      -- Served from the check of the document's current text, waiting for
+      -- it when the text is newer than the last check: an answer from an
+      -- older check could show the type of whatever name used to sit at
+      -- the cursor.
       requestHandler SMethod_TextDocumentHover $ \req responder -> do
         let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
             pos = req ^. L.params . L.position
-        mtxt <- readDocText uri
-        let result :: Hover |? Null
-            result = case mtxt of
-              Nothing -> InR Null
-              Just src -> case parseProgramDiagnostic src of
-                Left _ -> InR Null
-                Right prog ->
-                  -- The typed program is elaborated afresh per hover
-                  -- request. This duplicates work with the debounced
-                  -- 'publishCheckResult' path but keeps the hover
-                  -- handler synchronous; for typical hover frequency
-                  -- (a few per second at most) the cost is invisible.
-                  case hoverForPosition (docLines src) (compileToTypedProgram src) prog pos of
-                    Nothing -> InR Null
-                    Just h -> InL h
-        responder (Right result),
+        respondFromWorker responder $ \env -> do
+          result <- currentResult st env uri
+          pure $ case result >>= crHover >>= (`hoverAt` pos) of
+            Nothing -> InR Null
+            Just h -> InL h,
       -- Cross-file symbol search (Cmd+T / Ctrl+T). Scans every @.aww@ file
       -- under the workspace roots received at @initialize@. No incremental
-      -- index — each request walks the disk. Acceptable for v0; if it
-      -- becomes a bottleneck on large projects, add a cache + a
-      -- @workspace/didChangeWatchedFiles@-driven invalidator.
+      -- index — each request walks the disk.
       requestHandler SMethod_WorkspaceSymbol $ \req responder -> do
         let q = T.toLower (req ^. L.params . L.query)
         roots <- liftIO $ readIORef (ssWorkspaceRoots st)
-        files <- liftIO $ concat <$> mapM findAwwFiles roots
-        matches <- liftIO $ concat <$> mapM (workspaceSymbolsForFile q) files
-        responder (Right (InL matches))
+        respondFromWorker responder $ \_ -> do
+          files <- concat <$> mapM findAwwFiles roots
+          InL . concat <$> mapM (workspaceSymbolsForFile q) files
     ]
 
--- | Convert one Awsum 'AD.Fix' into an LSP 'CodeAction'. The diagnostic the
---   action came from is tucked into @diagnostics@ so VS Code shows it
---   inline next to the lightbulb.
-fixToCodeAction :: SrcLines -> NormalizedUri -> Diagnostic -> AD.Fix -> CodeAction
-fixToCodeAction ls uri d (AD.Fix title edits) =
+-- | One Awsum 'AD.Fix' as its title and LSP edits.
+fixEdits :: SrcLines -> AD.Fix -> (Text, [TextEdit])
+fixEdits ls (AD.Fix title edits) =
+  (title, [TextEdit (spanToRange ls sp) newText | AD.Edit sp newText <- edits])
+
+-- | A fix as an LSP 'CodeAction'. The diagnostic the action came from is
+--   tucked into @diagnostics@ so VS Code shows it inline next to the
+--   lightbulb.
+fixToCodeAction :: NormalizedUri -> Diagnostic -> (Text, [TextEdit]) -> CodeAction
+fixToCodeAction uri d (title, edits) =
   CodeAction
     { _title = title,
       _kind = Just CodeActionKind_QuickFix,
       _diagnostics = Just [d],
       _isPreferred = Just True,
       _disabled = Nothing,
-      _edit = Just (mkWorkspaceEdit ls uri edits),
+      _edit =
+        Just
+          WorkspaceEdit
+            { _changes = Just (Map.singleton (fromNormalizedUri uri) edits),
+              _documentChanges = Nothing,
+              _changeAnnotations = Nothing
+            },
       _command = Nothing,
       _data_ = Nothing
-    }
-
-mkWorkspaceEdit :: SrcLines -> NormalizedUri -> [AD.Edit] -> WorkspaceEdit
-mkWorkspaceEdit ls uri edits =
-  WorkspaceEdit
-    { _changes =
-        Just
-          ( Map.singleton
-              (fromNormalizedUri uri)
-              [TextEdit (spanToRange ls sp) newText | AD.Edit sp newText <- edits]
-          ),
-      _documentChanges = Nothing,
-      _changeAnnotations = Nothing
     }
 
 -- ════════════════════════════════════════════════════════════════════════════

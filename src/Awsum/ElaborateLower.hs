@@ -17,7 +17,15 @@
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
 --   • 'CBuiltIn' only appears as the callee of a /saturated/ 'CCall'.
 --   • Unsupported qualified names fail fast with a clear error.
-module Awsum.ElaborateLower (SimplifyMode (..), elaborateLowerProgram, elaborateLowerProgramWith) where
+module Awsum.ElaborateLower
+  ( SimplifyMode (..),
+    Elaborated (..),
+    elaborateLowerProgram,
+    elaborateLowerProgramWith,
+    elaborateProgram,
+    lowerElaborated,
+  )
+where
 
 import Awsum.BuiltIn (builtIns, lookupBuiltIn)
 import Awsum.Core
@@ -557,7 +565,22 @@ elaborateLowerProgram = elaborateLowerProgramWith SimplifyOn
 --   the entry point of the test suites' and @awsum-bench@'s no-simplify
 --   differential runs.
 elaborateLowerProgramWith :: SimplifyMode -> ProgramType -> Program -> Either TypeError ([Warning], PreludeTags, CoreProgram)
-elaborateLowerProgramWith simplifyMode progType progIn = do
+elaborateLowerProgramWith simplifyMode progType progIn =
+  elaborateProgram progType progIn >>= lowerElaborated simplifyMode progType
+
+-- | A typechecked program: the desugared surface program with empty types
+--   resolved, its typed AST, and the typechecker's warnings. Everything
+--   'lowerElaborated' needs; the language server also keeps the typed AST
+--   for hover, so one typecheck serves both.
+data Elaborated = Elaborated
+  { elProgram :: Program,
+    elTyped :: TypedProgram,
+    elWarnings :: [Warning]
+  }
+
+-- | The front half of 'elaborateLowerProgram': desugar and typecheck.
+elaborateProgram :: ProgramType -> Program -> Either TypeError Elaborated
+elaborateProgram progType progIn = do
   -- 0) Pre-typecheck desugar: rewrite 'do' blocks into nested
   --    'bindEither' calls with 'ELam' continuations. Lambdas
   --    themselves are kept as 'ELam' nodes — the typechecker handles
@@ -577,11 +600,17 @@ elaborateLowerProgramWith simplifyMode progType progIn = do
           { decls =
               fmap (markEmptyTypesInDecl emptyNames) (decls progDesugared)
           }
-  -- 1) Elaboration: typecheck → typed AST ('TypedProgram'), then
-  --    row-monomorphisation (specialises row-polymorphic combinators at
-  --    their concrete instantiations so the construction-site row
-  --    injection in their bodies fires with real tags).
+  -- 1) Typecheck → typed AST ('TypedProgram').
   (typedProg, warnings) <- typecheckProgram progType preludeDefNames prog
+  pure (Elaborated prog typedProg warnings)
+
+-- | The back half of 'elaborateLowerProgram': lower a typechecked program
+--   to Core and run every Core-to-Core pass.
+lowerElaborated :: SimplifyMode -> ProgramType -> Elaborated -> Either TypeError ([Warning], PreludeTags, CoreProgram)
+lowerElaborated simplifyMode progType (Elaborated prog typedProg warnings) = do
+  -- 1.5) Row-monomorphisation: specialise row-polymorphic combinators at
+  --      their concrete instantiations so the construction-site row
+  --      injection in their bodies fires with real tags.
   let monoProg = monomorphizeRows typedProg
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)

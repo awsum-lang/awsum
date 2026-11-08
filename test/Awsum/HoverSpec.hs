@@ -1,15 +1,15 @@
 -- | Smoke tests for LSP @textDocument/hover@.
 --
---   Drives 'Awsum.Lsp.hoverForPosition' on tiny in-memory programs and
---   asserts the rendered markdown payload contains the expected fenced
+--   Drives 'Awsum.Lsp.hoverAt' on tiny in-memory programs and asserts
+--   the rendered markdown payload contains the expected fenced
 --   @```awsum``` type block. Full snapshot fixtures (per-position
 --   markdown bodies, one file per scenario) are a clean follow-up;
 --   this spec covers the load-bearing positions: head name, parameter,
 --   top-level reference in body, monomorphic local binding.
 module Awsum.HoverSpec (spec) where
 
-import Awsum.Lsp (compileToTypedProgram, hoverForPosition)
-import Awsum.Parser (parseProgram)
+import Awsum.Lsp (compileDocument)
+import Awsum.Lsp qualified as Lsp
 import Data.Text qualified as T
 import Language.LSP.Protocol.Types
   ( Hover (..),
@@ -29,14 +29,12 @@ pos line col = Position (fromIntegral (line - 1)) (fromIntegral (col - 1))
 --   failure or no hover.
 hoverAt :: Text -> Position -> Maybe Text
 hoverAt src position = do
-  prog <- case parseProgram src of
-    Left _ -> Nothing
-    Right p -> Just p
-  Hover (InL (MarkupContent _ md)) _ <- hoverForPosition (lines src) (compileToTypedProgram src) prog position
+  index <- snd (compileDocument src)
+  Hover (InL (MarkupContent _ md)) _ <- Lsp.hoverAt index position
   pure md
 
 spec :: Spec
-spec = describe "Awsum.Lsp.hoverForPosition" $ do
+spec = describe "Awsum.Lsp.hoverAt" $ do
   it "shows the type on a top-level head name (Sig)" $ do
     -- Cursor on the @s@ of @square@ in the signature line. Trace's
     -- head-name record maps that span to the signature's full arrow
