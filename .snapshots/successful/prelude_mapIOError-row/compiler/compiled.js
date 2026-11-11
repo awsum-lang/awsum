@@ -412,7 +412,7 @@
     }
   };
 
-  const v_$cps$$df$andThenIO$36 = (v_io, v_$df$andThenIO$36$cap0$0, v_$k) => {
+  const v_$cps$$df$andThenIO$36 = (v_$df$andThenIO$36$cap0$0, v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
@@ -515,7 +515,6 @@
             v_$k,
             v_$cps$$df$andThenIO$32(
               v_$cps$$df$andThenIO$36(
-                v_$cps$$df$andThenIO$40([7, "remappedY", [5, [0]]], [49]),
                 v_$cps$$df$handleErrorIO$24(
                   v_$cps$$df$$rowmono$1$andThenIO$28(
                     v_$cps$$df$mapIO$20(v_remappedY, [39]),
@@ -523,6 +522,7 @@
                   ),
                   [41]
                 ),
+                v_$cps$$df$andThenIO$40([7, "remappedY", [5, [0]]], [49]),
                 [47]
               ),
               [45]
@@ -551,7 +551,6 @@
             v_$k,
             v_$cps$$df$andThenIO$32(
               v_$cps$$df$andThenIO$36(
-                v_$cps$$df$andThenIO$40([7, "remappedX", [5, [0]]], [49]),
                 v_$cps$$df$handleErrorIO$24(
                   v_$cps$$df$$rowmono$1$andThenIO$28(
                     v_$cps$$df$mapIO$20(v_remappedX, [39]),
@@ -559,6 +558,7 @@
                   ),
                   [41]
                 ),
+                v_$cps$$df$andThenIO$40([7, "remappedX", [5, [0]]], [49]),
                 [47]
               ),
               [45]
@@ -626,7 +626,6 @@
             v_$k,
             v_$cps$$df$andThenIO$32(
               v_$cps$$df$andThenIO$36(
-                v_$cps$$df$andThenIO$40([7, "mappedOk", [5, [0]]], [49]),
                 v_$cps$$df$handleErrorIO$12(
                   v_$cps$$df$$rowmono$0$andThenIO$16(
                     v_$cps$$df$mapIO$20(v_mappedOk, [39]),
@@ -634,6 +633,7 @@
                   ),
                   [35]
                 ),
+                v_$cps$$df$andThenIO$40([7, "mappedOk", [5, [0]]], [49]),
                 [47]
               ),
               [45]
@@ -662,7 +662,6 @@
             v_$k,
             v_$cps$$df$andThenIO$32(
               v_$cps$$df$andThenIO$36(
-                v_$cps$$df$andThenIO$40([7, "mappedB", [5, [0]]], [49]),
                 v_$cps$$df$handleErrorIO$12(
                   v_$cps$$df$$rowmono$0$andThenIO$16(
                     v_$cps$$df$mapIO$20(v_mappedB, [39]),
@@ -670,6 +669,7 @@
                   ),
                   [35]
                 ),
+                v_$cps$$df$andThenIO$40([7, "mappedB", [5, [0]]], [49]),
                 [47]
               ),
               [45]
@@ -696,7 +696,6 @@
         v_$cps$$df$andThenIO$56(
           v_$cps$$df$andThenIO$32(
             v_$cps$$df$andThenIO$36(
-              v_$cps$$df$andThenIO$40([7, "mappedA", [5, [0]]], [49]),
               v_$cps$$df$handleErrorIO$12(
                 v_$cps$$df$$rowmono$0$andThenIO$16(
                   v_$cps$$df$mapIO$20(v_mappedA, [39]),
@@ -704,6 +703,7 @@
                 ),
                 [35]
               ),
+              v_$cps$$df$andThenIO$40([7, "mappedA", [5, [0]]], [49]),
               [47]
             ),
             [45]

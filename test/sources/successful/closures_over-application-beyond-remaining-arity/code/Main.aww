@@ -1,0 +1,50 @@
+{- A closure is applied to more arguments than it has parameters left: its
+   result is a type variable instantiated at a function type, so the call
+   saturates the closure and applies what it returns to the remaining
+   arguments. The closures travel through a constructor field and the
+   argument comes from argv. Prints the argument three times,
+   `|`-separated. -}
+
+import IO.Stdout
+import IO.Args
+
+type Box c = Box (String -> c)
+
+always : c -> String -> c
+always v _s = v
+
+pick : c -> String -> String -> c
+pick v _s _t = v
+
+shout : String -> String
+shout s = s
+
+callTwo : Box (String -> String) -> String -> String
+callTwo b arg = case b of
+  Box f -> f arg arg
+
+callThree : Box (String -> String -> String) -> String -> String
+callThree b arg = case b of
+  Box f -> f arg arg arg
+
+type MissingArg = MissingArg
+
+compute : List String -> Either (MissingArg | StringTooLong) String
+compute args = do
+  arg <- nothingAsLeft MissingArg (headList args)
+  first <- callTwo (Box (always shout)) arg ++ "|"
+  second <- first ++ callThree (Box (always (always shout))) arg
+  third <- second ++ "|"
+  third ++ callThree (Box (pick shout)) arg
+
+onError : (MissingArg | StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  MissingArg -> IO.Stdout.print "MISSING_ARG"
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\args -> eitherToIO (compute args))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO onError

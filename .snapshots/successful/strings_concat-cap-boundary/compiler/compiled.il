@@ -363,10 +363,10 @@
     pop
     ldarg.0
     castclass object[]
-    ldc.i4.1
+    ldc.i4.2
     ldelem.ref
-    stloc.0
-    ldloc.0
+    stloc.1
+    ldloc.1
     castclass object[]
     ldc.i4.0
     ldelem.ref
@@ -375,7 +375,7 @@
     ldc.i4.3
     bne.un IL_c0
     pop
-    ldloc.0
+    ldloc.1
     ret
   IL_c0:
     pop
@@ -388,14 +388,8 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    ldc.i4.1
-    ldloc.3
     ldc.i4.2
-    ldelem.ref
-    stelem.ref
-    ldloc.3
-    ldc.i4.2
-    ldloc.0
+    ldloc.1
     castclass object[]
     ldc.i4.1
     ldelem.ref
@@ -472,13 +466,13 @@
     stelem.ref
     ldloc.s 4
     ldc.i4.1
-    ldloc.1
-    ldloc.1
-    call object AwsumMain::__concat(object, object)
+    ldloc.3
     stelem.ref
     ldloc.s 4
     ldc.i4.2
-    ldloc.3
+    ldloc.1
+    ldloc.1
+    call object AwsumMain::__concat(object, object)
     stelem.ref
     ldloc.s 4
     starg.s 0

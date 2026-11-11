@@ -545,9 +545,9 @@ CoreProgram
                                                     ( CContinue
                                                         [ CReuse ReuseUnique "$args$1" 53
                                                             [ CCon 36
-                                                                [ CVar "$mx$0"
-                                                                , CCon 29 []
+                                                                [ CCon 29 []
                                                                 , CCon 31 []
+                                                                , CVar "$mx$0"
                                                                 ]
                                                             , CReuse ReuseGuarded "$mapin" 45
                                                                 [ CVar "$k" ]
@@ -582,9 +582,9 @@ CoreProgram
                                 ,
                                     ( 36
                                     ,
-                                        [ "$mapin"
-                                        , "$df$$map$Tw$1$cap0$0"
+                                        [ "$df$$map$Tw$1$cap0$0"
                                         , "$df$$map$Tw$1$cap0$1"
+                                        , "$mapin"
                                         ]
                                     , CDrop "$df$$map$Tw$1$cap0$0"
                                         ( CDrop "$df$$map$Tw$1$cap0$1"
@@ -597,12 +597,12 @@ CoreProgram
                                                         ( CContinue
                                                             [ CReuse ReuseUnique "$args$1" 53
                                                                 [ CReuse ReuseUnique "$args" 36
-                                                                    [ CVar "$mx$0"
-                                                                    , CCon 30
+                                                                    [ CCon 30
                                                                         [ CVar "$df$$map$Tw$1$cap0$0"
                                                                         , CVar "$df$$map$Tw$1$cap0$1"
                                                                         ]
                                                                     , CCon 31 []
+                                                                    , CVar "$mx$0"
                                                                     ]
                                                                 , CReuse ReuseGuarded "$mapin" 46
                                                                     [ CVar "$k" ]

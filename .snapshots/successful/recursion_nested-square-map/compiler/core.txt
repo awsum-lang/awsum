@@ -574,9 +574,9 @@ CoreProgram
                                 ,
                                     ( 35
                                     ,
-                                        [ "p"
-                                        , "$df$mapPerfect$0$cap0$0"
+                                        [ "$df$mapPerfect$0$cap0$0"
                                         , "$df$mapPerfect$0$cap0$1"
+                                        , "p"
                                         ]
                                     , CDrop "$df$mapPerfect$0$cap0$0"
                                         ( CDrop "$df$mapPerfect$0$cap0$1"
@@ -589,8 +589,7 @@ CoreProgram
                                                         ( CContinue
                                                             [ CReuse ReuseUnique "$args$1" 52
                                                                 [ CReuse ReuseUnique "$args" 35
-                                                                    [ CVar "inner"
-                                                                    , CCon 29
+                                                                    [ CCon 29
                                                                         [ CVar "$df$mapPerfect$0$cap0$0"
                                                                         , CVar "$df$mapPerfect$0$cap0$1"
                                                                         ]
@@ -598,6 +597,7 @@ CoreProgram
                                                                         [ CVar "$df$mapPerfect$0$cap0$0"
                                                                         , CVar "$df$mapPerfect$0$cap0$1"
                                                                         ]
+                                                                    , CVar "inner"
                                                                     ]
                                                                 , CReuse ReuseGuarded "p" 45
                                                                     [ CVar "$k" ]
@@ -639,9 +639,9 @@ CoreProgram
                                                     ( CContinue
                                                         [ CReuse ReuseUnique "$args$1" 52
                                                             [ CCon 35
-                                                                [ CVar "inner"
+                                                                [ CCon 30 []
                                                                 , CCon 30 []
-                                                                , CCon 30 []
+                                                                , CVar "inner"
                                                                 ]
                                                             , CReuse ReuseGuarded "p" 47
                                                                 [ CVar "$k" ]

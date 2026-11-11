@@ -141,7 +141,8 @@ CoreProgram
                 ( CDrop "$inl17$xs"
                     ( CCall
                         ( CVar "$cps$$df$andThenIO$0" )
-                        [ CCon 7
+                        [ CVar "$inl17$xs"
+                        , CCon 7
                             [ CCase
                                 ( CCall
                                     ( CVar "rev" )
@@ -183,15 +184,14 @@ CoreProgram
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
-                        , CVar "$inl17$xs"
                         , CCon 27 []
                         ]
                     )
                 )
             )
         , CFunDef "$cps$$df$andThenIO$0"
-            [ "io"
-            , "$df$andThenIO$0$cap0$0"
+            [ "$df$andThenIO$0$cap0$0"
+            , "io"
             , "$k"
             ]
             ( CLoop
@@ -253,8 +253,8 @@ CoreProgram
                                 ( CDrop "$df$andThenIO$0$cap0$0"
                                     ( CDrop "$k"
                                         ( CContinue
-                                            [ CVar "next"
-                                            , CVar "$df$andThenIO$0$cap0$0"
+                                            [ CVar "$df$andThenIO$0$cap0$0"
+                                            , CVar "next"
                                             , CReuse ReuseGuarded "io" 28
                                                 [ CVar "$k"
                                                 , CVar "s"

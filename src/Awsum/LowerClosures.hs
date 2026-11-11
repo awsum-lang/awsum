@@ -47,26 +47,29 @@
 -- captureCount)@ order, which matches the prior per-arity allocation —
 -- a program whose shape set is unchanged keeps its tags.
 --
--- ## Generalised apply (saturate + grow)
+-- ## Generalised apply (saturate, grow, over-apply)
 --
 -- A closure of shape @(helper, c)@ has remaining arity
--- @r = arity helper - c@. The language requires every top-level
--- 'CFunDef' to bind all its arrow-arity parameters, so @r@ is the
--- closure's true arrow-remaining and a well-typed application supplies
--- @k <= r@ arguments — over-application of a closure value (@k > r@)
--- cannot occur. Dispatcher @apply_k@ therefore handles two cases per
--- shape with @r >= k@:
+-- @r = arity helper - c@: the number of arguments that saturate its
+-- helper. A call may supply more. When the helper's result type is a
+-- type variable instantiated at a function type (@always : c -> String
+-- -> c@ at @c := String -> String@), a well-typed call passes @k > r@
+-- arguments. Dispatcher @apply_k@ handles all three cases per shape:
 --
 -- @
 --   apply_k cl x_1 .. x_k = case cl of
---     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k  -- r == k: saturate
---     tag (cap_0 .. cap_{c-1}) -> growTag (cap_0 .. cap_{c-1} x_1 .. x_k) -- r >  k: grow
+--     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k    -- r == k: saturate
+--     tag (cap_0 .. cap_{c-1}) -> growTag (cap_0 .. cap_{c-1} x_1 .. x_k)  -- r >  k: grow
+--     tag (cap_0 .. cap_{c-1}) ->                                          -- r <  k: over-apply
+--       apply_{k-r} (helper cap_0 .. cap_{c-1} x_1 .. x_r) x_{r+1} .. x_k
 -- @
 --
 -- The grow arm builds a /larger/ closure @(helper, c+k)@ at runtime —
 -- the defunctionalised equivalent of an STG @PAP@ — instead of calling
--- @helper@. The shape set is closed under growth ('closeUnderGrow') so
--- every grow target has a tag.
+-- @helper@. The over-apply arm saturates the helper and dispatches the
+-- closure it returns on the remaining arguments. 'closeArities' closes
+-- the shape set under growth and the dispatcher arities under @k - r@,
+-- so every grow target has a tag and every re-dispatch a dispatcher.
 --
 -- ## What stays untouched
 --
@@ -98,24 +101,47 @@ lowerClosuresProgram :: CoreProgram -> CoreProgram
 lowerClosuresProgram prog@(CoreProgram decls) =
   let arities = Map.fromList [(n, length args) | CFunDef n args _ <- decls]
       observed = foldMap (declShapes arities) decls
-      -- Every arity at which a closure value is applied; each needs an
-      -- @apply_k@ dispatcher. Seeds 'closeUnderGrow' (which @k@s can
-      -- grow a closure) and decides which dispatchers to emit.
-      applyArities = collectResidualArities arities decls
-      shapes = closeUnderGrow arities applyArities observed
+      -- Every arity at which a closure value is applied, plus the
+      -- arities over-applying arms re-dispatch at; each needs an
+      -- @apply_k@ dispatcher.
+      (applyArities, shapes) =
+        closeArities arities (collectResidualArities arities decls) observed
       shapeTag = assignTags (nextFreshConTag prog) arities shapes
       rewritten = map (rewriteDecl arities shapeTag) decls
       dispatchers =
         map (dispatcherDecl arities shapeTag shapes) (Set.toAscList applyArities)
    in CoreProgram (rewritten <> dispatchers)
 
--- | Remaining (uncaptured) arity of a closure shape. The language
--- requires every top-level 'CFunDef' to bind all its arrow-arity
--- parameters, so this equals the closure's true arrow-remaining and a
--- well-typed application never supplies more than @r@ arguments.
+-- | Remaining (uncaptured) arity of a closure shape: how many arguments
+-- saturate its helper. A call may supply more (module header).
 remainingArity :: Map Name Int -> ClosureShape -> Int
 remainingArity arities (helper, captureCount) =
   maybe 0 (subtract captureCount) (Map.lookup helper arities)
+
+-- | Close the dispatcher arities and the shape set together. Growth
+-- mints shapes from the arities ('closeUnderGrow'); an over-applying
+-- arm of @apply_k@ re-dispatches through @apply_{k-r}@, so that arity
+-- needs a dispatcher too, and a new arity can grow further shapes.
+-- Both sets are bounded — arities stay below the largest residual
+-- one, shapes below their helper's arity — so the fixpoint exists.
+closeArities :: Map Name Int -> Set Int -> Set ClosureShape -> (Set Int, Set ClosureShape)
+closeArities arities = go
+  where
+    go applyArities observed =
+      let shapes = closeUnderGrow arities applyArities observed
+          reDispatched =
+            Set.fromList
+              [ k - r
+              | k <- Set.toList applyArities,
+                s <- Set.toList shapes,
+                let r = remainingArity arities s,
+                r >= 1,
+                r < k
+              ]
+          applyArities' = applyArities <> reDispatched
+       in if Set.size applyArities' == Set.size applyArities
+            then (applyArities, shapes)
+            else go applyArities' shapes
 
 -- | Close a shape set under /growth/: a closure @(h, c)@ applied to
 -- fewer arguments than its remaining arity (@k < r@) yields a larger
@@ -297,16 +323,20 @@ rewriteExpr arities shapeTag = goValue
       e@(CIntLit _ _) -> e
       e@(CBuiltIn _) -> e
 
--- | Materialise the @apply_k@ dispatcher: one arm per closure shape
--- whose remaining arity is at least @k@. A shape with @r == k@
--- saturates its helper; a shape with @r > k@ grows into the larger
--- closure @(helper, c + k)@ — always present in the shape set because
--- 'closeUnderGrow' added it for this @k@.
+-- | Materialise the @apply_k@ dispatcher: one arm per closure shape. A
+-- shape with @r == k@ saturates its helper; a shape with @r > k@ grows
+-- into the larger closure @(helper, c + k)@ — present in the shape set
+-- because 'closeUnderGrow' added it for this @k@; a shape with
+-- @r < k@ saturates its helper on the first @r@ arguments and
+-- dispatches the returned closure on the rest through @apply_{k-r}@ —
+-- present because 'closeArities' added that arity.
 --
 -- @
 --   apply_k cl x_1 .. x_k = case cl of
---     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k  -- r == k
+--     tag (cap_0 .. cap_{c-1}) -> helper cap_0 .. cap_{c-1} x_1 .. x_k          -- r == k
 --     tag (cap_0 .. cap_{c-1}) -> CCon growTag (cap_0 .. cap_{c-1} x_1 .. x_k)  -- r > k
+--     tag (cap_0 .. cap_{c-1}) ->                                               -- r < k
+--       apply_{k-r} (helper cap_0 .. cap_{c-1} x_1 .. x_r) x_{r+1} .. x_k
 -- @
 dispatcherDecl :: Map Name Int -> Map ClosureShape Int -> Set ClosureShape -> Int -> CDecl
 dispatcherDecl arities shapeTag shapes k =
@@ -320,7 +350,7 @@ dispatcherDecl arities shapeTag shapes k =
       armShapes =
         sortOn
           (`Map.lookup` shapeTag)
-          [s | s <- Set.toList shapes, remainingArity arities s >= k]
+          [s | s <- Set.toList shapes, remainingArity arities s >= 1]
       arms :: [(Int, [Name], CExpr)]
       arms =
         [ (tag, captureNames, body)
@@ -328,12 +358,19 @@ dispatcherDecl arities shapeTag shapes k =
           Just tag <- [Map.lookup s shapeTag],
           let captureNames :: [Name]
               captureNames = ["$cap" <> show tag <> "_" <> show i | i <- [0 .. captureCount - 1]]
-              allArgs :: [CExpr]
-              allArgs = map CVar (captureNames <> argParams)
+              captures :: [CExpr]
+              captures = map CVar captureNames
+              args :: [CExpr]
+              args = map CVar argParams
+              r :: Int
+              r = remainingArity arities s
               body :: CExpr
-              body
-                | remainingArity arities s == k = CCall (CVar helper) allArgs
-                | otherwise = CCon (shapeTag Map.! (helper, captureCount + k)) allArgs
+              body = case compare r k of
+                EQ -> CCall (CVar helper) (captures <> args)
+                GT -> CCon (shapeTag Map.! (helper, captureCount + k)) (captures <> args)
+                LT ->
+                  let (saturating, rest) = splitAt r args
+                   in CCall (CVar (applyName (k - r))) (CCall (CVar helper) (captures <> saturating) : rest)
         ]
    in CFunDef (applyName k) params (CCase (CVar closureParam) arms)
 

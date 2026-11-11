@@ -61,8 +61,8 @@ $scc$$apply$$scc$$apply1_$df$$lam$13$7_$df$$lam$$x$2556233793:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont                            count=0
-  case-pattern    n                               count=3
   case-pattern    $df$mapNest$0$cap0$0            count=0
+  case-pattern    n                               count=3
   case-pattern    inner                           count=0
   case-pattern    a                               count=0
   case-pattern    n                               count=3

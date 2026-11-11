@@ -92,7 +92,7 @@
     }
   };
 
-  const v_$cps$$df$andThenIO$0 = (v_io, v_$df$andThenIO$0$cap0$0, v_$k) => {
+  const v_$cps$$df$andThenIO$0 = (v_$df$andThenIO$0$cap0$0, v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
@@ -135,6 +135,7 @@
 
   const v_$inl17$xs = v_mk(3 | 0, [24]);
   const main = v_$cps$$df$andThenIO$0(
+    v_$inl17$xs,
     [
       7,
       (s => {
@@ -157,7 +158,6 @@
       })(v_rev([26, v_$inl17$xs, [24]])),
       [5, [0]]
     ],
-    v_$inl17$xs,
     [27]
   );
 

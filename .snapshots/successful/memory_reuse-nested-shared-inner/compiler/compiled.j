@@ -310,6 +310,8 @@ L_tarm6:
   aastore
   invokestatic AwsumMain/v_mk(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   astore_0
+  aload_0
+  astore_1
   iconst_3
   anewarray java/lang/Object
   dup
@@ -405,8 +407,6 @@ L_join7:
   iconst_2
   aload 5
   aastore
-  astore_1
-  aload_0
   astore_2
   iconst_1
   anewarray java/lang/Object
@@ -428,7 +428,7 @@ L_join7:
   .limit stack 7
   .limit locals 16
 L_tco11:
-  aload_0
+  aload_1
   checkcast [Ljava/lang/Object;
   iconst_0
   aaload
@@ -444,7 +444,7 @@ L_tco11:
   astore 5
   aload_2
   astore 6
-  aload_1
+  aload_0
   checkcast [Ljava/lang/Object;
   iconst_0
   aaload
@@ -459,7 +459,7 @@ L_tco11:
   ldc "E"
   goto L_join13
 L_arm14:
-  aload_1
+  aload_0
   checkcast [Ljava/lang/Object;
   iconst_2
   aaload
@@ -523,18 +523,18 @@ L_join13:
   invokestatic AwsumMain/v_$apply$$df$andThenIO$0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tarm12:
-  aload_0
+  aload_1
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
   astore 4
-  aload_0
+  aload_1
   checkcast [Ljava/lang/Object;
   iconst_2
   aaload
   astore 5
+  aload_0
   aload 5
-  aload_1
   iconst_3
   anewarray java/lang/Object
   dup

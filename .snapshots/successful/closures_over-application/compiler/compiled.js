@@ -28,8 +28,15 @@
           const v_$cl = v_$args[1];
           const v_$arg0 = v_$args[2];
           switch (v_$cl[0]) {
+            case 8: {
+              v_$args = (v_$args[0] = 12, v_$args[1] = v_$cl[1], v_$args);
+              continue;
+            }
             case 9: {
               return v_$arg0;
+            }
+            case 10: {
+              return [8, v_$arg0];
             }
           }
         }
@@ -41,9 +48,36 @@
     }
   };
 
+  const v_$inl2$$cl = [10];
+  const v_$inl3$$arg0 = [9];
+  const v_$inl4$$arg1 = 5 | 0;
   const main = [
     7,
-    String(v_$scc$$apply1__applyOnce([12, [9], 5 | 0])),
+    String(
+      (s => {
+        switch (s[0]) {
+          case 8: {
+            return v_$scc$$apply1__applyOnce(
+              [
+                11,
+                v_$scc$$apply1__applyOnce([12, v_$inl2$$cl[1], v_$inl3$$arg0]),
+                v_$inl4$$arg1
+              ]
+            );
+          }
+          case 9: {
+            return v_$scc$$apply1__applyOnce(
+              [11, v_$inl3$$arg0, v_$inl4$$arg1]
+            );
+          }
+          case 10: {
+            return v_$scc$$apply1__applyOnce(
+              [12, v_$inl3$$arg0, v_$inl4$$arg1]
+            );
+          }
+        }
+      })(v_$inl2$$cl)
+    ),
     [5, [0]]
   ];
 

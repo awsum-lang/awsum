@@ -66,9 +66,9 @@ $scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$$x$1714952523:
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$1                           count=0
-  case-pattern    $mapin                          count=3
   case-pattern    $df$$map$Tw$1$cap0$0            count=0
   case-pattern    $df$$map$Tw$1$cap0$1            count=0
+  case-pattern    $mapin                          count=3
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$1                           count=0

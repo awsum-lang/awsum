@@ -134,7 +134,8 @@ CoreProgram
                 ( CDrop "$inl27$s"
                     ( CCall
                         ( CVar "$cps$$df$andThenIO$0" )
-                        [ CCon 7
+                        [ CVar "$inl27$s"
+                        , CCon 7
                             [ CLet "$inl23$t2"
                                 ( CCall
                                     ( CVar "sumLeft" )
@@ -165,15 +166,14 @@ CoreProgram
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
-                        , CVar "$inl27$s"
                         , CCon 26 []
                         ]
                     )
                 )
             )
         , CFunDef "$cps$$df$andThenIO$0"
-            [ "io"
-            , "$df$andThenIO$0$cap0$0"
+            [ "$df$andThenIO$0$cap0$0"
+            , "io"
             , "$k"
             ]
             ( CLoop
@@ -240,8 +240,8 @@ CoreProgram
                                 ( CDrop "$df$andThenIO$0$cap0$0"
                                     ( CDrop "$k"
                                         ( CContinue
-                                            [ CVar "next"
-                                            , CVar "$df$andThenIO$0$cap0$0"
+                                            [ CVar "$df$andThenIO$0$cap0$0"
+                                            , CVar "next"
                                             , CReuse ReuseGuarded "io" 27
                                                 [ CVar "$k"
                                                 , CVar "s"

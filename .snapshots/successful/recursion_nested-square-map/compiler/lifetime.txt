@@ -65,9 +65,9 @@ $scc$$apply$$scc$$apply1_$df$$lam$13$7_$df$$lam$$x$2769931407:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont                            count=0
-  case-pattern    p                               count=3
   case-pattern    $df$mapPerfect$0$cap0$0         count=0
   case-pattern    $df$mapPerfect$0$cap0$1         count=0
+  case-pattern    p                               count=3
   case-pattern    inner                           count=0
   case-pattern    a                               count=0
   case-pattern    p                               count=3

@@ -571,50 +571,50 @@ define internal ptr @v_wOk() {
 }
 
 define internal ptr @v_main() {
-  %t0 = call ptr @__alloc(i64 24, i32 2)
-  %t1 = inttoptr i64 7 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t3
-  %t4 = call ptr @__alloc(i64 16, i32 1)
-  %t5 = inttoptr i64 5 to ptr
-  %t6 = getelementptr ptr, ptr %t4, i32 0
-  store ptr %t5, ptr %t6
-  %t7 = call ptr @__alloc(i64 8, i32 0)
-  %t8 = inttoptr i64 0 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = getelementptr ptr, ptr %t4, i32 1
-  store ptr %t7, ptr %t10
-  %t11 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t4, ptr %t11
-  %t12 = call ptr @__alloc(i64 8, i32 0)
-  %t13 = inttoptr i64 96 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = call ptr @v_$cps$$df$andThenIO$116(ptr %t0, ptr %t12)
-  %t16 = call ptr @v_nevOk()
-  %t17 = call ptr @__alloc(i64 8, i32 0)
-  %t18 = inttoptr i64 70 to ptr
+  %t0 = call ptr @v_nevOk()
+  %t1 = call ptr @__alloc(i64 8, i32 0)
+  %t2 = inttoptr i64 70 to ptr
+  %t3 = getelementptr ptr, ptr %t1, i32 0
+  store ptr %t2, ptr %t3
+  %t4 = call ptr @v_$cps$$df$mapIO$64(ptr %t0, ptr %t1)
+  %t5 = call ptr @__alloc(i64 8, i32 0)
+  %t6 = inttoptr i64 68 to ptr
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  store ptr %t6, ptr %t7
+  %t8 = call ptr @v_$cps$$df$andThenIO$60(ptr %t4, ptr %t5)
+  %t9 = call ptr @__alloc(i64 8, i32 0)
+  %t10 = inttoptr i64 66 to ptr
+  %t11 = getelementptr ptr, ptr %t9, i32 0
+  store ptr %t10, ptr %t11
+  %t12 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t8, ptr %t9)
+  %t13 = call ptr @__alloc(i64 24, i32 2)
+  %t14 = inttoptr i64 7 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = getelementptr ptr, ptr %t13, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t16
+  %t17 = call ptr @__alloc(i64 16, i32 1)
+  %t18 = inttoptr i64 5 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
   store ptr %t18, ptr %t19
-  %t20 = call ptr @v_$cps$$df$mapIO$64(ptr %t16, ptr %t17)
-  %t21 = call ptr @__alloc(i64 8, i32 0)
-  %t22 = inttoptr i64 68 to ptr
-  %t23 = getelementptr ptr, ptr %t21, i32 0
-  store ptr %t22, ptr %t23
-  %t24 = call ptr @v_$cps$$df$andThenIO$60(ptr %t20, ptr %t21)
+  %t20 = call ptr @__alloc(i64 8, i32 0)
+  %t21 = inttoptr i64 0 to ptr
+  %t22 = getelementptr ptr, ptr %t20, i32 0
+  store ptr %t21, ptr %t22
+  %t23 = getelementptr ptr, ptr %t17, i32 1
+  store ptr %t20, ptr %t23
+  %t24 = getelementptr ptr, ptr %t13, i32 2
+  store ptr %t17, ptr %t24
   %t25 = call ptr @__alloc(i64 8, i32 0)
-  %t26 = inttoptr i64 66 to ptr
+  %t26 = inttoptr i64 96 to ptr
   %t27 = getelementptr ptr, ptr %t25, i32 0
   store ptr %t26, ptr %t27
-  %t28 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t24, ptr %t25)
+  %t28 = call ptr @v_$cps$$df$andThenIO$116(ptr %t13, ptr %t25)
   %t29 = call ptr @__alloc(i64 8, i32 0)
   %t30 = inttoptr i64 94 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$andThenIO$112(ptr %t15, ptr %t28, ptr %t29)
+  %t32 = call ptr @v_$cps$$df$andThenIO$112(ptr %t12, ptr %t28, ptr %t29)
   %t33 = call ptr @__alloc(i64 8, i32 0)
   %t34 = inttoptr i64 92 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
@@ -5949,12 +5949,12 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v_$cps$$df$andThenIO$112(ptr %v_io, ptr %v_$df$andThenIO$112$cap0$0, ptr %v_$k) {
+define internal ptr @v_$cps$$df$andThenIO$112(ptr %v_$df$andThenIO$112$cap0$0, ptr %v_io, ptr %v_$k) {
 entry:
   %t3 = alloca ptr
-  store ptr %v_io, ptr %t3
+  store ptr %v_$df$andThenIO$112$cap0$0, ptr %t3
   %t4 = alloca ptr
-  store ptr %v_$df$andThenIO$112$cap0$0, ptr %t4
+  store ptr %v_io, ptr %t4
   %t5 = alloca ptr
   store ptr %v_$k, ptr %t5
   %t2 = alloca ptr
@@ -5963,14 +5963,14 @@ tco.loop.0:
   %t6 = load ptr, ptr %t3
   %t7 = load ptr, ptr %t4
   %t8 = load ptr, ptr %t5
-  %t9 = getelementptr ptr, ptr %t6, i32 0
+  %t9 = getelementptr ptr, ptr %t7, i32 0
   %t10 = load ptr, ptr %t9
   %t11 = ptrtoint ptr %t10 to i64
   switch i64 %t11, label %tco.case.default.12 [ i64 5, label %tco.case.arm.5.13 i64 6, label %tco.case.arm.6.15 i64 7, label %tco.case.arm.7.17 ]
 tco.case.arm.5.13:
   call void @__inc_ref(ptr %t8)
-  call void @__inc_ref(ptr %t7)
-  %t14 = call ptr @v_$apply$$df$andThenIO$112(ptr %t8, ptr %t7)
+  call void @__inc_ref(ptr %t6)
+  %t14 = call ptr @v_$apply$$df$andThenIO$112(ptr %t8, ptr %t6)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t8)
@@ -5978,34 +5978,34 @@ tco.case.arm.5.13:
   br label %tco.exit.1
 tco.case.arm.6.15:
   call void @__inc_ref(ptr %t8)
-  call void @__inc_ref(ptr %t6)
-  %t16 = call ptr @v_$apply$$df$andThenIO$112(ptr %t8, ptr %t6)
+  call void @__inc_ref(ptr %t7)
+  %t16 = call ptr @v_$apply$$df$andThenIO$112(ptr %t8, ptr %t7)
   call void @__free_recursive(ptr %t6)
   call void @__free_recursive(ptr %t7)
   call void @__free_recursive(ptr %t8)
   store ptr %t16, ptr %t2
   br label %tco.exit.1
 tco.case.arm.7.17:
-  %t18 = getelementptr ptr, ptr %t6, i32 1
+  %t18 = getelementptr ptr, ptr %t7, i32 1
   %t19 = load ptr, ptr %t18
-  %t20 = getelementptr ptr, ptr %t6, i32 2
+  %t20 = getelementptr ptr, ptr %t7, i32 2
   %t21 = load ptr, ptr %t20
   call void @__inc_ref(ptr %t21)
-  %t28 = getelementptr i8, ptr %t6, i64 -8
+  %t28 = getelementptr i8, ptr %t7, i64 -8
   %t29 = load i32, ptr %t28
   %t30 = icmp eq i32 %t29, 1
   br i1 %t30, label %reuse.in_place.31, label %reuse.copy.32
 reuse.in_place.31:
-  %t22 = getelementptr ptr, ptr %t6, i32 2
+  %t22 = getelementptr ptr, ptr %t7, i32 2
   %t23 = load ptr, ptr %t22
   call void @__free_recursive(ptr %t23)
   %t26 = inttoptr i64 95 to ptr
-  %t27 = getelementptr ptr, ptr %t6, i32 0
+  %t27 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t26, ptr %t27
   call void @__inc_ref(ptr %t8)
-  %t24 = getelementptr ptr, ptr %t6, i32 1
+  %t24 = getelementptr ptr, ptr %t7, i32 1
   store ptr %t8, ptr %t24
-  %t25 = getelementptr ptr, ptr %t6, i32 2
+  %t25 = getelementptr ptr, ptr %t7, i32 2
   store ptr %t19, ptr %t25
   br label %reuse.in_place.end.34
 reuse.in_place.end.34:
@@ -6021,15 +6021,15 @@ reuse.copy.32:
   call void @__inc_ref(ptr %t19)
   %t40 = getelementptr ptr, ptr %t36, i32 2
   store ptr %t19, ptr %t40
-  call void @__free_recursive(ptr %t6)
+  call void @__free_recursive(ptr %t7)
   br label %reuse.copy.end.35
 reuse.copy.end.35:
   br label %reuse.join.33
 reuse.join.33:
-  %t41 = phi ptr [ %t6, %reuse.in_place.end.34 ], [ %t36, %reuse.copy.end.35 ]
+  %t41 = phi ptr [ %t7, %reuse.in_place.end.34 ], [ %t36, %reuse.copy.end.35 ]
   call void @__free_recursive(ptr %t8)
-  store ptr %t21, ptr %t3
-  store ptr %t7, ptr %t4
+  store ptr %t6, ptr %t3
+  store ptr %t21, ptr %t4
   store ptr %t41, ptr %t5
   br label %tco.loop.0
 tco.case.default.12:
@@ -6251,50 +6251,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.9, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_wOk()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_wOk()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 90 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 88 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.9, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 90 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 88 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -6430,50 +6430,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.10, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_wE3()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_wE3()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 90 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 88 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.10, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 90 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 88 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -6609,50 +6609,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.11, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_wE2str()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_wE2str()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 90 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 88 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.11, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 90 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 88 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -6788,50 +6788,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.12, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_wE1()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_wE1()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 90 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 88 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.12, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 90 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$23$andThenIO$104(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 88 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$100(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -6967,50 +6967,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.13, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_idem2Second()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_idem2Second()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 72 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$68(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.13, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 72 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$68(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -7146,50 +7146,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.14, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_idem2First()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_idem2First()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 72 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$68(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.14, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 72 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$68(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -7325,50 +7325,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.15, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_idemE2()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_idemE2()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 66 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.15, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 66 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -7504,50 +7504,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.16, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_idemE1()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_idemE1()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 66 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.16, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 66 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -7683,50 +7683,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.17, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_twoOk()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_twoOk()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 86 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 84 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.17, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 86 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 84 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -7862,50 +7862,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.18, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_twoE2()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_twoE2()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 86 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 84 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.18, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 86 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 84 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8041,50 +8041,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.19, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_twoSecond()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_twoSecond()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 86 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 84 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.19, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 86 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 84 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8220,50 +8220,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.20, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_twoFirst()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_twoFirst()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 86 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 84 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.20, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 86 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$22$andThenIO$96(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 84 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$92(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8399,50 +8399,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.21, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_abE2()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_abE2()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 82 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$21$andThenIO$88(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 80 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$84(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.21, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 82 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$21$andThenIO$88(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 80 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$84(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8578,50 +8578,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.22, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_abE1()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_abE1()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 82 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$21$andThenIO$88(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 80 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$84(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.22, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 82 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$21$andThenIO$88(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 80 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$84(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8757,50 +8757,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.23, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_strIdem()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_strIdem()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 74 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$72(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.23, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 74 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$72(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -8936,50 +8936,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.24, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_strE2()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_strE2()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 78 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 76 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.24, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 78 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 76 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -9115,50 +9115,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.25, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_strE1()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_strE1()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 78 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 76 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.25, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 78 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 76 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -9294,50 +9294,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.26, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_strOk()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_strOk()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 78 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 76 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.26, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 78 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$$rowmono$20$andThenIO$80(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 76 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$76(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -9473,45 +9473,45 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.46 i64 7, label %tco.case.arm.7.48 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.27, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_pureNever()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
-  %t31 = getelementptr ptr, ptr %t29, i32 0
-  store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
+  %t12 = call ptr @v_pureNever()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 24, i32 2)
+  %t22 = inttoptr i64 7 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = getelementptr ptr, ptr %t21, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.27, i64 12), ptr %t24
+  %t25 = call ptr @__alloc(i64 16, i32 1)
+  %t26 = inttoptr i64 5 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = call ptr @__alloc(i64 8, i32 0)
+  %t29 = inttoptr i64 0 to ptr
+  %t30 = getelementptr ptr, ptr %t28, i32 0
+  store ptr %t29, ptr %t30
+  %t31 = getelementptr ptr, ptr %t25, i32 1
+  store ptr %t28, ptr %t31
+  %t32 = getelementptr ptr, ptr %t21, i32 2
+  store ptr %t25, ptr %t32
   %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
+  %t34 = inttoptr i64 96 to ptr
   %t35 = getelementptr ptr, ptr %t33, i32 0
   store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t36 = call ptr @v_$cps$$df$andThenIO$116(ptr %t21, ptr %t33)
   %t37 = call ptr @__alloc(i64 8, i32 0)
   %t38 = inttoptr i64 94 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$112(ptr %t20, ptr %t36, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 92 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
@@ -9647,50 +9647,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.28, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_nevRightE1()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_nevRightE1()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 66 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.28, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 66 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -9826,50 +9826,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.29, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_nevRightOk()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_nevRightOk()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 66 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.29, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 66 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0
@@ -10005,50 +10005,50 @@ tco.loop.0:
   switch i64 %t9, label %tco.case.default.10 [ i64 5, label %tco.case.arm.5.11 i64 6, label %tco.case.arm.6.50 i64 7, label %tco.case.arm.7.52 ]
 tco.case.arm.5.11:
   call void @__inc_ref(ptr %t6)
-  %t12 = call ptr @__alloc(i64 24, i32 2)
-  %t13 = inttoptr i64 7 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t12, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.30, i64 12), ptr %t15
-  %t16 = call ptr @__alloc(i64 16, i32 1)
-  %t17 = inttoptr i64 5 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = call ptr @__alloc(i64 8, i32 0)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t19, ptr %t22
-  %t23 = getelementptr ptr, ptr %t12, i32 2
-  store ptr %t16, ptr %t23
-  %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 96 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @v_$cps$$df$andThenIO$116(ptr %t12, ptr %t24)
-  %t28 = call ptr @v_nevFail()
-  %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 70 to ptr
+  %t12 = call ptr @v_nevFail()
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 70 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = call ptr @v_$cps$$df$mapIO$64(ptr %t12, ptr %t13)
+  %t17 = call ptr @__alloc(i64 8, i32 0)
+  %t18 = inttoptr i64 68 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_$cps$$df$andThenIO$60(ptr %t16, ptr %t17)
+  %t21 = call ptr @__alloc(i64 8, i32 0)
+  %t22 = inttoptr i64 66 to ptr
+  %t23 = getelementptr ptr, ptr %t21, i32 0
+  store ptr %t22, ptr %t23
+  %t24 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t20, ptr %t21)
+  %t25 = call ptr @__alloc(i64 24, i32 2)
+  %t26 = inttoptr i64 7 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.30, i64 12), ptr %t28
+  %t29 = call ptr @__alloc(i64 16, i32 1)
+  %t30 = inttoptr i64 5 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
-  %t32 = call ptr @v_$cps$$df$mapIO$64(ptr %t28, ptr %t29)
-  %t33 = call ptr @__alloc(i64 8, i32 0)
-  %t34 = inttoptr i64 68 to ptr
-  %t35 = getelementptr ptr, ptr %t33, i32 0
-  store ptr %t34, ptr %t35
-  %t36 = call ptr @v_$cps$$df$andThenIO$60(ptr %t32, ptr %t33)
+  %t32 = call ptr @__alloc(i64 8, i32 0)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t29, i32 1
+  store ptr %t32, ptr %t35
+  %t36 = getelementptr ptr, ptr %t25, i32 2
+  store ptr %t29, ptr %t36
   %t37 = call ptr @__alloc(i64 8, i32 0)
-  %t38 = inttoptr i64 66 to ptr
+  %t38 = inttoptr i64 96 to ptr
   %t39 = getelementptr ptr, ptr %t37, i32 0
   store ptr %t38, ptr %t39
-  %t40 = call ptr @v_$cps$$df$handleErrorIO$56(ptr %t36, ptr %t37)
+  %t40 = call ptr @v_$cps$$df$andThenIO$116(ptr %t25, ptr %t37)
   %t41 = call ptr @__alloc(i64 8, i32 0)
   %t42 = inttoptr i64 94 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
-  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t27, ptr %t40, ptr %t41)
+  %t44 = call ptr @v_$cps$$df$andThenIO$112(ptr %t24, ptr %t40, ptr %t41)
   %t45 = call ptr @__alloc(i64 8, i32 0)
   %t46 = inttoptr i64 92 to ptr
   %t47 = getelementptr ptr, ptr %t45, i32 0

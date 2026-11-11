@@ -87,7 +87,7 @@
     }
   };
 
-  const v_$cps$$df$andThenIO$0 = (v_io, v_$df$andThenIO$0$cap0$0, v_$k) => {
+  const v_$cps$$df$andThenIO$0 = (v_$df$andThenIO$0$cap0$0, v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
@@ -131,6 +131,7 @@
   const v_$inl27$s = v_mk2(2 | 0, [24]);
   const v_$inl23$t2 = v_sumLeft(v_$inl27$s, [24]);
   const main = v_$cps$$df$andThenIO$0(
+    v_$inl27$s,
     [
       7,
       (s => {
@@ -145,7 +146,6 @@
       })(v_$inl23$t2),
       [5, [0]]
     ],
-    v_$inl27$s,
     [26]
   );
 

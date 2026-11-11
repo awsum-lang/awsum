@@ -107,11 +107,11 @@ CoreProgram
                     [
                         ( 8
                         ,
-                            [ "x"
-                            , "$df$andThenEither$0$cap0$0"
+                            [ "$df$andThenEither$0$cap0$0"
+                            , "x"
                             ]
-                        , CDrop "x"
-                            ( CDrop "$df$andThenEither$0$cap0$0"
+                        , CDrop "$df$andThenEither$0$cap0$0"
+                            ( CDrop "x"
                                 ( CCase
                                     ( CVar "x" )
                                     [
@@ -175,12 +175,12 @@ CoreProgram
                                         , CDrop "m"
                                             ( CContinue
                                                 [ CReuse ReuseUnique "$args" 8
-                                                    [ CCall
+                                                    [ CVar "m"
+                                                    , CCall
                                                         ( CBuiltIn "concatString" )
                                                         [ CVar "acc"
                                                         , CVar "acc"
                                                         ]
-                                                    , CVar "m"
                                                     ]
                                                 ]
                                             )

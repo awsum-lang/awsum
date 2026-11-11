@@ -100,15 +100,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$36" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$40" )
-                                        [ CCon 7
-                                            [ CString "mappedA"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 49 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$12" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$0$andThenIO$16" )
@@ -120,6 +111,15 @@ CoreProgram
                                             , CCon 37 []
                                             ]
                                         , CCon 35 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$40" )
+                                        [ CCon 7
+                                            [ CString "mappedA"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 49 []
                                         ]
                                     , CCon 47 []
                                     ]
@@ -965,8 +965,8 @@ CoreProgram
                 )
             )
         , CFunDef "$cps$$df$andThenIO$36"
-            [ "io"
-            , "$df$andThenIO$36$cap0$0"
+            [ "$df$andThenIO$36$cap0$0"
+            , "io"
             , "$k"
             ]
             ( CLoop
@@ -1001,8 +1001,8 @@ CoreProgram
                                 ( CDrop "$df$andThenIO$36$cap0$0"
                                     ( CDrop "$k"
                                         ( CContinue
-                                            [ CVar "next"
-                                            , CVar "$df$andThenIO$36$cap0$0"
+                                            [ CVar "$df$andThenIO$36$cap0$0"
+                                            , CVar "next"
                                             , CReuse ReuseGuarded "io" 48
                                                 [ CVar "$k"
                                                 , CVar "s"
@@ -1156,15 +1156,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$36" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$40" )
-                                        [ CCon 7
-                                            [ CString "remappedY"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 49 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$24" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$1$andThenIO$28" )
@@ -1176,6 +1167,15 @@ CoreProgram
                                             , CCon 43 []
                                             ]
                                         , CCon 41 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$40" )
+                                        [ CCon 7
+                                            [ CString "remappedY"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 49 []
                                         ]
                                     , CCon 47 []
                                     ]
@@ -1268,15 +1268,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$36" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$40" )
-                                        [ CCon 7
-                                            [ CString "remappedX"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 49 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$24" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$1$andThenIO$28" )
@@ -1288,6 +1279,15 @@ CoreProgram
                                             , CCon 43 []
                                             ]
                                         , CCon 41 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$40" )
+                                        [ CCon 7
+                                            [ CString "remappedX"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 49 []
                                         ]
                                     , CCon 47 []
                                     ]
@@ -1380,15 +1380,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$36" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$40" )
-                                        [ CCon 7
-                                            [ CString "mappedOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 49 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$12" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$0$andThenIO$16" )
@@ -1400,6 +1391,15 @@ CoreProgram
                                             , CCon 37 []
                                             ]
                                         , CCon 35 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$40" )
+                                        [ CCon 7
+                                            [ CString "mappedOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 49 []
                                         ]
                                     , CCon 47 []
                                     ]
@@ -1492,15 +1492,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$36" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$40" )
-                                        [ CCon 7
-                                            [ CString "mappedB"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 49 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$12" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$0$andThenIO$16" )
@@ -1512,6 +1503,15 @@ CoreProgram
                                             , CCon 37 []
                                             ]
                                         , CCon 35 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$40" )
+                                        [ CCon 7
+                                            [ CString "mappedB"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 49 []
                                         ]
                                     , CCon 47 []
                                     ]

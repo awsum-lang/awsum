@@ -38,13 +38,13 @@
     while (true) {
       switch (v_$args[0]) {
         case 8: {
-          const v_x = v_$args[1];
+          const v_x = v_$args[2];
           switch (v_x[0]) {
             case 3: {
               return v_x;
             }
             case 4: {
-              v_$args = (v_$args[0] = 9, v_$args[1] = v_$args[2], v_$args[2] = v_x[1], v_$args);
+              v_$args = (v_$args[0] = 9, v_$args[2] = v_x[1], v_$args);
               continue;
             }
           }
@@ -64,10 +64,10 @@
               }
               case 4: {
                 const v_m = __s[1];
-                v_$args = (v_$args[0] = 8, v_$args[1] = __concat(
+                v_$args = (v_$args[0] = 8, v_$args[1] = v_m, v_$args[2] = __concat(
                   v_acc,
                   v_acc
-                ), v_$args[2] = v_m, v_$args);
+                ), v_$args);
                 continue;
               }
             }

@@ -948,16 +948,7 @@ CoreProgram
                                                                                                         ( CVar "$cps$$df$andThenIO$66" )
                                                                                                         [ CCall
                                                                                                             ( CVar "$cps$$df$andThenIO$70" )
-                                                                                                            [ CCall
-                                                                                                                ( CVar "$cps$$df$andThenIO$74" )
-                                                                                                                [ CCon 7
-                                                                                                                    [ CString "nevOk"
-                                                                                                                    , CCon 5
-                                                                                                                        [ CCon 0 [] ]
-                                                                                                                    ]
-                                                                                                                , CCon 58 []
-                                                                                                                ]
-                                                                                                            , CLet "$inl317$e"
+                                                                                                            [ CLet "$inl317$e"
                                                                                                                 ( CVar "nevOk" )
                                                                                                                 ( CDrop "$inl317$e"
                                                                                                                     ( CCall
@@ -989,6 +980,15 @@ CoreProgram
                                                                                                                         ]
                                                                                                                     )
                                                                                                                 )
+                                                                                                            , CCall
+                                                                                                                ( CVar "$cps$$df$andThenIO$74" )
+                                                                                                                [ CCon 7
+                                                                                                                    [ CString "nevOk"
+                                                                                                                    , CCon 5
+                                                                                                                        [ CCon 0 [] ]
+                                                                                                                    ]
+                                                                                                                , CCon 58 []
+                                                                                                                ]
                                                                                                             , CCon 56 []
                                                                                                             ]
                                                                                                         , CCon 54 []
@@ -2396,8 +2396,8 @@ CoreProgram
                 )
             )
         , CFunDef "$cps$$df$andThenIO$70"
-            [ "io"
-            , "$df$andThenIO$70$cap0$0"
+            [ "$df$andThenIO$70$cap0$0"
+            , "io"
             , "$k"
             ]
             ( CLoop
@@ -2432,8 +2432,8 @@ CoreProgram
                                 ( CDrop "$df$andThenIO$70$cap0$0"
                                     ( CDrop "$k"
                                         ( CContinue
-                                            [ CVar "next"
-                                            , CVar "$df$andThenIO$70$cap0$0"
+                                            [ CVar "$df$andThenIO$70$cap0$0"
+                                            , CVar "next"
                                             , CReuse ReuseGuarded "io" 57
                                                 [ CVar "$k"
                                                 , CVar "s"
@@ -2586,16 +2586,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "wOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl234$e"
+                                    [ CLet "$inl234$e"
                                         ( CVar "wOk" )
                                         ( CDrop "$inl234$e"
                                             ( CCall
@@ -2627,6 +2618,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "wOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -2717,16 +2717,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "wE3"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl240$e"
+                                    [ CLet "$inl240$e"
                                         ( CVar "wE3" )
                                         ( CDrop "$inl240$e"
                                             ( CCall
@@ -2758,6 +2749,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "wE3"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -2848,16 +2848,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "wE2str"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl246$e"
+                                    [ CLet "$inl246$e"
                                         ( CVar "wE2str" )
                                         ( CDrop "$inl246$e"
                                             ( CCall
@@ -2889,6 +2880,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "wE2str"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -2979,16 +2979,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "wE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl252$e"
+                                    [ CLet "$inl252$e"
                                         ( CVar "wE1" )
                                         ( CDrop "$inl252$e"
                                             ( CCall
@@ -3020,6 +3011,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "wE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3110,16 +3110,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "idem2Second"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl199$e"
+                                    [ CLet "$inl199$e"
                                         ( CVar "idem2Second" )
                                         ( CDrop "$inl199$e"
                                             ( CCall
@@ -3151,6 +3142,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "idem2Second"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3241,16 +3241,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "idem2First"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl205$e"
+                                    [ CLet "$inl205$e"
                                         ( CVar "idem2First" )
                                         ( CDrop "$inl205$e"
                                             ( CCall
@@ -3282,6 +3273,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "idem2First"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3372,16 +3372,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "idemE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl226$e"
+                                    [ CLet "$inl226$e"
                                         ( CVar "idemE2" )
                                         ( CDrop "$inl226$e"
                                             ( CCall
@@ -3413,6 +3404,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "idemE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3503,16 +3503,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "idemE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl223$e"
+                                    [ CLet "$inl223$e"
                                         ( CVar "idemE1" )
                                         ( CDrop "$inl223$e"
                                             ( CCall
@@ -3544,6 +3535,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "idemE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3634,16 +3634,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "twoOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl260$e"
+                                    [ CLet "$inl260$e"
                                         ( CVar "twoOk" )
                                         ( CDrop "$inl260$e"
                                             ( CCall
@@ -3675,6 +3666,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "twoOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3765,16 +3765,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "twoE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl266$e"
+                                    [ CLet "$inl266$e"
                                         ( CVar "twoE2" )
                                         ( CDrop "$inl266$e"
                                             ( CCall
@@ -3806,6 +3797,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "twoE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -3896,16 +3896,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "twoSecond"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl272$e"
+                                    [ CLet "$inl272$e"
                                         ( CVar "twoSecond" )
                                         ( CDrop "$inl272$e"
                                             ( CCall
@@ -3937,6 +3928,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "twoSecond"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4027,16 +4027,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "twoFirst"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl278$e"
+                                    [ CLet "$inl278$e"
                                         ( CVar "twoFirst" )
                                         ( CDrop "$inl278$e"
                                             ( CCall
@@ -4068,6 +4059,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "twoFirst"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4158,16 +4158,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "abE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl286$e"
+                                    [ CLet "$inl286$e"
                                         ( CVar "abE2" )
                                         ( CDrop "$inl286$e"
                                             ( CCall
@@ -4199,6 +4190,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "abE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4289,16 +4289,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "abE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl292$e"
+                                    [ CLet "$inl292$e"
                                         ( CVar "abE1" )
                                         ( CDrop "$inl292$e"
                                             ( CCall
@@ -4330,6 +4321,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "abE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4420,16 +4420,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "strIdem"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl220$e"
+                                    [ CLet "$inl220$e"
                                         ( CVar "strIdem" )
                                         ( CDrop "$inl220$e"
                                             ( CCall
@@ -4461,6 +4452,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "strIdem"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4551,16 +4551,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "strE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl300$e"
+                                    [ CLet "$inl300$e"
                                         ( CVar "strE2" )
                                         ( CDrop "$inl300$e"
                                             ( CCall
@@ -4592,6 +4583,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "strE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4682,16 +4682,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "strE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl306$e"
+                                    [ CLet "$inl306$e"
                                         ( CVar "strE1" )
                                         ( CDrop "$inl306$e"
                                             ( CCall
@@ -4723,6 +4714,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "strE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4813,16 +4813,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "strOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl312$e"
+                                    [ CLet "$inl312$e"
                                         ( CVar "strOk" )
                                         ( CDrop "$inl312$e"
                                             ( CCall
@@ -4854,6 +4845,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "strOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -4944,16 +4944,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "pureNever"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl217$e"
+                                    [ CLet "$inl217$e"
                                         ( CVar "pureNever" )
                                         ( CDrop "$inl217$e"
                                             ( CCall
@@ -4981,6 +4972,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "pureNever"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -5071,16 +5071,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "nevRightE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl214$e"
+                                    [ CLet "$inl214$e"
                                         ( CVar "nevRightE1" )
                                         ( CDrop "$inl214$e"
                                             ( CCall
@@ -5112,6 +5103,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "nevRightE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -5202,16 +5202,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "nevRightOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl211$e"
+                                    [ CLet "$inl211$e"
                                         ( CVar "nevRightOk" )
                                         ( CDrop "$inl211$e"
                                             ( CCall
@@ -5243,6 +5234,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "nevRightOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []
@@ -5333,16 +5333,7 @@ CoreProgram
                                 ( CVar "$cps$$df$andThenIO$66" )
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$70" )
-                                    [ CCall
-                                        ( CVar "$cps$$df$andThenIO$74" )
-                                        [ CCon 7
-                                            [ CString "nevFail"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 58 []
-                                        ]
-                                    , CLet "$inl208$e"
+                                    [ CLet "$inl208$e"
                                         ( CVar "nevFail" )
                                         ( CDrop "$inl208$e"
                                             ( CCall
@@ -5374,6 +5365,15 @@ CoreProgram
                                                 ]
                                             )
                                         )
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$74" )
+                                        [ CCon 7
+                                            [ CString "nevFail"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 58 []
+                                        ]
                                     , CCon 56 []
                                     ]
                                 , CCon 54 []

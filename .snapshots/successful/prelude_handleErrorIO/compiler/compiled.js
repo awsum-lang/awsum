@@ -611,7 +611,7 @@
     }
   };
 
-  const v_$cps$$df$andThenIO$56 = (v_io, v_$df$andThenIO$56$cap0$0, v_$k) => {
+  const v_$cps$$df$andThenIO$56 = (v_$df$andThenIO$56$cap0$0, v_io, v_$k) => {
     while (true) {
       switch (v_io[0]) {
         case 5: {
@@ -675,8 +675,8 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "treeNoError", [5, [0]]], [57]),
                 v_treeNoError,
+                v_$cps$$df$andThenIO$60([7, "treeNoError", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -741,7 +741,6 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "refailNarrow", [5, [0]]], [57]),
                 v_$cps$$df$handleErrorIO$40(
                   v_$cps$$df$andThenIO$32(
                     v_$cps$$df$mapIO$36(v_refailNarrow, [45]),
@@ -749,6 +748,7 @@
                   ),
                   [47]
                 ),
+                v_$cps$$df$andThenIO$60([7, "refailNarrow", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -777,11 +777,11 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "nested", [5, [0]]], [57]),
                 v_$cps$$df$andThenIO$32(
                   v_$cps$$df$mapIO$36(v_nested, [45]),
                   [43]
                 ),
+                v_$cps$$df$andThenIO$60([7, "nested", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -810,11 +810,11 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "passthrough", [5, [0]]], [57]),
                 v_$cps$$df$andThenIO$32(
                   v_$cps$$df$mapIO$36(v_passthrough, [45]),
                   [43]
                 ),
+                v_$cps$$df$andThenIO$60([7, "passthrough", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -843,11 +843,11 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "dispatchB", [5, [0]]], [57]),
                 v_$cps$$df$andThenIO$32(
                   v_$cps$$df$mapIO$36(v_dispatchB, [45]),
                   [43]
                 ),
+                v_$cps$$df$andThenIO$60([7, "dispatchB", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -876,11 +876,11 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "dispatchA", [5, [0]]], [57]),
                 v_$cps$$df$andThenIO$32(
                   v_$cps$$df$mapIO$36(v_dispatchA, [45]),
                   [43]
                 ),
+                v_$cps$$df$andThenIO$60([7, "dispatchA", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -950,8 +950,8 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "treePreserve", [5, [0]]], [57]),
                 v_treePreserve,
+                v_$cps$$df$andThenIO$60([7, "treePreserve", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -1019,7 +1019,6 @@
             v_$k,
             v_$cps$$df$andThenIO$52(
               v_$cps$$df$andThenIO$56(
-                v_$cps$$df$andThenIO$60([7, "refailRow", [5, [0]]], [57]),
                 v_$cps$$df$handleErrorIO$44(
                   v_$cps$$df$$rowmono$0$andThenIO$48(
                     v_$cps$$df$mapIO$36(v_refailRow, [45]),
@@ -1027,6 +1026,7 @@
                   ),
                   [49]
                 ),
+                v_$cps$$df$andThenIO$60([7, "refailRow", [5, [0]]], [57]),
                 [55]
               ),
               [53]
@@ -1057,11 +1057,11 @@
                 v_$cps$$df$andThenIO$92(
                   v_$cps$$df$andThenIO$52(
                     v_$cps$$df$andThenIO$56(
-                      v_$cps$$df$andThenIO$60([7, "recover", [5, [0]]], [57]),
                       v_$cps$$df$andThenIO$32(
                         v_$cps$$df$mapIO$36(v_recover, [45]),
                         [43]
                       ),
+                      v_$cps$$df$andThenIO$60([7, "recover", [5, [0]]], [57]),
                       [55]
                     ),
                     [53]

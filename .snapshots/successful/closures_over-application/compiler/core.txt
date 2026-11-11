@@ -35,13 +35,63 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
-                    [ CCall
-                        ( CVar "$scc$$apply1_applyOnce" )
-                        [ CCon 12
-                            [ CCon 9 []
-                            , CIntLit 5 TInt32
-                            ]
-                        ]
+                    [ CLet "$inl2$$cl"
+                        ( CCon 10 [] )
+                        ( CDrop "$inl2$$cl"
+                            ( CLet "$inl3$$arg0"
+                                ( CCon 9 [] )
+                                ( CDrop "$inl3$$arg0"
+                                    ( CLet "$inl4$$arg1"
+                                        ( CIntLit 5 TInt32 )
+                                        ( CDrop "$inl4$$arg1"
+                                            ( CCase
+                                                ( CVar "$inl2$$cl" )
+                                                [
+                                                    ( 8
+                                                    , [ "$inl1$$cap8_0" ]
+                                                    , CCall
+                                                        ( CVar "$scc$$apply1_applyOnce" )
+                                                        [ CCon 11
+                                                            [ CCall
+                                                                ( CVar "$scc$$apply1_applyOnce" )
+                                                                [ CCon 12
+                                                                    [ CProj "$inl2$$cl" 1
+                                                                    , CVar "$inl3$$arg0"
+                                                                    ]
+                                                                ]
+                                                            , CVar "$inl4$$arg1"
+                                                            ]
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 9
+                                                    , []
+                                                    , CCall
+                                                        ( CVar "$scc$$apply1_applyOnce" )
+                                                        [ CCon 11
+                                                            [ CVar "$inl3$$arg0"
+                                                            , CVar "$inl4$$arg1"
+                                                            ]
+                                                        ]
+                                                    )
+                                                ,
+                                                    ( 10
+                                                    , []
+                                                    , CCall
+                                                        ( CVar "$scc$$apply1_applyOnce" )
+                                                        [ CCon 12
+                                                            [ CVar "$inl3$$arg0"
+                                                            , CVar "$inl4$$arg1"
+                                                            ]
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
@@ -57,16 +107,33 @@ CoreProgram
                             [ "$cl"
                             , "$arg0"
                             ]
-                        , CDrop "$arg0"
-                            ( CCase
-                                ( CVar "$cl" )
-                                [
-                                    ( 9
-                                    , []
-                                    , CDrop "$cl"
-                                        ( CVar "$arg0" )
-                                    )
-                                ]
+                        , CDrop "$cl"
+                            ( CDrop "$arg0"
+                                ( CCase
+                                    ( CVar "$cl" )
+                                    [
+                                        ( 8
+                                        , [ "$cap8_0" ]
+                                        , CContinue
+                                            [ CReuse ReuseUnique "$args" 12
+                                                [ CProj "$cl" 1
+                                                , CVar "$arg0"
+                                                ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 9
+                                        , []
+                                        , CVar "$arg0"
+                                        )
+                                    ,
+                                        ( 10
+                                        , []
+                                        , CCon 8
+                                            [ CVar "$arg0" ]
+                                        )
+                                    ]
+                                )
                             )
                         )
                     ,
