@@ -1,0 +1,1 @@
+one/two/three;del 1;ins 0 zero;ins 2 middle;ins 4 tail;show

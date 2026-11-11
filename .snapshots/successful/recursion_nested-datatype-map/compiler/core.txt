@@ -557,8 +557,8 @@ CoreProgram
                                 ,
                                     ( 35
                                     ,
-                                        [ "n"
-                                        , "$df$mapNest$0$cap0$0"
+                                        [ "$df$mapNest$0$cap0$0"
+                                        , "n"
                                         ]
                                     , CDrop "$df$mapNest$0$cap0$0"
                                         ( CCase
@@ -570,9 +570,9 @@ CoreProgram
                                                     ( CContinue
                                                         [ CReuse ReuseUnique "$args$1" 51
                                                             [ CReuse ReuseUnique "$args" 35
-                                                                [ CVar "inner"
-                                                                , CReuse ReuseGuarded "n" 30
+                                                                [ CReuse ReuseGuarded "n" 30
                                                                     [ CVar "$df$mapNest$0$cap0$0" ]
+                                                                , CVar "inner"
                                                                 ]
                                                             , CCon 45
                                                                 [ CVar "$k" ]
@@ -612,8 +612,8 @@ CoreProgram
                                                     ( CContinue
                                                         [ CCon 51
                                                             [ CReuse ReuseUnique "$args$1" 35
-                                                                [ CVar "inner"
-                                                                , CCon 29 []
+                                                                [ CCon 29 []
+                                                                , CVar "inner"
                                                                 ]
                                                             , CReuse ReuseGuarded "n" 47
                                                                 [ CVar "$k" ]

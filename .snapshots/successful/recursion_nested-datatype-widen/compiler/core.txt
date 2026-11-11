@@ -505,8 +505,8 @@ CoreProgram
                                                     ( CContinue
                                                         [ CCon 51
                                                             [ CReuse ReuseUnique "$args$1" 35
-                                                                [ CVar "$mx$0"
-                                                                , CCon 29 []
+                                                                [ CCon 29 []
+                                                                , CVar "$mx$0"
                                                                 ]
                                                             , CReuse ReuseGuarded "$mapin" 44
                                                                 [ CVar "$k" ]
@@ -535,8 +535,8 @@ CoreProgram
                                 ,
                                     ( 35
                                     ,
-                                        [ "$mapin"
-                                        , "$df$$map$Nest$1$cap0$0"
+                                        [ "$df$$map$Nest$1$cap0$0"
+                                        , "$mapin"
                                         ]
                                     , CDrop "$df$$map$Nest$1$cap0$0"
                                         ( CCase
@@ -548,9 +548,9 @@ CoreProgram
                                                     ( CContinue
                                                         [ CReuse ReuseUnique "$args$1" 51
                                                             [ CReuse ReuseUnique "$args" 35
-                                                                [ CVar "$mx$0"
-                                                                , CReuse ReuseGuarded "$mapin" 30
+                                                                [ CReuse ReuseGuarded "$mapin" 30
                                                                     [ CVar "$df$$map$Nest$1$cap0$0" ]
+                                                                , CVar "$mx$0"
                                                                 ]
                                                             , CCon 45
                                                                 [ CVar "$k" ]

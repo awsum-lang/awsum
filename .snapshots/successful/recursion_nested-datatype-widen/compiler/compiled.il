@@ -1228,10 +1228,6 @@
     stelem.ref
     ldloc.s 6
     ldc.i4.1
-    ldloc.s 4
-    stelem.ref
-    ldloc.s 6
-    ldc.i4.2
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.s 7
@@ -1241,6 +1237,10 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 7
+    stelem.ref
+    ldloc.s 6
+    ldc.i4.2
+    ldloc.s 4
     stelem.ref
     ldloc.s 6
     stelem.ref
@@ -1330,7 +1330,7 @@
     ldc.i4.2
     ldelem.ref
     stloc.3
-    ldloc.2
+    ldloc.3
     castclass object[]
     ldc.i4.0
     ldelem.ref
@@ -1339,7 +1339,7 @@
     ldc.i4.s 24
     bne.un IL_c26
     pop
-    ldloc.2
+    ldloc.3
     castclass object[]
     ldc.i4.1
     ldelem.ref
@@ -1364,10 +1364,6 @@
     stelem.ref
     ldloc.s 6
     ldc.i4.1
-    ldloc.s 4
-    stelem.ref
-    ldloc.s 6
-    ldc.i4.2
     ldc.i4.2
     newarr [System.Runtime]System.Object
     stloc.s 7
@@ -1378,9 +1374,13 @@
     stelem.ref
     ldloc.s 7
     ldc.i4.1
-    ldloc.3
+    ldloc.2
     stelem.ref
     ldloc.s 7
+    stelem.ref
+    ldloc.s 6
+    ldc.i4.2
+    ldloc.s 4
     stelem.ref
     ldloc.s 6
     stelem.ref
@@ -1405,7 +1405,7 @@
     br IL_tco_loop
   IL_c26:
     pop
-    ldloc.2
+    ldloc.3
     castclass object[]
     ldc.i4.1
     ldelem.ref
@@ -1427,12 +1427,6 @@
     ldc.i4.0
     ldc.i4.s 37
     box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 6
-    ldc.i4.1
-    ldloc.s 6
-    ldc.i4.2
-    ldelem.ref
     stelem.ref
     ldloc.s 6
     ldc.i4.2

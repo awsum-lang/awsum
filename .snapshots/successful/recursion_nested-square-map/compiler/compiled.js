@@ -283,26 +283,29 @@
               }
             }
             case 35: {
-              const v_p = v_$args[1];
-              const v_$df$mapPerfect$0$cap0$0 = v_$args[2];
-              const v_$df$mapPerfect$0$cap0$1 = v_$args[3];
+              const v_$df$mapPerfect$0$cap0$0 = v_$args[1];
+              const v_$df$mapPerfect$0$cap0$1 = v_$args[2];
+              const v_p = v_$args[3];
               switch (v_p[0]) {
                 case 24: {
                   const v_inner = v_p[1];
-                  v_$args$1 = (v_$args$1[0] = 52, v_$args$1[1] = (v_$args[0] = 35, v_$args[1] = v_inner, v_$args[2] = [
+                  v_$args$1 = (v_$args$1[0] = 52, v_$args$1[1] = (v_$args[0] = 35, v_$args[1] = [
                     29,
                     v_$df$mapPerfect$0$cap0$0,
                     v_$df$mapPerfect$0$cap0$1
-                  ], v_$args[3] = [
+                  ], v_$args[2] = [
                     29,
                     v_$df$mapPerfect$0$cap0$0,
                     v_$df$mapPerfect$0$cap0$1
-                  ], v_$args), v_$args$1[2] = [45, v_$k], v_$args$1);
+                  ], v_$args[3] = v_inner, v_$args), v_$args$1[2] = [
+                    45,
+                    v_$k
+                  ], v_$args$1);
                   continue;
                 }
                 case 25: {
                   const v_a = v_p[1];
-                  v_$args$1 = (v_$args$1[0] = 52, v_$args$1[1] = (v_$args[0] = 37, v_$args[1] = v_$args[2], v_$args[2] = v_$args[3], v_$args[3] = v_a, v_$args), v_$args$1[2] = [
+                  v_$args$1 = (v_$args$1[0] = 52, v_$args$1[1] = (v_$args[0] = 37, v_$args[3] = v_a, v_$args), v_$args$1[2] = [
                     46,
                     v_$k
                   ], v_$args$1);
@@ -317,9 +320,9 @@
                   const v_inner = v_p[1];
                   v_$args$1 = (v_$args$1[0] = 52, v_$args$1[1] = [
                     35,
-                    v_inner,
                     [30],
-                    [30]
+                    [30],
+                    v_inner
                   ], v_$args$1[2] = [47, v_$k], v_$args$1);
                   continue;
                 }

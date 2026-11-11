@@ -33,8 +33,11 @@
 -- generate a specialised copy of @f@:
 --
 --   * Each function-typed parameter slot is /removed/.
---   * The closure's captures are /appended/ to the parameter list
---     (so they flow as ordinary first-order values).
+--   * The closure's captures are /prepended/ to the parameter list
+--     (so they flow as ordinary first-order values). Prepending keeps a
+--     partial application correct: the call site supplies the captures
+--     plus a prefix of the kept parameters, and a partial application
+--     binds the leading parameters.
 --   * Inside the body, every @CCall (CVar p) args@ where @p@ was a
 --     function-typed parameter is rewritten as
 --     @CCall (CVar helper) (captures ++ args)@. Pass-through HOFs
@@ -304,13 +307,13 @@ specializeAndCall env f origArgs slotClosures = do
       captureArgs = concatMap (closCaptures . snd) slotClosures
   keptArgs' <- traverse (transformExpr env) keptArgs
   captureArgs' <- traverse (transformExpr env) captureArgs
-  pure (CCall (CVar specName) (keptArgs' <> captureArgs'))
+  pure (CCall (CVar specName) (captureArgs' <> keptArgs'))
 
 -- | Materialise a specialised 'CFunDef'. The function-typed slot
 --   parameters are replaced with one fresh parameter per capture,
---   and the body is walked with each removed slot bound to a
---   closure whose capture expressions reference those fresh
---   parameters.
+--   placed before the kept parameters (module header), and the body is
+--   walked with each removed slot bound to a closure whose capture
+--   expressions reference those fresh parameters.
 generateSpec :: Name -> Name -> [(Int, Closure)] -> SpecM ()
 generateSpec specName origName slotClosures = do
   declsMap <- gets ssDecls
@@ -328,7 +331,7 @@ generateSpec specName origName slotClosures = do
             | (i, clos) <- M.toAscList slotMap
             ]
           captureParams = concatMap snd captureNamesPerSlot
-          newParams = keptParams <> captureParams
+          newParams = captureParams <> keptParams
           paramByIndex = M.fromList (zip [0 ..] origParams)
           slotEnv =
             M.fromList

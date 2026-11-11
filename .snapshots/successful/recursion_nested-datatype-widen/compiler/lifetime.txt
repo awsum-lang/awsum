@@ -58,8 +58,8 @@ $scc$$apply$$scc$$apply1_$df$$lam$14$7_$df$$lam$$x$2574563281:
   case-pattern    $mapin                          count=3
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$0                           count=0
-  case-pattern    $mapin                          count=3
   case-pattern    $df$$map$Nest$1$cap0$0          count=0
+  case-pattern    $mapin                          count=3
   case-pattern    $mx$0                           count=0
   case-pattern    $mx$0                           count=0
   case-pattern    io                              count=0

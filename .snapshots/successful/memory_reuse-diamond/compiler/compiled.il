@@ -276,7 +276,7 @@
 
   .method private hidebysig static object v_main() cil managed
   {
-    .maxstack 7
+    .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
     ldc.i4.2
     box [System.Runtime]System.Int32
@@ -291,6 +291,7 @@
     ldloc.0
     call object AwsumMain::v_mk2(object, object)
     stloc.0
+    ldloc.0
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.1
@@ -357,7 +358,6 @@
     ldloc.2
     stelem.ref
     ldloc.1
-    ldloc.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.1
@@ -377,7 +377,7 @@
     .maxstack 8
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4, object V_5, object V_6)
   IL_tco_loop:
-    ldarg.0
+    ldarg.1
     castclass object[]
     ldc.i4.0
     ldelem.ref
@@ -397,7 +397,7 @@
     stelem.ref
     ldloc.2
     ldc.i4.1
-    ldarg.1
+    ldarg.0
     castclass object[]
     ldc.i4.0
     ldelem.ref
@@ -410,7 +410,7 @@
     br IL_c0
   IL_c1:
     pop
-    ldarg.1
+    ldarg.0
     castclass object[]
     ldc.i4.3
     ldelem.ref
@@ -464,18 +464,18 @@
     ret
   IL_c4:
     pop
-    ldarg.0
+    ldarg.1
     castclass object[]
     ldc.i4.1
     ldelem.ref
     stloc.0
-    ldarg.0
+    ldarg.1
     castclass object[]
     ldc.i4.2
     ldelem.ref
     stloc.1
+    ldarg.0
     ldloc.1
-    ldarg.1
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.2

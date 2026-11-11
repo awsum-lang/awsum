@@ -18,6 +18,12 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 - **`awsum` collects only the old generation in parallel.** The binary keeps one capability per core, but every young-generation collection used to synchronise all of them — frequent and short, they cost more than they saved: checking a large file took up to 2.5× the CPU time and ran slower than on one core. Young-generation collections are now single-threaded (`-qg1`); a 1200-level nested `case` checks in 0.54 s instead of 0.69 s, on half the CPU.
 
+### Fixed
+
+- **A closure applied to more arguments than it has parameters left now runs.** When a function's result type is a type variable instantiated at a function type — `always : c -> String -> c` used at `c := String -> String`, or a typed printf / URL router where `link route a b` returns the formatter's result — a call passes more arguments than the closure takes. The closure dispatcher had no case for that and every backend broke differently: a wrong value on LLVM, a crash of `awsum` itself on JVM, `InvalidProgramException` on CLR, a trap on WASM, `undefined` on JS. The dispatcher now saturates the closure and applies the function it returns to the remaining arguments.
+
+- **A partially applied higher-order function keeps its closure's captures in place.** Passing a closure that carries a capture to a higher-order function without supplying all of the function's other arguments — `Box (applyFirst (pickFirst "captured"))` — bound the capture to the first missing argument instead: the program printed the later argument instead of `captured`, identically on all five backends.
+
 ## [0.0.8] - 2026-11-07
 
 ### Added

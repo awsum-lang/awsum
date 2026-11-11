@@ -255,9 +255,9 @@
                   const v_$mx$0 = v_$mapin[1];
                   v_$args$1 = [
                     51,
-                    (v_$args$1[0] = 35, v_$args$1[1] = v_$mx$0, v_$args$1[2] = [
+                    (v_$args$1[0] = 35, v_$args$1[1] = [
                       29
-                    ], v_$args$1),
+                    ], v_$args$1[2] = v_$mx$0, v_$args$1),
                     [44, v_$k]
                   ];
                   continue;
@@ -273,20 +273,23 @@
               }
             }
             case 35: {
-              const v_$mapin = v_$args[1];
-              const v_$df$$map$Nest$1$cap0$0 = v_$args[2];
+              const v_$df$$map$Nest$1$cap0$0 = v_$args[1];
+              const v_$mapin = v_$args[2];
               switch (v_$mapin[0]) {
                 case 24: {
                   const v_$mx$0 = v_$mapin[1];
-                  v_$args$1 = (v_$args$1[0] = 51, v_$args$1[1] = (v_$args[0] = 35, v_$args[1] = v_$mx$0, v_$args[2] = [
+                  v_$args$1 = (v_$args$1[0] = 51, v_$args$1[1] = (v_$args[0] = 35, v_$args[1] = [
                     30,
                     v_$df$$map$Nest$1$cap0$0
-                  ], v_$args), v_$args$1[2] = [45, v_$k], v_$args$1);
+                  ], v_$args[2] = v_$mx$0, v_$args), v_$args$1[2] = [
+                    45,
+                    v_$k
+                  ], v_$args$1);
                   continue;
                 }
                 case 25: {
                   const v_$mx$0 = v_$mapin[1];
-                  v_$args$1 = (v_$args$1[0] = 51, v_$args$1[1] = (v_$args[0] = 37, v_$args[1] = v_$args[2], v_$args[2] = v_$mx$0, v_$args), v_$args$1[2] = [
+                  v_$args$1 = (v_$args$1[0] = 51, v_$args$1[1] = (v_$args[0] = 37, v_$args[2] = v_$mx$0, v_$args), v_$args$1[2] = [
                     46,
                     v_$k
                   ], v_$args$1);

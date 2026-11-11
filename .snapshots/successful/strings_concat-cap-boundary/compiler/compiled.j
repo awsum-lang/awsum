@@ -360,14 +360,14 @@ L_tco8:
   iload_1
   bipush 8
   if_icmpne L_tarm9
+  aconst_null
+  astore_2
   aload_0
   checkcast [Ljava/lang/Object;
-  iconst_1
+  iconst_2
   aaload
-  astore_2
-  aconst_null
   astore_3
-  aload_2
+  aload_3
   checkcast [Ljava/lang/Object;
   iconst_0
   aaload
@@ -377,7 +377,7 @@ L_tco8:
   iload 4
   iconst_3
   if_icmpne L_tarm11
-  aload_2
+  aload_3
   aconst_null
   astore_3
   aconst_null
@@ -392,16 +392,8 @@ L_tarm11:
   aastore
   aload_0
   checkcast [Ljava/lang/Object;
-  iconst_1
-  aload_0
-  checkcast [Ljava/lang/Object;
   iconst_2
-  aaload
-  aastore
-  aload_0
-  checkcast [Ljava/lang/Object;
-  iconst_2
-  aload_2
+  aload_3
   checkcast [Ljava/lang/Object;
   iconst_1
   aaload
@@ -492,14 +484,14 @@ L_tarm12:
   aload_0
   checkcast [Ljava/lang/Object;
   iconst_1
-  aload_3
-  aload_3
-  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aload 6
   aastore
   aload_0
   checkcast [Ljava/lang/Object;
   iconst_2
-  aload 6
+  aload_3
+  aload_3
+  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   aload_0
   checkcast [Ljava/lang/Object;

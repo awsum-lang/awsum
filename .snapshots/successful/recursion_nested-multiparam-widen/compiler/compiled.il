@@ -1321,10 +1321,6 @@
     stelem.ref
     ldloc.s 8
     ldc.i4.1
-    ldloc.s 5
-    stelem.ref
-    ldloc.s 8
-    ldc.i4.2
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.s 9
@@ -1336,7 +1332,7 @@
     ldloc.s 9
     stelem.ref
     ldloc.s 8
-    ldc.i4.3
+    ldc.i4.2
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.s 9
@@ -1346,6 +1342,10 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 9
+    stelem.ref
+    ldloc.s 8
+    ldc.i4.3
+    ldloc.s 5
     stelem.ref
     ldloc.s 8
     stelem.ref
@@ -1449,7 +1449,7 @@
     ldc.i4.3
     ldelem.ref
     stloc.s 4
-    ldloc.2
+    ldloc.s 4
     castclass object[]
     ldc.i4.0
     ldelem.ref
@@ -1458,7 +1458,7 @@
     ldc.i4.s 24
     bne.un IL_c26
     pop
-    ldloc.2
+    ldloc.s 4
     castclass object[]
     ldc.i4.1
     ldelem.ref
@@ -1483,10 +1483,6 @@
     stelem.ref
     ldloc.s 8
     ldc.i4.1
-    ldloc.s 5
-    stelem.ref
-    ldloc.s 8
-    ldc.i4.2
     ldc.i4.3
     newarr [System.Runtime]System.Object
     stloc.s 9
@@ -1497,16 +1493,16 @@
     stelem.ref
     ldloc.s 9
     ldc.i4.1
-    ldloc.3
+    ldloc.2
     stelem.ref
     ldloc.s 9
     ldc.i4.2
-    ldloc.s 4
+    ldloc.3
     stelem.ref
     ldloc.s 9
     stelem.ref
     ldloc.s 8
-    ldc.i4.3
+    ldc.i4.2
     ldc.i4.1
     newarr [System.Runtime]System.Object
     stloc.s 9
@@ -1516,6 +1512,10 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.s 9
+    stelem.ref
+    ldloc.s 8
+    ldc.i4.3
+    ldloc.s 5
     stelem.ref
     ldloc.s 8
     stelem.ref
@@ -1540,12 +1540,12 @@
     br IL_tco_loop
   IL_c26:
     pop
-    ldloc.2
+    ldloc.s 4
     castclass object[]
     ldc.i4.1
     ldelem.ref
     stloc.s 5
-    ldloc.2
+    ldloc.s 4
     castclass object[]
     ldc.i4.2
     ldelem.ref
@@ -1567,18 +1567,6 @@
     ldc.i4.0
     ldc.i4.s 38
     box [System.Runtime]System.Int32
-    stelem.ref
-    ldloc.s 8
-    ldc.i4.1
-    ldloc.s 8
-    ldc.i4.2
-    ldelem.ref
-    stelem.ref
-    ldloc.s 8
-    ldc.i4.2
-    ldloc.s 8
-    ldc.i4.3
-    ldelem.ref
     stelem.ref
     ldloc.s 8
     ldc.i4.3

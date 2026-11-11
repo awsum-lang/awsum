@@ -1,0 +1,34 @@
+{- A higher-order function is partially applied to a closure that carries
+   a capture, and the result travels through a constructor field before
+   its last argument arrives from argv. The capture must stay bound to the
+   closure, not to the missing argument. Prints `captured`. -}
+
+import IO.Stdout
+import IO.Args
+
+type Box = Box (String -> String)
+
+applyFirst : (String -> String) -> String -> String
+applyFirst f s = f s
+
+pickFirst : String -> String -> String
+pickFirst a _b = a
+
+call : Box -> String -> String
+call b arg = case b of
+  Box f -> f arg
+
+run : List String -> IO Never Unit
+run args = case headList args of
+  Nothing -> IO.Stdout.print "MISSING_ARG"
+  Just a -> IO.Stdout.print (call (Box (applyFirst (pickFirst "captured"))) a)
+
+onError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+onError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO run
+  |> handleErrorIO onError

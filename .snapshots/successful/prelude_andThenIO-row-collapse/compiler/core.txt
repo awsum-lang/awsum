@@ -290,15 +290,6 @@ CoreProgram
                                                                                                         [ CCall
                                                                                                             ( CVar "$cps$$df$andThenIO$112" )
                                                                                                             [ CCall
-                                                                                                                ( CVar "$cps$$df$andThenIO$116" )
-                                                                                                                [ CCon 7
-                                                                                                                    [ CString "nevOk"
-                                                                                                                    , CCon 5
-                                                                                                                        [ CCon 0 [] ]
-                                                                                                                    ]
-                                                                                                                , CCon 96 []
-                                                                                                                ]
-                                                                                                            , CCall
                                                                                                                 ( CVar "$cps$$df$handleErrorIO$56" )
                                                                                                                 [ CCall
                                                                                                                     ( CVar "$cps$$df$andThenIO$60" )
@@ -310,6 +301,15 @@ CoreProgram
                                                                                                                     , CCon 68 []
                                                                                                                     ]
                                                                                                                 , CCon 66 []
+                                                                                                                ]
+                                                                                                            , CCall
+                                                                                                                ( CVar "$cps$$df$andThenIO$116" )
+                                                                                                                [ CCon 7
+                                                                                                                    [ CString "nevOk"
+                                                                                                                    , CCon 5
+                                                                                                                        [ CCon 0 [] ]
+                                                                                                                    ]
+                                                                                                                , CCon 96 []
                                                                                                                 ]
                                                                                                             , CCon 94 []
                                                                                                             ]
@@ -3405,8 +3405,8 @@ CoreProgram
                 )
             )
         , CFunDef "$cps$$df$andThenIO$112"
-            [ "io"
-            , "$df$andThenIO$112$cap0$0"
+            [ "$df$andThenIO$112$cap0$0"
+            , "io"
             , "$k"
             ]
             ( CLoop
@@ -3441,8 +3441,8 @@ CoreProgram
                                 ( CDrop "$df$andThenIO$112$cap0$0"
                                     ( CDrop "$k"
                                         ( CContinue
-                                            [ CVar "next"
-                                            , CVar "$df$andThenIO$112$cap0$0"
+                                            [ CVar "$df$andThenIO$112$cap0$0"
+                                            , CVar "next"
                                             , CReuse ReuseGuarded "io" 95
                                                 [ CVar "$k"
                                                 , CVar "s"
@@ -3596,15 +3596,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "wOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$100" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$8$andThenIO$104" )
@@ -3616,6 +3607,15 @@ CoreProgram
                                             , CCon 90 []
                                             ]
                                         , CCon 88 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "wOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -3708,15 +3708,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "wE3"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$100" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$8$andThenIO$104" )
@@ -3728,6 +3719,15 @@ CoreProgram
                                             , CCon 90 []
                                             ]
                                         , CCon 88 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "wE3"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -3820,15 +3820,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "wE2str"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$100" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$8$andThenIO$104" )
@@ -3840,6 +3831,15 @@ CoreProgram
                                             , CCon 90 []
                                             ]
                                         , CCon 88 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "wE2str"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -3932,15 +3932,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "wE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$100" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$8$andThenIO$104" )
@@ -3952,6 +3943,15 @@ CoreProgram
                                             , CCon 90 []
                                             ]
                                         , CCon 88 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "wE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4044,15 +4044,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "idem2Second"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$68" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -4064,6 +4055,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 72 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "idem2Second"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4156,15 +4156,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "idem2First"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$68" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -4176,6 +4167,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 72 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "idem2First"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4268,15 +4268,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "idemE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$56" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -4288,6 +4279,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 66 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "idemE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4380,15 +4380,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "idemE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$56" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -4400,6 +4391,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 66 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "idemE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4492,15 +4492,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "twoOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$92" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$7$andThenIO$96" )
@@ -4512,6 +4503,15 @@ CoreProgram
                                             , CCon 86 []
                                             ]
                                         , CCon 84 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "twoOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4604,15 +4604,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "twoE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$92" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$7$andThenIO$96" )
@@ -4624,6 +4615,15 @@ CoreProgram
                                             , CCon 86 []
                                             ]
                                         , CCon 84 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "twoE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4716,15 +4716,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "twoSecond"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$92" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$7$andThenIO$96" )
@@ -4736,6 +4727,15 @@ CoreProgram
                                             , CCon 86 []
                                             ]
                                         , CCon 84 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "twoSecond"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4828,15 +4828,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "twoFirst"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$92" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$7$andThenIO$96" )
@@ -4848,6 +4839,15 @@ CoreProgram
                                             , CCon 86 []
                                             ]
                                         , CCon 84 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "twoFirst"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -4940,15 +4940,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "abE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$84" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$6$andThenIO$88" )
@@ -4960,6 +4951,15 @@ CoreProgram
                                             , CCon 82 []
                                             ]
                                         , CCon 80 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "abE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5052,15 +5052,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "abE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$84" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$6$andThenIO$88" )
@@ -5072,6 +5063,15 @@ CoreProgram
                                             , CCon 82 []
                                             ]
                                         , CCon 80 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "abE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5164,15 +5164,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "strIdem"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$72" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -5184,6 +5175,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 74 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "strIdem"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5276,15 +5276,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "strE2"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$76" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$5$andThenIO$80" )
@@ -5296,6 +5287,15 @@ CoreProgram
                                             , CCon 78 []
                                             ]
                                         , CCon 76 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "strE2"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5388,15 +5388,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "strE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$76" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$5$andThenIO$80" )
@@ -5408,6 +5399,15 @@ CoreProgram
                                             , CCon 78 []
                                             ]
                                         , CCon 76 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "strE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5500,15 +5500,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "strOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$76" )
                                         [ CCall
                                             ( CVar "$cps$$df$$rowmono$5$andThenIO$80" )
@@ -5520,6 +5511,15 @@ CoreProgram
                                             , CCon 78 []
                                             ]
                                         , CCon 76 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "strOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5612,15 +5612,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "pureNever"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$andThenIO$60" )
                                         [ CCall
                                             ( CVar "$cps$$df$mapIO$64" )
@@ -5628,6 +5619,15 @@ CoreProgram
                                             , CCon 70 []
                                             ]
                                         , CCon 68 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "pureNever"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5720,15 +5720,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "nevRightE1"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$56" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -5740,6 +5731,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 66 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "nevRightE1"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5832,15 +5832,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "nevRightOk"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$56" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -5852,6 +5843,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 66 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "nevRightOk"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
@@ -5944,15 +5944,6 @@ CoreProgram
                                 [ CCall
                                     ( CVar "$cps$$df$andThenIO$112" )
                                     [ CCall
-                                        ( CVar "$cps$$df$andThenIO$116" )
-                                        [ CCon 7
-                                            [ CString "nevFail"
-                                            , CCon 5
-                                                [ CCon 0 [] ]
-                                            ]
-                                        , CCon 96 []
-                                        ]
-                                    , CCall
                                         ( CVar "$cps$$df$handleErrorIO$56" )
                                         [ CCall
                                             ( CVar "$cps$$df$andThenIO$60" )
@@ -5964,6 +5955,15 @@ CoreProgram
                                             , CCon 68 []
                                             ]
                                         , CCon 66 []
+                                        ]
+                                    , CCall
+                                        ( CVar "$cps$$df$andThenIO$116" )
+                                        [ CCon 7
+                                            [ CString "nevFail"
+                                            , CCon 5
+                                                [ CCon 0 [] ]
+                                            ]
+                                        , CCon 96 []
                                         ]
                                     , CCon 94 []
                                     ]
