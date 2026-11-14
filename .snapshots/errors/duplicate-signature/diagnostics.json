@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":5,"startCol":1,"endLine":5,"endCol":30,"message":"Duplicate type signature for: foo","fixes":[]}]

@@ -1,9 +1,0 @@
-{- Error: function defined with more parameters than its signature allows -}
-
-import IO.Stdout
-
-foo : String -> IO Never Unit
-foo a b = IO.Stdout.print a
-
-main : IO Never Unit
-main = foo "x" "extra"

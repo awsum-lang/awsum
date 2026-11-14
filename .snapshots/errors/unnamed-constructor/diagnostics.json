@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":7,"startCol":10,"endLine":7,"endCol":11,"message":"Constructor name must not be bare '_'; use '_C' (or similar) to mark a constructor as intentionally unused","fixes":[]}]

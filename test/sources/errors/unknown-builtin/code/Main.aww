@@ -1,9 +1,0 @@
-{- Error: BuiltIn.nonexistent is not provided by the compiler. -}
-
-import IO.Stdout
-
-main : IO Never Unit
-main = IO.Stdout.print "ok"
-
-bogus : String
-bogus = BuiltIn.nonexistent

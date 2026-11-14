@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":10,"startCol":5,"endLine":10,"endCol":5,"message":"unexpected \"'a'<newline>\"\nexpecting \"--\", \"case\", \"do\", \"let\", '\"', '(', '-', '\\', '_', end of line, or uppercase letter","fixes":[]}]

@@ -1,1 +1,0 @@
-a/bb/ccc;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;dup;offset 12000000;line 20000000;del 6000000;offset 12000000
