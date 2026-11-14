@@ -1,8 +1,0 @@
-{- Error: same function name defined twice -}
-
-foo = foo
-
-foo = foo
-
-main : IO Never Unit
-main = IO.Stdout.print "ok"

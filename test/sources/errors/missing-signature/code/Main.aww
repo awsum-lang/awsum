@@ -1,6 +1,0 @@
-{- Error: function definition without type signature -}
-
-foo x = x
-
-main : IO Never Unit
-main = IO.Stdout.print "ok"

@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":6,"startCol":19,"endLine":6,"endCol":23,"message":"Duplicate type parameter: '_tag' is already declared in this type","fixes":[]}]

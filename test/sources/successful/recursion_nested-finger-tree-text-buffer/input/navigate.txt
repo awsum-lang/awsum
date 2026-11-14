@@ -1,1 +1,0 @@
-alpha/be/gamma;offset 0;offset 1;offset 2;line 0;line 5;line 6;line 8;line 9;line 14

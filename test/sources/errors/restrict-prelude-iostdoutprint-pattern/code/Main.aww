@@ -1,5 +1,0 @@
-{- Error: IOStdoutPrint constructor matched in user code. Prelude-private. -}
-
-main : IO Never Unit
-main = case main of
-  IOStdoutPrint _s _k -> main

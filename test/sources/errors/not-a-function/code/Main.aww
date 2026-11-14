@@ -1,9 +1,0 @@
-{- Error: applying a String value as if it were a function -}
-
-import IO.Stdout
-
-notAFn : String
-notAFn = "x"
-
-main : IO Never Unit
-main = IO.Stdout.print (notAFn notAFn)

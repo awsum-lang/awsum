@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":13,"startCol":3,"endLine":13,"endCol":7,"message":"Constructor 'True' is not in any alternative of the structural sum Int32 | String.","fixes":[]}]

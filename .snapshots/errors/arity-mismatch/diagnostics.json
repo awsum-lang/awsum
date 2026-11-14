@@ -1,1 +1,0 @@
-[{"severity":"error","startLine":6,"startCol":1,"endLine":6,"endCol":28,"message":"Arity mismatch for foo: expected 1 arguments, got 2","fixes":[]}]
